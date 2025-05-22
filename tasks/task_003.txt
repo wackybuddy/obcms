@@ -1,0 +1,49 @@
+# Task ID: 3
+# Title: Administrative Hierarchy and Regional Setup
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Implement the administrative hierarchy database models to support the geographic coverage requirements (Region > Province > Municipality > Barangay) with focus on Regions IX, XII, and other regions.
+# Details:
+1. Create models for administrative divisions (Region, Province, Municipality, Barangay)
+2. Populate database with Philippine administrative data, focusing on Regions IX, XII, and others
+3. Implement relationships between administrative levels
+4. Create management commands for data import/export
+5. Implement API endpoints for administrative hierarchy data
+6. Create admin interfaces for managing administrative data
+
+Model example:
+```python
+from django.db import models
+
+class Region(models.Model):
+    code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+class Province(models.Model):
+    region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name='provinces')
+    code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+
+class Municipality(models.Model):
+    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name='municipalities')
+    code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+
+class Barangay(models.Model):
+    municipality = models.ForeignKey(Municipality, on_delete=models.CASCADE, related_name='barangays')
+    code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+```
+
+# Test Strategy:
+1. Unit tests for model relationships and constraints
+2. Test data import functionality with sample data
+3. Verify API endpoints return correct hierarchical data
+4. Test filtering and querying capabilities
+5. Validate admin interface functionality for managing data

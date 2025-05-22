@@ -1,0 +1,93 @@
+# Task ID: 14
+# Title: MOA and Partnership Tracking
+# Status: pending
+# Dependencies: 12
+# Priority: medium
+# Description: Implement the MOA (Memoranda of Agreement) and partnership tracking system for managing agreements and partnerships with various stakeholders.
+# Details:
+1. Create MOA and partnership models
+2. Implement agreement status tracking
+3. Build deliverable and milestone management
+4. Create signatory and approval tracking
+5. Implement document attachment and versioning
+6. Build admin interfaces for MOA and partnership management
+7. Create API endpoints for MOA and partnership data
+
+Model example:
+```python
+from django.db import models
+from django.conf import settings
+
+class Partnership(models.Model):
+    PARTNERSHIP_TYPES = [
+        ('moa', 'Memorandum of Agreement'),
+        ('mou', 'Memorandum of Understanding'),
+        ('contract', 'Contract'),
+        ('informal', 'Informal Partnership'),
+        ('other', 'Other')
+    ]
+    
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('review', 'Under Review'),
+        ('pending_signature', 'Pending Signature'),
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+        ('terminated', 'Terminated'),
+        ('expired', 'Expired')
+    ]
+    
+    title = models.CharField(max_length=255)
+    partnership_type = models.CharField(max_length=20, choices=PARTNERSHIP_TYPES)
+    description = models.TextField()
+    organizations = models.ManyToManyField('Organization', related_name='partnerships')
+    communities = models.ManyToManyField('OBCCommunity', related_name='partnerships', blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    objectives = models.TextField()
+    scope = models.TextField()
+    focal_person = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='managed_partnerships')
+    document = models.FileField(upload_to='partnerships/%Y/%m/', null=True, blank=True)
+    document_number = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class PartnershipMilestone(models.Model):
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('delayed', 'Delayed'),
+        ('cancelled', 'Cancelled')
+    ]
+    
+    partnership = models.ForeignKey(Partnership, on_delete=models.CASCADE, related_name='milestones')
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    due_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+    completion_date = models.DateField(null=True, blank=True)
+    responsible_party = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class PartnershipSignatory(models.Model):
+    partnership = models.ForeignKey(Partnership, on_delete=models.CASCADE, related_name='signatories')
+    name = models.CharField(max_length=255)
+    position = models.CharField(max_length=100)
+    organization = models.ForeignKey('Organization', on_delete=models.CASCADE)
+    signed = models.BooleanField(default=False)
+    signature_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+```
+
+# Test Strategy:
+1. Unit tests for partnership model creation and management
+2. Test agreement status tracking
+3. Verify deliverable and milestone management
+4. Test signatory and approval tracking
+5. Validate document attachment and versioning
+6. Test API endpoints for MOA and partnership data

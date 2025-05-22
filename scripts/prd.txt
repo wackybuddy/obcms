@@ -1,0 +1,238 @@
+# OBC Management System - Product Requirements Document
+
+## Project Overview
+
+The OBC Management System (Other Bangsamoro Communities Management System) is a comprehensive web-based application designed to support the OOBC's mandate of serving Other Bangsamoro Communities (OBCs) residing outside the Bangsamoro Autonomous Region in Muslim Mindanao (BARMM). This system digitalizes the office's core functions of gathering information, assessing needs, recommending policies, and coordinating with various stakeholders.
+
+## OOBC Context and Background
+
+### OOBC Mandate
+The OOBC serves as the primary unit within the Office of the Chief Minister (OCM) responsible for:
+1. **Recommending policies and systematic programs** to promote the welfare of Other Bangsamoro Communities (OBCs) outside BARMM
+2. **Coordinating with local government units (LGUs) and national government agencies (NGAs)** as well as Bangsamoro ministries and offices (BMOAs)
+
+### OOBC Functions
+1. **Gathering Information and Assessing Needs**: Collecting data from primary and secondary sources to evaluate economic, social, and cultural status of Other Bangsamoro Communities (OBCs)
+2. **Recommendation of Policies, Programs, and Services**: Developing evidence-based proposals for new initiatives
+3. **Coordination with MOAs and LGUs and NGAs**: Establishing coordination mechanisms and facilitating partnerships
+
+### OOBC Mission and Vision
+- **Vision**: "The OOBC envisions itself as a channel for ensuring socio-economic and cultural development measures and programs to the Other Bangsamoro Communities (OBCs) guided by Moral Governance"
+- **Mission**: "The OOBC's mission is to promote the welfare and aspirations of the OBCs through policy recommendation and systematic programs"
+- **Values**: CORE ICM (Commitment, Optimism, Resourcefulness, Excellence, Inclusivity, Community-oriented, Integrity/Moral Governance)
+
+## Business Objectives
+
+1. Digitize and streamline OOBC's core functions and operations
+2. Support comprehensive MANA (Mapping and Needs Assessment) activities
+3. Facilitate coordination between OOBC, BMOAs, LGUs, and NGAs
+4. Provide data-driven insights for policy recommendations
+5. Track and monitor Other Bangsamoro Community development initiatives
+6. Support the OOBC's 2025-2028 strategic plan implementation
+
+## Target Users
+
+- OOBC staff and administrators
+- Chief Minister's Office personnel
+- BARMM ministries, agencies, and offices (BMOAs)
+- Local government unit officials
+- National government agency representatives
+- Community leaders and stakeholders
+- Assessment coordinators and researchers
+
+## Core Modules
+
+### 1. OBC Data Module
+**Purpose**: Comprehensive Other Bangsamoro Community information management system
+
+**Key Features**:
+- **Community Profiles**: Detailed profiles of Other Bangsamoro Communities outside BARMM
+- **Geographic Coverage**: Administrative hierarchy (Region > Province > Municipality > Barangay)
+- **Demographic Data**: Population, households, cultural background, languages, livelihoods
+- **Stakeholder Management**: Community leaders, Ulama, Imams, ALIVE/Arabic teachers
+- **Document Management**: Community documents, assessment reports, correspondence
+- **Status Tracking**: Community development status and progress monitoring
+
+**Specific Requirements**:
+- Support for regions IX (Zamboanga Peninsula), XII (SOCCSKSARGEN), and other regions
+- Integration with Philippine Statistics Authority data
+- Cultural and religious information management
+- Livelihood and economic activity tracking
+
+### 2. OBC MANA Module (Mapping and Needs Assessment)
+**Purpose**: Comprehensive needs assessment and mapping capabilities
+
+**Key Features**:
+- **Assessment Management**: Create, conduct, and manage MANA activities
+- **Need Categories**: Education, Economic Development, Social Development, Cultural Development, Infrastructure
+- **Priority Assessment**: Ranking system (Low, Medium, High, Critical)
+- **Stakeholder Engagement**: Consultation tracking and feedback management
+- **Geographic Mapping**: Regional and community-level mapping
+- **Baseline Studies**: Socio-economic profiling and surveys
+
+**Assessment Areas**:
+- **Education**: Scholarships, Madaris support, Islamic education integration
+- **Economic Development**: Halal industry, agriculture/fisheries, MSMEs
+- **Social Development**: TABANG, AMBag, Kapyanan programs extension
+- **Cultural Development**: Traditional crafts, cultural centers, heritage preservation
+- **Infrastructure**: Farm-to-market roads, healthcare facilities, utilities
+
+### 3. Coordination and Collaboration Module
+**Purpose**: Facilitate multi-stakeholder coordination
+
+**Key Features**:
+- **Stakeholder Directory**: BMOAs, LGUs, NGAs, development partners
+- **Meeting Management**: Consultations, coordination meetings, courtesy calls
+- **MOA/Partnership Tracking**: Memoranda of Agreement and partnership management
+- **Communication Hub**: Information sharing and correspondence
+- **Event Management**: Forums, consultations, capacity building sessions
+
+### 4. Policy and Program Recommendation Module
+**Purpose**: Support evidence-based policy recommendations
+
+**Key Features**:
+- **Recommendation Tracking**: Policy proposals and status
+- **Evidence Documentation**: Supporting data and analysis
+- **Approval Workflows**: Chief Minister submission and approval process
+- **Impact Assessment**: Program effectiveness and outcomes
+- **Knowledge Management**: Best practices and lessons learned
+
+## Technical Requirements
+
+### Technology Stack
+- **Backend**: Django 4.2+ (Python web framework)
+- **Database**: SQLite (upgradeable to PostgreSQL)
+- **API**: Django REST Framework
+- **Frontend**: Django templates with Tailwind CSS framework
+- **Authentication**: Django built-in auth with role-based access
+- **File Storage**: Local filesystem with cloud storage capability
+
+### Database Schema Extensions
+- **OOBC-Specific Models**: 
+  - MANA Assessment models
+  - Stakeholder and partnership models
+  - Policy recommendation tracking
+  - Program monitoring models
+- **Regional Coverage**: Focus on Regions IX, XII, and expandable architecture
+- **Cultural Data**: Islamic education, Halal industry, traditional crafts
+
+## Functional Requirements Based on OOBC Operations
+
+### 1. Other Bangsamoro Community Information Management
+- Comprehensive community profiling with cultural and religious context
+- Support for Other Bangsamoro Communities in multiple regions
+- Integration with existing government data sources
+- Historical data tracking and trend analysis
+
+### 2. MANA (Mapping and Needs Assessment)
+- Multi-methodology assessment support (surveys, interviews, focus groups)
+- Sector-specific needs assessment (education, economic, social, cultural)
+- Geographic visualization and mapping
+- Stakeholder consultation management
+- Baseline study development and tracking
+
+### 3. Policy Recommendation System
+- Evidence-based recommendation development
+- Chief Minister submission workflow
+- Cross-reference with existing BARMM programs
+- Impact assessment and monitoring
+
+### 4. Coordination Hub
+- Multi-stakeholder communication platform
+- Meeting and event management
+- Partnership and MOA tracking
+- Information sharing and collaboration tools
+
+### 5. Monitoring and Evaluation
+- Program implementation tracking
+- Outcome measurement and reporting
+- Performance indicator management
+- Regular M&E activity scheduling
+
+### 6. Strategic Communication
+- Information drive and public outreach management
+- IEC material distribution tracking
+- Social media integration
+- Stakeholder engagement analytics
+
+## Implementation Phases Aligned with OOBC Strategy 2025-2028
+
+### Phase 1: Foundation and Core Infrastructure (Q1-Q2 2025)
+- Project setup and database design
+- Basic authentication and user management
+- Administrative hierarchy and regional setup
+- Core Other Bangsamoro Community profile management
+
+### Phase 2: MANA System Implementation (Q3 2025-Q1 2026)
+- Assessment creation and management
+- Needs categorization and prioritization
+- Stakeholder consultation tracking
+- Basic reporting and analytics
+
+### Phase 3: Coordination and Policy Systems (Q2-Q3 2026)
+- Stakeholder directory and communication
+- Policy recommendation workflows
+- Partnership and MOA management
+- Advanced reporting capabilities
+
+### Phase 4: Enhancement and Integration (Q4 2026-Q2 2027)
+- Advanced analytics and dashboards
+- Mobile-responsive enhancements with Tailwind CSS
+- API integrations with government systems
+- Performance optimization
+
+### Phase 5: Strategic Communication and M&E (Q3-Q4 2027)
+- Communication platform integration
+- Comprehensive M&E framework
+- Knowledge management system
+- Training and capacity building support
+
+## Success Criteria
+
+1. **Operational Efficiency**: 50% reduction in manual data processing time
+2. **Data Quality**: 95% accuracy in Other Bangsamoro Community profiles and assessments
+3. **Stakeholder Engagement**: 80% of target communities covered in MANA
+4. **Policy Impact**: Measurable improvement in recommendation implementation
+5. **User Adoption**: 100% OOBC staff trained and actively using the system
+
+## Key Performance Indicators
+
+1. Number of Other Bangsamoro Communities profiled and assessed
+2. Number of MANA activities conducted and completed
+3. Number of policy recommendations submitted and approved
+4. Number of partnerships and MOAs facilitated
+5. Stakeholder satisfaction ratings
+6. System usage and performance metrics
+
+## Frontend Design Requirements
+
+### Tailwind CSS Implementation
+- **Responsive Design**: Mobile-first approach using Tailwind's responsive utilities
+- **Component-Based Architecture**: Reusable UI components with consistent styling
+- **Dark Mode Support**: Toggle between light and dark themes for better accessibility
+- **Cultural Sensitivity**: Color schemes and design elements that respect Bangsamoro culture
+- **Performance**: Optimized CSS bundle with unused styles purged
+
+### User Interface Guidelines
+- **Clean and Modern**: Minimalist design focusing on functionality
+- **Accessibility**: WCAG 2.1 AA compliance using Tailwind's accessibility features
+- **Government Standards**: Professional appearance suitable for government use
+- **Mobile Responsive**: Fully functional on smartphones and tablets
+- **Cross-Browser Compatible**: Support for modern browsers
+
+## Risk Mitigation
+
+1. **Data Security**: Implement robust security measures for sensitive community data
+2. **Stakeholder Buy-in**: Extensive consultation and training programs
+3. **Technical Challenges**: Phased implementation with continuous testing
+4. **Resource Constraints**: Prioritize core functionalities and scalable architecture
+5. **Change Management**: Comprehensive change management and training strategy
+
+## Compliance and Standards
+
+1. **Data Privacy**: Compliance with Philippine Data Privacy Act
+2. **Government Standards**: Adherence to government IT standards and protocols
+3. **Cultural Sensitivity**: Respect for Bangsamoro cultural and religious practices
+4. **Accessibility**: Web Content Accessibility Guidelines compliance
+
+This OBC Management System will serve as a comprehensive digital platform supporting the OOBC's mission to promote the welfare and development of Other Bangsamoro Communities outside BARMM through evidence-based policy recommendations and effective coordination mechanisms.

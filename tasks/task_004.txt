@@ -1,0 +1,52 @@
+# Task ID: 4
+# Title: OBC Community Profile Models and Management
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Develop the core data models and management interfaces for Other Bangsamoro Community profiles, including demographic data, cultural information, and community status tracking.
+# Details:
+1. Create OBC Community Profile model with comprehensive fields
+2. Implement demographic data tracking (population, households, etc.)
+3. Add cultural and religious information fields
+4. Create livelihood and economic activity tracking
+5. Implement status tracking for community development
+6. Build admin interfaces for profile management
+7. Create API endpoints for community profile data
+
+Model example:
+```python
+from django.db import models
+
+class OBCCommunity(models.Model):
+    name = models.CharField(max_length=255)
+    barangay = models.ForeignKey('Barangay', on_delete=models.CASCADE, related_name='obc_communities')
+    population = models.PositiveIntegerField(null=True, blank=True)
+    households = models.PositiveIntegerField(null=True, blank=True)
+    cultural_background = models.TextField(blank=True)
+    languages = models.CharField(max_length=255, blank=True)
+    religious_facilities = models.TextField(blank=True)
+    established_year = models.PositiveIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=50, choices=[
+        ('developing', 'Developing'),
+        ('established', 'Established'),
+        ('vulnerable', 'Vulnerable'),
+        ('thriving', 'Thriving')
+    ], default='developing')
+    last_updated = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class CommunityLivelihood(models.Model):
+    community = models.ForeignKey(OBCCommunity, on_delete=models.CASCADE, related_name='livelihoods')
+    livelihood_type = models.CharField(max_length=100)
+    description = models.TextField()
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    is_primary = models.BooleanField(default=False)
+```
+
+# Test Strategy:
+1. Unit tests for OBC Community model creation and validation
+2. Test relationships between communities and administrative divisions
+3. Verify demographic data calculations and aggregations
+4. Test API endpoints for community data
+5. Validate admin interface functionality
+6. Test data import/export capabilities

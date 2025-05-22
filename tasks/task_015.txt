@@ -1,0 +1,107 @@
+# Task ID: 15
+# Title: Policy Recommendation Tracking System
+# Status: pending
+# Dependencies: 7, 8
+# Priority: high
+# Description: Implement the policy recommendation tracking system for managing policy proposals, supporting evidence, approval workflows, and impact assessment.
+# Details:
+1. Create policy recommendation models
+2. Implement evidence documentation and management
+3. Build approval workflow and status tracking
+4. Create impact assessment and outcome tracking
+5. Implement knowledge management for best practices
+6. Build admin interfaces for policy recommendation management
+7. Create API endpoints for policy recommendation data
+
+Model example:
+```python
+from django.db import models
+from django.conf import settings
+
+class PolicyRecommendation(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('review', 'Under Review'),
+        ('submitted', 'Submitted to Chief Minister'),
+        ('approved', 'Approved'),
+        ('implemented', 'Implemented'),
+        ('rejected', 'Rejected'),
+        ('revised', 'Being Revised')
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('urgent', 'Urgent')
+    ]
+    
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    rationale = models.TextField()
+    target_communities = models.ManyToManyField('OBCCommunity', related_name='policy_recommendations', blank=True)
+    related_assessments = models.ManyToManyField('MANAAssessment', related_name='policy_recommendations', blank=True)
+    related_needs = models.ManyToManyField('AssessedNeed', related_name='policy_recommendations', blank=True)
+    proposed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='proposed_policies')
+    submission_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    approval_date = models.DateField(null=True, blank=True)
+    implementation_date = models.DateField(null=True, blank=True)
+    expected_outcomes = models.TextField()
+    budget_implications = models.TextField(blank=True)
+    legal_implications = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class PolicyEvidence(models.Model):
+    EVIDENCE_TYPES = [
+        ('data', 'Statistical Data'),
+        ('research', 'Research Study'),
+        ('assessment', 'Needs Assessment'),
+        ('consultation', 'Stakeholder Consultation'),
+        ('case_study', 'Case Study'),
+        ('best_practice', 'Best Practice'),
+        ('other', 'Other')
+    ]
+    
+    policy = models.ForeignKey(PolicyRecommendation, on_delete=models.CASCADE, related_name='evidence')
+    title = models.CharField(max_length=255)
+    evidence_type = models.CharField(max_length=20, choices=EVIDENCE_TYPES)
+    description = models.TextField()
+    source = models.CharField(max_length=255, blank=True)
+    date = models.DateField(null=True, blank=True)
+    document = models.FileField(upload_to='policy_evidence/%Y/%m/', null=True, blank=True)
+    url = models.URLField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class PolicyImpact(models.Model):
+    IMPACT_TYPES = [
+        ('economic', 'Economic'),
+        ('social', 'Social'),
+        ('educational', 'Educational'),
+        ('cultural', 'Cultural'),
+        ('infrastructure', 'Infrastructure'),
+        ('other', 'Other')
+    ]
+    
+    policy = models.ForeignKey(PolicyRecommendation, on_delete=models.CASCADE, related_name='impacts')
+    impact_type = models.CharField(max_length=20, choices=IMPACT_TYPES)
+    description = models.TextField()
+    measurement_method = models.TextField()
+    baseline_value = models.CharField(max_length=100, blank=True)
+    target_value = models.CharField(max_length=100, blank=True)
+    actual_value = models.CharField(max_length=100, blank=True)
+    assessment_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+```
+
+# Test Strategy:
+1. Unit tests for policy recommendation model creation and management
+2. Test evidence documentation and management
+3. Verify approval workflow and status tracking
+4. Test impact assessment and outcome tracking
+5. Validate knowledge management for best practices
+6. Test API endpoints for policy recommendation data

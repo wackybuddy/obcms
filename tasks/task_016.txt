@@ -1,0 +1,125 @@
+# Task ID: 16
+# Title: Monitoring and Evaluation Framework
+# Status: pending
+# Dependencies: 8, 15
+# Priority: medium
+# Description: Implement the monitoring and evaluation framework for tracking program implementation, measuring outcomes, and managing performance indicators.
+# Details:
+1. Create M&E framework models
+2. Implement indicator management and tracking
+3. Build program implementation monitoring
+4. Create outcome measurement and reporting
+5. Implement regular M&E activity scheduling
+6. Build admin interfaces for M&E management
+7. Create API endpoints for M&E data
+
+Model example:
+```python
+from django.db import models
+from django.conf import settings
+
+class Program(models.Model):
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('implementing', 'Implementing'),
+        ('completed', 'Completed'),
+        ('suspended', 'Suspended'),
+        ('cancelled', 'Cancelled')
+    ]
+    
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    objectives = models.TextField()
+    target_communities = models.ManyToManyField('OBCCommunity', related_name='programs')
+    related_policy = models.ForeignKey('PolicyRecommendation', on_delete=models.SET_NULL, null=True, blank=True, related_name='programs')
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+    program_manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='managed_programs')
+    budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    funding_source = models.CharField(max_length=255, blank=True)
+    partners = models.ManyToManyField('Organization', related_name='programs', blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class Indicator(models.Model):
+    INDICATOR_TYPES = [
+        ('input', 'Input'),
+        ('output', 'Output'),
+        ('outcome', 'Outcome'),
+        ('impact', 'Impact'),
+        ('process', 'Process')
+    ]
+    
+    DATA_TYPES = [
+        ('numeric', 'Numeric'),
+        ('percentage', 'Percentage'),
+        ('categorical', 'Categorical'),
+        ('text', 'Text'),
+        ('boolean', 'Yes/No')
+    ]
+    
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='indicators')
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    indicator_type = models.CharField(max_length=20, choices=INDICATOR_TYPES)
+    data_type = models.CharField(max_length=20, choices=DATA_TYPES)
+    unit = models.CharField(max_length=50, blank=True)
+    baseline_value = models.CharField(max_length=100, blank=True)
+    target_value = models.CharField(max_length=100, blank=True)
+    data_source = models.CharField(max_length=255, blank=True)
+    data_collection_method = models.TextField(blank=True)
+    frequency = models.CharField(max_length=100, blank=True)
+    responsible_person = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+
+class IndicatorMeasurement(models.Model):
+    indicator = models.ForeignKey(Indicator, on_delete=models.CASCADE, related_name='measurements')
+    date = models.DateField()
+    value = models.CharField(max_length=100)
+    notes = models.TextField(blank=True)
+    recorded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class MEActivity(models.Model):
+    ACTIVITY_TYPES = [
+        ('monitoring_visit', 'Monitoring Visit'),
+        ('evaluation', 'Evaluation'),
+        ('data_collection', 'Data Collection'),
+        ('review_meeting', 'Review Meeting'),
+        ('report', 'Reporting'),
+        ('other', 'Other')
+    ]
+    
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('postponed', 'Postponed')
+    ]
+    
+    program = models.ForeignKey(Program, on_delete=models.CASCADE, related_name='me_activities')
+    title = models.CharField(max_length=255)
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES)
+    description = models.TextField()
+    date = models.DateField()
+    location = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+    conducted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='conducted_me_activities')
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='participated_me_activities', blank=True)
+    findings = models.TextField(blank=True)
+    recommendations = models.TextField(blank=True)
+    report = models.FileField(upload_to='me_reports/%Y/%m/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+```
+
+# Test Strategy:
+1. Unit tests for M&E framework model creation and management
+2. Test indicator management and tracking
+3. Verify program implementation monitoring
+4. Test outcome measurement and reporting
+5. Validate regular M&E activity scheduling
+6. Test API endpoints for M&E data

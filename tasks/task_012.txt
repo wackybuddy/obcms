@@ -1,0 +1,87 @@
+# Task ID: 12
+# Title: Stakeholder Directory and Communication Hub
+# Status: pending
+# Dependencies: 5
+# Priority: medium
+# Description: Implement the stakeholder directory and communication hub for managing contacts and communications with BMOAs, LGUs, NGAs, and other development partners.
+# Details:
+1. Create stakeholder organization models
+2. Implement contact management for organizations
+3. Build communication tracking and history
+4. Create message templates and management
+5. Implement communication scheduling and reminders
+6. Build admin interfaces for stakeholder directory management
+7. Create API endpoints for stakeholder directory data
+
+Model example:
+```python
+from django.db import models
+from django.conf import settings
+
+class Organization(models.Model):
+    ORGANIZATION_TYPES = [
+        ('bmoa', 'BARMM Ministry/Agency/Office'),
+        ('lgu', 'Local Government Unit'),
+        ('nga', 'National Government Agency'),
+        ('ngo', 'Non-Governmental Organization'),
+        ('academic', 'Academic Institution'),
+        ('religious', 'Religious Organization'),
+        ('private', 'Private Sector'),
+        ('other', 'Other')
+    ]
+    
+    name = models.CharField(max_length=255)
+    organization_type = models.CharField(max_length=20, choices=ORGANIZATION_TYPES)
+    description = models.TextField(blank=True)
+    address = models.TextField(blank=True)
+    phone = models.CharField(max_length=50, blank=True)
+    email = models.EmailField(blank=True)
+    website = models.URLField(blank=True)
+    focal_person = models.CharField(max_length=255, blank=True)
+    focal_person_position = models.CharField(max_length=100, blank=True)
+    focal_person_contact = models.CharField(max_length=50, blank=True)
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class Communication(models.Model):
+    COMMUNICATION_TYPES = [
+        ('email', 'Email'),
+        ('letter', 'Letter'),
+        ('meeting', 'Meeting'),
+        ('phone', 'Phone Call'),
+        ('visit', 'Site Visit'),
+        ('other', 'Other')
+    ]
+    
+    DIRECTION_CHOICES = [
+        ('incoming', 'Incoming'),
+        ('outgoing', 'Outgoing')
+    ]
+    
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='communications')
+    communication_type = models.CharField(max_length=20, choices=COMMUNICATION_TYPES)
+    direction = models.CharField(max_length=10, choices=DIRECTION_CHOICES)
+    subject = models.CharField(max_length=255)
+    content = models.TextField()
+    date = models.DateField()
+    time = models.TimeField(null=True, blank=True)
+    sender = models.CharField(max_length=255, blank=True)
+    recipient = models.CharField(max_length=255, blank=True)
+    recorded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    follow_up_required = models.BooleanField(default=False)
+    follow_up_date = models.DateField(null=True, blank=True)
+    follow_up_notes = models.TextField(blank=True)
+    attachment = models.FileField(upload_to='communications/%Y/%m/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+```
+
+# Test Strategy:
+1. Unit tests for organization model creation and management
+2. Test contact management functionality
+3. Verify communication tracking and history
+4. Test message templates and management
+5. Validate communication scheduling and reminders
+6. Test API endpoints for stakeholder directory data

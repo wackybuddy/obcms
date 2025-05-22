@@ -1,0 +1,160 @@
+# Task ID: 19
+# Title: Frontend Implementation with Tailwind CSS
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Implement the frontend user interface using Tailwind CSS framework with responsive design, component-based architecture, and cultural sensitivity.
+# Details:
+1. Set up Tailwind CSS in the Django project
+2. Create base templates and layouts
+3. Implement responsive design using Tailwind's utilities
+4. Build reusable UI components
+5. Implement dark mode support
+6. Create culturally sensitive color schemes and design elements
+7. Optimize CSS bundle with purging of unused styles
+
+Implementation example:
+```bash
+# Install Tailwind CSS dependencies
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+```javascript
+// tailwind.config.js
+module.exports = {
+  content: [
+    './templates/**/*.html',
+    './static/js/**/*.js',
+  ],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'barmm-green': '#0A5640',
+        'barmm-gold': '#D4AF37',
+        'barmm-blue': '#0067A5',
+        'barmm-white': '#FFFFFF',
+        'barmm-black': '#000000',
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        arabic: ['Amiri', 'serif'],
+      },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+  ],
+}
+```
+
+```html
+<!-- Base template example -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OOBC Management System{% endblock %}</title>
+    <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
+    <script src="{% static 'js/alpine.min.js' %}" defer></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-barmm-green text-white shadow-md">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <img src="{% static 'images/oobc-logo.png' %}" alt="OOBC Logo" class="h-10">
+                    <div>
+                        <h1 class="text-xl font-bold">OOBC Management System</h1>
+                        <p class="text-xs">Office for Other Bangsamoro Communities</p>
+                    </div>
+                </div>
+                <nav class="hidden md:flex space-x-4">
+                    <a href="{% url 'home' %}" class="hover:text-barmm-gold">Home</a>
+                    <a href="{% url 'communities' %}" class="hover:text-barmm-gold">Communities</a>
+                    <a href="{% url 'assessments' %}" class="hover:text-barmm-gold">MANA</a>
+                    <a href="{% url 'coordination' %}" class="hover:text-barmm-gold">Coordination</a>
+                    <a href="{% url 'policies' %}" class="hover:text-barmm-gold">Policies</a>
+                </nav>
+                <div class="flex items-center space-x-2">
+                    <button id="darkModeToggle" class="p-1 rounded-full hover:bg-gray-700">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    </button>
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center space-x-1">
+                            <img src="{% static 'images/avatar.png' %}" alt="User" class="h-8 w-8 rounded-full">
+                            <span class="hidden md:inline">{{ user.username }}</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1">
+                            <a href="{% url 'profile' %}" class="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                            <a href="{% url 'settings' %}" class="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Settings</a>
+                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main content -->
+        <main class="flex-grow container mx-auto px-4 py-6">
+            {% block content %}{% endblock %}
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-barmm-green text-white py-4">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <p>&copy; {% now "Y" %} Office for Other Bangsamoro Communities</p>
+                        <p class="text-sm">Office of the Chief Minister - BARMM</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="#" class="hover:text-barmm-gold">Privacy Policy</a>
+                        <a href="#" class="hover:text-barmm-gold">Terms of Use</a>
+                        <a href="#" class="hover:text-barmm-gold">Contact</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        
+        darkModeToggle.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+```
+
+# Test Strategy:
+1. Test responsive design across different device sizes
+2. Verify dark mode functionality
+3. Test accessibility compliance using automated tools
+4. Verify cross-browser compatibility
+5. Test component reusability
+6. Validate CSS optimization and bundle size
+7. Perform visual regression testing
+8. Test cultural sensitivity with stakeholders

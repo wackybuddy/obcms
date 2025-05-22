@@ -1,0 +1,116 @@
+# Task ID: 17
+# Title: Strategic Communication Module
+# Status: pending
+# Dependencies: 12, 13
+# Priority: medium
+# Description: Implement the strategic communication module for managing information drives, public outreach, IEC material distribution, and stakeholder engagement analytics.
+# Details:
+1. Create communication campaign models
+2. Implement IEC material management
+3. Build distribution tracking and analytics
+4. Create social media integration
+5. Implement stakeholder engagement tracking
+6. Build admin interfaces for strategic communication management
+7. Create API endpoints for strategic communication data
+
+Model example:
+```python
+from django.db import models
+from django.conf import settings
+
+class CommunicationCampaign(models.Model):
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('active', 'Active'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+        ('on_hold', 'On Hold')
+    ]
+    
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    objectives = models.TextField()
+    target_audience = models.TextField()
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+    campaign_manager = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='managed_campaigns')
+    key_messages = models.TextField()
+    budget = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    communities = models.ManyToManyField('OBCCommunity', related_name='communication_campaigns', blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class IECMaterial(models.Model):
+    MATERIAL_TYPES = [
+        ('brochure', 'Brochure'),
+        ('flyer', 'Flyer'),
+        ('poster', 'Poster'),
+        ('video', 'Video'),
+        ('audio', 'Audio'),
+        ('social_media', 'Social Media Content'),
+        ('presentation', 'Presentation'),
+        ('other', 'Other')
+    ]
+    
+    campaign = models.ForeignKey(CommunicationCampaign, on_delete=models.CASCADE, related_name='materials', null=True, blank=True)
+    title = models.CharField(max_length=255)
+    material_type = models.CharField(max_length=20, choices=MATERIAL_TYPES)
+    description = models.TextField()
+    content = models.TextField(blank=True)
+    file = models.FileField(upload_to='iec_materials/%Y/%m/', null=True, blank=True)
+    url = models.URLField(blank=True)
+    language = models.CharField(max_length=50, blank=True)
+    target_audience = models.TextField(blank=True)
+    production_date = models.DateField(null=True, blank=True)
+    quantity_produced = models.PositiveIntegerField(null=True, blank=True)
+    quantity_distributed = models.PositiveIntegerField(null=True, blank=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class MaterialDistribution(models.Model):
+    material = models.ForeignKey(IECMaterial, on_delete=models.CASCADE, related_name='distributions')
+    distribution_date = models.DateField()
+    location = models.CharField(max_length=255)
+    community = models.ForeignKey('OBCCommunity', on_delete=models.SET_NULL, null=True, blank=True)
+    organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
+    quantity = models.PositiveIntegerField()
+    distributed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    recipients_count = models.PositiveIntegerField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class SocialMediaPost(models.Model):
+    PLATFORM_CHOICES = [
+        ('facebook', 'Facebook'),
+        ('twitter', 'Twitter'),
+        ('instagram', 'Instagram'),
+        ('youtube', 'YouTube'),
+        ('other', 'Other')
+    ]
+    
+    campaign = models.ForeignKey(CommunicationCampaign, on_delete=models.CASCADE, related_name='social_media_posts', null=True, blank=True)
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    platform = models.CharField(max_length=20, choices=PLATFORM_CHOICES)
+    post_date = models.DateTimeField()
+    url = models.URLField(blank=True)
+    engagement_reach = models.PositiveIntegerField(null=True, blank=True)
+    engagement_likes = models.PositiveIntegerField(null=True, blank=True)
+    engagement_shares = models.PositiveIntegerField(null=True, blank=True)
+    engagement_comments = models.PositiveIntegerField(null=True, blank=True)
+    posted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+```
+
+# Test Strategy:
+1. Unit tests for communication campaign model creation and management
+2. Test IEC material management
+3. Verify distribution tracking and analytics
+4. Test social media integration
+5. Validate stakeholder engagement tracking
+6. Test API endpoints for strategic communication data

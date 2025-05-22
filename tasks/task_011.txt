@@ -1,0 +1,84 @@
+# Task ID: 11
+# Title: Baseline Study Management
+# Status: pending
+# Dependencies: 7, 8
+# Priority: medium
+# Description: Implement the baseline study management system for creating, conducting, and analyzing socio-economic baseline studies for OBC communities.
+# Details:
+1. Create baseline study models with comprehensive fields
+2. Implement study methodology tracking
+3. Build indicator management for baseline studies
+4. Create data collection and entry interfaces
+5. Implement data analysis and visualization tools
+6. Build admin interfaces for baseline study management
+7. Create API endpoints for baseline study data
+
+Model example:
+```python
+from django.db import models
+from django.conf import settings
+
+class BaselineStudy(models.Model):
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('in_progress', 'In Progress'),
+        ('data_collection', 'Data Collection'),
+        ('analysis', 'Analysis'),
+        ('completed', 'Completed'),
+        ('published', 'Published')
+    ]
+    
+    title = models.CharField(max_length=255)
+    community = models.ForeignKey('OBCCommunity', on_delete=models.CASCADE, related_name='baseline_studies')
+    description = models.TextField()
+    methodology = models.TextField()
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planned')
+    lead_researcher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='led_studies')
+    team_members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='study_teams', blank=True)
+    objectives = models.TextField()
+    sample_size = models.PositiveIntegerField(null=True, blank=True)
+    sampling_method = models.CharField(max_length=100, blank=True)
+    key_findings = models.TextField(blank=True)
+    recommendations = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class BaselineIndicator(models.Model):
+    INDICATOR_TYPES = [
+        ('economic', 'Economic'),
+        ('social', 'Social'),
+        ('educational', 'Educational'),
+        ('health', 'Health'),
+        ('infrastructure', 'Infrastructure'),
+        ('cultural', 'Cultural'),
+        ('other', 'Other')
+    ]
+    
+    DATA_TYPES = [
+        ('numeric', 'Numeric'),
+        ('percentage', 'Percentage'),
+        ('categorical', 'Categorical'),
+        ('text', 'Text'),
+        ('boolean', 'Yes/No')
+    ]
+    
+    study = models.ForeignKey(BaselineStudy, on_delete=models.CASCADE, related_name='indicators')
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    indicator_type = models.CharField(max_length=20, choices=INDICATOR_TYPES)
+    data_type = models.CharField(max_length=20, choices=DATA_TYPES)
+    unit = models.CharField(max_length=50, blank=True)
+    target_value = models.CharField(max_length=100, blank=True)
+    actual_value = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+```
+
+# Test Strategy:
+1. Unit tests for baseline study creation and management
+2. Test indicator management functionality
+3. Verify data collection and entry interfaces
+4. Test data analysis and visualization tools
+5. Validate admin interfaces for baseline study management
+6. Test API endpoints for baseline study data

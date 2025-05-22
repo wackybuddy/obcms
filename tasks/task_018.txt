@@ -1,0 +1,158 @@
+# Task ID: 18
+# Title: Dashboard and Reporting System
+# Status: pending
+# Dependencies: 4, 7, 8, 15, 16
+# Priority: high
+# Description: Implement the dashboard and reporting system for visualizing key data, generating reports, and providing insights for decision-making.
+# Details:
+1. Create dashboard models and configurations
+2. Implement data visualization components
+3. Build report generation functionality
+4. Create custom query and filtering capabilities
+5. Implement data export in multiple formats
+6. Build admin interfaces for dashboard and report management
+7. Create API endpoints for dashboard and reporting data
+
+Implementation example:
+```python
+from django.db import models
+from django.conf import settings
+
+class Dashboard(models.Model):
+    DASHBOARD_TYPES = [
+        ('executive', 'Executive Dashboard'),
+        ('operational', 'Operational Dashboard'),
+        ('analytical', 'Analytical Dashboard'),
+        ('community', 'Community Dashboard'),
+        ('custom', 'Custom Dashboard')
+    ]
+    
+    title = models.CharField(max_length=255)
+    dashboard_type = models.CharField(max_length=20, choices=DASHBOARD_TYPES)
+    description = models.TextField(blank=True)
+    is_public = models.BooleanField(default=False)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class DashboardWidget(models.Model):
+    WIDGET_TYPES = [
+        ('chart', 'Chart'),
+        ('table', 'Table'),
+        ('metric', 'Metric'),
+        ('map', 'Map'),
+        ('list', 'List'),
+        ('custom', 'Custom')
+    ]
+    
+    CHART_TYPES = [
+        ('bar', 'Bar Chart'),
+        ('line', 'Line Chart'),
+        ('pie', 'Pie Chart'),
+        ('doughnut', 'Doughnut Chart'),
+        ('radar', 'Radar Chart'),
+        ('scatter', 'Scatter Plot'),
+        ('other', 'Other')
+    ]
+    
+    dashboard = models.ForeignKey(Dashboard, on_delete=models.CASCADE, related_name='widgets')
+    title = models.CharField(max_length=255)
+    widget_type = models.CharField(max_length=20, choices=WIDGET_TYPES)
+    chart_type = models.CharField(max_length=20, choices=CHART_TYPES, blank=True)
+    data_source = models.CharField(max_length=255)
+    query_params = models.JSONField(default=dict)
+    position_x = models.PositiveSmallIntegerField(default=0)
+    position_y = models.PositiveSmallIntegerField(default=0)
+    width = models.PositiveSmallIntegerField(default=1)
+    height = models.PositiveSmallIntegerField(default=1)
+    refresh_interval = models.PositiveIntegerField(null=True, blank=True, help_text='Refresh interval in seconds')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class Report(models.Model):
+    REPORT_TYPES = [
+        ('community', 'Community Report'),
+        ('assessment', 'Assessment Report'),
+        ('policy', 'Policy Report'),
+        ('program', 'Program Report'),
+        ('monitoring', 'Monitoring Report'),
+        ('evaluation', 'Evaluation Report'),
+        ('custom', 'Custom Report')
+    ]
+    
+    FORMAT_CHOICES = [
+        ('pdf', 'PDF'),
+        ('excel', 'Excel'),
+        ('csv', 'CSV'),
+        ('html', 'HTML'),
+        ('json', 'JSON')
+    ]
+    
+    title = models.CharField(max_length=255)
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPES)
+    description = models.TextField(blank=True)
+    query_params = models.JSONField(default=dict)
+    template = models.CharField(max_length=255, blank=True)
+    default_format = models.CharField(max_length=10, choices=FORMAT_CHOICES, default='pdf')
+    is_scheduled = models.BooleanField(default=False)
+    schedule_frequency = models.CharField(max_length=50, blank=True)
+    recipients = models.TextField(blank=True, help_text='Comma-separated email addresses')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class ReportGeneration(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ]
+    
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name='generations')
+    generated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    generated_at = models.DateTimeField(auto_now_add=True)
+    format = models.CharField(max_length=10)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    file = models.FileField(upload_to='reports/%Y/%m/', null=True, blank=True)
+    error_message = models.TextField(blank=True)
+    query_params_used = models.JSONField(default=dict)
+```
+
+# Views and templates for dashboard
+```python
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import Dashboard, DashboardWidget
+
+@login_required
+def dashboard_view(request, dashboard_id):
+    dashboard = Dashboard.objects.get(id=dashboard_id)
+    widgets = dashboard.widgets.all().order_by('position_y', 'position_x')
+    
+    # Process widget data
+    widget_data = []
+    for widget in widgets:
+        # Get data for widget based on data_source and query_params
+        # This would be implemented based on specific data sources
+        data = get_widget_data(widget.data_source, widget.query_params)
+        widget_data.append({
+            'widget': widget,
+            'data': data
+        })
+    
+    return render(request, 'dashboard/dashboard.html', {
+        'dashboard': dashboard,
+        'widget_data': widget_data
+    })
+```
+
+# Test Strategy:
+1. Unit tests for dashboard and widget models
+2. Test data visualization components
+3. Verify report generation functionality
+4. Test custom query and filtering capabilities
+5. Validate data export in multiple formats
+6. Test API endpoints for dashboard and reporting data
+7. Verify dashboard rendering and interactivity
+8. Test report scheduling and delivery
