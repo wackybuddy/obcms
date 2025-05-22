@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - OBC Management System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <div class="mx-auto h-12 w-12 bg-bangsamoro rounded-full flex items-center justify-center">
+                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                </svg>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Create your account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Register for OBC Management System
+            </p>
+        </div>
+        
+        <form class="mt-8 space-y-6" method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <!-- Username -->
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Name Fields -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700">First Name</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- User Type -->
+                <div>
+                    <label for="{{ form.user_type.id_for_label }}" class="block text-sm font-medium text-gray-700">User Type</label>
+                    {{ form.user_type }}
+                    {% if form.user_type.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.user_type.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Organization -->
+                <div>
+                    <label for="{{ form.organization.id_for_label }}" class="block text-sm font-medium text-gray-700">Organization</label>
+                    {{ form.organization }}
+                    {% if form.organization.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.organization.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Position -->
+                <div>
+                    <label for="{{ form.position.id_for_label }}" class="block text-sm font-medium text-gray-700">Position</label>
+                    {{ form.position }}
+                    {% if form.position.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.position.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Contact Number -->
+                <div>
+                    <label for="{{ form.contact_number.id_for_label }}" class="block text-sm font-medium text-gray-700">Contact Number</label>
+                    {{ form.contact_number }}
+                    {% if form.contact_number.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.contact_number.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Password Fields -->
+                <div>
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-700">Password</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}
+                        <div class="text-red-600 text-sm mt-1">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="text-red-600 text-sm">
+                    {{ form.non_field_errors.0 }}
+                </div>
+            {% endif %}
+
+            <div class="flex items-center justify-between">
+                <div class="text-sm">
+                    <a href="{% url 'common:login' %}" class="font-medium text-bangsamoro hover:text-blue-500">
+                        Already have an account? Sign in here
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-bangsamoro hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Register Account
+                </button>
+            </div>
+
+            <div class="text-sm text-center text-gray-600">
+                <p class="mt-2">Your account will be pending approval after registration.</p>
+                <p>You will be notified once your account is approved.</p>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - OBC Management System{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <span class="text-sm font-medium text-gray-500">Dashboard</span>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <p class="mt-2 text-lg text-gray-600">
+            Welcome back, <span class="font-medium">{{ user.get_full_name|default:user.username }}</span>
+        </p>
+        <div class="mt-4 flex items-center space-x-4">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if user.is_approved or user.is_superuser %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                {% if user.is_approved or user.is_superuser %}
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Account Approved
+                {% else %}
+                    <i class="fas fa-clock mr-2"></i>
+                    Pending Approval
+                {% endif %}
+            </span>
+            <span class="text-sm text-gray-500">{{ user.get_user_type_display }} • Last login: {{ user.last_login|date:"M d, Y H:i" }}</span>
+        </div>
+    </div>
+
+    <!-- User Status Alert -->
+    {% if not user.is_approved and not user.is_superuser %}
+    <div class="mb-8 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-md">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-amber-400 text-lg"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-amber-800">Account Pending Approval</h3>
+                <div class="mt-2 text-sm text-amber-700">
+                    <p>Your account is pending approval from an administrator. Some features may be limited until your account is approved.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- System Overview Statistics -->
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium">Total Communities</p>
+                        <p class="text-3xl font-bold">{{ stats.communities.total|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-map-marker-alt text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-emerald-100 text-sm font-medium">MANA Assessments</p>
+                        <p class="text-3xl font-bold">{{ stats.mana.total_assessments|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-chart-bar text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium">Active Partnerships</p>
+                        <p class="text-3xl font-bold">{{ stats.coordination.active_partnerships|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-handshake text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-orange-100 text-sm font-medium">Policy Recommendations</p>
+                        <p class="text-3xl font-bold">{{ stats.policy_tracking.total_policies|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-file-alt text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Modules -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">System Modules</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- OBC Communities Module -->
+            <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-users text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        OBC Communities
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Manage community profiles and demographic data.
+                    </p>
+                    <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
+                        <span>{{ stats.communities.total|default:0 }} communities</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- MANA Module -->
+            <a href="{% url 'common:mana_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-map text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                        MANA
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Mapping and Needs Assessment functionality.
+                    </p>
+                    <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
+                        <span>{{ stats.mana.total_assessments|default:0 }} assessments</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Coordination Module -->
+            <a href="{% url 'common:coordination_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-handshake text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        Coordination
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Multi-stakeholder coordination and partnerships.
+                    </p>
+                    <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                        <span>{{ stats.coordination.total_events|default:0 }} events</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Policy Tracking Module -->
+            <a href="{% url 'common:policy_tracking_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-balance-scale text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
+                        Policy Tracking
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Policy recommendations and evidence tracking.
+                    </p>
+                    <div class="mt-4 flex items-center text-orange-600 text-sm font-medium">
+                        <span>{{ stats.policy_tracking.total_policies|default:0 }} policies</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Manage Profile -->
+            <a href="{% url 'common:profile' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-user text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
+                        Manage Profile
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Update your personal information and settings.
+                    </p>
+                    <div class="mt-4 flex items-center text-gray-600 text-sm font-medium">
+                        <span>Update Profile</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            {% if user.is_staff %}
+            <!-- Admin Panel -->
+            <a href="/admin/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-cogs text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-red-600 transition-colors">
+                        Admin Panel
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        System administration and management tools.
+                    </p>
+                    <div class="mt-4 flex items-center text-red-600 text-sm font-medium">
+                        <span>Open Admin</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+            {% endif %}
+
+            <!-- Help & Support -->
+            <div class="group bg-white rounded-lg shadow-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-question-circle text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        Help & Support
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        User guides and documentation resources.
+                    </p>
+                    <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
+                        <span>Get Help</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About & Mission -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- About OBC Management System -->
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                    About the System
+                </h2>
+                <p class="text-gray-600 leading-relaxed mb-4">
+                    The Other Bangsamoro Communities Management System supports the OOBC's mandate of serving 
+                    Bangsamoro communities outside BARMM through comprehensive data management, needs assessment, 
+                    and coordination functions.
+                </p>
+                <div class="space-y-3">
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        Comprehensive data management
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        Needs assessment tools
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        Multi-stakeholder coordination
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        Policy tracking and recommendations
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Statement -->
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-bullseye text-orange-600 mr-3"></i>
+                    Mission Statement
+                </h2>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                    To promote the welfare and aspirations of the Other Bangsamoro Communities 
+                    through policy recommendations and systematic programs guided by Moral Governance.
+                </p>
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+                    <p class="text-xl font-bold text-blue-800 text-center mb-2">
+                        "BANGSAMORO KA, SAAN KA MAN!"
+                    </p>
+                    <p class="text-sm text-blue-600 text-center">
+                        Office for Other Bangsamoro Communities
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

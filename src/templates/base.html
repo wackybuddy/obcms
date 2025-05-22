@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OBC Management System{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        .bg-bangsamoro {
+            background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+        }
+        .text-bangsamoro {
+            color: #1e40af;
+        }
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navigation Bar -->
+    {% if user.is_authenticated %}
+    <nav class="bg-bangsamoro shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo and Brand -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="{% url 'common:dashboard' %}" class="flex items-center space-x-2 text-white hover:text-green-200">
+                            <i class="fas fa-mosque text-2xl"></i>
+                            <div>
+                                <h1 class="text-xl font-bold">OBC Management</h1>
+                                <p class="text-xs text-green-200">OOBC - BARMM</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Main Navigation -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="{% url 'common:dashboard' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    
+                    <a href="{% url 'common:communities_home' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
+                        <i class="fas fa-users"></i>
+                        <span>Communities</span>
+                    </a>
+                    
+                    <a href="{% url 'common:mana_home' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <span>MANA</span>
+                    </a>
+                    
+                    <a href="{% url 'common:coordination_home' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
+                        <i class="fas fa-handshake"></i>
+                        <span>Coordination</span>
+                    </a>
+                    
+                    <a href="{% url 'common:policy_tracking_home' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
+                        <i class="fas fa-gavel"></i>
+                        <span>Policy Tracking</span>
+                    </a>
+                </div>
+                
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:flex items-center space-x-2 text-white">
+                        <div class="text-right">
+                            <p class="text-sm font-medium">{{ user.get_full_name|default:user.username }}</p>
+                            <p class="text-xs text-green-200">{{ user.get_user_type_display }}</p>
+                        </div>
+                        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-sm"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Dropdown Menu -->
+                    <div class="relative">
+                        <button class="nav-item p-2 rounded-md text-white hover:text-green-200 transition-colors" onclick="toggleUserMenu()">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        
+                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                            <a href="{% url 'common:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+                                <i class="fas fa-user-circle"></i>
+                                <span>Profile</span>
+                            </a>
+                            {% if user.is_staff %}
+                            <a href="/admin/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
+                                <i class="fas fa-tools"></i>
+                                <span>Admin Panel</span>
+                            </a>
+                            {% endif %}
+                            <hr class="my-1">
+                            <a href="{% url 'common:logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile menu button -->
+                    <button class="md:hidden nav-item p-2 rounded-md text-white hover:text-green-200" onclick="toggleMobileMenu()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu -->
+        <div id="mobileMenu" class="hidden md:hidden bg-blue-800 bg-opacity-90">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="{% url 'common:dashboard' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{% url 'common:communities_home' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
+                    <i class="fas fa-users"></i>
+                    <span>Communities</span>
+                </a>
+                <a href="{% url 'common:mana_home' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>MANA</span>
+                </a>
+                <a href="{% url 'common:coordination_home' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
+                    <i class="fas fa-handshake"></i>
+                    <span>Coordination</span>
+                </a>
+                <a href="{% url 'common:policy_tracking_home' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
+                    <i class="fas fa-gavel"></i>
+                    <span>Policy Tracking</span>
+                </a>
+                <hr class="my-2 border-white border-opacity-20">
+                <a href="{% url 'common:profile' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="{% url 'common:logout' %}" class="block px-3 py-2 rounded-md text-red-200 hover:bg-red-600 hover:bg-opacity-50 flex items-center space-x-2">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Breadcrumb -->
+    {% if user.is_authenticated %}
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2 text-sm">
+                    <li>
+                        <a href="{% url 'common:dashboard' %}" class="text-gray-500 hover:text-bangsamoro">
+                            <i class="fas fa-home"></i>
+                        </a>
+                    </li>
+                    {% block breadcrumb %}{% endblock %}
+                </ol>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="flex-1">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} bg-{% if message.tags == 'error' %}red{% elif message.tags == 'success' %}green{% elif message.tags == 'warning' %}yellow{% else %}blue{% endif %}-100 border border-{% if message.tags == 'error' %}red{% elif message.tags == 'success' %}green{% elif message.tags == 'warning' %}yellow{% else %}blue{% endif %}-400 text-{% if message.tags == 'error' %}red{% elif message.tags == 'success' %}green{% elif message.tags == 'warning' %}yellow{% else %}blue{% endif %}-700 px-4 py-3 rounded mb-4 flex items-center space-x-2">
+                <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <div class="flex justify-center items-center space-x-2 mb-2">
+                    <i class="fas fa-mosque text-xl text-green-400"></i>
+                    <p class="text-lg font-semibold">BANGSAMORO KA, SAAN KA MAN!</p>
+                </div>
+                <p class="text-sm text-gray-300">Office for Other Bangsamoro Communities (OOBC)</p>
+                <p class="text-sm text-gray-300">Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)</p>
+                <div class="mt-4 text-xs text-gray-400">
+                    <p>&copy; {% now "Y" %} BARMM - All rights reserved</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        function toggleUserMenu() {
+            const menu = document.getElementById('userMenu');
+            menu.classList.toggle('hidden');
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('#userMenu') && !event.target.closest('button')) {
+                    menu.classList.add('hidden');
+                }
+            });
+        }
+        
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('hidden');
+        }
+        
+        // Close dropdowns when pressing Escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                document.getElementById('userMenu').classList.add('hidden');
+                document.getElementById('mobileMenu').classList.add('hidden');
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
