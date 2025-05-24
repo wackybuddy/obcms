@@ -1,6 +1,6 @@
 # Task ID: 6
 # Title: Document Management System
-# Status: pending
+# Status: done
 # Dependencies: 4
 # Priority: medium
 # Description: Implement a document management system for storing and organizing community documents, assessment reports, correspondence, and other files related to OBC communities.

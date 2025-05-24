@@ -1,6 +1,6 @@
 # Task ID: 11
 # Title: Baseline Study Management
-# Status: pending
+# Status: done
 # Dependencies: 7, 8
 # Priority: medium
 # Description: Implement the baseline study management system for creating, conducting, and analyzing socio-economic baseline studies for OBC communities.

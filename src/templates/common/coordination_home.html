@@ -239,7 +239,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if user.is_staff %}
-            <a href="/admin/coordination/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:coordination_organizations' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-building text-white text-xl"></i>
@@ -257,7 +257,7 @@
                 </div>
             </a>
 
-            <a href="/admin/coordination/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:coordination_partnerships' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-handshake text-white text-xl"></i>
@@ -275,7 +275,7 @@
                 </div>
             </a>
 
-            <a href="/admin/coordination/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:coordination_events' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-calendar-plus text-white text-xl"></i>
@@ -293,7 +293,7 @@
                 </div>
             </a>
 
-            <a href="/admin/coordination/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:coordination_view_all' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-list-alt text-white text-xl"></i>

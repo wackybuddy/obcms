@@ -59,7 +59,7 @@
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-purple-100 text-sm font-medium">Total Population</p>
+                        <p class="text-purple-100 text-sm font-medium">OBC Population</p>
                         <p class="text-3xl font-bold">{{ stats.communities.total_population|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -74,16 +74,98 @@
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-orange-100 text-sm font-medium">Regions Covered</p>
-                        <p class="text-3xl font-bold">{{ stats.communities.by_region|length|default:0 }}</p>
+                        <p class="text-orange-100 text-sm font-medium">With Islamic Facilities</p>
+                        <p class="text-3xl font-bold">{{ stats.communities.with_mosque|add:stats.communities.with_madrasah|default:0 }}</p>
+                        <div class="mt-2 flex items-center text-sm">
+                            <span class="text-orange-200 text-xs">{{ stats.communities.with_mosque|default:0 }} mosques, {{ stats.communities.with_madrasah|default:0 }} madrasah</span>
+                        </div>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-map-marker-alt text-2xl"></i>
+                        <i class="fas fa-mosque text-2xl"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Vulnerable Sectors Overview -->
+    {% if stats.vulnerable_sectors %}
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Vulnerable Sectors Overview</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            {% if stats.vulnerable_sectors.total_women %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-female text-2xl text-pink-500 mb-2"></i>
+                <p class="text-sm text-gray-600">Women</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_women|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_elderly %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-user-clock text-2xl text-gray-500 mb-2"></i>
+                <p class="text-sm text-gray-600">Elderly</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_elderly|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_pwd %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-wheelchair text-2xl text-blue-500 mb-2"></i>
+                <p class="text-sm text-gray-600">PWDs</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_pwd|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_farmers %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-tractor text-2xl text-green-500 mb-2"></i>
+                <p class="text-sm text-gray-600">Farmers</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_farmers|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_fisherfolk %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-fish text-2xl text-cyan-500 mb-2"></i>
+                <p class="text-sm text-gray-600">Fisherfolk</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_fisherfolk|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_idps %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-running text-2xl text-red-500 mb-2"></i>
+                <p class="text-sm text-gray-600">IDPs</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_idps|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_teachers_asatidz %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-chalkboard-teacher text-2xl text-purple-500 mb-2"></i>
+                <p class="text-sm text-gray-600">Teachers/Asatidz</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_teachers_asatidz|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_religious_leaders_ulama %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-mosque text-2xl text-indigo-500 mb-2"></i>
+                <p class="text-sm text-gray-600">Religious Leaders (Ulama)</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_religious_leaders_ulama|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_csos %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-hands-helping text-2xl text-cyan-500 mb-2"></i>
+                <p class="text-sm text-gray-600">CSOs</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_csos|default:0 }}</p>
+            </div>
+            {% endif %}
+            {% if stats.vulnerable_sectors.total_associations %}
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 text-center">
+                <i class="fas fa-users text-2xl text-teal-500 mb-2"></i>
+                <p class="text-sm text-gray-600">Associations</p>
+                <p class="text-lg font-bold">{{ stats.vulnerable_sectors.total_associations|default:0 }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Recent Communities & Regional Distribution -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -95,22 +177,24 @@
                 <div class="p-6">
                     <div class="space-y-4">
                         {% for community in stats.communities.recent %}
-                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                                    <span class="text-white font-bold text-sm">{{ community.name|first|upper }}</span>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ community.name }}</div>
-                                    <div class="text-sm text-gray-500">
-                                        {{ community.barangay.name }}, {{ community.barangay.municipality.name }}
+                        <a href="{% url 'common:communities_manage' %}?search={{ community.barangay.name }}" class="block">
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                                        <span class="text-white font-bold text-sm">{{ community.barangay.name|first|upper }}</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ community.barangay.name }}</div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ community.barangay.municipality.name }}, {{ community.barangay.municipality.province.name }}
+                                        </div>
                                     </div>
                                 </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ community.created_at|date:"M d, Y" }}
+                                </div>
                             </div>
-                            <div class="text-xs text-gray-500">
-                                {{ community.created_at|date:"M d, Y" }}
-                            </div>
-                        </div>
+                        </a>
                         {% endfor %}
                     </div>
                 </div>
@@ -145,12 +229,72 @@
         {% endif %}
     </div>
 
+    <!-- Development Status & Ethnolinguistic Groups -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Development Status -->
+        {% if stats.communities.development_status %}
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Development Status</h2>
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="space-y-4">
+                        {% for status in stats.communities.development_status %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded-full mr-3
+                                    {% if status.development_status == 'thriving' %}bg-green-500
+                                    {% elif status.development_status == 'established' %}bg-blue-500
+                                    {% elif status.development_status == 'developing' %}bg-yellow-500
+                                    {% elif status.development_status == 'vulnerable' %}bg-orange-500
+                                    {% elif status.development_status == 'at_risk' %}bg-red-500
+                                    {% else %}bg-gray-500{% endif %}">
+                                </div>
+                                <span class="text-sm font-medium text-gray-900 capitalize">{{ status.development_status|default:"Unknown" }}</span>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ status.count }} communities
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Ethnolinguistic Groups -->
+        {% if stats.ethnolinguistic_groups %}
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Ethnolinguistic Distribution</h2>
+            <div class="bg-white rounded-lg shadow-lg border border-gray-200">
+                <div class="p-6">
+                    <div class="space-y-4">
+                        {% for group in stats.ethnolinguistic_groups %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-language text-purple-600 text-sm"></i>
+                                </div>
+                                <span class="ml-3 text-sm font-medium text-gray-900 capitalize">{{ group.primary_ethnolinguistic_group }}</span>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                {{ group.count }} communities
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
     <!-- Quick Actions -->
     <div>
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% if user.is_staff %}
-            <a href="/admin/communities/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:communities_add' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
@@ -168,7 +312,7 @@
                 </div>
             </a>
 
-            <a href="/admin/communities/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:communities_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-edit text-white text-xl"></i>
@@ -186,7 +330,7 @@
                 </div>
             </a>
 
-            <a href="/admin/communities/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:communities_stakeholders' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-users text-white text-xl"></i>

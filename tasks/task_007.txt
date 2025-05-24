@@ -1,6 +1,6 @@
 # Task ID: 7
 # Title: MANA (Mapping and Needs Assessment) Core Module
-# Status: pending
+# Status: done
 # Dependencies: 4, 5
 # Priority: high
 # Description: Develop the core MANA module for creating, conducting, and managing mapping and needs assessment activities for OBC communities.

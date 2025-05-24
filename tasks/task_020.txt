@@ -1,6 +1,6 @@
 # Task ID: 20
 # Title: API Development with Django REST Framework
-# Status: pending
+# Status: done
 # Dependencies: 2, 3, 4, 7, 8, 12, 15
 # Priority: medium
 # Description: Implement the API layer using Django REST Framework to provide data access for frontend components and potential future integrations.

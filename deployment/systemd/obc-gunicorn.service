@@ -1,0 +1,39 @@
+[Unit]
+Description=OBC Management System Gunicorn Daemon
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=gunicorn
+WorkingDirectory=/var/www/obc-system/src
+Environment="PATH=/var/www/obc-system/venv/bin"
+EnvironmentFile=/var/www/obc-system/.env
+ExecStart=/var/www/obc-system/venv/bin/gunicorn \
+    --worker-class=gevent \
+    --workers=3 \
+    --worker-connections=1000 \
+    --max-requests=1000 \
+    --max-requests-jitter=100 \
+    --timeout=30 \
+    --bind=unix:/run/gunicorn/obc.sock \
+    --access-logfile=/var/log/obc-system/access.log \
+    --error-logfile=/var/log/obc-system/error.log \
+    --log-level=info \
+    --pid=/run/gunicorn/obc.pid \
+    obc_management.wsgi:application
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+# Security settings
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/www/obc-system/media /var/log/obc-system /run/gunicorn
+
+[Install]
+WantedBy=multi-user.target

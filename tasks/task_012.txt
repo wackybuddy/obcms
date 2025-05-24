@@ -1,6 +1,6 @@
 # Task ID: 12
 # Title: Stakeholder Directory and Communication Hub
-# Status: pending
+# Status: done
 # Dependencies: 5
 # Priority: medium
 # Description: Implement the stakeholder directory and communication hub for managing contacts and communications with BMOAs, LGUs, NGAs, and other development partners.

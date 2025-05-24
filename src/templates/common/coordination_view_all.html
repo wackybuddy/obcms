@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}View All - Coordination{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-6" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-4">
+            <li>
+                <div>
+                    <a href="{% url 'common:dashboard' %}" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-home"></i>
+                        <span class="sr-only">Home</span>
+                    </a>
+                </div>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
+                    <a href="{% url 'common:coordination_home' %}" class="text-gray-400 hover:text-gray-500">Coordination</a>
+                </div>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
+                    <span class="text-gray-600 font-medium">View All</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Coordination Overview</h1>
+        <p class="mt-2 text-lg text-gray-600">Comprehensive view of all coordination activities</p>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-r from-blue-400 to-blue-600 rounded-lg shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center">
+                <i class="fas fa-building text-2xl mr-4"></i>
+                <div>
+                    <p class="text-blue-100">Organizations</p>
+                    <p class="text-3xl font-bold">{{ organizations.count }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-green-400 to-green-600 rounded-lg shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center">
+                <i class="fas fa-handshake text-2xl mr-4"></i>
+                <div>
+                    <p class="text-green-100">Partnerships</p>
+                    <p class="text-3xl font-bold">{{ partnerships.count }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-purple-400 to-purple-600 rounded-lg shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center">
+                <i class="fas fa-calendar-alt text-2xl mr-4"></i>
+                <div>
+                    <p class="text-purple-100">Events</p>
+                    <p class="text-3xl font-bold">{{ events.count }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-orange-400 to-orange-600 rounded-lg shadow-lg p-6 text-white transform hover:scale-105 transition-transform duration-200">
+            <div class="flex items-center">
+                <i class="fas fa-tasks text-2xl mr-4"></i>
+                <div>
+                    <p class="text-orange-100">Action Items</p>
+                    <p class="text-3xl font-bold">{{ action_items.count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Navigation</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{% url 'common:coordination_organizations' %}" class="block bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 text-center">
+                <i class="fas fa-building text-2xl mb-2"></i>
+                <div class="font-semibold">Organizations</div>
+                <div class="text-sm opacity-90">Manage partner organizations</div>
+            </a>
+            <a href="{% url 'common:coordination_partnerships' %}" class="block bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105 text-center">
+                <i class="fas fa-handshake text-2xl mb-2"></i>
+                <div class="font-semibold">Partnerships</div>
+                <div class="text-sm opacity-90">Track agreements</div>
+            </a>
+            <a href="{% url 'common:coordination_events' %}" class="block bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 text-center">
+                <i class="fas fa-calendar-alt text-2xl mb-2"></i>
+                <div class="font-semibold">Events</div>
+                <div class="text-sm opacity-90">Schedule & manage events</div>
+            </a>
+            <a href="#" class="block bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 transform hover:scale-105 text-center">
+                <i class="fas fa-tasks text-2xl mb-2"></i>
+                <div class="font-semibold">Action Items</div>
+                <div class="text-sm opacity-90">Track follow-ups</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Recent Organizations -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Organizations</h3>
+            </div>
+            <div class="p-6">
+                {% if recent_organizations %}
+                    <div class="space-y-4">
+                        {% for org in recent_organizations %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-building text-blue-600"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ org.name }}</p>
+                                    <p class="text-xs text-gray-500">{{ org.organization_type|capfirst }}</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                {{ org.status|capfirst }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500">No organizations added yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Events -->
+        <div class="bg-white rounded-lg shadow-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Upcoming Events</h3>
+            </div>
+            <div class="p-6">
+                {% if upcoming_events %}
+                    <div class="space-y-4">
+                        {% for event in upcoming_events %}
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-calendar-alt text-purple-600"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ event.title }}</p>
+                                    <p class="text-xs text-gray-500">{{ event.start_date|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {{ event.status|capfirst }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500">No upcoming events scheduled.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Items Dashboard -->
+    <div class="bg-white rounded-lg shadow-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Pending Action Items</h3>
+        </div>
+        <div class="p-6">
+            {% if pending_action_items %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-2 text-sm font-medium text-gray-500">Task</th>
+                                <th class="text-left py-2 text-sm font-medium text-gray-500">Assigned To</th>
+                                <th class="text-left py-2 text-sm font-medium text-gray-500">Due Date</th>
+                                <th class="text-left py-2 text-sm font-medium text-gray-500">Priority</th>
+                                <th class="text-left py-2 text-sm font-medium text-gray-500">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for item in pending_action_items %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                <td class="py-3 text-sm text-gray-900">{{ item.task }}</td>
+                                <td class="py-3 text-sm text-gray-600">{{ item.assigned_to|default:"Unassigned" }}</td>
+                                <td class="py-3 text-sm text-gray-600">{{ item.due_date|date:"M d, Y"|default:"No deadline" }}</td>
+                                <td class="py-3">
+                                    {% if item.priority == 'high' %}
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">High</span>
+                                    {% elif item.priority == 'medium' %}
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Medium</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Low</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">
+                                        {{ item.status|capfirst }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-check-circle text-4xl text-green-400 mb-4"></i>
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">All caught up!</h4>
+                    <p class="text-gray-500">No pending action items at the moment.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mt-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a href="{% url 'common:coordination_organizations' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-building text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        Manage Organizations
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        View and manage partner organizations.
+                    </p>
+                    <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
+                        <span>Manage Organizations</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'common:coordination_partnerships' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-handshake text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                        View Partnerships
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Manage partnership agreements.
+                    </p>
+                    <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
+                        <span>View Partnerships</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'common:coordination_events' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-calendar-alt text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        Manage Events
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Schedule and manage coordination events.
+                    </p>
+                    <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                        <span>Manage Events</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

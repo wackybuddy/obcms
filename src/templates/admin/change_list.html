@@ -1,0 +1,387 @@
+{% extends "admin/base.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-list{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; {{ opts.verbose_name_plural|capfirst }}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block content %}
+<div class="change-list-wrapper">
+    <!-- Header Section -->
+    <div class="change-list-header bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    {% if opts.app_label == 'common' %}
+                        <i class="fas fa-cog text-blue-600 mr-3"></i>
+                    {% elif opts.app_label == 'communities' %}
+                        <i class="fas fa-users text-green-600 mr-3"></i>
+                    {% elif opts.app_label == 'mana' %}
+                        <i class="fas fa-map text-purple-600 mr-3"></i>
+                    {% elif opts.app_label == 'coordination' %}
+                        <i class="fas fa-handshake text-orange-600 mr-3"></i>
+                    {% elif opts.app_label == 'policy_tracking' %}
+                        <i class="fas fa-gavel text-red-600 mr-3"></i>
+                    {% elif opts.app_label == 'documents' %}
+                        <i class="fas fa-file-alt text-yellow-600 mr-3"></i>
+                    {% else %}
+                        <i class="fas fa-table text-gray-600 mr-3"></i>
+                    {% endif %}
+                    {{ opts.verbose_name_plural|capfirst }}
+                </h1>
+                <p class="text-gray-600 mt-2">{% trans "Manage" %} {{ opts.verbose_name_plural|lower }}</p>
+                
+                {% if cl.result_count %}
+                <div class="mt-4">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        <i class="fas fa-list mr-2"></i>
+                        {% if cl.result_count == 1 %}
+                            {{ cl.result_count }} {{ opts.verbose_name }}
+                        {% else %}
+                            {{ cl.result_count }} {{ opts.verbose_name_plural }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                {% if has_add_permission %}
+                    <a href="{% url cl.opts|admin_urlname:'add' %}{% if is_popup %}?{{ request.GET.urlencode }}{% endif %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>
+                        {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+                    </a>
+                {% endif %}
+                
+                {% if cl.has_filters %}
+                    <button id="toggle-filters" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <i class="fas fa-filter mr-2"></i>
+                        {% trans "Filters" %}
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Actions -->
+    {% if cl.search_fields %}
+    <div class="search-section bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6">
+        <form method="get" class="flex items-center space-x-4">
+            <div class="flex-1">
+                <label for="searchbar" class="sr-only">{% trans 'Search' %}</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="{% blocktrans %}Search {{ cl.opts.verbose_name_plural }}{% endblocktrans %}">
+                </div>
+            </div>
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <i class="fas fa-search mr-2"></i>
+                {% trans 'Search' %}
+            </button>
+            {% if cl.query %}
+            <a href="?" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                <i class="fas fa-times mr-2"></i>
+                {% trans 'Clear' %}
+            </a>
+            {% endif %}
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Filters Sidebar -->
+    {% if cl.has_filters %}
+    <div id="changelist-filter" class="filter-sidebar hidden bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-filter text-blue-600 mr-2"></i>
+            {% trans 'Filter' %}
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for spec in cl.filter_specs %}
+                <div class="filter-group">
+                    <h4 class="font-medium text-gray-700 mb-2">{{ spec.title }}</h4>
+                    <ul class="space-y-1">
+                        {% for choice in spec.choices %}
+                            <li>
+                                <a href="{{ choice.query_string|iriencode }}" class="{% if choice.selected %}text-blue-600 font-medium bg-blue-50 {% else %}text-gray-600 hover:text-blue-600 hover:bg-gray-50 {% endif %}block px-3 py-1 text-sm rounded-md transition-colors">
+                                    {{ choice.display }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    {% if action_form and actions_on_top and cl.show_admin_actions %}
+        <div class="actions-section bg-white rounded-lg shadow-lg border border-gray-200 p-6 mb-6">
+            <form method="post" class="flex items-center space-x-4">
+                {% csrf_token %}
+                <div class="flex items-center space-x-2">
+                    <label for="action-toggle" class="text-sm font-medium text-gray-700">{% trans "Action:" %}</label>
+                    <input type="checkbox" id="action-toggle" class="action-select-all h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <span class="text-sm text-gray-500">{% trans "Select all" %}</span>
+                </div>
+                <select name="action" required class="block w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <option value="" selected>---------</option>
+                    {% for choice in action_form.action.field.choices %}
+                        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors" name="index" value="{{ action_index|default:0 }}">
+                    <i class="fas fa-play mr-2"></i>
+                    {% trans "Go" %}
+                </button>
+            </form>
+        </div>
+    {% endif %}
+
+    <!-- Results Table -->
+    <div class="results-section bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+        {% if cl.formset.errors %}
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">
+                            {% trans "Please correct the errors below." %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if cl.result_count %}
+            <div class="results">
+                {% result_list cl %}
+            </div>
+        {% else %}
+            <div class="no-results p-8 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-inbox text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                    {% if cl.query %}
+                        {% trans "No results found" %}
+                    {% else %}
+                        {% trans "No items yet" %}
+                    {% endif %}
+                </h3>
+                <p class="text-gray-600 mb-4">
+                    {% if cl.query %}
+                        {% trans "Try adjusting your search or filter criteria." %}
+                    {% else %}
+                        {% blocktrans %}No {{ cl.opts.verbose_name_plural|lower }} have been created yet.{% endblocktrans %}
+                    {% endif %}
+                </p>
+                {% if has_add_permission %}
+                    <a href="{% url cl.opts|admin_urlname:'add' %}{% if is_popup %}?{{ request.GET.urlencode }}{% endif %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>
+                        {% blocktrans with cl.opts.verbose_name as name %}Add the first {{ name }}{% endblocktrans %}
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if cl.result_count and is_paginated %}
+        <div class="pagination-section mt-6">
+            {% pagination cl %}
+        </div>
+    {% endif %}
+</div>
+
+<style>
+/* Custom styles for change list */
+.change-list-wrapper {
+    padding: 0 !important;
+}
+
+/* Hide default Django admin elements */
+#content h1 {
+    display: none !important;
+}
+
+.object-tools {
+    display: none !important;
+}
+
+/* Results table styling */
+.results table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+}
+
+.results table th {
+    background: #f8fafc !important;
+    padding: 1rem !important;
+    text-align: left !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    white-space: nowrap !important;
+}
+
+.results table th a {
+    color: #374151 !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.results table th a:hover {
+    color: #1e40af !important;
+}
+
+.results table th .sortoptions {
+    margin-left: 0.5rem !important;
+}
+
+.results table td {
+    padding: 0.75rem 1rem !important;
+    border-bottom: 1px solid #f3f4f6 !important;
+    vertical-align: middle !important;
+}
+
+.results table tr:hover {
+    background: #f9fafb !important;
+}
+
+.results table tr:nth-child(even) {
+    background: #ffffff !important;
+}
+
+.results table tr:nth-child(even):hover {
+    background: #f9fafb !important;
+}
+
+/* Action checkboxes */
+.action-checkbox {
+    transform: scale(1.2) !important;
+    margin-right: 0.5rem !important;
+}
+
+/* Row actions */
+.row-actions {
+    white-space: nowrap !important;
+}
+
+.row-actions a {
+    color: #1e40af !important;
+    text-decoration: none !important;
+    margin-right: 0.5rem !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 0.25rem !important;
+    transition: all 0.2s !important;
+}
+
+.row-actions a:hover {
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+}
+
+/* Filter sidebar responsiveness */
+@media (max-width: 768px) {
+    .filter-sidebar .grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Animation for filter toggle */
+.filter-sidebar {
+    transition: all 0.3s ease !important;
+}
+
+.filter-sidebar.hidden {
+    opacity: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 1.5rem !important;
+}
+
+.filter-sidebar:not(.hidden) {
+    opacity: 1 !important;
+    max-height: 500px !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter toggle functionality
+    const filterToggle = document.getElementById('toggle-filters');
+    const filterSidebar = document.getElementById('changelist-filter');
+    
+    if (filterToggle && filterSidebar) {
+        filterToggle.addEventListener('click', function() {
+            filterSidebar.classList.toggle('hidden');
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-filter');
+            icon.classList.toggle('fa-filter-circle-xmark');
+        });
+    }
+    
+    // Select all functionality
+    const selectAllCheckbox = document.querySelector('.action-select-all');
+    const itemCheckboxes = document.querySelectorAll('.action-checkbox');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+    
+    // Update select all when individual items change
+    itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checkedCount = document.querySelectorAll('.action-checkbox:checked').length;
+            selectAllCheckbox.checked = checkedCount === itemCheckboxes.length;
+            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < itemCheckboxes.length;
+        });
+    });
+    
+    // Search form auto-submit after delay
+    const searchInput = document.getElementById('searchbar');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                // Auto-submit could be enabled here if desired
+            }, 1000);
+        });
+    }
+    
+    // Row hover effects
+    const tableRows = document.querySelectorAll('.results table tbody tr');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.01)';
+            this.style.transition = 'all 0.2s ease';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

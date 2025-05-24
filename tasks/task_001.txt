@@ -1,6 +1,6 @@
 # Task ID: 1
 # Title: Project Setup and Environment Configuration
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Initialize the Django project, configure the development environment, and set up the basic project structure for the OBC Management System (Other Bangsamoro Communities Management System).

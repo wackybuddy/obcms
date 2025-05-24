@@ -1,0 +1,25 @@
+# Production requirements for OBC Management System
+-r ../requirements/base.txt
+
+# Production server
+gunicorn==20.1.0
+psycopg2-binary==2.9.5
+
+# Security
+django-secure==1.0.2
+
+# Performance
+django-redis==5.2.0
+redis==4.5.1
+
+# Monitoring
+sentry-sdk[django]==1.15.0
+
+# Email
+django-anymail[mailgun]==9.0
+
+# File storage (if using cloud storage)
+django-storages[boto3]==1.13.2
+
+# SSL/HTTPS
+certbot==2.1.0

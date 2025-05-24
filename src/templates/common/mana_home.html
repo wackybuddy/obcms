@@ -180,7 +180,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% if user.is_staff %}
-            <a href="/admin/mana/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:mana_new_assessment' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
@@ -198,7 +198,7 @@
                 </div>
             </a>
 
-            <a href="/admin/mana/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:mana_manage_assessments' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-list-alt text-white text-xl"></i>
@@ -216,7 +216,7 @@
                 </div>
             </a>
 
-            <a href="/admin/mana/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:mana_geographic_data' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-map text-white text-xl"></i>

@@ -37,6 +37,14 @@ DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
+# Custom User Model
+AUTH_USER_MODEL = 'common.User'
+
+# Authentication URLs
+LOGIN_URL = '/auth/login/'
+LOGIN_REDIRECT_URL = '/auth/dashboard/'
+LOGOUT_REDIRECT_URL = '/auth/login/'
+
 # Application definition
 
 DJANGO_APPS = [
@@ -46,6 +54,7 @@ DJANGO_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
 ]
 
 THIRD_PARTY_APPS = [
@@ -60,9 +69,12 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'common',
     'communities',
+    'documents',
     'mana',
     'coordination',
     'policies',
+    'policy_tracking',
+    'data_imports',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -197,6 +209,10 @@ CORS_ALLOWED_ORIGINS = [
 # Site settings
 SITE_NAME = env('SITE_NAME', default='OBC Management System')
 SITE_DESCRIPTION = env('SITE_DESCRIPTION', default='Other Bangsamoro Communities Management System')
+
+# Django Admin "View site" link
+SITE_ID = 1
+SITE_URL = '/auth/dashboard/'
 
 # Crispy Forms
 CRISPY_TEMPLATE_PACK = 'bootstrap4'

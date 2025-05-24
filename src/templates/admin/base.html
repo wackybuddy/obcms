@@ -1,0 +1,539 @@
+{% load i18n static %}<!DOCTYPE html>
+{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" dir="{{ LANGUAGE_BIDI|yesno:'rtl,ltr,auto' }}">
+<head>
+<title>{% block title %}{{ title }} | {% if site_title %}{{ site_title }}{% else %}{% trans 'Django site admin' %}{% endif %}{% endblock %}</title>
+<link rel="stylesheet" href="{% block stylesheet %}{% static "admin/css/base.css" %}{% endblock %}">
+{% block dark-mode-vars %}
+  <link rel="stylesheet" href="{% static "admin/css/dark_mode.css" %}">
+{% endblock %}
+{% block responsive %}
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="{% static "admin/css/responsive.css" %}">
+{% endblock %}
+{% if 'grappelli' in settings.INSTALLED_APPS %}
+    <link rel="stylesheet" href="{% static "grappelli/css/grappelli.css" %}">
+{% endif %}
+{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE">{% endblock %}
+
+<!-- Tailwind CSS for modern styling -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Custom Admin Styles -->
+<style>
+    /* Override Django admin with modern styling */
+    .bg-bangsamoro {
+        background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+    }
+    
+    #header {
+        background: linear-gradient(135deg, #1e40af 0%, #059669 100%) !important;
+        border-bottom: none !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    #header a:link, #header a:visited {
+        color: white !important;
+        text-decoration: none;
+    }
+    
+    #header a:hover {
+        color: #d1fae5 !important;
+    }
+    
+    #branding h1 {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        padding: 0.75rem 0 !important;
+        color: white !important;
+    }
+    
+    #branding h1::before {
+        content: '\f54d';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+        font-size: 1.25rem;
+    }
+    
+    #user-tools {
+        padding: 0.75rem 0 !important;
+        color: white !important;
+    }
+    
+    #user-tools a {
+        color: white !important;
+        padding: 0.5rem 0.75rem !important;
+        border-radius: 0.375rem !important;
+        transition: all 0.2s !important;
+        margin: 0 0.25rem !important;
+    }
+    
+    #user-tools a:hover {
+        background-color: rgba(0, 0, 0, 0.2) !important; /* Darker background for better contrast */
+        color: white !important; /* Keep text white for high contrast */
+    }
+    
+    .breadcrumbs {
+        background: white !important;
+        border: none !important;
+        padding: 1rem 2rem !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+        border-radius: 0 0 0.5rem 0.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .breadcrumbs a {
+        color: #1e40af !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+    }
+    
+    .breadcrumbs a:hover {
+        color: #059669 !important;
+    }
+    
+    #content {
+        padding: 0 2rem 2rem 2rem !important;
+        background: #f9fafb !important;
+        min-height: calc(100vh - 120px) !important;
+    }
+    
+    .module {
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+        margin-bottom: 1.5rem !important;
+        overflow: hidden !important;
+    }
+    
+    .module h2, .module caption {
+        background: #f8fafc !important;
+        color: #374151 !important;
+        padding: 1rem 1.5rem !important;
+        margin: 0 !important;
+        font-weight: 600 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    
+    .module h3 {
+        color: #374151 !important;
+        padding: 0.75rem 1.5rem !important;
+        margin: 0 !important;
+        font-weight: 500 !important;
+        background: #f9fafb !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    
+    .dashboard .module table {
+        margin: 0 !important;
+    }
+    
+    .dashboard .module table th {
+        background: #f8fafc !important;
+        color: #374151 !important;
+        padding: 0.75rem 1.5rem !important;
+        font-weight: 600 !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    
+    .dashboard .module table td {
+        padding: 0.75rem 1.5rem !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+    }
+    
+    .dashboard .module table td a {
+        color: #1e40af !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+    }
+    
+    .dashboard .module table td a:hover {
+        color: #059669 !important;
+    }
+    
+    .addlink, .changelink, .deletelink {
+        background: #1e40af !important;
+        color: white !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 0.375rem !important;
+        text-decoration: none !important;
+        font-weight: 500 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        transition: all 0.2s !important;
+        margin-right: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .addlink:hover, .changelink:hover {
+        background: #1d4ed8 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .deletelink {
+        background: #dc2626 !important;
+    }
+    
+    .deletelink:hover {
+        background: #b91c1c !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .addlink::before {
+        content: '\f067';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+    }
+    
+    .changelink::before {
+        content: '\f044';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+    }
+    
+    .deletelink::before {
+        content: '\f2ed';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+    }
+    
+    /* Form styling */
+    .form-row {
+        background: white !important;
+        padding: 1rem !important;
+        margin-bottom: 1rem !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0.5rem !important;
+    }
+    
+    .form-row label {
+        color: #374151 !important;
+        font-weight: 600 !important;
+        margin-bottom: 0.5rem !important;
+        display: block !important;
+    }
+    
+    .form-row input, .form-row select, .form-row textarea {
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.375rem !important;
+        padding: 0.5rem 0.75rem !important;
+        transition: all 0.2s !important;
+    }
+    
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+        border-color: #1e40af !important;
+        box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1) !important;
+        outline: none !important;
+    }
+    
+    .submit-row {
+        background: white !important;
+        padding: 1rem 1.5rem !important;
+        border-top: 1px solid #e5e7eb !important;
+        margin-top: 1.5rem !important;
+        border-radius: 0 0 0.5rem 0.5rem !important;
+    }
+    
+    .submit-row input[type="submit"] {
+        background: #1e40af !important;
+        color: white !important;
+        padding: 0.75rem 1.5rem !important;
+        border: none !important;
+        border-radius: 0.375rem !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: all 0.2s !important;
+    }
+    
+    .submit-row input[type="submit"]:hover {
+        background: #1d4ed8 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Messages */
+    .messagelist {
+        margin: 0 0 1.5rem 0 !important;
+        padding: 0 !important;
+    }
+    
+    .messagelist li {
+        padding: 1rem 1.5rem !important;
+        border-radius: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+        font-weight: 500 !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    .messagelist .success {
+        background: #d1fae5 !important;
+        color: #065f46 !important;
+        border: 1px solid #a7f3d0 !important;
+    }
+    
+    .messagelist .success::before {
+        content: '\f058';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+        color: #10b981;
+    }
+    
+    .messagelist .error {
+        background: #fee2e2 !important;
+        color: #991b1b !important;
+        border: 1px solid #fca5a5 !important;
+    }
+    
+    .messagelist .error::before {
+        content: '\f057';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+        color: #ef4444;
+    }
+    
+    .messagelist .warning {
+        background: #fef3cd !important;
+        color: #92400e !important;
+        border: 1px solid #fcd34d !important;
+    }
+    
+    .messagelist .warning::before {
+        content: '\f071';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+        color: #f59e0b;
+    }
+    
+    /* Sidebar navigation (if using apps) */
+    #nav-sidebar {
+        background: white !important;
+        border-right: 1px solid #e5e7eb !important;
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    #nav-sidebar .nav-sidebar-header {
+        background: #f8fafc !important;
+        padding: 1rem !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        font-weight: 600 !important;
+        color: #374151 !important;
+    }
+    
+    #nav-sidebar a {
+        color: #374151 !important;
+        padding: 0.75rem 1rem !important;
+        display: block !important;
+        text-decoration: none !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+        transition: all 0.2s !important;
+    }
+    
+    #nav-sidebar a:hover {
+        background: #f8fafc !important;
+        color: #1e40af !important;
+        padding-left: 1.25rem !important;
+    }
+    
+    /* Table styling improvements */
+    .results table {
+        background: white !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0.5rem !important;
+        overflow: hidden !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .results table th {
+        background: #f8fafc !important;
+        color: #374151 !important;
+        font-weight: 600 !important;
+        padding: 1rem !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    
+    .results table td {
+        padding: 0.75rem 1rem !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+    }
+    
+    .results table tr:hover {
+        background: #f9fafb !important;
+    }
+    
+    /* Pagination */
+    .paginator {
+        background: white !important;
+        padding: 1rem !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0.5rem !important;
+        margin-top: 1rem !important;
+        text-align: center !important;
+    }
+    
+    .paginator a {
+        color: #1e40af !important;
+        padding: 0.5rem 0.75rem !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0.375rem !important;
+        margin: 0 0.25rem !important;
+        text-decoration: none !important;
+        transition: all 0.2s !important;
+    }
+    
+    .paginator a:hover {
+        background: #1e40af !important;
+        color: white !important;
+    }
+    
+    .paginator .this-page {
+        background: #1e40af !important;
+        color: white !important;
+        padding: 0.5rem 0.75rem !important;
+        border-radius: 0.375rem !important;
+        margin: 0 0.25rem !important;
+    }
+</style>
+</head>
+{% load i18n %}
+
+<body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}"
+  data-admin-utc-offset="{% now "Z" %}">
+<div id="container">
+
+    {% block header %}
+    <div id="header" class="bg-bangsamoro">
+        <div id="branding">
+        {% block branding %}
+        <h1 id="site-name"><a href="{% url 'admin:index' %}">{% if site_header %}{{ site_header }}{% else %}{% trans 'OBC Management System' %}{% endif %}</a></h1>
+        {% endblock %}
+        </div>
+        {% block usertools %}
+        {% if has_permission %}
+        <div id="user-tools">
+            {% block welcome-msg %}
+                {% trans 'Welcome,' %}
+                <strong>{% firstof user.get_short_name user.get_username %}</strong>.
+            {% endblock %}
+            {% block userlinks %}
+                {% if site_url %}
+                    <a href="{{ site_url }}">{% trans 'View site' %}</a> /
+                {% endif %}
+                {% if user.is_active and user.is_staff %}
+                    {% url 'django-admindocs-docroot' as docsroot %}
+                    {% if docsroot %}
+                        <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
+                    {% endif %}
+                {% endif %}
+                {% if user.has_usable_password %}
+                <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
+                {% endif %}
+                <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
+            {% endblock %}
+        </div>
+        {% endif %}
+        {% endblock %}
+        {% block nav-global %}{% endblock %}
+    </div>
+    {% endblock %}
+
+    {% block nav-breadcrumbs %}
+      {% block breadcrumbs %}
+      <div class="breadcrumbs">
+      <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+      {% if title %} &rsaquo; {{ title }}{% endif %}
+      </div>
+      {% endblock %}
+    {% endblock %}
+
+    {% block nav-sidebar %}
+    {% endblock %}
+
+    {% block messages %}
+        {% if messages %}
+        <ul class="messagelist">{% for message in messages %}
+          <li class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message|capfirst }}</li>
+        {% endfor %}</ul>
+        {% endif %}
+    {% endblock messages %}
+
+    <div id="content" class="{% block coltype %}colM{% endblock %}">
+        {% block pretitle %}{% endblock %}
+        {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+        {% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}</h2>{% endif %}{% endblock %}
+        {% block content %}
+        {% block object-tools %}{% endblock %}
+        {{ content }}
+        {% endblock %}
+        {% block sidebar %}{% endblock %}
+    </div>
+
+    {% block footer %}<div id="footer"></div>{% endblock %}
+</div>
+
+<!-- Custom JavaScript for enhanced functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth animations to action buttons
+    const actionButtons = document.querySelectorAll('.addlink, .changelink, .deletelink');
+    actionButtons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Enhanced form field focus effects
+    const formInputs = document.querySelectorAll('input, select, textarea');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.background = '#f8fafc';
+        });
+        input.addEventListener('blur', function() {
+            this.parentElement.style.background = 'white';
+        });
+    });
+    
+    // Add loading state to submit buttons
+    const submitButtons = document.querySelectorAll('input[type="submit"]');
+    submitButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            this.style.opacity = '0.8';
+            this.style.cursor = 'wait';
+            this.value = 'Processing...';
+        });
+    });
+    
+    // Auto-hide messages after 5 seconds
+    const messages = document.querySelectorAll('.messagelist li');
+    messages.forEach(message => {
+        setTimeout(() => {
+            message.style.opacity = '0';
+            message.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                message.remove();
+            }, 300);
+        }, 5000);
+    });
+});
+</script>
+
+{% block extrahead %}{% endblock %}
+</body>
+</html>

@@ -1,3 +1,1353 @@
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth import get_user_model
+from common.models import Barangay
 
-# Create your models here.
+User = get_user_model()
+
+
+class OBCCommunity(models.Model):
+    """
+    Enhanced model for Other Bangsamoro Community profiles.
+    Represents OBC settlements outside BARMM with comprehensive data fields
+    based on the OBC Database specifications for Regions 9 and 12.
+    """
+    DEVELOPMENT_STATUS_CHOICES = [
+        ('developing', 'Developing'),
+        ('established', 'Established'),
+        ('vulnerable', 'Vulnerable'),
+        ('thriving', 'Thriving'),
+        ('at_risk', 'At Risk'),
+    ]
+    
+    SETTLEMENT_TYPE_CHOICES = [
+        ('village', 'Village'),
+        ('subdivision', 'Subdivision'),
+        ('sitio', 'Sitio'),
+        ('purok', 'Purok'),
+        ('compound', 'Compound'),
+        ('dispersed', 'Dispersed Settlement'),
+    ]
+    
+    # I. IDENTIFICATION AND LOCATION
+    # Unique identifier for the specific OBC
+    obc_id = models.CharField(
+        max_length=50,
+        default='',
+        blank=True,
+        help_text="Unique identifier for the OBC (e.g., R12-SK-PAL-001)"
+    )
+    
+    # Source document reference
+    source_document_reference = models.TextField(
+        blank=True,
+        help_text="Document source and page number (e.g., 'OBC MANA Region 12, p.7')"
+    )
+    
+    # Community name(s)
+    community_names = models.TextField(
+        default='',
+        blank=True,
+        help_text="Common name(s) used to refer to the community (comma-separated)"
+    )
+    
+    # Geographic location
+    barangay = models.ForeignKey(
+        Barangay, 
+        on_delete=models.CASCADE, 
+        related_name='obc_communities',
+        help_text="Barangay where the community is located"
+    )
+    
+    purok_sitio = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Specific Purok/Sitio within the barangay"
+    )
+    
+    specific_location = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Additional specific location details"
+    )
+    
+    settlement_type = models.CharField(
+        max_length=20,
+        choices=SETTLEMENT_TYPE_CHOICES,
+        default='village',
+        help_text="Type of settlement"
+    )
+    
+    # Geographic coordinates for mapping
+    latitude = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Latitude coordinate for mapping"
+    )
+    
+    longitude = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Longitude coordinate for mapping"
+    )
+    
+    # Proximity to BARMM
+    PROXIMITY_CHOICES = [
+        ('adjacent', 'Adjacent to BARMM'),
+        ('near', 'Near BARMM'),
+        ('distant', 'Distant from BARMM'),
+    ]
+    
+    proximity_to_barmm = models.CharField(
+        max_length=20,
+        choices=PROXIMITY_CHOICES,
+        blank=True,
+        help_text="Proximity to BARMM boundaries"
+    )
+    
+    # II. DEMOGRAPHIC PROFILE
+    # Population data
+    estimated_obc_population = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of individuals identified as part of the OBC"
+    )
+    
+    total_barangay_population = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Total barangay population for context"
+    )
+    
+    households = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of households in the community"
+    )
+    
+    families = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of families in the community"
+    )
+    
+    # Primary ethnolinguistic groups
+    ETHNOLINGUISTIC_CHOICES = [
+        ('magindanaw', 'Magindanaw'),
+        ('tausug', 'Tausug'),
+        ('maranao', 'Maranao'),
+        ('yakan', 'Yakan'),
+        ('sama', 'Sama'),
+        ('banguingui', 'Banguingui'),
+        ('other', 'Other'),
+    ]
+    
+    primary_ethnolinguistic_group = models.CharField(
+        max_length=50,
+        choices=ETHNOLINGUISTIC_CHOICES,
+        blank=True,
+        help_text="Primary ethnolinguistic group"
+    )
+    
+    other_ethnolinguistic_groups = models.TextField(
+        blank=True,
+        help_text="Other ethnolinguistic groups present (comma-separated)"
+    )
+    
+    languages_spoken = models.TextField(
+        blank=True,
+        help_text="Languages spoken in the community (comma-separated)"
+    )
+    
+    # Age Demographics
+    children_0_12 = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of children aged 0-12"
+    )
+    
+    youth_13_30 = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of youth aged 13-30"
+    )
+    
+    adults_31_59 = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of adults aged 31-59"
+    )
+    
+    seniors_60_plus = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of seniors aged 60 and above"
+    )
+    
+    # Vulnerable sectors
+    women_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of women in the community"
+    )
+    
+    solo_parents_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of solo parents"
+    )
+    
+    elderly_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of elderly/senior citizens"
+    )
+    
+    pwd_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of Persons with Disabilities (PWDs)"
+    )
+    
+    farmers_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of farmers"
+    )
+    
+    fisherfolk_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of fisherfolk"
+    )
+    
+    indigenous_peoples_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of Indigenous Peoples (if distinct within OBC)"
+    )
+    
+    idps_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of Internally Displaced Persons (IDPs)"
+    )
+    
+    religious_leaders_ulama_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of Religious Leaders (Ulama) in the community"
+    )
+    
+    csos_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of Civil Society Organizations (CSOs) in the community"
+    )
+    
+    associations_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of Associations in the community"
+    )
+    
+    teachers_asatidz_count = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        help_text="Number of Teachers/Asatidz (Islamic teachers)"
+    )
+    
+    # III. SOCIO-ECONOMIC PROFILE
+    # Primary livelihoods
+    primary_livelihoods = models.TextField(
+        blank=True,
+        help_text="Primary livelihoods (e.g., Rice Farming, Coconut Production, Fishing)"
+    )
+    
+    secondary_livelihoods = models.TextField(
+        blank=True,
+        help_text="Secondary livelihoods in the community"
+    )
+    
+    # Poverty and economic status
+    POVERTY_INCIDENCE_CHOICES = [
+        ('very_high', 'Very High (>70%)'),
+        ('high', 'High (50-70%)'),
+        ('moderate', 'Moderate (30-50%)'),
+        ('low', 'Low (10-30%)'),
+        ('very_low', 'Very Low (<10%)'),
+        ('unknown', 'Unknown'),
+    ]
+    
+    estimated_poverty_incidence = models.CharField(
+        max_length=20,
+        choices=POVERTY_INCIDENCE_CHOICES,
+        blank=True,
+        help_text="Estimated poverty incidence within OBC"
+    )
+    
+    # Access to basic services (rating system)
+    ACCESS_RATING_CHOICES = [
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+        ('none', 'None'),
+    ]
+    
+    access_formal_education = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to formal schools"
+    )
+    
+    access_als = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to Alternative Learning System (ALS)"
+    )
+    
+    access_madrasah = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to Madrasah/Islamic education"
+    )
+    
+    access_healthcare = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to healthcare facilities"
+    )
+    
+    access_clean_water = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to clean water supply"
+    )
+    
+    access_sanitation = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to sanitation facilities"
+    )
+    
+    access_electricity = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to electricity"
+    )
+    
+    access_roads_transport = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to roads and transportation"
+    )
+    
+    access_communication = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to communication (mobile/internet)"
+    )
+    
+    # Land tenure and economic issues
+    land_tenure_issues = models.TextField(
+        blank=True,
+        help_text="Land tenure issues (lack of titles, disputes, ancestral domain claims)"
+    )
+    
+    number_of_employed_obc = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of Employed OBC Individuals"
+    )
+    
+    number_of_cooperatives = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of Cooperatives in the community"
+    )
+    
+    number_of_social_enterprises = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of Social Enterprises in the community"
+    )
+    
+    number_of_micro_enterprises = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of Micro-Enterprises (such as Sari-Sari Stores, etc.)"
+    )
+    
+    number_of_unbanked_obc = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of OBC Individuals without Access to Financial Services (Unbanked)"
+    )
+    
+    financial_literacy_access = models.TextField(
+        blank=True,
+        help_text="Financial literacy and access to financial services"
+    )
+    
+    # IV. CULTURAL AND HISTORICAL CONTEXT
+    # Historical background
+    brief_historical_background = models.TextField(
+        blank=True,
+        help_text="Key historical narratives of the community in the area"
+    )
+    
+    established_year = models.PositiveIntegerField(
+        null=True, 
+        blank=True,
+        validators=[
+            MinValueValidator(1800),
+            MaxValueValidator(2030)
+        ],
+        help_text="Year the community was established"
+    )
+    
+    origin_story = models.TextField(
+        blank=True,
+        help_text="Story of how the community was established"
+    )
+    
+    migration_history = models.TextField(
+        blank=True,
+        help_text="Migration history and patterns"
+    )
+    
+    # Cultural practices and traditions
+    cultural_practices_traditions = models.TextField(
+        blank=True,
+        help_text="Notable customs, traditions, festivals"
+    )
+    
+    religious_affiliation = models.TextField(
+        blank=True,
+        help_text="Religious affiliation and specific practices"
+    )
+    
+    traditional_leaders_role = models.TextField(
+        blank=True,
+        help_text="Role of traditional leaders (Imams, Elders, Chieftains)"
+    )
+    
+    cultural_preservation_efforts = models.TextField(
+        blank=True,
+        help_text="Existing cultural preservation efforts"
+    )
+    
+    # Religious facilities
+    has_mosque = models.BooleanField(
+        default=False,
+        help_text="Whether the community has a mosque"
+    )
+    
+    has_madrasah = models.BooleanField(
+        default=False,
+        help_text="Whether the community has a madrasah/Islamic school"
+    )
+    
+    religious_leaders_count = models.PositiveIntegerField(
+        default=0,
+        help_text="Number of religious leaders (Imam, Ustadz, etc.)"
+    )
+    
+    # V. GOVERNANCE AND COMMUNITY LEADERSHIP
+    # Political representation and leadership
+    formal_political_representation = models.TextField(
+        blank=True,
+        help_text="Presence in Barangay Council, LGU representation"
+    )
+    
+    informal_leadership_structures = models.TextField(
+        blank=True,
+        help_text="Description of informal leadership structures"
+    )
+    
+    community_organizations = models.TextField(
+        blank=True,
+        help_text="Community organizations/associations (name, focus, contact)"
+    )
+    
+    RELATIONSHIP_LGU_CHOICES = [
+        ('collaborative', 'Collaborative'),
+        ('strained', 'Strained'),
+        ('minimal', 'Minimal'),
+        ('good', 'Good'),
+        ('excellent', 'Excellent'),
+    ]
+    
+    relationship_with_lgu = models.CharField(
+        max_length=20,
+        choices=RELATIONSHIP_LGU_CHOICES,
+        blank=True,
+        help_text="Relationship with LGU"
+    )
+    
+    participation_local_governance = models.TextField(
+        blank=True,
+        help_text="Participation in local governance and planning"
+    )
+    
+    access_government_info = models.TextField(
+        blank=True,
+        help_text="Access to information on government programs"
+    )
+    
+    # VI. CHALLENGES AND BARRIERS
+    # Governance and policy challenges
+    governance_policy_challenges = models.TextField(
+        blank=True,
+        help_text="Marginalization, lack of representation issues"
+    )
+    
+    access_public_services_challenges = models.TextField(
+        blank=True,
+        help_text="Challenges in accessing education, health, infrastructure"
+    )
+    
+    land_ownership_security_issues = models.TextField(
+        blank=True,
+        help_text="Land ownership and security challenges"
+    )
+    
+    economic_disparities = models.TextField(
+        blank=True,
+        help_text="Poverty, limited employment, economic challenges"
+    )
+    
+    social_instability_conflict = models.TextField(
+        blank=True,
+        help_text="Rido, security issues, social conflicts"
+    )
+    
+    cultural_miscommunication = models.TextField(
+        blank=True,
+        help_text="Cultural miscommunication challenges"
+    )
+    
+    gender_inequality_issues = models.TextField(
+        blank=True,
+        help_text="Gender inequality, early marriage issues"
+    )
+    
+    substance_abuse_issues = models.TextField(
+        blank=True,
+        help_text="Drug use, substance abuse issues"
+    )
+    
+    investment_scam_issues = models.TextField(
+        blank=True,
+        help_text="Investment scams and financial fraud issues"
+    )
+    
+    environmental_degradation = models.TextField(
+        blank=True,
+        help_text="Mining, illegal fishing, environmental issues"
+    )
+    
+    other_challenges = models.TextField(
+        blank=True,
+        help_text="Other specific challenges (ISAL education, Halal industry, etc.)"
+    )
+    
+    challenges_impact = models.TextField(
+        blank=True,
+        help_text="Impact of these challenges on the community"
+    )
+    
+    # VII. COMMUNITY ASPIRATIONS AND DEVELOPMENT PRIORITIES
+    key_aspirations = models.TextField(
+        blank=True,
+        help_text="Key community aspirations (poverty eradication, improved services, etc.)"
+    )
+    
+    infrastructure_priorities = models.TextField(
+        blank=True,
+        help_text="Infrastructure development priorities (roads, water, health, schools)"
+    )
+    
+    livelihood_program_priorities = models.TextField(
+        blank=True,
+        help_text="Livelihood program priorities (agriculture, fisheries, SMEs, Halal, ecotourism)"
+    )
+    
+    education_priorities = models.TextField(
+        blank=True,
+        help_text="Education priorities (scholarships, skills training, Madrasah support)"
+    )
+    
+    healthcare_priorities = models.TextField(
+        blank=True,
+        help_text="Healthcare access priorities"
+    )
+    
+    cultural_preservation_priorities = models.TextField(
+        blank=True,
+        help_text="Cultural preservation initiative priorities"
+    )
+    
+    peace_security_priorities = models.TextField(
+        blank=True,
+        help_text="Peace and order/conflict resolution priorities"
+    )
+    
+    specific_project_proposals = models.TextField(
+        blank=True,
+        help_text="Specific project proposals/ideas from the community"
+    )
+    
+    # Development Status
+    development_status = models.CharField(
+        max_length=20,
+        choices=DEVELOPMENT_STATUS_CHOICES,
+        default='developing',
+        help_text="Current development status of the community"
+    )
+    
+    # X. NEEDS ASSESSMENT DATA
+    needs_assessment_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date of last needs assessment"
+    )
+    
+    key_findings_last_assessment = models.TextField(
+        blank=True,
+        help_text="Key findings from last needs assessment"
+    )
+    
+    assessment_data_sources = models.TextField(
+        blank=True,
+        help_text="Data sources (community consultations, surveys, LGU data)"
+    )
+    
+    identified_gaps = models.TextField(
+        blank=True,
+        help_text="Identified gaps based on assessments"
+    )
+    
+    # XI. CONTACT INFORMATION
+    key_community_leaders = models.TextField(
+        blank=True,
+        help_text="Key community leader(s)/focal person(s) with contact details"
+    )
+    
+    relevant_lgu_officials = models.TextField(
+        blank=True,
+        help_text="Relevant LGU official(s) and their contact information"
+    )
+    
+    # Legacy fields for backward compatibility
+    community_leader = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Name of the primary community leader"
+    )
+    
+    leader_contact = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Contact information for community leader"
+    )
+    
+    # Administrative
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this community record is active"
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes about the community"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'communities_obc_community'
+        ordering = ['barangay__municipality__province__region__code', 
+                   'barangay__municipality__province__name', 
+                   'barangay__municipality__name', 
+                   'barangay__name']
+        verbose_name = 'OBC Community'
+        verbose_name_plural = 'OBC Communities'
+    
+    def __str__(self):
+        return f"{self.barangay.name}, {self.barangay.municipality.name}, {self.barangay.province.name}"
+    
+    @property
+    def full_location(self):
+        """Return the full administrative location path."""
+        location = f"{self.barangay.full_path}"
+        if self.specific_location:
+            location += f" > {self.specific_location}"
+        return location
+    
+    @property
+    def region(self):
+        """Return the region this community belongs to."""
+        return self.barangay.region
+    
+    @property
+    def province(self):
+        """Return the province this community belongs to."""
+        return self.barangay.province
+    
+    @property
+    def municipality(self):
+        """Return the municipality this community belongs to."""
+        return self.barangay.municipality
+    
+    @property
+    def total_age_demographics(self):
+        """Calculate total from age demographics."""
+        total = 0
+        if self.children_0_12:
+            total += self.children_0_12
+        if self.youth_13_30:
+            total += self.youth_13_30
+        if self.adults_31_59:
+            total += self.adults_31_59
+        if self.seniors_60_plus:
+            total += self.seniors_60_plus
+        return total
+    
+    @property
+    def average_household_size(self):
+        """Calculate average household size."""
+        if self.households and self.estimated_obc_population:
+            return round(self.estimated_obc_population / self.households, 1)
+        return None
+    
+    @property
+    def percentage_obc_in_barangay(self):
+        """Calculate percentage of OBCs in barangay."""
+        if self.estimated_obc_population and self.total_barangay_population:
+            return round((self.estimated_obc_population / self.total_barangay_population) * 100, 2)
+        return None
+    
+    @property 
+    def coordinates(self):
+        """Return coordinates as [longitude, latitude] for GeoJSON."""
+        if self.latitude and self.longitude:
+            return [self.longitude, self.latitude]
+        return None
+
+
+class CommunityLivelihood(models.Model):
+    """
+    Model for tracking different livelihood activities within OBC communities.
+    """
+    LIVELIHOOD_CATEGORIES = [
+        ('agriculture', 'Agriculture'),
+        ('fishing', 'Fishing'),
+        ('livestock', 'Livestock'),
+        ('trade', 'Trade/Business'),
+        ('services', 'Services'),
+        ('handicrafts', 'Handicrafts'),
+        ('transportation', 'Transportation'),
+        ('construction', 'Construction'),
+        ('government', 'Government Employment'),
+        ('private_employment', 'Private Employment'),
+        ('other', 'Other'),
+    ]
+    
+    community = models.ForeignKey(
+        OBCCommunity, 
+        on_delete=models.CASCADE, 
+        related_name='livelihoods'
+    )
+    
+    livelihood_type = models.CharField(
+        max_length=50,
+        choices=LIVELIHOOD_CATEGORIES,
+        help_text="Type of livelihood activity"
+    )
+    
+    specific_activity = models.CharField(
+        max_length=255,
+        help_text="Specific livelihood activity (e.g., rice farming, tricycle driving)"
+    )
+    
+    description = models.TextField(
+        blank=True,
+        help_text="Detailed description of the livelihood activity"
+    )
+    
+    households_involved = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of households involved in this livelihood"
+    )
+    
+    percentage_of_community = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(100)
+        ],
+        help_text="Percentage of community involved in this livelihood"
+    )
+    
+    is_primary_livelihood = models.BooleanField(
+        default=False,
+        help_text="Whether this is the primary livelihood for the community"
+    )
+    
+    seasonal = models.BooleanField(
+        default=False,
+        help_text="Whether this livelihood is seasonal"
+    )
+    
+    income_level = models.CharField(
+        max_length=20,
+        choices=[
+            ('very_low', 'Very Low'),
+            ('low', 'Low'),
+            ('moderate', 'Moderate'),
+            ('high', 'High'),
+            ('very_high', 'Very High'),
+        ],
+        blank=True,
+        help_text="General income level from this livelihood"
+    )
+    
+    challenges = models.TextField(
+        blank=True,
+        help_text="Challenges faced in this livelihood activity"
+    )
+    
+    opportunities = models.TextField(
+        blank=True,
+        help_text="Opportunities for improvement or expansion"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'communities_livelihood'
+        ordering = ['community__barangay__name', '-is_primary_livelihood', 'livelihood_type']
+        verbose_name = 'Community Livelihood'
+        verbose_name_plural = 'Community Livelihoods'
+    
+    def __str__(self):
+        primary = " (Primary)" if self.is_primary_livelihood else ""
+        return f"{self.specific_activity} - {self.community.barangay.name}{primary}"
+
+
+class CommunityInfrastructure(models.Model):
+    """
+    Model for tracking infrastructure availability in OBC communities.
+    """
+    INFRASTRUCTURE_TYPES = [
+        ('water', 'Water Supply'),
+        ('electricity', 'Electricity'),
+        ('roads', 'Roads/Transportation'),
+        ('communication', 'Communication/Internet'),
+        ('health', 'Health Facilities'),
+        ('education', 'Education Facilities'),
+        ('religious', 'Religious Facilities'),
+        ('market', 'Market/Trading Post'),
+        ('waste', 'Waste Management'),
+        ('drainage', 'Drainage System'),
+    ]
+    
+    AVAILABILITY_STATUS = [
+        ('available', 'Available'),
+        ('limited', 'Limited'),
+        ('poor', 'Poor Quality'),
+        ('none', 'Not Available'),
+        ('planned', 'Planned/Proposed'),
+    ]
+    
+    community = models.ForeignKey(
+        OBCCommunity, 
+        on_delete=models.CASCADE, 
+        related_name='infrastructure'
+    )
+    
+    infrastructure_type = models.CharField(
+        max_length=50,
+        choices=INFRASTRUCTURE_TYPES,
+        help_text="Type of infrastructure"
+    )
+    
+    availability_status = models.CharField(
+        max_length=20,
+        choices=AVAILABILITY_STATUS,
+        help_text="Current availability status"
+    )
+    
+    description = models.TextField(
+        blank=True,
+        help_text="Detailed description of the infrastructure"
+    )
+    
+    coverage_percentage = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(100)
+        ],
+        help_text="Percentage of community with access"
+    )
+    
+    condition = models.CharField(
+        max_length=20,
+        choices=[
+            ('excellent', 'Excellent'),
+            ('good', 'Good'),
+            ('fair', 'Fair'),
+            ('poor', 'Poor'),
+            ('very_poor', 'Very Poor'),
+        ],
+        blank=True,
+        help_text="Physical condition of the infrastructure"
+    )
+    
+    priority_for_improvement = models.CharField(
+        max_length=20,
+        choices=[
+            ('critical', 'Critical'),
+            ('high', 'High'),
+            ('medium', 'Medium'),
+            ('low', 'Low'),
+        ],
+        default='medium',
+        help_text="Priority level for improvement"
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes about the infrastructure"
+    )
+    
+    last_assessed = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when this infrastructure was last assessed"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'communities_infrastructure'
+        ordering = ['community__barangay__name', 'infrastructure_type']
+        verbose_name = 'Community Infrastructure'
+        verbose_name_plural = 'Community Infrastructure'
+        unique_together = ['community', 'infrastructure_type']
+    
+    def __str__(self):
+        return f"{self.get_infrastructure_type_display()} - {self.community.barangay.name} ({self.get_availability_status_display()})"
+
+
+class Stakeholder(models.Model):
+    """
+    Model for tracking key stakeholders in OBC communities including 
+    community leaders, religious figures, and teachers.
+    """
+    STAKEHOLDER_TYPES = [
+        ('community_leader', 'Community Leader'),
+        ('barangay_captain', 'Barangay Captain'),
+        ('tribal_leader', 'Tribal Leader/Datu'),
+        ('ulama', 'Ulama'),
+        ('imam', 'Imam/Khatib'),
+        ('ustadz', 'Ustadz/Religious Teacher'),
+        ('arabic_teacher', 'ALIVE/Arabic Teacher'),
+        ('madrasa_teacher', 'Madrasah Teacher'),
+        ('youth_leader', 'Youth Leader'),
+        ('women_leader', 'Women Leader'),
+        ('business_leader', 'Business Leader'),
+        ('cooperative_leader', 'Cooperative Leader'),
+        ('health_worker', 'Community Health Worker'),
+        ('volunteer', 'Community Volunteer'),
+        ('other', 'Other')
+    ]
+    
+    INFLUENCE_LEVELS = [
+        ('very_high', 'Very High'),
+        ('high', 'High'),
+        ('medium', 'Medium'),
+        ('low', 'Low'),
+        ('emerging', 'Emerging'),
+    ]
+    
+    ENGAGEMENT_LEVELS = [
+        ('very_active', 'Very Active'),
+        ('active', 'Active'),
+        ('moderate', 'Moderate'),
+        ('limited', 'Limited'),
+        ('inactive', 'Inactive'),
+    ]
+    
+    # Basic Information
+    full_name = models.CharField(
+        max_length=255,
+        help_text="Full name of the stakeholder"
+    )
+    
+    nickname = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Common nickname or title (e.g., Ustadz Abdullah)"
+    )
+    
+    stakeholder_type = models.CharField(
+        max_length=50,
+        choices=STAKEHOLDER_TYPES,
+        help_text="Type/role of stakeholder in the community"
+    )
+    
+    community = models.ForeignKey(
+        OBCCommunity,
+        on_delete=models.CASCADE,
+        related_name='stakeholders',
+        help_text="OBC community where this stakeholder is active"
+    )
+    
+    # Role and Position
+    position = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Official position or title held"
+    )
+    
+    organization = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Organization or institution they represent"
+    )
+    
+    responsibilities = models.TextField(
+        blank=True,
+        help_text="Key responsibilities and duties"
+    )
+    
+    # Contact Information
+    contact_number = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Primary contact number"
+    )
+    
+    alternate_contact = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Alternate contact number"
+    )
+    
+    email = models.EmailField(
+        blank=True,
+        help_text="Email address"
+    )
+    
+    address = models.TextField(
+        blank=True,
+        help_text="Physical address within the community"
+    )
+    
+    # Influence and Engagement
+    influence_level = models.CharField(
+        max_length=20,
+        choices=INFLUENCE_LEVELS,
+        default='medium',
+        help_text="Level of influence within the community"
+    )
+    
+    engagement_level = models.CharField(
+        max_length=20,
+        choices=ENGAGEMENT_LEVELS,
+        default='active',
+        help_text="Level of engagement in community activities"
+    )
+    
+    areas_of_influence = models.TextField(
+        blank=True,
+        help_text="Specific areas where they have influence (e.g., youth, religious matters, livelihood)"
+    )
+    
+    # Background Information
+    age = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(18),
+            MaxValueValidator(100)
+        ],
+        help_text="Age of the stakeholder"
+    )
+    
+    educational_background = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Educational background and qualifications"
+    )
+    
+    cultural_background = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Cultural or ethnic background"
+    )
+    
+    languages_spoken = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Languages spoken (comma-separated)"
+    )
+    
+    # Service and History
+    since_year = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[
+            MinValueValidator(1950),
+            MaxValueValidator(2030)
+        ],
+        help_text="Year they started serving in this role"
+    )
+    
+    years_in_community = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of years living in this community"
+    )
+    
+    previous_roles = models.TextField(
+        blank=True,
+        help_text="Previous roles or positions held in the community"
+    )
+    
+    # Additional Information
+    special_skills = models.TextField(
+        blank=True,
+        help_text="Special skills or expertise they bring to the community"
+    )
+    
+    networks = models.TextField(
+        blank=True,
+        help_text="External networks or connections they have"
+    )
+    
+    achievements = models.TextField(
+        blank=True,
+        help_text="Notable achievements or contributions to the community"
+    )
+    
+    challenges_faced = models.TextField(
+        blank=True,
+        help_text="Challenges they face in their role"
+    )
+    
+    support_needed = models.TextField(
+        blank=True,
+        help_text="Support or resources they need to be more effective"
+    )
+    
+    # Administrative
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this stakeholder is currently active"
+    )
+    
+    is_verified = models.BooleanField(
+        default=False,
+        help_text="Whether the stakeholder information has been verified"
+    )
+    
+    verification_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when information was last verified"
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes about the stakeholder"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'communities_stakeholder'
+        ordering = ['community__barangay__name', 'stakeholder_type', 'full_name']
+        verbose_name = 'Community Stakeholder'
+        verbose_name_plural = 'Community Stakeholders'
+        unique_together = ['full_name', 'community', 'stakeholder_type']
+    
+    def __str__(self):
+        display_name = self.nickname if self.nickname else self.full_name
+        return f"{display_name} ({self.get_stakeholder_type_display()}) - {self.community.barangay.name}"
+    
+    @property
+    def display_name(self):
+        """Return the preferred display name."""
+        return self.nickname if self.nickname else self.full_name
+    
+    @property
+    def years_of_service(self):
+        """Calculate years of service if since_year is provided."""
+        if self.since_year:
+            from datetime import datetime
+            return datetime.now().year - self.since_year
+        return None
+    
+    @property
+    def contact_info(self):
+        """Return formatted contact information."""
+        contacts = []
+        if self.contact_number:
+            contacts.append(f"Mobile: {self.contact_number}")
+        if self.alternate_contact:
+            contacts.append(f"Alt: {self.alternate_contact}")
+        if self.email:
+            contacts.append(f"Email: {self.email}")
+        return " | ".join(contacts) if contacts else "No contact info"
+
+
+class StakeholderEngagement(models.Model):
+    """
+    Model for tracking stakeholder engagement activities and interactions.
+    """
+    ENGAGEMENT_TYPES = [
+        ('meeting', 'Community Meeting'),
+        ('consultation', 'Consultation'),
+        ('training', 'Training/Workshop'),
+        ('assessment', 'Assessment/Survey'),
+        ('project_activity', 'Project Activity'),
+        ('religious_activity', 'Religious Activity'),
+        ('cultural_event', 'Cultural Event'),
+        ('emergency_response', 'Emergency Response'),
+        ('coordination', 'Coordination Meeting'),
+        ('other', 'Other')
+    ]
+    
+    ENGAGEMENT_OUTCOMES = [
+        ('very_positive', 'Very Positive'),
+        ('positive', 'Positive'),
+        ('neutral', 'Neutral'),
+        ('challenging', 'Challenging'),
+        ('negative', 'Negative'),
+    ]
+    
+    stakeholder = models.ForeignKey(
+        Stakeholder,
+        on_delete=models.CASCADE,
+        related_name='engagements',
+        help_text="Stakeholder involved in this engagement"
+    )
+    
+    engagement_type = models.CharField(
+        max_length=50,
+        choices=ENGAGEMENT_TYPES,
+        help_text="Type of engagement activity"
+    )
+    
+    title = models.CharField(
+        max_length=255,
+        help_text="Title or subject of the engagement"
+    )
+    
+    description = models.TextField(
+        help_text="Detailed description of the engagement"
+    )
+    
+    date = models.DateField(
+        help_text="Date of the engagement"
+    )
+    
+    duration_hours = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        help_text="Duration in hours"
+    )
+    
+    location = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Location where engagement took place"
+    )
+    
+    participants_count = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of participants involved"
+    )
+    
+    outcome = models.CharField(
+        max_length=20,
+        choices=ENGAGEMENT_OUTCOMES,
+        default='positive',
+        help_text="Overall outcome of the engagement"
+    )
+    
+    key_points = models.TextField(
+        blank=True,
+        help_text="Key points discussed or outcomes achieved"
+    )
+    
+    action_items = models.TextField(
+        blank=True,
+        help_text="Action items or follow-up tasks identified"
+    )
+    
+    challenges_encountered = models.TextField(
+        blank=True,
+        help_text="Challenges or issues encountered"
+    )
+    
+    stakeholder_feedback = models.TextField(
+        blank=True,
+        help_text="Feedback provided by the stakeholder"
+    )
+    
+    follow_up_needed = models.BooleanField(
+        default=False,
+        help_text="Whether follow-up is needed"
+    )
+    
+    follow_up_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date for follow-up if needed"
+    )
+    
+    documented_by = models.CharField(
+        max_length=255,
+        help_text="Person who documented this engagement"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'communities_stakeholder_engagement'
+        ordering = ['-date', 'stakeholder__full_name']
+        verbose_name = 'Stakeholder Engagement'
+        verbose_name_plural = 'Stakeholder Engagements'
+    
+    def __str__(self):
+        return f"{self.title} - {self.stakeholder.display_name} ({self.date})"

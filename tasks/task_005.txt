@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Stakeholder Management System
-# Status: pending
+# Status: done
 # Dependencies: 4
 # Priority: medium
 # Description: Implement the stakeholder management system to track community leaders, Ulama, Imams, ALIVE/Arabic teachers, and other key stakeholders in OBC communities.
