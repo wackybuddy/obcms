@@ -7,7 +7,6 @@
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
             <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                <i class="fas fa-home mr-2"></i>
                 Dashboard
             </a>
         </li>
@@ -51,7 +50,7 @@
                         <p class="text-3xl font-bold">{{ total_communities }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-home text-2xl"></i>
+                        <i class="fas fa-users text-2xl"></i>
                     </div>
                 </div>
             </div>
@@ -167,7 +166,7 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-home text-white"></i>
+                                    <i class="fas fa-map-marker-alt text-white"></i>
                                 </div>
                                 <div>
                                     <div class="text-sm font-semibold text-gray-900">{{ community.barangay.name }}</div>
@@ -239,7 +238,7 @@
             </table>
             {% else %}
             <div class="text-center py-12 text-gray-500">
-                <i class="fas fa-home text-4xl mb-4"></i>
+                <i class="fas fa-search text-4xl mb-4"></i>
                 <p class="text-lg font-medium">No communities found</p>
                 <p class="text-sm">Try adjusting your filters or add a new community.</p>
                 <a href="{% url 'common:communities_add' %}" 

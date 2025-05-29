@@ -13,18 +13,321 @@
     
     <!-- Custom CSS -->
     <style>
-        .bg-bangsamoro {
-            background: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+        /* PRIMARY COLOR SYSTEM - Based on Blue-to-Teal Gradient */
+        :root {
+            /* Primary Gradient Colors */
+            --primary-blue: #1e40af;
+            --primary-teal: #059669;
+            --primary-blue-light: #3b82f6;
+            --primary-blue-lighter: #60a5fa;
+            --primary-blue-lightest: #93c5fd;
+            --primary-blue-dark: #1d4ed8;
+            --primary-blue-darker: #1e3a8a;
+            --primary-teal-light: #10b981;
+            --primary-teal-lighter: #34d399;
+            --primary-teal-lightest: #6ee7b7;
+            --primary-teal-dark: #047857;
+            --primary-teal-darker: #065f46;
+            
+            /* Secondary Colors */
+            --secondary-coral: #f472b6;
+            --secondary-coral-light: #f9a8d4;
+            --secondary-coral-dark: #ec4899;
+            --secondary-purple: #8b5cf6;
+            --secondary-purple-light: #a78bfa;
+            --secondary-purple-dark: #7c3aed;
+            
+            /* Tertiary Colors */
+            --tertiary-amber: #f59e0b;
+            --tertiary-amber-light: #fbbf24;
+            --tertiary-amber-dark: #d97706;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+            --warning-yellow: #f59e0b;
+            
+            /* Neutral Colors */
+            --neutral-50: #f9fafb;
+            --neutral-100: #f3f4f6;
+            --neutral-200: #e5e7eb;
+            --neutral-300: #d1d5db;
+            --neutral-400: #9ca3af;
+            --neutral-500: #6b7280;
+            --neutral-600: #4b5563;
+            --neutral-700: #374151;
+            --neutral-800: #1f2937;
+            --neutral-900: #111827;
         }
+
+        /* Primary Gradient Classes */
+        .bg-bangsamoro,
+        .bg-bangsamoro-gradient {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-teal) 100%);
+        }
+        
+        .bg-bangsamoro-reverse {
+            background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-blue) 100%);
+        }
+        
+        .bg-bangsamoro-radial {
+            background: radial-gradient(circle at center, var(--primary-blue) 0%, var(--primary-teal) 100%);
+        }
+
+        /* Text Colors */
         .text-bangsamoro {
-            color: #1e40af;
+            color: var(--primary-blue);
         }
+        .text-bangsamoro-teal {
+            color: var(--primary-teal);
+        }
+        .text-bangsamoro-light {
+            color: var(--primary-blue-light);
+        }
+        .text-bangsamoro-gradient {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-teal) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Button Classes */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-teal) 100%);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-blue-dark) 0%, var(--primary-teal-dark) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-coral) 0%, var(--secondary-purple) 100%);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, var(--secondary-coral-dark) 0%, var(--secondary-purple-dark) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(244, 114, 182, 0.3);
+        }
+        
+        .btn-tertiary {
+            background: var(--tertiary-amber);
+            color: white;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .btn-tertiary:hover {
+            background: var(--tertiary-amber-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+        }
+
+        /* Background Classes */
+        .bg-primary-light {
+            background-color: var(--primary-blue-lightest);
+        }
+        .bg-primary-teal-light {
+            background-color: var(--primary-teal-lightest);
+        }
+        .bg-secondary-light {
+            background-color: var(--secondary-coral-light);
+        }
+        .bg-tertiary-light {
+            background-color: var(--tertiary-amber-light);
+        }
+
+        /* Border Classes */
+        .border-bangsamoro {
+            border-color: var(--primary-blue);
+        }
+        .border-bangsamoro-teal {
+            border-color: var(--primary-teal);
+        }
+        .border-bangsamoro-gradient {
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                        linear-gradient(135deg, var(--primary-blue), var(--primary-teal)) border-box;
+        }
+
+        /* Interactive Effects */
         .hover-lift:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
         }
+        
+        .hover-gradient:hover {
+            background: linear-gradient(135deg, var(--primary-blue-light) 0%, var(--primary-teal-light) 100%);
+            transition: all 0.3s ease;
+        }
+        
         .nav-item:hover {
             background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        /* Card and Component Styles */
+        .card-gradient {
+            background: linear-gradient(135deg, var(--neutral-50) 0%, var(--primary-blue-lightest) 100%);
+            border: 1px solid var(--primary-blue-lighter);
+        }
+        
+        .card-teal-gradient {
+            background: linear-gradient(135deg, var(--neutral-50) 0%, var(--primary-teal-lightest) 100%);
+            border: 1px solid var(--primary-teal-lighter);
+        }
+
+        /* Status and Alert Colors */
+        .status-success {
+            background-color: var(--success-green);
+            color: white;
+        }
+        .status-error {
+            background-color: var(--error-red);
+            color: white;
+        }
+        .status-warning {
+            background-color: var(--warning-yellow);
+            color: white;
+        }
+        .status-info {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-teal) 100%);
+            color: white;
+        }
+
+        /* Animation Classes */
+        .gradient-shift {
+            background: linear-gradient(270deg, var(--primary-blue), var(--primary-teal), var(--secondary-purple), var(--primary-blue));
+            background-size: 800% 800%;
+            animation: gradientShift 8s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Focus States */
+        .focus-bangsamoro:focus {
+            outline: none;
+            ring: 2px solid var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+        
+        .focus-bangsamoro-teal:focus {
+            outline: none;
+            ring: 2px solid var(--primary-teal);
+            border-color: var(--primary-teal);
+        }
+
+        /* Mobile Responsive Utilities */
+        @media (max-width: 475px) {
+            .xs\:hidden { display: none; }
+            .xs\:block { display: block; }
+            .xs\:flex { display: flex; }
+        }
+
+        /* Enhanced Dropdown Styles */
+        .user-dropdown-menu {
+            min-width: 12rem;
+            border: 1px solid var(--neutral-200);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .user-dropdown-menu.opacity-100 {
+            opacity: 1;
+        }
+
+        .user-dropdown-menu.opacity-0 {
+            opacity: 0;
+        }
+
+        .user-dropdown-menu.scale-100 {
+            transform: scale(1);
+        }
+
+        .user-dropdown-menu.scale-95 {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Navigation Enhancements */
+        @media (max-width: 1023px) {
+            .mobile-nav-item {
+                position: relative;
+                overflow: hidden;
+            }
+
+            .mobile-nav-item::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+                transition: left 0.5s;
+            }
+
+            .mobile-nav-item:hover::before {
+                left: 100%;
+            }
+        }
+
+        /* Touch Device Optimizations */
+        .touch-device .nav-item {
+            padding: 0.75rem 1rem;
+        }
+
+        .touch-device .user-dropdown button {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        /* Navbar Responsiveness */
+        @media (max-width: 1024px) {
+            nav .max-w-7xl {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav h1 {
+                font-size: 1rem;
+            }
+            
+            nav .text-xs {
+                font-size: 0.625rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            nav .flex.justify-between {
+                padding: 0 0.25rem;
+            }
+        }
+
+        /* Smooth transitions for all interactive elements */
+        .nav-item,
+        .mobile-nav-item,
+        .user-dropdown button,
+        .user-dropdown-menu a {
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* Print styles */
+        @media print {
+            nav,
+            .user-dropdown,
+            #mobileMenu {
+                display: none !important;
+            }
         }
     </style>
     
@@ -32,132 +335,7 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Navigation Bar -->
-    {% if user.is_authenticated %}
-    <nav class="bg-bangsamoro shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <!-- Logo and Brand -->
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <a href="{% url 'common:dashboard' %}" class="flex items-center space-x-2 text-white hover:text-green-200">
-                            <i class="fas fa-mosque text-2xl"></i>
-                            <div>
-                                <h1 class="text-xl font-bold">OBC Management</h1>
-                                <p class="text-xs text-green-200">OOBC - BARMM</p>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Main Navigation -->
-                <div class="hidden md:flex items-center space-x-1">
-                    <a href="{% url 'common:dashboard' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
-                        <i class="fas fa-tachometer-alt"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    
-                    <a href="{% url 'common:communities_home' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
-                        <i class="fas fa-users"></i>
-                        <span>Communities</span>
-                    </a>
-                    
-                    <a href="{% url 'common:mana_home' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>MANA</span>
-                    </a>
-                    
-                    <a href="{% url 'common:coordination_home' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
-                        <i class="fas fa-handshake"></i>
-                        <span>Coordination</span>
-                    </a>
-                    
-                    <a href="{% url 'common:policy_tracking_home' %}" class="nav-item px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors flex items-center space-x-2">
-                        <i class="fas fa-gavel"></i>
-                        <span>Policy Tracking</span>
-                    </a>
-                </div>
-                
-                <!-- User Menu -->
-                <div class="flex items-center space-x-4">
-                    <div class="hidden md:flex items-center space-x-2 text-white">
-                        <div class="text-right">
-                            <p class="text-sm font-medium">{{ user.get_full_name|default:user.username }}</p>
-                            <p class="text-xs text-green-200">{{ user.get_user_type_display }}</p>
-                        </div>
-                        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user text-sm"></i>
-                        </div>
-                    </div>
-                    
-                    <!-- Dropdown Menu -->
-                    <div class="relative">
-                        <button class="nav-item p-2 rounded-md text-white hover:text-green-200 transition-colors" onclick="toggleUserMenu()">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                        
-                        <div id="userMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                            <a href="{% url 'common:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                                <i class="fas fa-user-circle"></i>
-                                <span>Profile</span>
-                            </a>
-                            {% if user.is_staff %}
-                            <a href="/admin/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                                <i class="fas fa-tools"></i>
-                                <span>Admin Panel</span>
-                            </a>
-                            {% endif %}
-                            <hr class="my-1">
-                            <a href="{% url 'common:logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span>Logout</span>
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <!-- Mobile menu button -->
-                    <button class="md:hidden nav-item p-2 rounded-md text-white hover:text-green-200" onclick="toggleMobileMenu()">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Mobile Navigation Menu -->
-        <div id="mobileMenu" class="hidden md:hidden bg-blue-800 bg-opacity-90">
-            <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="{% url 'common:dashboard' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="{% url 'common:communities_home' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
-                    <i class="fas fa-users"></i>
-                    <span>Communities</span>
-                </a>
-                <a href="{% url 'common:mana_home' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
-                    <i class="fas fa-map-marked-alt"></i>
-                    <span>MANA</span>
-                </a>
-                <a href="{% url 'common:coordination_home' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
-                    <i class="fas fa-handshake"></i>
-                    <span>Coordination</span>
-                </a>
-                <a href="{% url 'common:policy_tracking_home' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
-                    <i class="fas fa-gavel"></i>
-                    <span>Policy Tracking</span>
-                </a>
-                <hr class="my-2 border-white border-opacity-20">
-                <a href="{% url 'common:profile' %}" class="block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 flex items-center space-x-2">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Profile</span>
-                </a>
-                <a href="{% url 'common:logout' %}" class="block px-3 py-2 rounded-md text-red-200 hover:bg-red-600 hover:bg-opacity-50 flex items-center space-x-2">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Logout</span>
-                </a>
-            </div>
-        </div>
-    </nav>
-    {% endif %}
+    {% include 'common/navbar.html' %}
 
     <!-- Breadcrumb -->
     {% if user.is_authenticated %}
@@ -165,11 +343,6 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
             <nav class="flex" aria-label="Breadcrumb">
                 <ol class="flex items-center space-x-2 text-sm">
-                    <li>
-                        <a href="{% url 'common:dashboard' %}" class="text-gray-500 hover:text-bangsamoro">
-                            <i class="fas fa-home"></i>
-                        </a>
-                    </li>
                     {% block breadcrumb %}{% endblock %}
                 </ol>
             </nav>
@@ -204,6 +377,7 @@
                     <p class="text-lg font-semibold">BANGSAMORO KA, SAAN KA MAN!</p>
                 </div>
                 <p class="text-sm text-gray-300">Office for Other Bangsamoro Communities (OOBC)</p>
+                <p class="text-sm text-gray-300">Office of the Chief Minister (OCM)</p>
                 <p class="text-sm text-gray-300">Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)</p>
                 <div class="mt-4 text-xs text-gray-400">
                     <p>&copy; {% now "Y" %} BARMM - All rights reserved</p>
@@ -214,28 +388,141 @@
 
     <!-- JavaScript -->
     <script>
-        function toggleUserMenu() {
-            const menu = document.getElementById('userMenu');
-            menu.classList.toggle('hidden');
-            
-            // Close menu when clicking outside
-            document.addEventListener('click', function(event) {
-                if (!event.target.closest('#userMenu') && !event.target.closest('button')) {
-                    menu.classList.add('hidden');
-                }
-            });
-        }
-        
+        // Mobile menu toggle
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
             menu.classList.toggle('hidden');
         }
-        
-        // Close dropdowns when pressing Escape
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                document.getElementById('userMenu').classList.add('hidden');
-                document.getElementById('mobileMenu').classList.add('hidden');
+
+        // Initialize navbar functionality when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // User dropdown hover functionality
+            const userDropdown = document.querySelector('.user-dropdown');
+            const userDropdownMenu = document.querySelector('.user-dropdown-menu');
+            let hoverTimeout;
+
+            if (userDropdown && userDropdownMenu) {
+                // Show dropdown on mouseenter
+                userDropdown.addEventListener('mouseenter', function() {
+                    clearTimeout(hoverTimeout);
+                    userDropdownMenu.classList.remove('hidden');
+                    // Add smooth transition classes
+                    setTimeout(() => {
+                        userDropdownMenu.classList.remove('opacity-0', 'scale-95');
+                        userDropdownMenu.classList.add('opacity-100', 'scale-100');
+                    }, 10);
+                });
+
+                // Hide dropdown on mouseleave with delay
+                userDropdown.addEventListener('mouseleave', function() {
+                    hoverTimeout = setTimeout(() => {
+                        userDropdownMenu.classList.remove('opacity-100', 'scale-100');
+                        userDropdownMenu.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {
+                            userDropdownMenu.classList.add('hidden');
+                        }, 200);
+                    }, 150); // Small delay before hiding
+                });
+
+                // Keep dropdown open when hovering over the menu itself
+                userDropdownMenu.addEventListener('mouseenter', function() {
+                    clearTimeout(hoverTimeout);
+                });
+
+                userDropdownMenu.addEventListener('mouseleave', function() {
+                    hoverTimeout = setTimeout(() => {
+                        userDropdownMenu.classList.remove('opacity-100', 'scale-100');
+                        userDropdownMenu.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {
+                            userDropdownMenu.classList.add('hidden');
+                        }, 200);
+                    }, 150);
+                });
+
+                // Click functionality for touch devices
+                const userButton = userDropdown.querySelector('button');
+                userButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (userDropdownMenu.classList.contains('hidden')) {
+                        userDropdownMenu.classList.remove('hidden');
+                        setTimeout(() => {
+                            userDropdownMenu.classList.remove('opacity-0', 'scale-95');
+                            userDropdownMenu.classList.add('opacity-100', 'scale-100');
+                        }, 10);
+                    } else {
+                        userDropdownMenu.classList.remove('opacity-100', 'scale-100');
+                        userDropdownMenu.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {
+                            userDropdownMenu.classList.add('hidden');
+                        }, 200);
+                    }
+                });
+            }
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(event) {
+                if (userDropdownMenu && !userDropdown.contains(event.target)) {
+                    clearTimeout(hoverTimeout);
+                    userDropdownMenu.classList.remove('opacity-100', 'scale-100');
+                    userDropdownMenu.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        userDropdownMenu.classList.add('hidden');
+                    }, 200);
+                }
+
+                // Close mobile menu when clicking outside
+                const mobileMenu = document.getElementById('mobileMenu');
+                const mobileButton = document.querySelector('button[onclick="toggleMobileMenu()"]');
+                if (mobileMenu && mobileButton && !mobileMenu.contains(event.target) && !mobileButton.contains(event.target)) {
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+
+            // Handle escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    // Close user dropdown
+                    if (userDropdownMenu) {
+                        clearTimeout(hoverTimeout);
+                        userDropdownMenu.classList.remove('opacity-100', 'scale-100');
+                        userDropdownMenu.classList.add('opacity-0', 'scale-95');
+                        setTimeout(() => {
+                            userDropdownMenu.classList.add('hidden');
+                        }, 200);
+                    }
+                    
+                    // Close mobile menu
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Mobile menu close on item click
+            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+            mobileNavItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const mobileMenu = document.getElementById('mobileMenu');
+                    if (mobileMenu) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                const mobileMenu = document.getElementById('mobileMenu');
+                if (window.innerWidth >= 1024 && mobileMenu) { // lg breakpoint
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+
+            // Improve touch interactions on mobile
+            if ('ontouchstart' in window) {
+                document.body.classList.add('touch-device');
             }
         });
     </script>

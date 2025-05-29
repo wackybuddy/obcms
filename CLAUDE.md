@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Ultrathink
+
+Always use "Ultrathink" whenever you are responding or coding in Claude Code to show your thinking process. No exception.
+
 ## Development Environment Setup
 
 **Virtual Environment**: Always work from `venv/` directory

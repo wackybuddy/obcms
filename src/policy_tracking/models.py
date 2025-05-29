@@ -38,19 +38,11 @@ class PolicyRecommendation(models.Model):
     ]
     
     POLICY_CATEGORIES = [
-        ('education', 'Education'),
         ('economic_development', 'Economic Development'),
         ('social_development', 'Social Development'),
         ('cultural_development', 'Cultural Development'),
-        ('infrastructure', 'Infrastructure'),
-        ('governance', 'Governance'),
-        ('healthcare', 'Healthcare'),
-        ('environment', 'Environment'),
-        ('human_rights', 'Human Rights'),
-        ('legal_framework', 'Legal Framework'),
-        ('administrative', 'Administrative'),
-        ('financial', 'Financial'),
-        ('other', 'Other'),
+        ('rehabilitation_development', 'Rehabilitation & Development'),
+        ('protection_of_rights', 'Protection of Rights'),
     ]
     
     SCOPE_LEVELS = [
@@ -82,7 +74,7 @@ class PolicyRecommendation(models.Model):
     )
     
     category = models.CharField(
-        max_length=25,
+        max_length=30,
         choices=POLICY_CATEGORIES,
         help_text="Policy category"
     )

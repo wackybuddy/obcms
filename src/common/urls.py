@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from communities import data_utils
 
 app_name = 'common'
 
@@ -22,8 +23,16 @@ urlpatterns = [
     path('coordination/partnerships/', views.coordination_partnerships, name='coordination_partnerships'),
     path('coordination/events/', views.coordination_events, name='coordination_events'),
     path('coordination/view-all/', views.coordination_view_all, name='coordination_view_all'),
-    path('policy-tracking/', views.policy_tracking_home, name='policy_tracking_home'),
-    path('policy-tracking/new-policy/', views.policy_tracking_new_policy, name='policy_tracking_new_policy'),
-    path('policy-tracking/manage-policies/', views.policy_tracking_manage_policies, name='policy_tracking_manage_policies'),
+    path('recommendations/', views.recommendations_home, name='recommendations_home'),
+    path('recommendations/new/', views.recommendations_new, name='recommendations_new'),
+    path('recommendations/manage/', views.recommendations_manage, name='recommendations_manage'),
+    path('recommendations/area/<str:area_slug>/', views.recommendations_by_area, name='recommendations_by_area'),
+    
+    # Data Import/Export/Report URLs
+    path('communities/import/', data_utils.import_communities_csv, name='import_communities'),
+    path('communities/export/', data_utils.export_communities, name='export_communities'),
+    path('communities/report/', data_utils.generate_obc_report, name='generate_obc_report'),
+    path('data-guidelines/', data_utils.data_guidelines, name='data_guidelines'),
+    
     path('', views.dashboard, name='home'),  # Default to dashboard
 ]

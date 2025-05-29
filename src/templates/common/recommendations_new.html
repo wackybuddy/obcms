@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}New Policy - Policy Tracking{% endblock %}
+{% block title %}New Recommendation - Recommendations Tracking{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -9,23 +9,14 @@
     <nav class="flex mb-6" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-4">
             <li>
-                <div>
-                    <a href="{% url 'common:dashboard' %}" class="text-gray-400 hover:text-gray-500">
-                        <i class="fas fa-home"></i>
-                        <span class="sr-only">Home</span>
-                    </a>
+                <div class="flex items-center">
+                    <a href="{% url 'common:recommendations_home' %}" class="text-gray-400 hover:text-gray-500">Recommendations</a>
                 </div>
             </li>
             <li>
                 <div class="flex items-center">
                     <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
-                    <a href="{% url 'common:policy_tracking_home' %}" class="text-gray-400 hover:text-gray-500">Policy Tracking</a>
-                </div>
-            </li>
-            <li>
-                <div class="flex items-center">
-                    <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
-                    <span class="text-gray-600 font-medium">New Policy</span>
+                    <span class="text-gray-600 font-medium">New Recommendation</span>
                 </div>
             </li>
         </ol>
@@ -33,8 +24,8 @@
 
     <!-- Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Create New Policy Recommendation</h1>
-        <p class="mt-2 text-lg text-gray-600">Track and manage policy recommendations for OOBC communities</p>
+        <h1 class="text-3xl font-bold text-gray-900">Create New Recommendation</h1>
+        <p class="mt-2 text-lg text-gray-600">Track and manage recommendations for OOBC communities</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -42,7 +33,7 @@
         <div class="lg:col-span-2">
             <div class="bg-white rounded-lg shadow-lg">
                 <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Policy Information</h2>
+                    <h2 class="text-xl font-semibold text-gray-900">Recommendation Information</h2>
                 </div>
                 <form class="p-6 space-y-6">
                     {% csrf_token %}
@@ -50,11 +41,11 @@
                     <!-- Policy Title -->
                     <div>
                         <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
-                            Policy Title <span class="text-red-500">*</span>
+                            Recommendation Title <span class="text-red-500">*</span>
                         </label>
                         <input type="text" id="title" name="title" required 
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                               placeholder="Enter policy title">
+                               placeholder="Enter recommendation title">
                     </div>
 
                     <!-- Policy Category -->
@@ -65,14 +56,11 @@
                         <select id="category" name="category" required 
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             <option value="">Select category</option>
-                            <option value="education">Education</option>
                             <option value="economic_development">Economic Development</option>
                             <option value="social_development">Social Development</option>
                             <option value="cultural_development">Cultural Development</option>
-                            <option value="infrastructure">Infrastructure</option>
-                            <option value="healthcare">Healthcare</option>
-                            <option value="governance">Governance</option>
-                            <option value="environment">Environment</option>
+                            <option value="rehabilitation_development">Rehabilitation & Development</option>
+                            <option value="protection_of_rights">Protection of Rights</option>
                         </select>
                     </div>
 
@@ -117,11 +105,11 @@
                     <!-- Policy Description -->
                     <div>
                         <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                            Policy Description <span class="text-red-500">*</span>
+                            Recommendation Description <span class="text-red-500">*</span>
                         </label>
                         <textarea id="description" name="description" rows="4" required 
                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  placeholder="Provide a detailed description of the policy recommendation"></textarea>
+                                  placeholder="Provide a detailed description of the recommendation"></textarea>
                     </div>
 
                     <!-- Rationale -->
@@ -131,7 +119,7 @@
                         </label>
                         <textarea id="rationale" name="rationale" rows="4" required 
                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                  placeholder="Explain the reasoning and evidence supporting this policy"></textarea>
+                                  placeholder="Explain the reasoning and evidence supporting this recommendation"></textarea>
                     </div>
 
                     <!-- Expected Outcomes -->
@@ -171,7 +159,7 @@
                         </button>
                         <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200">
                             <i class="fas fa-save mr-2"></i>
-                            Create Policy
+                            Create Recommendation
                         </button>
                     </div>
                 </form>
@@ -183,28 +171,28 @@
             <!-- Recent Policies -->
             <div class="bg-white rounded-lg shadow-lg">
                 <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-900">Recent Policies</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">Recent Recommendations</h3>
                 </div>
                 <div class="p-6">
-                    {% if recent_policies %}
+                    {% if recent_recommendations %}
                         <div class="space-y-3">
-                            {% for policy in recent_policies %}
+                            {% for recommendation in recent_recommendations %}
                             <div class="p-3 bg-gray-50 rounded-lg">
-                                <p class="text-sm font-medium text-gray-900">{{ policy.title|truncatechars:40 }}</p>
-                                <p class="text-xs text-gray-500">{{ policy.category|capfirst }} • {{ policy.created_at|date:"M d" }}</p>
+                                <p class="text-sm font-medium text-gray-900">{{ recommendation.title|truncatechars:40 }}</p>
+                                <p class="text-xs text-gray-500">{{ recommendation.category|capfirst }} • {{ recommendation.created_at|date:"M d" }}</p>
                                 <span class="inline-block mt-1 px-2 py-1 text-xs font-semibold rounded-full 
-                                    {% if policy.status == 'draft' %}bg-gray-100 text-gray-800
-                                    {% elif policy.status == 'under_review' %}bg-yellow-100 text-yellow-800
-                                    {% elif policy.status == 'approved' %}bg-green-100 text-green-800
-                                    {% elif policy.status == 'implemented' %}bg-blue-100 text-blue-800
+                                    {% if recommendation.status == 'draft' %}bg-gray-100 text-gray-800
+                                    {% elif recommendation.status == 'under_review' %}bg-yellow-100 text-yellow-800
+                                    {% elif recommendation.status == 'approved' %}bg-green-100 text-green-800
+                                    {% elif recommendation.status == 'implemented' %}bg-blue-100 text-blue-800
                                     {% else %}bg-red-100 text-red-800{% endif %}">
-                                    {{ policy.status|capfirst|default:"Draft" }}
+                                    {{ recommendation.status|capfirst|default:"Draft" }}
                                 </span>
                             </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-gray-500 text-sm">No policies created yet.</p>
+                        <p class="text-gray-500 text-sm">No recommendations created yet.</p>
                     {% endif %}
                 </div>
             </div>
@@ -215,17 +203,17 @@
                     <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
                 </div>
                 <div class="p-6 space-y-3">
-                    <a href="{% url 'common:policy_tracking_manage_policies' %}" class="block w-full text-center bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors duration-200">
+                    <a href="{% url 'common:recommendations_manage' %}" class="block w-full text-center bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors duration-200">
                         <i class="fas fa-list mr-2"></i>
-                        View All Policies
+                        View All Recommendations
                     </a>
                     <button class="w-full bg-green-100 text-green-700 px-4 py-2 rounded-md hover:bg-green-200 transition-colors duration-200">
                         <i class="fas fa-file-import mr-2"></i>
-                        Import Policy Template
+                        Import Recommendation Template
                     </button>
                     <button class="w-full bg-purple-100 text-purple-700 px-4 py-2 rounded-md hover:bg-purple-200 transition-colors duration-200">
                         <i class="fas fa-chart-bar mr-2"></i>
-                        Policy Analytics
+                        Recommendation Analytics
                     </button>
                 </div>
             </div>
@@ -234,14 +222,14 @@
             <div class="bg-blue-50 rounded-lg p-6">
                 <h3 class="text-lg font-semibold text-blue-900 mb-3">
                     <i class="fas fa-info-circle mr-2"></i>
-                    Policy Guidelines
+                    Recommendation Guidelines
                 </h3>
                 <ul class="text-sm text-blue-800 space-y-2">
-                    <li>• Ensure policies align with OOBC mandate and objectives</li>
+                    <li>• Ensure recommendations align with OOBC mandate and objectives</li>
                     <li>• Include evidence-based justification</li>
                     <li>• Consider cultural sensitivity and community needs</li>
                     <li>• Specify measurable outcomes and success indicators</li>
-                    <li>• Review existing policies to avoid duplication</li>
+                    <li>• Review existing recommendations to avoid duplication</li>
                 </ul>
             </div>
         </div>

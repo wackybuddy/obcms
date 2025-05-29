@@ -4,24 +4,32 @@
 
 {% block content %}
 <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <div>
-            <div class="mx-auto h-12 w-12 bg-bangsamoro rounded-full flex items-center justify-center">
-                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                </svg>
+    <div class="max-w-md w-full">
+        <div class="bg-white py-8 px-6 shadow-lg rounded-lg border border-gray-200">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <div class="mx-auto h-16 w-16 bg-bangsamoro-gradient rounded-full flex items-center justify-center shadow-lg">
+                    <i class="fas fa-user-plus text-white text-2xl"></i>
+                </div>
+                <h2 class="mt-6 text-3xl font-bold text-gray-900">
+                    Create Account
+                </h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Register for OBC Management System
+                </p>
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <p class="text-sm font-medium text-blue-800">
+                        Office for Other Bangsamoro Communities
+                    </p>
+                    <p class="text-xs text-blue-600 mt-1">
+                        BANGSAMORO KA, SAAN KA MAN!
+                    </p>
+                </div>
             </div>
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                Create your account
-            </h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Register for OBC Management System
-            </p>
-        </div>
-        
-        <form class="mt-8 space-y-6" method="post">
-            {% csrf_token %}
-            <div class="space-y-4">
+            
+            <!-- Registration Form -->
+            <form class="space-y-6" method="post">
+                {% csrf_token %}
                 <!-- Username -->
                 <div>
                     <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700">Username</label>
@@ -112,31 +120,57 @@
                 </div>
             </div>
 
-            {% if form.non_field_errors %}
-                <div class="text-red-600 text-sm">
-                    {{ form.non_field_errors.0 }}
+                <!-- Form Errors -->
+                {% if form.non_field_errors %}
+                    <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-md">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-red-800">{{ form.non_field_errors.0 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-bangsamoro-gradient hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-md transform hover:scale-105">
+                        <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                            <i class="fas fa-user-plus text-white group-hover:text-green-200 transition-colors"></i>
+                        </span>
+                        Create OBC Account
+                    </button>
                 </div>
-            {% endif %}
-
-            <div class="flex items-center justify-between">
-                <div class="text-sm">
-                    <a href="{% url 'common:login' %}" class="font-medium text-bangsamoro hover:text-blue-500">
-                        Already have an account? Sign in here
-                    </a>
+            </form>
+            
+            <!-- Bottom Info Section -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <!-- Login Link -->
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        Already have an account?
+                        <a href="{% url 'common:login' %}" class="font-medium text-blue-600 hover:text-blue-500 transition-colors">
+                            Sign in here
+                        </a>
+                    </p>
+                </div>
+                
+                <!-- Approval Notice -->
+                <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p class="text-xs text-yellow-800">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Your account will be pending approval after registration.
+                    </p>
+                    <p class="text-xs text-yellow-700 mt-1">
+                        You will be notified once your account is approved.
+                    </p>
                 </div>
             </div>
-
-            <div>
-                <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-bangsamoro hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Register Account
-                </button>
-            </div>
-
-            <div class="text-sm text-center text-gray-600">
-                <p class="mt-2">Your account will be pending approval after registration.</p>
-                <p>You will be notified once your account is approved.</p>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 {% endblock %}

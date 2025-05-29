@@ -1,20 +1,19 @@
 {% extends 'base.html' %}
 
-{% block title %}Policy Tracking - OBC Management System{% endblock %}
+{% block title %}Recommendations Tracking - OBC Management System{% endblock %}
 
 {% block breadcrumbs %}
 <nav class="flex" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
             <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                <i class="fas fa-home mr-2"></i>
                 Dashboard
             </a>
         </li>
         <li aria-current="page">
             <div class="flex items-center">
                 <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Policy Tracking</span>
+                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Recommendations</span>
             </div>
         </li>
     </ol>
@@ -25,86 +24,146 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <!-- Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Policy Tracking & Advocacy</h1>
+        <h1 class="text-3xl font-bold text-gray-900">Recommendations Tracking & Advocacy</h1>
         <p class="mt-2 text-lg text-gray-600">
-            Evidence-based policy recommendations and advocacy tracking for Bangsamoro communities
+            Evidence-based policy, program, and service recommendations tracking for Bangsamoro communities
         </p>
     </div>
 
     <!-- Statistics Cards -->
     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Recommendations -->
         <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-orange-100 text-sm font-medium">Total Policies</p>
-                        <p class="text-3xl font-bold">{{ stats.policy_tracking.total_policies|default:0 }}</p>
+                        <p class="text-orange-100 text-sm font-medium">Total Recommendations</p>
+                        <p class="text-3xl font-bold">{{ stats.recommendations.total|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-file-alt text-2xl"></i>
+                        <i class="fas fa-lightbulb text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-orange-400/30">
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.policies|default:0 }}</p>
+                        <p class="text-xs text-orange-100">Policies</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.programs|default:0 }}</p>
+                        <p class="text-xs text-orange-100">Programs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.services|default:0 }}</p>
+                        <p class="text-xs text-orange-100">Services</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Total Implemented -->
         <div class="relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-green-100 text-sm font-medium">Implemented</p>
-                        <p class="text-3xl font-bold">{{ stats.policy_tracking.implemented|default:0 }}</p>
+                        <p class="text-green-100 text-sm font-medium">Total Implemented</p>
+                        <p class="text-3xl font-bold">{{ stats.recommendations.implemented|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                         <i class="fas fa-check-circle text-2xl"></i>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm font-medium">Under Review</p>
-                        <p class="text-3xl font-bold">{{ stats.policy_tracking.under_review|default:0 }}</p>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-green-400/30">
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.implemented_policies|default:0 }}</p>
+                        <p class="text-xs text-green-100">Policies</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-clock text-2xl"></i>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.implemented_programs|default:0 }}</p>
+                        <p class="text-xs text-green-100">Programs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.implemented_services|default:0 }}</p>
+                        <p class="text-xs text-green-100">Services</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="relative overflow-hidden bg-gradient-to-br from-red-500 via-red-600 to-red-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+        <!-- Submitted -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-red-100 text-sm font-medium">High Priority</p>
-                        <p class="text-3xl font-bold">{{ stats.policy_tracking.high_priority|default:0 }}</p>
+                        <p class="text-blue-100 text-sm font-medium">Submitted</p>
+                        <p class="text-3xl font-bold">{{ stats.recommendations.submitted|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-exclamation-triangle text-2xl"></i>
+                        <i class="fas fa-paper-plane text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-blue-400/30">
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.submitted_policies|default:0 }}</p>
+                        <p class="text-xs text-blue-100">Policies</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.submitted_programs|default:0 }}</p>
+                        <p class="text-xs text-blue-100">Programs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.submitted_services|default:0 }}</p>
+                        <p class="text-xs text-blue-100">Services</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proposed -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium">Proposed</p>
+                        <p class="text-3xl font-bold">{{ stats.recommendations.proposed|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-edit text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-purple-400/30">
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.proposed_policies|default:0 }}</p>
+                        <p class="text-xs text-purple-100">Policies</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.proposed_programs|default:0 }}</p>
+                        <p class="text-xs text-purple-100">Programs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.recommendations.proposed_services|default:0 }}</p>
+                        <p class="text-xs text-purple-100">Services</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Policies & Evidence -->
+    <!-- Recent Recommendations & Evidence -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Recent Policies -->
+        <!-- Recent Recommendations -->
         <div class="bg-white rounded-lg shadow-lg border border-gray-200">
             <div class="p-6">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                     <i class="fas fa-history text-orange-600 mr-3"></i>
-                    Recent Policy Updates
+                    Recent Recommendation Updates
                 </h2>
                 <div class="space-y-4">
-                    {% for policy in stats.policy_tracking.recent_policies|slice:":5" %}
+                    {% for recommendation in stats.recommendations_tracking.recent_recommendations|slice:":5" %}
                     <div class="flex items-center p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200">
                         <div class="flex-shrink-0">
                             <div class="p-2 bg-orange-500 rounded-lg">
@@ -112,22 +171,22 @@
                             </div>
                         </div>
                         <div class="ml-4 flex-1">
-                            <p class="text-sm font-semibold text-gray-900">{{ policy.title }}</p>
-                            <p class="text-xs text-gray-600">{{ policy.policy_area|title }} • {{ policy.priority|title }} Priority</p>
+                            <p class="text-sm font-semibold text-gray-900">{{ recommendation.title }}</p>
+                            <p class="text-xs text-gray-600">{{ recommendation.category|title }} • {{ recommendation.priority|title }} Priority</p>
                         </div>
                         <div class="flex-shrink-0">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                         {% if policy.status == 'active' %}bg-green-100 text-green-800
-                                         {% elif policy.status == 'under_review' %}bg-yellow-100 text-yellow-800
+                                         {% if recommendation.status == 'implemented' %}bg-green-100 text-green-800
+                                         {% elif recommendation.status == 'under_review' %}bg-yellow-100 text-yellow-800
                                          {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ policy.status|title }}
+                                {{ recommendation.status|title }}
                             </span>
                         </div>
                     </div>
                     {% empty %}
                     <div class="text-center py-8 text-gray-500">
                         <i class="fas fa-file-plus text-3xl mb-4"></i>
-                        <p>No recent policy updates found</p>
+                        <p>No recent recommendation updates found</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -142,7 +201,7 @@
                     Evidence Contributions
                 </h2>
                 <div class="space-y-4">
-                    {% for evidence in stats.policy_tracking.recent_evidence|slice:":5" %}
+                    {% for evidence in stats.recommendations_tracking.recent_evidence|slice:":5" %}
                     <div class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                         <div class="flex-shrink-0">
                             <div class="p-2 bg-blue-500 rounded-lg">
@@ -172,57 +231,43 @@
         </div>
     </div>
 
-    <!-- Policy Areas -->
+    <!-- Recommendations Areas -->
     <div class="bg-white rounded-lg shadow-lg border border-gray-200 mb-8">
         <div class="p-6">
             <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                 <i class="fas fa-layer-group text-orange-600 mr-3"></i>
-                Policy Areas
+                Recommendations Areas
             </h2>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                <div class="group p-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-colors duration-200 cursor-pointer">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors duration-200">
-                                <i class="fas fa-graduation-cap text-blue-600 text-xl"></i>
-                            </div>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm font-semibold text-gray-900">Education</p>
-                            <p class="text-lg font-bold text-blue-600">{{ stats.policy_tracking.by_area.education|default:0 }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="group p-4 rounded-lg border-2 border-gray-200 hover:border-green-400 transition-colors duration-200 cursor-pointer">
+                <a href="{% url 'common:recommendations_by_area' 'economic-development' %}" class="group p-4 rounded-lg border-2 border-gray-200 hover:border-green-400 transition-colors duration-200 cursor-pointer block">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <div class="p-2 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors duration-200">
-                                <i class="fas fa-briefcase text-green-600 text-xl"></i>
+                                <i class="fas fa-chart-line text-green-600 text-xl"></i>
                             </div>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-semibold text-gray-900">Economic</p>
-                            <p class="text-lg font-bold text-green-600">{{ stats.policy_tracking.by_area.economic|default:0 }}</p>
+                            <p class="text-sm font-semibold text-gray-900">Economic Development</p>
+                            <p class="text-lg font-bold text-green-600">{{ stats.areas.economic_development|default:0 }}</p>
                         </div>
                     </div>
-                </div>
+                </a>
 
-                <div class="group p-4 rounded-lg border-2 border-gray-200 hover:border-purple-400 transition-colors duration-200 cursor-pointer">
+                <a href="{% url 'common:recommendations_by_area' 'social-development' %}" class="group p-4 rounded-lg border-2 border-gray-200 hover:border-purple-400 transition-colors duration-200 cursor-pointer block">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <div class="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors duration-200">
-                                <i class="fas fa-heart text-purple-600 text-xl"></i>
+                                <i class="fas fa-users text-purple-600 text-xl"></i>
                             </div>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-semibold text-gray-900">Social</p>
-                            <p class="text-lg font-bold text-purple-600">{{ stats.policy_tracking.by_area.social|default:0 }}</p>
+                            <p class="text-sm font-semibold text-gray-900">Social Development</p>
+                            <p class="text-lg font-bold text-purple-600">{{ stats.areas.social_development|default:0 }}</p>
                         </div>
                     </div>
-                </div>
+                </a>
 
-                <div class="group p-4 rounded-lg border-2 border-gray-200 hover:border-orange-400 transition-colors duration-200 cursor-pointer">
+                <a href="{% url 'common:recommendations_by_area' 'cultural-development' %}" class="group p-4 rounded-lg border-2 border-gray-200 hover:border-orange-400 transition-colors duration-200 cursor-pointer block">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
                             <div class="p-2 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors duration-200">
@@ -230,25 +275,39 @@
                             </div>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-semibold text-gray-900">Cultural</p>
-                            <p class="text-lg font-bold text-orange-600">{{ stats.policy_tracking.by_area.cultural|default:0 }}</p>
+                            <p class="text-sm font-semibold text-gray-900">Cultural Development</p>
+                            <p class="text-lg font-bold text-orange-600">{{ stats.areas.cultural_development|default:0 }}</p>
                         </div>
                     </div>
-                </div>
+                </a>
 
-                <div class="group p-4 rounded-lg border-2 border-gray-200 hover:border-gray-400 transition-colors duration-200 cursor-pointer">
+                <a href="{% url 'common:recommendations_by_area' 'rehabilitation-development' %}" class="group p-4 rounded-lg border-2 border-gray-200 hover:border-blue-400 transition-colors duration-200 cursor-pointer block">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
-                            <div class="p-2 bg-gray-50 rounded-lg group-hover:bg-gray-100 transition-colors duration-200">
-                                <i class="fas fa-building text-gray-600 text-xl"></i>
+                            <div class="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors duration-200">
+                                <i class="fas fa-hammer text-blue-600 text-xl"></i>
                             </div>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-semibold text-gray-900">Infrastructure</p>
-                            <p class="text-lg font-bold text-gray-600">{{ stats.policy_tracking.by_area.infrastructure|default:0 }}</p>
+                            <p class="text-sm font-semibold text-gray-900">Rehabilitation & Development</p>
+                            <p class="text-lg font-bold text-blue-600">{{ stats.areas.rehabilitation_development|default:0 }}</p>
                         </div>
                     </div>
-                </div>
+                </a>
+
+                <a href="{% url 'common:recommendations_by_area' 'protection-rights' %}" class="group p-4 rounded-lg border-2 border-gray-200 hover:border-red-400 transition-colors duration-200 cursor-pointer block">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="p-2 bg-red-50 rounded-lg group-hover:bg-red-100 transition-colors duration-200">
+                                <i class="fas fa-balance-scale text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-semibold text-gray-900">Protection of Rights</p>
+                            <p class="text-lg font-bold text-red-600">{{ stats.areas.protection_rights|default:0 }}</p>
+                        </div>
+                    </div>
+                </a>
             </div>
         </div>
     </div>
@@ -258,19 +317,19 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {% if user.is_staff %}
-            <a href="{% url 'common:policy_tracking_new_policy' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:recommendations_new' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-plus text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                        New Policy
+                        New Recommendation
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
-                        Create a new policy recommendation.
+                        Create a new recommendation.
                     </p>
                     <div class="mt-4 flex items-center text-orange-600 text-sm font-medium">
-                        <span>Create Policy</span>
+                        <span>Create Recommendation</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
@@ -285,7 +344,7 @@
                         Add Evidence
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
-                        Submit supporting evidence for policies.
+                        Submit supporting evidence for recommendations.
                     </p>
                     <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
                         <span>Add Evidence</span>
@@ -312,16 +371,16 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:policy_tracking_manage_policies' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'common:recommendations_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-list-alt text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                        Manage Policies
+                        Manage Recommendations
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
-                        View and manage all policy data.
+                        View and manage all recommendation data.
                     </p>
                     <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
                         <span>Manage All</span>
@@ -339,7 +398,7 @@
                         Administrative Access Required
                     </h3>
                     <p class="mt-2 text-sm text-gray-500">
-                        Contact your administrator to manage policy data.
+                        Contact your administrator to manage recommendation data.
                     </p>
                 </div>
             </div>

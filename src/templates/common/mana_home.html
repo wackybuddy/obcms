@@ -7,7 +7,6 @@
     <ol class="inline-flex items-center space-x-1 md:space-x-3">
         <li class="inline-flex items-center">
             <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                <i class="fas fa-home mr-2"></i>
                 Dashboard
             </a>
         </li>
@@ -78,16 +77,16 @@
             </div>
         </div>
 
-        <div class="relative overflow-hidden bg-gradient-to-br from-red-500 via-red-600 to-red-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-red-100 text-sm font-medium">High Priority Needs</p>
-                        <p class="text-3xl font-bold">{{ stats.mana.high_priority|default:0 }}</p>
+                        <p class="text-purple-100 text-sm font-medium">Planned</p>
+                        <p class="text-3xl font-bold">{{ stats.mana.planned|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-exclamation-triangle text-2xl"></i>
+                        <i class="fas fa-calendar-plus text-2xl"></i>
                     </div>
                 </div>
             </div>

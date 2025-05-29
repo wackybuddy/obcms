@@ -9,6 +9,40 @@ from django.utils import timezone
 from .models import User
 from .forms import UserRegistrationForm, CustomLoginForm
 
+# 5 Standard PPS (Policy, Program, Service) Areas for Recommendations
+RECOMMENDATIONS_AREAS = {
+    'economic-development': {
+        'name': 'Economic Development',
+        'categories': ['economic_development'],
+        'icon': 'fas fa-chart-line',
+        'color': 'green'
+    },
+    'social-development': {
+        'name': 'Social Development', 
+        'categories': ['social_development'],
+        'icon': 'fas fa-users',
+        'color': 'purple'
+    },
+    'cultural-development': {
+        'name': 'Cultural Development',
+        'categories': ['cultural_development'],
+        'icon': 'fas fa-mosque',
+        'color': 'orange'
+    },
+    'rehabilitation-development': {
+        'name': 'Rehabilitation & Development',
+        'categories': ['infrastructure', 'environment'],
+        'icon': 'fas fa-hammer',
+        'color': 'blue'
+    },
+    'protection-rights': {
+        'name': 'Protection of Rights',
+        'categories': ['human_rights'],
+        'icon': 'fas fa-balance-scale',
+        'color': 'red'
+    }
+}
+
 
 class CustomLoginView(LoginView):
     """Custom login view with OBC branding and approval check."""
@@ -83,12 +117,36 @@ def dashboard(request):
             'active_partnerships': Partnership.objects.filter(status='active').count(),
             'upcoming_events': Event.objects.filter(start_date__gte=timezone.now().date(), status='planned').count(),
             'pending_actions': 0,  # Will be calculated if ActionItem model exists
+            # Partnership breakdown by organization type
+            'bmoas': Partnership.objects.filter(
+                status='active',
+                lead_organization__organization_type='bmoa'
+            ).count(),
+            'ngas': Partnership.objects.filter(
+                status='active',
+                lead_organization__organization_type='nga'
+            ).count(),
+            'lgus': Partnership.objects.filter(
+                status='active',
+                lead_organization__organization_type='lgu'
+            ).count(),
         },
         'policy_tracking': {
             'total_policies': PolicyRecommendation.objects.count(),
             'implemented': PolicyRecommendation.objects.filter(status='implemented').count(),
             'under_review': PolicyRecommendation.objects.filter(status='under_review').count(),
             'high_priority': PolicyRecommendation.objects.filter(priority__in=['high', 'urgent', 'critical']).count(),
+            # Recommendations breakdown by category
+            'total_recommendations': PolicyRecommendation.objects.count(),
+            'policies': PolicyRecommendation.objects.filter(
+                category__in=['governance', 'legal_framework', 'administrative']
+            ).count(),
+            'programs': PolicyRecommendation.objects.filter(
+                category__in=['education', 'economic_development', 'social_development', 'cultural_development']
+            ).count(),
+            'services': PolicyRecommendation.objects.filter(
+                category__in=['healthcare', 'infrastructure', 'environment', 'human_rights']
+            ).count(),
         }
     }
     
@@ -191,24 +249,59 @@ def communities_home(request):
 def mana_home(request):
     """MANA module home page."""
     from mana.models import Assessment, Need, BaselineStudy
-    from django.db.models import Count
+    from django.db.models import Count, Q
     
     # Get MANA statistics
     assessments = Assessment.objects.select_related('community', 'category')
     needs = Need.objects.select_related('category', 'assessment')
     baseline_studies = BaselineStudy.objects.select_related('community')
     
+    # Calculate assessment metrics
+    total_assessments = assessments.count()
+    completed_assessments = assessments.filter(status='completed').count()
+    in_progress_assessments = assessments.filter(status__in=['data_collection', 'analysis']).count()
+    planned_assessments = assessments.filter(status__in=['planning', 'preparation']).count()
+    
+    # Calculate assessments by area/category (based on category name containing keywords)
+    education_assessments = assessments.filter(
+        Q(category__name__icontains='education') | Q(category__category_type__icontains='education')
+    ).count()
+    economic_assessments = assessments.filter(
+        Q(category__name__icontains='economic') | Q(category__category_type__icontains='economic')
+    ).count()
+    social_assessments = assessments.filter(
+        Q(category__name__icontains='social') | Q(category__category_type__icontains='social')
+    ).count()
+    cultural_assessments = assessments.filter(
+        Q(category__name__icontains='cultural') | Q(category__category_type__icontains='cultural')
+    ).count()
+    infrastructure_assessments = assessments.filter(
+        Q(category__name__icontains='infrastructure') | Q(category__category_type__icontains='infrastructure')
+    ).count()
+    
     stats = {
+        'mana': {
+            'total_assessments': total_assessments,
+            'completed': completed_assessments,
+            'in_progress': in_progress_assessments,
+            'planned': planned_assessments,
+            'by_area': {
+                'education': education_assessments,
+                'economic': economic_assessments,
+                'social': social_assessments,
+                'cultural': cultural_assessments,
+                'infrastructure': infrastructure_assessments,
+            }
+        },
         'assessments': {
-            'total': assessments.count(),
-            'completed': assessments.filter(status='completed').count(),
-            'ongoing': assessments.filter(status__in=['data_collection', 'analysis']).count(),
+            'total': total_assessments,
+            'completed': completed_assessments,
+            'ongoing': in_progress_assessments,
             'by_status': assessments.values('status').annotate(count=Count('id')),
             'recent': assessments.order_by('-created_at')[:10]
         },
         'needs': {
             'total': needs.count(),
-            'high_priority': needs.filter(impact_severity=5).count(),
             'critical': needs.filter(urgency_level='immediate').count(),
             'by_category': needs.values('category__name').annotate(count=Count('id'))[:10],
             'recent': needs.order_by('-created_at')[:10]
@@ -271,36 +364,94 @@ def coordination_home(request):
 
 
 @login_required
-def policy_tracking_home(request):
-    """Policy Tracking module home page."""
+def recommendations_home(request):
+    """Recommendations Tracking module home page."""
     from policy_tracking.models import PolicyRecommendation, PolicyEvidence
-    from django.db.models import Count
+    from django.db.models import Count, Q
     
-    # Get policy tracking statistics
-    recommendations = PolicyRecommendation.objects.select_related('submitted_by', 'reviewed_by')
-    evidence = PolicyEvidence.objects.select_related('recommendation')
+    # Get recommendations tracking statistics
+    recommendations = PolicyRecommendation.objects.select_related('proposed_by', 'lead_author')
+    evidence = PolicyEvidence.objects.select_related('policy')
+    
+    # Define recommendation types
+    policy_categories = ['governance', 'legal_framework', 'administrative']
+    program_categories = ['education', 'economic_development', 'social_development', 'cultural_development']
+    service_categories = ['healthcare', 'infrastructure', 'environment', 'human_rights']
+    
+    # Define status mappings
+    submitted_statuses = ['submitted', 'under_consideration', 'approved', 'in_implementation', 'implemented']
+    proposed_statuses = ['draft', 'under_review', 'needs_revision']
+    
+    # Calculate main metrics
+    total_recommendations = recommendations.count()
+    total_implemented = recommendations.filter(status='implemented').count()
+    total_submitted = recommendations.filter(status__in=submitted_statuses).count()
+    total_proposed = recommendations.filter(status__in=proposed_statuses).count()
+    
+    # Calculate breakdown by type
+    policies_total = recommendations.filter(category__in=policy_categories).count()
+    programs_total = recommendations.filter(category__in=program_categories).count()
+    services_total = recommendations.filter(category__in=service_categories).count()
+    
+    # Implemented breakdown
+    implemented_policies = recommendations.filter(status='implemented', category__in=policy_categories).count()
+    implemented_programs = recommendations.filter(status='implemented', category__in=program_categories).count()
+    implemented_services = recommendations.filter(status='implemented', category__in=service_categories).count()
+    
+    # Submitted breakdown
+    submitted_policies = recommendations.filter(status__in=submitted_statuses, category__in=policy_categories).count()
+    submitted_programs = recommendations.filter(status__in=submitted_statuses, category__in=program_categories).count()
+    submitted_services = recommendations.filter(status__in=submitted_statuses, category__in=service_categories).count()
+    
+    # Proposed breakdown
+    proposed_policies = recommendations.filter(status__in=proposed_statuses, category__in=policy_categories).count()
+    proposed_programs = recommendations.filter(status__in=proposed_statuses, category__in=program_categories).count()
+    proposed_services = recommendations.filter(status__in=proposed_statuses, category__in=service_categories).count()
+    
+    # Area breakdowns using the 5 standard areas
+    economic_development = recommendations.filter(category='economic_development').count()
+    social_development = recommendations.filter(category='social_development').count()
+    cultural_development = recommendations.filter(category='cultural_development').count()
+    rehabilitation_development = recommendations.filter(category__in=['infrastructure', 'environment']).count()
+    protection_rights = recommendations.filter(category='human_rights').count()
     
     stats = {
         'recommendations': {
-            'total': recommendations.count(),
-            'implemented': recommendations.filter(status='implemented').count(),
-            'under_review': recommendations.filter(status='under_review').count(),
-            'approved': recommendations.filter(status='approved').count(),
-            'by_category': recommendations.values('category').annotate(count=Count('id'))[:10],
-            'by_status': recommendations.values('status').annotate(count=Count('id')),
-            'recent': recommendations.order_by('-created_at')[:10]
+            'total': total_recommendations,
+            'implemented': total_implemented,
+            'submitted': total_submitted,
+            'proposed': total_proposed,
+            'policies': policies_total,
+            'programs': programs_total,
+            'services': services_total,
+            'implemented_policies': implemented_policies,
+            'implemented_programs': implemented_programs,
+            'implemented_services': implemented_services,
+            'submitted_policies': submitted_policies,
+            'submitted_programs': submitted_programs,
+            'submitted_services': submitted_services,
+            'proposed_policies': proposed_policies,
+            'proposed_programs': proposed_programs,
+            'proposed_services': proposed_services,
         },
-        'evidence': {
-            'total': evidence.count(),
-            'verified': evidence.filter(verified=True).count(),
-            'by_type': evidence.values('evidence_type').annotate(count=Count('id'))[:10]
-        }
+        'areas': {
+            'economic_development': economic_development,
+            'social_development': social_development,
+            'cultural_development': cultural_development,
+            'rehabilitation_development': rehabilitation_development,
+            'protection_rights': protection_rights,
+        },
+        'recommendations_tracking': {
+            'recent_recommendations': recommendations.order_by('-created_at')[:5],
+            'recent_evidence': evidence.order_by('-date_added')[:5],
+        },
+        'areas_data': RECOMMENDATIONS_AREAS,
     }
     
     context = {
         'stats': stats,
     }
-    return render(request, 'common/policy_tracking_home.html', context)
+    return render(request, 'common/recommendations_home.html', context)
 
 
 @login_required
@@ -738,27 +889,28 @@ def coordination_view_all(request):
 
 
 @login_required
-def policy_tracking_new_policy(request):
-    """Create new policy recommendation page."""
+def recommendations_new(request):
+    """Create new recommendation page."""
     from policy_tracking.models import PolicyRecommendation
     
-    # Get recent policies for reference
-    recent_policies = PolicyRecommendation.objects.order_by('-created_at')[:5]
+    # Get recent recommendations for reference
+    recent_recommendations = PolicyRecommendation.objects.order_by('-created_at')[:5]
     
     context = {
-        'recent_policies': recent_policies,
+        'recent_recommendations': recent_recommendations,
+        'areas_data': RECOMMENDATIONS_AREAS,
     }
-    return render(request, 'common/policy_tracking_new_policy.html', context)
+    return render(request, 'common/recommendations_new.html', context)
 
 
 @login_required
-def policy_tracking_manage_policies(request):
-    """Manage policy recommendations page."""
+def recommendations_manage(request):
+    """Manage recommendations page."""
     from policy_tracking.models import PolicyRecommendation, PolicyEvidence
     from django.db.models import Count
     
-    # Get all policies with related data
-    policies = PolicyRecommendation.objects.select_related(
+    # Get all recommendations with related data
+    recommendations = PolicyRecommendation.objects.select_related(
         'proposed_by', 'lead_author', 'assigned_reviewer'
     ).annotate(
         evidence_count=Count('evidence')
@@ -767,12 +919,17 @@ def policy_tracking_manage_policies(request):
     # Filter functionality
     status_filter = request.GET.get('status')
     category_filter = request.GET.get('category')
+    area_filter = request.GET.get('area')
     
     if status_filter:
-        policies = policies.filter(status=status_filter)
+        recommendations = recommendations.filter(status=status_filter)
     
     if category_filter:
-        policies = policies.filter(category=category_filter)
+        recommendations = recommendations.filter(category=category_filter)
+        
+    if area_filter and area_filter in RECOMMENDATIONS_AREAS:
+        area_categories = RECOMMENDATIONS_AREAS[area_filter]['categories']
+        recommendations = recommendations.filter(category__in=area_categories)
     
     # Get filter options
     status_choices = PolicyRecommendation.STATUS_CHOICES if hasattr(PolicyRecommendation, 'STATUS_CHOICES') else []
@@ -780,18 +937,83 @@ def policy_tracking_manage_policies(request):
     
     # Statistics
     stats = {
-        'total_policies': policies.count(),
-        'implemented': policies.filter(status='implemented').count(),
-        'under_review': policies.filter(status='under_review').count(),
-        'approved': policies.filter(status='approved').count(),
+        'total_recommendations': recommendations.count(),
+        'implemented': recommendations.filter(status='implemented').count(),
+        'under_review': recommendations.filter(status='under_review').count(),
+        'approved': recommendations.filter(status='approved').count(),
     }
     
     context = {
-        'policies': policies,
+        'recommendations': recommendations,
         'status_choices': status_choices,
         'category_choices': category_choices,
         'current_status': status_filter,
         'current_category': category_filter,
+        'current_area': area_filter,
         'stats': stats,
+        'areas_data': RECOMMENDATIONS_AREAS,
     }
-    return render(request, 'common/policy_tracking_manage_policies.html', context)
+    return render(request, 'common/recommendations_manage.html', context)
+
+
+@login_required
+def recommendations_by_area(request, area_slug):
+    """View recommendations filtered by specific area."""
+    from policy_tracking.models import PolicyRecommendation, PolicyEvidence
+    from django.db.models import Count, Q
+    from django.http import Http404
+    
+    # Validate area slug
+    if area_slug not in RECOMMENDATIONS_AREAS:
+        raise Http404("Area not found")
+    
+    area_info = RECOMMENDATIONS_AREAS[area_slug]
+    area_categories = area_info['categories']
+    
+    # Get recommendations for this area
+    recommendations = PolicyRecommendation.objects.filter(
+        category__in=area_categories
+    ).select_related('proposed_by', 'lead_author').annotate(
+        evidence_count=Count('evidence')
+    )
+    
+    # Define status mappings
+    submitted_statuses = ['submitted', 'under_consideration', 'approved', 'in_implementation', 'implemented']
+    proposed_statuses = ['draft', 'under_review', 'needs_revision']
+    
+    # Calculate area-specific metrics
+    total_area_recommendations = recommendations.count()
+    implemented_area = recommendations.filter(status='implemented').count()
+    submitted_area = recommendations.filter(status__in=submitted_statuses).count()
+    proposed_area = recommendations.filter(status__in=proposed_statuses).count()
+    
+    # Get filter parameter
+    status_filter = request.GET.get('status')
+    if status_filter:
+        if status_filter == 'proposed':
+            recommendations = recommendations.filter(status__in=proposed_statuses)
+        elif status_filter == 'submitted':
+            recommendations = recommendations.filter(status__in=submitted_statuses)
+        elif status_filter == 'implemented':
+            recommendations = recommendations.filter(status='implemented')
+    
+    # Recent recommendations for this area
+    recent_recommendations = recommendations.order_by('-created_at')[:10]
+    
+    stats = {
+        'area_info': area_info,
+        'total': total_area_recommendations,
+        'implemented': implemented_area,
+        'submitted': submitted_area,
+        'proposed': proposed_area,
+        'current_filter': status_filter,
+    }
+    
+    context = {
+        'area_slug': area_slug,
+        'area_info': area_info,
+        'stats': stats,
+        'recommendations': recent_recommendations,
+        'current_filter': status_filter,
+    }
+    return render(request, 'common/recommendations_by_area.html', context)

@@ -53,21 +53,23 @@
 
     <!-- System Overview Statistics -->
     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total OBC Communities -->
         <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Total Communities</p>
+                        <p class="text-blue-100 text-sm font-medium">Total OBC Communities</p>
                         <p class="text-3xl font-bold">{{ stats.communities.total|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-map-marker-alt text-2xl"></i>
+                        <i class="fas fa-mosque text-2xl"></i>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- MANA Assessments -->
         <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
@@ -83,10 +85,11 @@
             </div>
         </div>
 
+        <!-- Active Partnerships -->
         <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-3">
                     <div>
                         <p class="text-purple-100 text-sm font-medium">Active Partnerships</p>
                         <p class="text-3xl font-bold">{{ stats.coordination.active_partnerships|default:0 }}</p>
@@ -95,19 +98,48 @@
                         <i class="fas fa-handshake text-2xl"></i>
                     </div>
                 </div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-purple-400/30">
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.coordination.bmoas|default:0 }}</p>
+                        <p class="text-xs text-purple-100">BMOAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.coordination.ngas|default:0 }}</p>
+                        <p class="text-xs text-purple-100">NGAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.coordination.lgus|default:0 }}</p>
+                        <p class="text-xs text-purple-100">LGUs</p>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- Recommendations -->
         <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-3">
                     <div>
-                        <p class="text-orange-100 text-sm font-medium">Policy Recommendations</p>
-                        <p class="text-3xl font-bold">{{ stats.policy_tracking.total_policies|default:0 }}</p>
+                        <p class="text-orange-100 text-sm font-medium">Recommendations</p>
+                        <p class="text-3xl font-bold">{{ stats.policy_tracking.total_recommendations|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-file-alt text-2xl"></i>
+                        <i class="fas fa-lightbulb text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 pt-3 border-t border-orange-400/30">
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.policy_tracking.policies|default:0 }}</p>
+                        <p class="text-xs text-orange-100">Policies</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.policy_tracking.programs|default:0 }}</p>
+                        <p class="text-xs text-orange-100">Programs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.policy_tracking.services|default:0 }}</p>
+                        <p class="text-xs text-orange-100">Services</p>
                     </div>
                 </div>
             </div>
@@ -175,20 +207,20 @@
                 </div>
             </a>
 
-            <!-- Policy Tracking Module -->
-            <a href="{% url 'common:policy_tracking_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <!-- Recommendations Module -->
+            <a href="{% url 'common:recommendations_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-balance-scale text-white text-xl"></i>
+                        <i class="fas fa-lightbulb text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
-                        Policy Tracking
+                        Recommendations
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
-                        Policy recommendations and evidence tracking.
+                        Recommendations tracking and advocacy.
                     </p>
                     <div class="mt-4 flex items-center text-orange-600 text-sm font-medium">
-                        <span>{{ stats.policy_tracking.total_policies|default:0 }} policies</span>
+                        <span>{{ stats.policy_tracking.total_recommendations|default:0 }} recommendations</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>

@@ -102,7 +102,7 @@
                                        id="{{ form.obc_id.id_for_label }}"
                                        value="{{ form.obc_id.value|default_if_none:'' }}"
                                        placeholder="e.g., R12-SK-PAL-001"
-                                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 {% if form.obc_id.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.obc_id.errors.0 }}</p>
                                 {% endif %}
@@ -116,7 +116,7 @@
                                 <select name="{{ form.barangay.name }}" 
                                         id="{{ form.barangay.id_for_label }}"
                                         required
-                                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                     <option value="">Select a barangay...</option>
                                     {% for barangay in form.barangay.field.queryset %}
                                         <option value="{{ barangay.id }}" {% if barangay.id|stringformat:"s" == form.barangay.value|stringformat:"s" %}selected{% endif %}>
@@ -139,7 +139,7 @@
                                        id="{{ form.community_names.id_for_label }}"
                                        value="{{ form.community_names.value|default_if_none:'' }}"
                                        placeholder="Common name(s) used for the community"
-                                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 {% if form.community_names.errors %}
                                     <p class="mt-1 text-sm text-red-600">{{ form.community_names.errors.0 }}</p>
                                 {% endif %}
@@ -152,9 +152,9 @@
                                 </label>
                                 <textarea name="{{ form.source_document_reference.name }}" 
                                           id="{{ form.source_document_reference.id_for_label }}"
-                                          rows="2"
+                                          rows="3"
                                           placeholder="e.g., OBC MANA Region 12, p.7"
-                                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{{ form.source_document_reference.value|default_if_none:'' }}</textarea>
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.source_document_reference.value|default_if_none:'' }}</textarea>
                             </div>
                             
                             <!-- Location Details -->
@@ -167,7 +167,7 @@
                                        id="{{ form.purok_sitio.id_for_label }}"
                                        value="{{ form.purok_sitio.value|default_if_none:'' }}"
                                        placeholder="Specific Purok/Sitio"
-                                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                             </div>
                             
                             <div>
@@ -179,7 +179,7 @@
                                        id="{{ form.specific_location.id_for_label }}"
                                        value="{{ form.specific_location.value|default_if_none:'' }}"
                                        placeholder="Additional location details"
-                                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                             </div>
                             
                             <!-- Settlement Type & Proximity -->
@@ -189,7 +189,7 @@
                                 </label>
                                 <select name="{{ form.settlement_type.name }}" 
                                         id="{{ form.settlement_type.id_for_label }}"
-                                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                     {% for value, label in form.settlement_type.field.choices %}
                                         <option value="{{ value }}" {% if value == form.settlement_type.value %}selected{% endif %}>{{ label }}</option>
                                     {% endfor %}
@@ -202,7 +202,7 @@
                                 </label>
                                 <select name="{{ form.proximity_to_barmm.name }}" 
                                         id="{{ form.proximity_to_barmm.id_for_label }}"
-                                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                     <option value="">Select proximity...</option>
                                     {% for value, label in form.proximity_to_barmm.field.choices %}
                                         <option value="{{ value }}" {% if value == form.proximity_to_barmm.value %}selected{% endif %}>{{ label }}</option>
@@ -221,7 +221,7 @@
                                        value="{{ form.latitude.value|default_if_none:'' }}"
                                        step="any"
                                        placeholder="e.g., 6.5000"
-                                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                             </div>
                             
                             <div>
@@ -234,7 +234,7 @@
                                        value="{{ form.longitude.value|default_if_none:'' }}"
                                        step="any"
                                        placeholder="e.g., 124.5000"
-                                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                             </div>
                         </div>
                     </div>
@@ -258,7 +258,7 @@
                                            id="{{ form.estimated_obc_population.id_for_label }}"
                                            value="{{ form.estimated_obc_population.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -270,7 +270,7 @@
                                            id="{{ form.total_barangay_population.id_for_label }}"
                                            value="{{ form.total_barangay_population.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <!-- Households -->
@@ -283,7 +283,7 @@
                                            id="{{ form.households.id_for_label }}"
                                            value="{{ form.households.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <!-- Families -->
@@ -296,7 +296,7 @@
                                            id="{{ form.families.id_for_label }}"
                                            value="{{ form.families.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                             </div>
                             
@@ -312,7 +312,7 @@
                                            id="{{ form.children_0_12.id_for_label }}"
                                            value="{{ form.children_0_12.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -324,7 +324,7 @@
                                            id="{{ form.youth_13_30.id_for_label }}"
                                            value="{{ form.youth_13_30.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -336,7 +336,7 @@
                                            id="{{ form.adults_31_59.id_for_label }}"
                                            value="{{ form.adults_31_59.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -348,7 +348,7 @@
                                            id="{{ form.seniors_60_plus.id_for_label }}"
                                            value="{{ form.seniors_60_plus.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                             </div>
                             
@@ -361,7 +361,7 @@
                                     </label>
                                     <select name="{{ form.primary_ethnolinguistic_group.name }}" 
                                             id="{{ form.primary_ethnolinguistic_group.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select group...</option>
                                         {% for value, label in form.primary_ethnolinguistic_group.field.choices %}
                                             <option value="{{ value }}" {% if value == form.primary_ethnolinguistic_group.value %}selected{% endif %}>{{ label }}</option>
@@ -378,7 +378,7 @@
                                            id="{{ form.other_ethnolinguistic_groups.id_for_label }}"
                                            value="{{ form.other_ethnolinguistic_groups.value|default_if_none:'' }}"
                                            placeholder="Other groups (comma-separated)"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div class="md:col-span-2">
@@ -390,7 +390,7 @@
                                            id="{{ form.languages_spoken.id_for_label }}"
                                            value="{{ form.languages_spoken.value|default_if_none:'' }}"
                                            placeholder="Languages spoken (comma-separated)"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                             </div>
                             
@@ -406,7 +406,7 @@
                                            id="{{ form.women_count.id_for_label }}"
                                            value="{{ form.women_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -418,7 +418,7 @@
                                            id="{{ form.solo_parents_count.id_for_label }}"
                                            value="{{ form.solo_parents_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -430,7 +430,7 @@
                                            id="{{ form.elderly_count.id_for_label }}"
                                            value="{{ form.elderly_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -442,7 +442,7 @@
                                            id="{{ form.pwd_count.id_for_label }}"
                                            value="{{ form.pwd_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -454,7 +454,7 @@
                                            id="{{ form.farmers_count.id_for_label }}"
                                            value="{{ form.farmers_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -466,7 +466,7 @@
                                            id="{{ form.fisherfolk_count.id_for_label }}"
                                            value="{{ form.fisherfolk_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -478,7 +478,7 @@
                                            id="{{ form.indigenous_peoples_count.id_for_label }}"
                                            value="{{ form.indigenous_peoples_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -490,7 +490,7 @@
                                            id="{{ form.idps_count.id_for_label }}"
                                            value="{{ form.idps_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -502,7 +502,7 @@
                                            id="{{ form.religious_leaders_ulama_count.id_for_label }}"
                                            value="{{ form.religious_leaders_ulama_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -514,7 +514,7 @@
                                            id="{{ form.csos_count.id_for_label }}"
                                            value="{{ form.csos_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -526,7 +526,7 @@
                                            id="{{ form.associations_count.id_for_label }}"
                                            value="{{ form.associations_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -538,7 +538,7 @@
                                            id="{{ form.teachers_asatidz_count.id_for_label }}"
                                            value="{{ form.teachers_asatidz_count.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                             </div>
                         </div>
@@ -558,7 +558,7 @@
                                           id="{{ form.primary_livelihoods.id_for_label }}"
                                           rows="3"
                                           placeholder="e.g., Rice Farming, Coconut Production, Fishing"
-                                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{{ form.primary_livelihoods.value|default_if_none:'' }}</textarea>
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.primary_livelihoods.value|default_if_none:'' }}</textarea>
                             </div>
                             
                             <div>
@@ -568,7 +568,7 @@
                                 <textarea name="{{ form.secondary_livelihoods.name }}" 
                                           id="{{ form.secondary_livelihoods.id_for_label }}"
                                           rows="3"
-                                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{{ form.secondary_livelihoods.value|default_if_none:'' }}</textarea>
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.secondary_livelihoods.value|default_if_none:'' }}</textarea>
                             </div>
                             
                             <!-- Economic Status -->
@@ -579,7 +579,7 @@
                                     </label>
                                     <select name="{{ form.estimated_poverty_incidence.name }}" 
                                             id="{{ form.estimated_poverty_incidence.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select incidence level...</option>
                                         {% for value, label in form.estimated_poverty_incidence.field.choices %}
                                             <option value="{{ value }}" {% if value == form.estimated_poverty_incidence.value %}selected{% endif %}>{{ label }}</option>
@@ -593,7 +593,7 @@
                                     </label>
                                     <select name="{{ form.development_status.name }}" 
                                             id="{{ form.development_status.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         {% for value, label in form.development_status.field.choices %}
                                             <option value="{{ value }}" {% if value == form.development_status.value %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
@@ -614,7 +614,7 @@
                                            value="{{ form.number_of_employed_obc.value|default_if_none:'' }}"
                                            min="0"
                                            placeholder="Number of employed OBC individuals"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -627,7 +627,7 @@
                                            value="{{ form.number_of_unbanked_obc.value|default_if_none:'' }}"
                                            min="0"
                                            placeholder="Number of unbanked OBC individuals"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                             </div>
                             
@@ -643,7 +643,7 @@
                                            id="{{ form.number_of_cooperatives.id_for_label }}"
                                            value="{{ form.number_of_cooperatives.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -655,7 +655,7 @@
                                            id="{{ form.number_of_social_enterprises.id_for_label }}"
                                            value="{{ form.number_of_social_enterprises.value|default_if_none:'' }}"
                                            min="0"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                                 
                                 <div>
@@ -668,7 +668,7 @@
                                            value="{{ form.number_of_micro_enterprises.value|default_if_none:'' }}"
                                            min="0"
                                            placeholder="e.g., Sari-Sari Stores"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                             </div>
                             
@@ -681,7 +681,7 @@
                                           id="{{ form.land_tenure_issues.id_for_label }}"
                                           rows="3"
                                           placeholder="Land tenure issues, disputes, ancestral domain claims"
-                                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{{ form.land_tenure_issues.value|default_if_none:'' }}</textarea>
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.land_tenure_issues.value|default_if_none:'' }}</textarea>
                             </div>
                             
                             <div>
@@ -692,7 +692,7 @@
                                           id="{{ form.financial_literacy_access.id_for_label }}"
                                           rows="3"
                                           placeholder="Financial literacy and access to financial services"
-                                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">{{ form.financial_literacy_access.value|default_if_none:'' }}</textarea>
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.financial_literacy_access.value|default_if_none:'' }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -710,7 +710,7 @@
                                     </label>
                                     <select name="{{ form.access_formal_education.name }}" 
                                             id="{{ form.access_formal_education.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_formal_education.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_formal_education.value %}selected{% endif %}>{{ label }}</option>
@@ -724,7 +724,7 @@
                                     </label>
                                     <select name="{{ form.access_als.name }}" 
                                             id="{{ form.access_als.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_als.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_als.value %}selected{% endif %}>{{ label }}</option>
@@ -738,7 +738,7 @@
                                     </label>
                                     <select name="{{ form.access_madrasah.name }}" 
                                             id="{{ form.access_madrasah.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_madrasah.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_madrasah.value %}selected{% endif %}>{{ label }}</option>
@@ -753,7 +753,7 @@
                                     </label>
                                     <select name="{{ form.access_healthcare.name }}" 
                                             id="{{ form.access_healthcare.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_healthcare.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_healthcare.value %}selected{% endif %}>{{ label }}</option>
@@ -767,7 +767,7 @@
                                     </label>
                                     <select name="{{ form.access_clean_water.name }}" 
                                             id="{{ form.access_clean_water.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_clean_water.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_clean_water.value %}selected{% endif %}>{{ label }}</option>
@@ -781,7 +781,7 @@
                                     </label>
                                     <select name="{{ form.access_sanitation.name }}" 
                                             id="{{ form.access_sanitation.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_sanitation.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_sanitation.value %}selected{% endif %}>{{ label }}</option>
@@ -796,7 +796,7 @@
                                     </label>
                                     <select name="{{ form.access_electricity.name }}" 
                                             id="{{ form.access_electricity.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_electricity.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_electricity.value %}selected{% endif %}>{{ label }}</option>
@@ -810,7 +810,7 @@
                                     </label>
                                     <select name="{{ form.access_roads_transport.name }}" 
                                             id="{{ form.access_roads_transport.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_roads_transport.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_roads_transport.value %}selected{% endif %}>{{ label }}</option>
@@ -824,7 +824,7 @@
                                     </label>
                                     <select name="{{ form.access_communication.name }}" 
                                             id="{{ form.access_communication.id_for_label }}"
-                                            class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                         <option value="">Select access level...</option>
                                         {% for value, label in form.access_communication.field.choices %}
                                             <option value="{{ value }}" {% if value == form.access_communication.value %}selected{% endif %}>{{ label }}</option>
@@ -877,7 +877,7 @@
                                            value="{{ form.religious_leaders_count.value|default_if_none:'' }}"
                                            min="0"
                                            placeholder="Number of religious leaders"
-                                           class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                                 </div>
                             </div>
                             
@@ -940,41 +940,41 @@
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Import from Excel -->
+                <!-- Import from Excel/CSV -->
                 <button onclick="showImportModal()" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
                     <div class="flex items-center mb-2">
-                        <i class="fas fa-file-excel text-green-600 text-xl mr-3"></i>
-                        <h3 class="font-semibold text-gray-900">Import from Excel</h3>
+                        <i class="fas fa-file-import text-green-600 text-xl mr-3"></i>
+                        <h3 class="font-semibold text-gray-900">Import from Excel / CSV</h3>
                     </div>
-                    <p class="text-sm text-gray-600">Bulk import community data from Excel spreadsheet</p>
+                    <p class="text-sm text-gray-600">Bulk import community data from Excel or CSV files</p>
                 </button>
                 
-                <!-- Download Template -->
-                <a href="#" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
+                <!-- Export Data -->
+                <button onclick="showExportModal()" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
                     <div class="flex items-center mb-2">
-                        <i class="fas fa-download text-blue-600 text-xl mr-3"></i>
-                        <h3 class="font-semibold text-gray-900">Download Template</h3>
+                        <i class="fas fa-file-export text-blue-600 text-xl mr-3"></i>
+                        <h3 class="font-semibold text-gray-900">Export as Excel / CSV / PDF</h3>
                     </div>
-                    <p class="text-sm text-gray-600">Get the Excel template for bulk import</p>
-                </a>
-                
-                <!-- Auto-fill from Previous -->
-                <button onclick="autoFillFromPrevious()" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
-                    <div class="flex items-center mb-2">
-                        <i class="fas fa-magic text-purple-600 text-xl mr-3"></i>
-                        <h3 class="font-semibold text-gray-900">Auto-fill Similar</h3>
-                    </div>
-                    <p class="text-sm text-gray-600">Pre-fill from similar community in same municipality</p>
+                    <p class="text-sm text-gray-600">Export community data in multiple formats</p>
                 </button>
                 
-                <!-- View Guidelines -->
-                <button onclick="showGuidelines()" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
+                <!-- Generate Report -->
+                <button onclick="showReportModal()" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-chart-bar text-purple-600 text-xl mr-3"></i>
+                        <h3 class="font-semibold text-gray-900">Generate Report about OBC Data</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">Create comprehensive reports on OBC community data</p>
+                </button>
+                
+                <!-- Data Guidelines -->
+                <a href="{% url 'common:data_guidelines' %}" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
                     <div class="flex items-center mb-2">
                         <i class="fas fa-book text-orange-600 text-xl mr-3"></i>
                         <h3 class="font-semibold text-gray-900">Data Guidelines</h3>
                     </div>
                     <p class="text-sm text-gray-600">View data collection standards and guidelines</p>
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -997,7 +997,7 @@
                             <tr>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                     <div class="flex items-center">
-                                        <i class="fas fa-home mr-2 text-gray-500"></i>
+                                        <i class="fas fa-map-marker-alt mr-2 text-gray-500"></i>
                                         Barangay
                                     </div>
                                 </th>
@@ -1074,6 +1074,156 @@
     {% endif %}
 </div>
 
+<!-- Import Modal -->
+<div id="importModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Import Communities from Excel/CSV</h3>
+                <button onclick="closeModal('importModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select File</label>
+                    <input type="file" id="importFile" accept=".csv,.xlsx,.xls" 
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <p class="mt-1 text-xs text-gray-500">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p class="text-sm text-yellow-800">
+                        <strong>Required columns:</strong> barangay_id, community_names<br>
+                        <strong>Optional:</strong> obc_id, estimated_obc_population, households, etc.
+                    </p>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal('importModal')" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button id="importBtn" onclick="handleImport()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-upload mr-2"></i>Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div id="exportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Export Communities Data</h3>
+                <button onclick="closeModal('exportModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Export Format</label>
+                    <select id="exportFormat" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="excel">Excel (.xlsx)</option>
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF Report</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Include Fields</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="exportFields" value="basic" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Basic Information</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="exportFields" value="demographics" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Demographics</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="exportFields" value="services" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Access to Services</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="exportFields" value="location" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Location Data</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal('exportModal')" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button onclick="handleExport()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div id="reportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Generate OBC Data Report</h3>
+                <button onclick="closeModal('reportModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+                    <select id="reportType" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="summary">Summary Report</option>
+                        <option value="demographic">Demographic Analysis</option>
+                        <option value="geographic">Geographic Distribution</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Format</label>
+                    <select id="reportFormat" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="pdf">PDF Document</option>
+                        <option value="excel">Excel Workbook</option>
+                    </select>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Reports include statistical analysis, charts, and comprehensive data summaries.
+                    </p>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal('reportModal')" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button onclick="handleReportGeneration()" 
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-chart-bar mr-2"></i>Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- JavaScript for Tab Functionality and Quick Actions -->
 <script>
 // Tab functionality
@@ -1109,6 +1259,98 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Quick Actions Functions
+function showImportModal() {
+    document.getElementById('importModal').classList.remove('hidden');
+}
+
+function showExportModal() {
+    document.getElementById('exportModal').classList.remove('hidden');
+}
+
+function showReportModal() {
+    document.getElementById('reportModal').classList.remove('hidden');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
+
+function handleImport() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select a file to import.');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Show loading
+    const importBtn = document.getElementById('importBtn');
+    const originalText = importBtn.innerHTML;
+    importBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
+    importBtn.disabled = true;
+    
+    fetch('{% url "common:import_communities" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Import successful! Created: ${data.created}, Updated: ${data.updated}`);
+            if (data.errors && data.errors.length > 0) {
+                console.log('Import errors:', data.errors);
+            }
+            closeModal('importModal');
+            // Optionally reload the page or update UI
+        } else {
+            alert('Import failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Import error:', error);
+        alert('Import failed: Network error');
+    })
+    .finally(() => {
+        importBtn.innerHTML = originalText;
+        importBtn.disabled = false;
+    });
+}
+
+function handleExport() {
+    const format = document.getElementById('exportFormat').value;
+    const fields = Array.from(document.querySelectorAll('input[name="exportFields"]:checked'))
+                       .map(cb => cb.value);
+    
+    let url = `{% url "common:export_communities" %}?format=${format}`;
+    if (fields.length > 0) {
+        fields.forEach(field => {
+            url += `&fields[]=${field}`;
+        });
+    }
+    
+    // Open in new window to trigger download
+    window.open(url, '_blank');
+    closeModal('exportModal');
+}
+
+function handleReportGeneration() {
+    const reportType = document.getElementById('reportType').value;
+    const reportFormat = document.getElementById('reportFormat').value;
+    
+    const url = `{% url "common:generate_obc_report" %}?type=${reportType}&format=${reportFormat}`;
+    
+    // Open in new window to trigger download
+    window.open(url, '_blank');
+    closeModal('reportModal');
+}
+
 function saveDraft() {
     // Save form data to localStorage
     const formData = new FormData(document.querySelector('form'));
@@ -1122,11 +1364,7 @@ function saveDraft() {
     alert('Draft saved successfully! Your data will be restored when you return.');
 }
 
-function showImportModal() {
-    // This would open a modal for Excel import
-    alert('Excel import feature coming soon! This will allow you to bulk import community data from spreadsheets.');
-}
-
+// Legacy functions for backward compatibility
 function autoFillFromPrevious() {
     // This would fetch data from similar communities
     const barangaySelect = document.querySelector('select[name="barangay"]');
@@ -1136,11 +1374,6 @@ function autoFillFromPrevious() {
     }
     
     alert('Auto-fill feature coming soon! This will suggest data based on similar communities in the same area.');
-}
-
-function showGuidelines() {
-    // This would show data collection guidelines
-    window.open('/docs/obc-data-collection-guidelines', '_blank');
 }
 
 // Auto-save draft every 5 minutes

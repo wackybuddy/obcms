@@ -4,6 +4,25 @@ from rest_framework.response import Response
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.http import HttpResponse, JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from django.conf import settings
+import pandas as pd
+import io
+import csv
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils.dataframe import dataframe_to_rows
+import json
+from datetime import datetime
 from .models import (
     OBCCommunity, CommunityLivelihood, CommunityInfrastructure,
     Stakeholder, StakeholderEngagement
