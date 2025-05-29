@@ -321,39 +321,132 @@ def mana_home(request):
 
 @login_required
 def coordination_home(request):
-    """Coordination module home page."""
-    from coordination.models import Event, Partnership, Organization
-    from django.db.models import Count
+    """Coordination module home page - Coordination with BMOAs, NGAs, and LGUs."""
+    from coordination.models import Event, Partnership, Organization, StakeholderEngagement, PartnershipSignatory, EventParticipant
+    from django.db.models import Count, Q
     from django.utils import timezone
     from datetime import timedelta
     
-    # Get coordination statistics
-    events = Event.objects.select_related('community', 'organizer')
-    partnerships = Partnership.objects.select_related('lead_organization')
-    organizations = Organization.objects.filter(is_active=True)
-    
-    # Recent and upcoming events
+    # Get coordination statistics for BMOAs, NGAs, and LGUs
     now = timezone.now()
-    recent_events = events.filter(start_date__gte=now.date() - timedelta(days=30))
-    upcoming_events = events.filter(start_date__gte=now.date(), status='planned')
+    
+    # 1. Mapped Partners (Organizations that have been registered and researched)
+    # Organizations that are active and have description/mandate information (indicating research)
+    mapped_partners = Organization.objects.filter(
+        is_active=True,
+        organization_type__in=['bmoa', 'nga', 'lgu']
+    ).exclude(description='')
+    
+    mapped_partners_stats = {
+        'total': mapped_partners.count(),
+        'bmoa': mapped_partners.filter(organization_type='bmoa').count(),
+        'nga': mapped_partners.filter(organization_type='nga').count(), 
+        'lgu': mapped_partners.filter(organization_type='lgu').count(),
+    }
+    
+    # 2. Active Partnerships
+    active_partnerships = Partnership.objects.filter(status='active')
+    
+    # Count partnerships by organization type involved through signatories
+    bmoa_partnerships = active_partnerships.filter(
+        signatories__organization__organization_type='bmoa'
+    ).distinct().count()
+    nga_partnerships = active_partnerships.filter(
+        signatories__organization__organization_type='nga'
+    ).distinct().count()
+    lgu_partnerships = active_partnerships.filter(
+        signatories__organization__organization_type='lgu'
+    ).distinct().count()
+    
+    active_partnerships_stats = {
+        'total': active_partnerships.count(),
+        'bmoa': bmoa_partnerships,
+        'nga': nga_partnerships,
+        'lgu': lgu_partnerships,
+    }
+    
+    # 3. Coordination Activities Done (Completed events and engagements)
+    completed_events = Event.objects.filter(status='completed')
+    completed_engagements = StakeholderEngagement.objects.filter(status='completed')
+    
+    total_completed_activities = completed_events.count() + completed_engagements.count()
+    
+    # Count by organization type for events through participants
+    bmoa_events = completed_events.filter(
+        participants__organization__organization_type='bmoa'
+    ).distinct().count()
+    nga_events = completed_events.filter(
+        participants__organization__organization_type='nga'
+    ).distinct().count()
+    lgu_events = completed_events.filter(
+        participants__organization__organization_type='lgu'
+    ).distinct().count()
+    
+    coordination_activities_done_stats = {
+        'total': total_completed_activities,
+        'bmoa': bmoa_events,
+        'nga': nga_events, 
+        'lgu': lgu_events,
+    }
+    
+    # 4. Planned Coordination Activities (Upcoming events and planned engagements)
+    planned_events = Event.objects.filter(
+        status__in=['planned', 'scheduled'],
+        start_date__gte=now.date()
+    )
+    
+    planned_engagements = StakeholderEngagement.objects.filter(
+        status__in=['planned', 'scheduled'],
+        planned_date__gte=now
+    )
+    
+    total_planned_activities = planned_events.count() + planned_engagements.count()
+    
+    # Count by organization type for planned events through participants
+    bmoa_planned = planned_events.filter(
+        participants__organization__organization_type='bmoa'
+    ).distinct().count()
+    nga_planned = planned_events.filter(
+        participants__organization__organization_type='nga'
+    ).distinct().count()
+    lgu_planned = planned_events.filter(
+        participants__organization__organization_type='lgu'
+    ).distinct().count()
+    
+    planned_coordination_activities_stats = {
+        'total': total_planned_activities,
+        'bmoa': bmoa_planned,
+        'nga': nga_planned,
+        'lgu': lgu_planned,
+    }
+    
+    # Recent activities for display
+    recent_events = Event.objects.filter(
+        start_date__gte=now.date() - timedelta(days=30)
+    ).order_by('-start_date')[:5]
+    
+    # Event categories breakdown (for Event Categories section)
+    event_by_type = {
+        'meeting': Event.objects.filter(event_type='meeting').count(),
+        'workshop': Event.objects.filter(event_type='workshop').count(),
+        'conference': Event.objects.filter(event_type='conference').count(),
+        'consultation': Event.objects.filter(event_type='consultation').count(),
+    }
+    
+    # Active partnerships list for display
+    active_partnerships_list = Partnership.objects.filter(
+        status='active'
+    ).order_by('-created_at')[:5]
     
     stats = {
-        'events': {
-            'total': events.count(),
-            'recent': recent_events.count(),
-            'upcoming': upcoming_events.count(),
-            'by_type': events.values('event_type').annotate(count=Count('id'))[:10],
-            'upcoming_list': upcoming_events.order_by('start_date')[:10]
-        },
-        'partnerships': {
-            'total': partnerships.count(),
-            'active': partnerships.filter(status='active').count(),
-            'by_type': partnerships.values('partnership_type').annotate(count=Count('id')),
-            'by_status': partnerships.values('status').annotate(count=Count('id'))
-        },
-        'organizations': {
-            'total': organizations.count(),
-            'by_type': organizations.values('organization_type').annotate(count=Count('id'))
+        'mapped_partners': mapped_partners_stats,
+        'active_partnerships': active_partnerships_stats,
+        'coordination_activities_done': coordination_activities_done_stats,
+        'planned_coordination_activities': planned_coordination_activities_stats,
+        'recent_events': recent_events,
+        'coordination': {
+            'active_partnerships': active_partnerships_list,
+            'by_type': event_by_type,
         }
     }
     

@@ -1,35 +1,57 @@
 {% extends "admin/base.html" %}
 {% load i18n static %}
 
-{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | OBC Management System{% endblock %}
 
 {% block extrastyle %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{% static 'admin/css/custom.css' %}">
+<!-- Add Tailwind CSS and Font Awesome for consistency -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 {% endblock %}
 
 {% block branding %}
-<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></h1>
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <i class="fas fa-building-flag mr-2"></i>
+        OBC Management System
+        <span style="font-size: 0.7em; font-weight: 400; opacity: 0.8; margin-left: 0.5rem;">Admin Portal</span>
+    </a>
+</h1>
 {% endblock %}
 
 {% block nav-global %}
 <div id="user-tools">
     {% block welcome-msg %}
+        <i class="fas fa-user-circle mr-1"></i>
         {% trans 'Welcome,' %}
-        <strong>{% firstof user.get_short_name user.get_username %}</strong>.
+        <strong>{% firstof user.get_short_name user.get_username %}</strong>
     {% endblock %}
     {% block userlinks %}
-        <a href="/auth/dashboard/">{% trans 'View site' %}</a> /
+        <a href="{% url 'common:dashboard' %}">
+            <i class="fas fa-external-link-alt mr-1"></i>
+            {% trans 'View System' %}
+        </a> /
         {% if user.is_active and user.is_staff %}
             {% url 'django-admindocs-docroot' as docsroot %}
             {% if docsroot %}
-                <a href="{{ docsroot }}">{% trans 'Documentation' %}</a> /
+                <a href="{{ docsroot }}">
+                    <i class="fas fa-book mr-1"></i>
+                    {% trans 'Documentation' %}
+                </a> /
             {% endif %}
         {% endif %}
         {% if user.has_usable_password %}
-        <a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a> /
+        <a href="{% url 'admin:password_change' %}">
+            <i class="fas fa-key mr-1"></i>
+            {% trans 'Change password' %}
+        </a> /
         {% endif %}
-        <a href="{% url 'admin:logout' %}">{% trans 'Log out' %}</a>
+        <a href="{% url 'admin:logout' %}">
+            <i class="fas fa-sign-out-alt mr-1"></i>
+            {% trans 'Log out' %}
+        </a>
     {% endblock %}
 </div>
 {% endblock %}

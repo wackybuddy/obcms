@@ -37,7 +37,9 @@ urlpatterns = [
     # Custom admin views (must come before admin.site.urls)
     path("admin/auth/group/", group_changelist_view, name='custom_group_changelist'),
     path("admin/", admin.site.urls),
-    path('auth/', include('common.urls')),
+    
+    # Main application URLs
+    path('', include('common.urls')),
     
     # API Authentication
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

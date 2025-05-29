@@ -30,63 +30,123 @@
         </p>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- Coordination Metrics Cards -->
     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+        <!-- Mapped Partners -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-4">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Organizations</p>
-                        <p class="text-3xl font-bold">{{ stats.coordination.total_organizations|default:0 }}</p>
+                        <p class="text-orange-100 text-sm font-medium">Mapped Partners</p>
+                        <p class="text-3xl font-bold">{{ stats.mapped_partners.total|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-building text-2xl"></i>
+                        <i class="fas fa-map-marked-alt text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-orange-100">
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.mapped_partners.bmoa|default:0 }}</p>
+                        <p class="text-xs">BMOAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.mapped_partners.nga|default:0 }}</p>
+                        <p class="text-xs">NGAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.mapped_partners.lgu|default:0 }}</p>
+                        <p class="text-xs">LGUs</p>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Active Partnerships -->
         <div class="relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-4">
                     <div>
                         <p class="text-green-100 text-sm font-medium">Active Partnerships</p>
-                        <p class="text-3xl font-bold">{{ stats.coordination.active_partnerships|default:0 }}</p>
+                        <p class="text-3xl font-bold">{{ stats.active_partnerships.total|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                         <i class="fas fa-handshake text-2xl"></i>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm font-medium">Upcoming Events</p>
-                        <p class="text-3xl font-bold">{{ stats.coordination.upcoming_events|default:0 }}</p>
+                <div class="grid grid-cols-3 gap-2 text-green-100">
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.active_partnerships.bmoa|default:0 }}</p>
+                        <p class="text-xs">BMOAs</p>
                     </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-calendar-alt text-2xl"></i>
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.active_partnerships.nga|default:0 }}</p>
+                        <p class="text-xs">NGAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.active_partnerships.lgu|default:0 }}</p>
+                        <p class="text-xs">LGUs</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+        <!-- Coordination Activities Done -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-4">
                     <div>
-                        <p class="text-orange-100 text-sm font-medium">Pending Action Items</p>
-                        <p class="text-3xl font-bold">{{ stats.coordination.pending_actions|default:0 }}</p>
+                        <p class="text-blue-100 text-sm font-medium">Activities Done</p>
+                        <p class="text-3xl font-bold">{{ stats.coordination_activities_done.total|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-tasks text-2xl"></i>
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-blue-100">
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.coordination_activities_done.bmoa|default:0 }}</p>
+                        <p class="text-xs">BMOAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.coordination_activities_done.nga|default:0 }}</p>
+                        <p class="text-xs">NGAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.coordination_activities_done.lgu|default:0 }}</p>
+                        <p class="text-xs">LGUs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Planned Coordination Activities -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium">Planned Activities</p>
+                        <p class="text-3xl font-bold">{{ stats.planned_coordination_activities.total|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-calendar-plus text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-purple-100">
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.planned_coordination_activities.bmoa|default:0 }}</p>
+                        <p class="text-xs">BMOAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.planned_coordination_activities.nga|default:0 }}</p>
+                        <p class="text-xs">NGAs</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-lg font-bold">{{ stats.planned_coordination_activities.lgu|default:0 }}</p>
+                        <p class="text-xs">LGUs</p>
                     </div>
                 </div>
             </div>
@@ -103,7 +163,7 @@
                     Recent Events
                 </h2>
                 <div class="space-y-4">
-                    {% for event in stats.coordination.recent_events|slice:":5" %}
+                    {% for event in stats.recent_events %}
                     <div class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
                         <div class="flex-shrink-0">
                             <div class="p-2 bg-blue-500 rounded-lg">

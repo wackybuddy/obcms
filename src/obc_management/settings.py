@@ -41,9 +41,9 @@ ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 AUTH_USER_MODEL = 'common.User'
 
 # Authentication URLs
-LOGIN_URL = '/auth/login/'
-LOGIN_REDIRECT_URL = '/auth/dashboard/'
-LOGOUT_REDIRECT_URL = '/auth/login/'
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Application definition
 
