@@ -8,7 +8,8 @@ from .models import (
     Survey, SurveyQuestion, SurveyResponse, MappingActivity,
     NeedsCategory, Need, NeedsPrioritization, NeedsPrioritizationItem,
     GeographicDataLayer, MapVisualization, SpatialDataPoint,
-    BaselineStudy, BaselineStudyTeamMember, BaselineDataCollection, BaselineIndicator
+    BaselineStudy, BaselineStudyTeamMember, BaselineDataCollection, BaselineIndicator,
+    WorkshopActivity, WorkshopSession, WorkshopParticipant, WorkshopOutput, MANAReport
 )
 
 
@@ -91,6 +92,15 @@ class MappingActivityInline(admin.TabularInline):
     show_change_link = True
 
 
+class WorkshopActivityInline(admin.TabularInline):
+    """Inline for workshop activities within assessments."""
+    model = WorkshopActivity
+    extra = 0
+    fields = ['title', 'workshop_type', 'workshop_day', 'status', 'scheduled_date', 'duration_hours']
+    show_change_link = True
+    ordering = ['workshop_day', 'start_time']
+
+
 @admin.register(Assessment)
 class AssessmentAdmin(admin.ModelAdmin):
     """Admin interface for Assessments."""
@@ -142,7 +152,7 @@ class AssessmentAdmin(admin.ModelAdmin):
         }),
     )
     
-    inlines = [AssessmentTeamMemberInline, SurveyInline, MappingActivityInline]
+    inlines = [AssessmentTeamMemberInline, SurveyInline, MappingActivityInline, WorkshopActivityInline]
     
     actions = ['mark_as_data_collection', 'mark_as_completed', 'export_to_csv']
     
@@ -605,3 +615,401 @@ class NeedAdmin(admin.ModelAdmin):
             return format_html('<span style="color: green;">✓ Validated</span>')
         return format_html('<span style="color: orange;">⚠ Pending</span>')
     validation_status.short_description = 'Validation'
+
+
+# Workshop-related Admin Classes
+
+class WorkshopSessionInline(admin.TabularInline):
+    """Inline for workshop sessions."""
+    model = WorkshopSession
+    extra = 1
+    fields = ['session_title', 'session_type', 'session_order', 'start_time', 'end_time', 'facilitator']
+    autocomplete_fields = ['facilitator']
+    ordering = ['session_order']
+
+
+class WorkshopParticipantInline(admin.TabularInline):
+    """Inline for workshop participants."""
+    model = WorkshopParticipant
+    extra = 3
+    fields = ['name', 'participant_type', 'gender', 'age_group', 'organization', 'attendance_status']
+    ordering = ['participant_type', 'name']
+
+
+class WorkshopOutputInline(admin.TabularInline):
+    """Inline for workshop outputs."""
+    model = WorkshopOutput
+    extra = 1
+    fields = ['output_type', 'title', 'description', 'created_by']
+    autocomplete_fields = ['created_by']
+    readonly_fields = ['created_at']
+
+
+@admin.register(WorkshopActivity)
+class WorkshopActivityAdmin(admin.ModelAdmin):
+    """Admin interface for Workshop Activities."""
+    
+    list_display = [
+        'title', 'assessment_link', 'workshop_type', 'workshop_day', 'status_badge',
+        'scheduled_date', 'duration_hours', 'participants_progress', 'outputs_count'
+    ]
+    list_filter = [
+        'workshop_type', 'workshop_day', 'status', 'scheduled_date', 'created_at'
+    ]
+    search_fields = ['title', 'description', 'assessment__title', 'methodology']
+    date_hierarchy = 'scheduled_date'
+    ordering = ['workshop_day', 'start_time']
+    autocomplete_fields = ['assessment', 'created_by']
+    filter_horizontal = ['facilitators']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'assessment', 'workshop_type', 'workshop_day', 'description')
+        }),
+        ('Schedule', {
+            'fields': (
+                ('scheduled_date', 'status'),
+                ('start_time', 'end_time', 'duration_hours')
+            )
+        }),
+        ('Participants', {
+            'fields': (('target_participants', 'actual_participants'),)
+        }),
+        ('Workshop Details', {
+            'fields': ('methodology', 'materials_needed', 'expected_outputs')
+        }),
+        ('Team', {
+            'fields': ('facilitators',)
+        }),
+        ('Results', {
+            'fields': ('key_findings', 'recommendations', 'challenges_encountered'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    inlines = [WorkshopSessionInline, WorkshopParticipantInline, WorkshopOutputInline]
+    
+    def assessment_link(self, obj):
+        """Link to assessment admin page."""
+        url = reverse('admin:mana_assessment_change', args=[obj.assessment.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.assessment.title)
+    assessment_link.short_description = 'Assessment'
+    
+    def status_badge(self, obj):
+        """Status with color coding."""
+        colors = {
+            'planned': 'gray',
+            'in_progress': 'blue',
+            'completed': 'green',
+            'cancelled': 'red',
+        }
+        color = colors.get(obj.status, 'gray')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color, obj.get_status_display()
+        )
+    status_badge.short_description = 'Status'
+    
+    def participants_progress(self, obj):
+        """Participants progress indicator."""
+        actual = obj.actual_participants
+        target = obj.target_participants
+        percentage = (actual / target * 100) if target > 0 else 0
+        color = '#28a745' if percentage >= 90 else '#ffc107' if percentage >= 70 else '#dc3545'
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}/{} ({:.0f}%)</span>',
+            color, actual, target, percentage
+        )
+    participants_progress.short_description = 'Participants'
+    
+    def outputs_count(self, obj):
+        """Count of workshop outputs."""
+        count = obj.outputs.count()
+        if count > 0:
+            return format_html('<span style="color: green;">{} outputs</span>', count)
+        return format_html('<span style="color: orange;">No outputs</span>')
+    outputs_count.short_description = 'Outputs'
+
+
+@admin.register(WorkshopSession)
+class WorkshopSessionAdmin(admin.ModelAdmin):
+    """Admin interface for Workshop Sessions."""
+    
+    list_display = [
+        'session_title', 'workshop_link', 'session_type', 'session_order',
+        'time_range', 'facilitator', 'has_outputs'
+    ]
+    list_filter = ['session_type', 'workshop__workshop_type', 'workshop__workshop_day']
+    search_fields = ['session_title', 'objectives', 'workshop__title']
+    ordering = ['workshop', 'session_order']
+    autocomplete_fields = ['workshop', 'facilitator']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('session_title', 'workshop', 'session_type', 'session_order')
+        }),
+        ('Schedule', {
+            'fields': (('start_time', 'end_time'),)
+        }),
+        ('Content', {
+            'fields': ('objectives', 'methodology')
+        }),
+        ('Team', {
+            'fields': ('facilitator',)
+        }),
+        ('Results', {
+            'fields': ('outputs', 'notes'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def workshop_link(self, obj):
+        """Link to workshop admin page."""
+        url = reverse('admin:mana_workshopactivity_change', args=[obj.workshop.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.workshop.title)
+    workshop_link.short_description = 'Workshop'
+    
+    def time_range(self, obj):
+        """Time range display."""
+        return f"{obj.start_time} - {obj.end_time}"
+    time_range.short_description = 'Time'
+    
+    def has_outputs(self, obj):
+        """Outputs indicator."""
+        if obj.outputs:
+            return format_html('<span style="color: green;">✓ Yes</span>')
+        return format_html('<span style="color: orange;">✗ No</span>')
+    has_outputs.short_description = 'Outputs'
+
+
+@admin.register(WorkshopParticipant)
+class WorkshopParticipantAdmin(admin.ModelAdmin):
+    """Admin interface for Workshop Participants."""
+    
+    list_display = [
+        'name', 'workshop_link', 'participant_type', 'gender', 'age_group',
+        'organization', 'attendance_badge'
+    ]
+    list_filter = [
+        'participant_type', 'gender', 'age_group', 'attendance_status',
+        'workshop__workshop_type', 'workshop__workshop_day'
+    ]
+    search_fields = ['name', 'organization', 'contact_info', 'workshop__title']
+    ordering = ['workshop', 'participant_type', 'name']
+    autocomplete_fields = ['workshop']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'workshop', 'participant_type')
+        }),
+        ('Demographics', {
+            'fields': (('gender', 'age_group'), 'organization')
+        }),
+        ('Contact', {
+            'fields': ('contact_info',)
+        }),
+        ('Participation', {
+            'fields': ('attendance_status', 'participation_notes')
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def workshop_link(self, obj):
+        """Link to workshop admin page."""
+        url = reverse('admin:mana_workshopactivity_change', args=[obj.workshop.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.workshop.title)
+    workshop_link.short_description = 'Workshop'
+    
+    def attendance_badge(self, obj):
+        """Attendance status with color coding."""
+        colors = {
+            'attended': 'green',
+            'partial': 'orange',
+            'absent': 'red',
+        }
+        color = colors.get(obj.attendance_status, 'gray')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color, obj.get_attendance_status_display()
+        )
+    attendance_badge.short_description = 'Attendance'
+
+
+@admin.register(WorkshopOutput)
+class WorkshopOutputAdmin(admin.ModelAdmin):
+    """Admin interface for Workshop Outputs."""
+    
+    list_display = [
+        'title', 'workshop_link', 'output_type', 'created_by', 'created_at', 'has_file'
+    ]
+    list_filter = [
+        'output_type', 'workshop__workshop_type', 'workshop__workshop_day', 'created_at'
+    ]
+    search_fields = ['title', 'description', 'content', 'workshop__title']
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
+    autocomplete_fields = ['workshop', 'created_by', 'created_by_session']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'workshop', 'output_type', 'description')
+        }),
+        ('Content', {
+            'fields': ('content',)
+        }),
+        ('File', {
+            'fields': ('file_path',)
+        }),
+        ('Session Link', {
+            'fields': ('created_by_session',),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def workshop_link(self, obj):
+        """Link to workshop admin page."""
+        url = reverse('admin:mana_workshopactivity_change', args=[obj.workshop.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.workshop.title)
+    workshop_link.short_description = 'Workshop'
+    
+    def has_file(self, obj):
+        """File attachment indicator."""
+        if obj.file_path:
+            return format_html('<span style="color: green;">✓ Yes</span>')
+        return format_html('<span style="color: orange;">✗ No</span>')
+    has_file.short_description = 'File'
+
+
+@admin.register(MANAReport)
+class MANAReportAdmin(admin.ModelAdmin):
+    """Admin interface for MANA Reports."""
+    
+    list_display = [
+        'title', 'assessment_link', 'report_status_badge', 'created_by',
+        'validation_date', 'submission_date', 'created_at'
+    ]
+    list_filter = [
+        'report_status', 'validation_date', 'submission_date', 'created_at'
+    ]
+    search_fields = [
+        'title', 'executive_summary', 'assessment__title', 'assessment__community__barangay__name'
+    ]
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']
+    autocomplete_fields = ['assessment', 'created_by', 'submitted_by']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'assessment', 'report_status')
+        }),
+        ('Executive Summary', {
+            'fields': ('executive_summary',)
+        }),
+        ('Context and Background', {
+            'fields': ('context_background', 'methodology'),
+            'classes': ('collapse',)
+        }),
+        ('Findings by Sector', {
+            'fields': (
+                'social_development_findings',
+                'economic_development_findings', 
+                'cultural_development_findings',
+                'rights_protection_findings'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Priority Issues and Recommendations', {
+            'fields': ('priority_issues', 'policy_recommendations'),
+            'classes': ('collapse',)
+        }),
+        ('Program Development', {
+            'fields': (
+                'program_development_opportunities',
+                'strategic_approaches',
+                'stakeholder_roles',
+                'resource_requirements',
+                'monitoring_evaluation'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Validation', {
+            'fields': (
+                ('validation_date', 'validation_participants'),
+                'validation_feedback'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Submission', {
+            'fields': (('submission_date', 'submitted_by'),),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['mark_as_review', 'mark_as_final', 'mark_as_submitted']
+    
+    def assessment_link(self, obj):
+        """Link to assessment admin page."""
+        url = reverse('admin:mana_assessment_change', args=[obj.assessment.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.assessment.title)
+    assessment_link.short_description = 'Assessment'
+    
+    def report_status_badge(self, obj):
+        """Status with color coding."""
+        colors = {
+            'draft': 'gray',
+            'review': 'orange',
+            'validation': 'blue',
+            'final': 'green',
+            'submitted': 'purple',
+        }
+        color = colors.get(obj.report_status, 'gray')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color, obj.get_report_status_display()
+        )
+    report_status_badge.short_description = 'Status'
+    
+    def mark_as_review(self, request, queryset):
+        """Bulk action to mark reports as under review."""
+        updated = queryset.update(report_status='review')
+        self.message_user(request, f'{updated} reports marked as under review.')
+    mark_as_review.short_description = "Mark as Under Review"
+    
+    def mark_as_final(self, request, queryset):
+        """Bulk action to mark reports as final."""
+        updated = queryset.update(report_status='final')
+        self.message_user(request, f'{updated} reports marked as final.')
+    mark_as_final.short_description = "Mark as Final"
+    
+    def mark_as_submitted(self, request, queryset):
+        """Bulk action to mark reports as submitted."""
+        updated = queryset.update(report_status='submitted')
+        self.message_user(request, f'{updated} reports marked as submitted.')
+    mark_as_submitted.short_description = "Mark as Submitted"

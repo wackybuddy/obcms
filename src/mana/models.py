@@ -98,7 +98,7 @@ class Assessment(models.Model):
         ('desk_review', 'Desk Review/Research'),
         ('survey', 'Survey'),
         ('kii', 'Key Informant Interview (KII)'),
-        ('fgd', 'FGD/Workshops'),
+        ('workshop', 'FGD/Workshops'),
         ('participatory', 'Participatory Assessment'),
         ('observation', 'Direct Observation'),
         ('mixed', 'Mixed Methods'),
@@ -310,12 +310,14 @@ class AssessmentTeamMember(models.Model):
     """Through model for assessment team members with roles."""
     
     ROLE_CHOICES = [
-        ('lead_assessor', 'Lead Assessor'),
+        ('team_leader', 'Team Leader/Executive Director'),
+        ('deputy_leader', 'Deputy Team Leader/DMO IV'),
+        ('facilitator', 'Facilitator (DMO/CDO)'),
+        ('documenter', 'Documenter'),
+        ('info_analyst', 'Information System Analyst'),
+        ('secretariat', 'Secretariat/Admin Support'),
         ('data_collector', 'Data Collector'),
-        ('analyst', 'Data Analyst'),
-        ('facilitator', 'Community Facilitator'),
         ('technical_expert', 'Technical Expert'),
-        ('coordinator', 'Field Coordinator'),
         ('observer', 'Observer'),
     ]
     
@@ -1725,6 +1727,572 @@ class SpatialDataPoint(models.Model):
     def coordinates(self):
         """Return coordinates as [longitude, latitude] for GeoJSON."""
         return [self.longitude, self.latitude]
+
+
+class WorkshopActivity(models.Model):
+    """Model for managing MANA workshop activities following OBC-MANA guidelines."""
+    
+    WORKSHOP_TYPES = [
+        ('workshop_1', 'Workshop 1: Understanding the Community Context'),
+        ('workshop_2', 'Workshop 2: Community Aspirations and Priorities'),
+        ('workshop_3', 'Workshop 3: Community Collaboration and Empowerment'),
+        ('workshop_4', 'Workshop 4: Community Feedback on Existing Initiatives'),
+        ('workshop_5', 'Workshop 5: OBCs Needs, Challenges, Factors, and Outcomes'),
+        ('workshop_6', 'Workshop 6: Ways Forward and Action Planning'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('planned', 'Planned'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    DAYS_MAPPING = [
+        ('day_1', 'Day 1: Arrival and Registration'),
+        ('day_2', 'Day 2: Opening and Understanding Community Context'),
+        ('day_3', 'Day 3: Aspirations, Priorities, Collaboration & Empowerment'),
+        ('day_4', 'Day 4: Feedback, Challenges, Ways Forward & Closing'),
+        ('day_5', 'Day 5: Departure'),
+    ]
+    
+    # Basic Information
+    assessment = models.ForeignKey(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name='workshop_activities',
+        help_text="Assessment this workshop belongs to"
+    )
+    
+    workshop_type = models.CharField(
+        max_length=15,
+        choices=WORKSHOP_TYPES,
+        help_text="Type of workshop activity"
+    )
+    
+    title = models.CharField(
+        max_length=250,
+        help_text="Workshop title"
+    )
+    
+    description = models.TextField(
+        help_text="Detailed description of workshop objectives"
+    )
+    
+    workshop_day = models.CharField(
+        max_length=10,
+        choices=DAYS_MAPPING,
+        help_text="Day of the 5-day MANA schedule"
+    )
+    
+    status = models.CharField(
+        max_length=15,
+        choices=STATUS_CHOICES,
+        default='planned',
+        help_text="Current status of the workshop"
+    )
+    
+    # Timing
+    scheduled_date = models.DateField(
+        help_text="Scheduled date for the workshop"
+    )
+    
+    start_time = models.TimeField(
+        help_text="Start time of the workshop"
+    )
+    
+    end_time = models.TimeField(
+        help_text="End time of the workshop"
+    )
+    
+    duration_hours = models.FloatField(
+        help_text="Duration in hours"
+    )
+    
+    # Participants and Facilitation
+    target_participants = models.IntegerField(
+        help_text="Target number of participants"
+    )
+    
+    actual_participants = models.IntegerField(
+        default=0,
+        help_text="Actual number of participants"
+    )
+    
+    facilitators = models.ManyToManyField(
+        User,
+        related_name='facilitated_workshops',
+        help_text="Workshop facilitators"
+    )
+    
+    # Workshop Content and Methodology
+    methodology = models.TextField(
+        help_text="Workshop methodology and approach"
+    )
+    
+    materials_needed = models.TextField(
+        blank=True,
+        help_text="Materials and supplies needed"
+    )
+    
+    # Expected Outputs
+    expected_outputs = models.TextField(
+        help_text="Expected workshop outputs and deliverables"
+    )
+    
+    # Results
+    key_findings = models.TextField(
+        blank=True,
+        help_text="Key findings from the workshop"
+    )
+    
+    recommendations = models.TextField(
+        blank=True,
+        help_text="Recommendations emerging from workshop"
+    )
+    
+    challenges_encountered = models.TextField(
+        blank=True,
+        help_text="Challenges encountered during workshop"
+    )
+    
+    # Metadata
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='created_workshops',
+        help_text="User who created this workshop"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['workshop_day', 'start_time']
+        unique_together = ['assessment', 'workshop_type']
+    
+    def __str__(self):
+        return f"{self.get_workshop_type_display()} - {self.assessment.title}"
+
+
+class WorkshopSession(models.Model):
+    """Model for individual workshop sessions within a workshop activity."""
+    
+    SESSION_TYPES = [
+        ('opening', 'Opening Session'),
+        ('presentation', 'Presentation'),
+        ('group_work', 'Group Work'),
+        ('plenary', 'Plenary Discussion'),
+        ('breakout', 'Breakout Session'),
+        ('synthesis', 'Synthesis Session'),
+        ('closing', 'Closing Session'),
+    ]
+    
+    workshop = models.ForeignKey(
+        WorkshopActivity,
+        on_delete=models.CASCADE,
+        related_name='sessions',
+        help_text="Workshop this session belongs to"
+    )
+    
+    session_title = models.CharField(
+        max_length=200,
+        help_text="Title of the session"
+    )
+    
+    session_type = models.CharField(
+        max_length=15,
+        choices=SESSION_TYPES,
+        help_text="Type of session"
+    )
+    
+    session_order = models.IntegerField(
+        help_text="Order of session within workshop"
+    )
+    
+    start_time = models.TimeField(
+        help_text="Session start time"
+    )
+    
+    end_time = models.TimeField(
+        help_text="Session end time"
+    )
+    
+    facilitator = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        help_text="Primary facilitator for this session"
+    )
+    
+    objectives = models.TextField(
+        help_text="Session objectives"
+    )
+    
+    methodology = models.TextField(
+        help_text="Session methodology and activities"
+    )
+    
+    outputs = models.TextField(
+        blank=True,
+        help_text="Session outputs and results"
+    )
+    
+    notes = models.TextField(
+        blank=True,
+        help_text="Session notes and observations"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['workshop', 'session_order']
+        unique_together = ['workshop', 'session_order']
+    
+    def __str__(self):
+        return f"Session {self.session_order}: {self.session_title}"
+
+
+class WorkshopParticipant(models.Model):
+    """Model for tracking workshop participants."""
+    
+    PARTICIPANT_TYPES = [
+        ('elder', 'Community Elder'),
+        ('women_leader', 'Women Leader'),
+        ('youth_leader', 'Youth Leader'),
+        ('farmer', 'Farmer'),
+        ('fisherfolk', 'Fisherfolk'),
+        ('religious_leader', 'Religious Leader'),
+        ('traditional_leader', 'Traditional Leader'),
+        ('milf_representative', 'MILF Representative'),
+        ('mnlf_representative', 'MNLF Representative'),
+        ('business_leader', 'Business Leader'),
+        ('teacher', 'Teacher/Educator'),
+        ('health_worker', 'Health Worker'),
+        ('other', 'Other'),
+    ]
+    
+    workshop = models.ForeignKey(
+        WorkshopActivity,
+        on_delete=models.CASCADE,
+        related_name='participants',
+        help_text="Workshop this participant attended"
+    )
+    
+    name = models.CharField(
+        max_length=100,
+        help_text="Participant name"
+    )
+    
+    participant_type = models.CharField(
+        max_length=20,
+        choices=PARTICIPANT_TYPES,
+        help_text="Type/role of participant"
+    )
+    
+    gender = models.CharField(
+        max_length=10,
+        choices=[('male', 'Male'), ('female', 'Female')],
+        help_text="Gender of participant"
+    )
+    
+    age_group = models.CharField(
+        max_length=15,
+        choices=[
+            ('18-30', '18-30 years'),
+            ('31-45', '31-45 years'),
+            ('46-60', '46-60 years'),
+            ('60+', '60+ years'),
+        ],
+        help_text="Age group of participant"
+    )
+    
+    contact_info = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Contact information"
+    )
+    
+    organization = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text="Organization or group represented"
+    )
+    
+    attendance_status = models.CharField(
+        max_length=15,
+        choices=[
+            ('attended', 'Attended'),
+            ('partial', 'Partial Attendance'),
+            ('absent', 'Absent'),
+        ],
+        default='attended',
+        help_text="Attendance status"
+    )
+    
+    participation_notes = models.TextField(
+        blank=True,
+        help_text="Notes on participant contributions"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['participant_type', 'name']
+        unique_together = ['workshop', 'name', 'participant_type']
+    
+    def __str__(self):
+        return f"{self.name} ({self.get_participant_type_display()})"
+
+
+class WorkshopOutput(models.Model):
+    """Model for tracking workshop outputs and deliverables."""
+    
+    OUTPUT_TYPES = [
+        ('community_map', 'Community Map'),
+        ('timeline', 'Historical Timeline'),
+        ('asset_inventory', 'Asset Inventory'),
+        ('stakeholder_map', 'Stakeholder Map'),
+        ('vision_statement', 'Vision Statement'),
+        ('needs_assessment', 'Needs Assessment'),
+        ('priority_list', 'Priority List'),
+        ('organization_map', 'Organization Map'),
+        ('collaboration_strategy', 'Collaboration Strategy'),
+        ('program_feedback', 'Program Feedback'),
+        ('problem_tree', 'Problem Tree'),
+        ('solution_inventory', 'Solution Inventory'),
+        ('action_plan', 'Action Plan'),
+        ('meta_cards', 'Meta Cards'),
+        ('flip_charts', 'Flip Charts'),
+        ('photos', 'Photo Documentation'),
+        ('audio_recording', 'Audio Recording'),
+        ('other', 'Other Output'),
+    ]
+    
+    workshop = models.ForeignKey(
+        WorkshopActivity,
+        on_delete=models.CASCADE,
+        related_name='outputs',
+        help_text="Workshop that produced this output"
+    )
+    
+    output_type = models.CharField(
+        max_length=30,
+        choices=OUTPUT_TYPES,
+        help_text="Type of workshop output"
+    )
+    
+    title = models.CharField(
+        max_length=200,
+        help_text="Title or name of the output"
+    )
+    
+    description = models.TextField(
+        help_text="Description of the output"
+    )
+    
+    content = models.TextField(
+        help_text="Content or details of the output"
+    )
+    
+    file_path = models.CharField(
+        max_length=500,
+        blank=True,
+        help_text="Path to associated file (if any)"
+    )
+    
+    created_by_session = models.ForeignKey(
+        WorkshopSession,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Session that created this output"
+    )
+    
+    # Metadata
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        help_text="User who documented this output"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['workshop', 'output_type']
+    
+    def __str__(self):
+        return f"{self.title} ({self.get_output_type_display()})"
+
+
+class MANAReport(models.Model):
+    """Model for managing OBC-MANA reports following the prescribed format."""
+    
+    REPORT_STATUS = [
+        ('draft', 'Draft'),
+        ('review', 'Under Review'),
+        ('validation', 'Validation'),
+        ('final', 'Final Report'),
+        ('submitted', 'Submitted'),
+    ]
+    
+    REPORT_SECTIONS = [
+        ('executive_summary', 'Executive Summary'),
+        ('context_background', 'Context and Background'),
+        ('methodology', 'Methodology'),
+        ('findings_analysis', 'Findings and Analysis'),
+        ('priority_recommendations', 'Priority Issues and Recommendations'),
+        ('implementation_framework', 'Implementation Framework'),
+        ('annexes', 'Annexes'),
+    ]
+    
+    # Basic Information
+    assessment = models.OneToOneField(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name='mana_report',
+        help_text="Assessment this report belongs to"
+    )
+    
+    title = models.CharField(
+        max_length=300,
+        help_text="Report title"
+    )
+    
+    report_status = models.CharField(
+        max_length=15,
+        choices=REPORT_STATUS,
+        default='draft',
+        help_text="Current status of the report"
+    )
+    
+    # Report Content
+    executive_summary = models.TextField(
+        blank=True,
+        help_text="Executive summary including key findings and recommendations"
+    )
+    
+    context_background = models.TextField(
+        blank=True,
+        help_text="Legal/policy frameworks and community profile"
+    )
+    
+    methodology = models.TextField(
+        blank=True,
+        help_text="Data collection methods and analytical framework"
+    )
+    
+    # Findings and Analysis sections
+    social_development_findings = models.TextField(
+        blank=True,
+        help_text="Education, health, social protection findings"
+    )
+    
+    economic_development_findings = models.TextField(
+        blank=True,
+        help_text="Livelihoods, infrastructure, financial inclusion findings"
+    )
+    
+    cultural_development_findings = models.TextField(
+        blank=True,
+        help_text="Cultural practices, religious institutions, arts findings"
+    )
+    
+    rights_protection_findings = models.TextField(
+        blank=True,
+        help_text="Governance, access to justice, land rights findings"
+    )
+    
+    # Priority Issues and Recommendations
+    priority_issues = models.TextField(
+        blank=True,
+        help_text="Prioritized needs and justification"
+    )
+    
+    policy_recommendations = models.TextField(
+        blank=True,
+        help_text="Policy recommendations for each priority"
+    )
+    
+    program_development_opportunities = models.TextField(
+        blank=True,
+        help_text="Program development opportunities"
+    )
+    
+    # Implementation Framework
+    strategic_approaches = models.TextField(
+        blank=True,
+        help_text="Strategic approaches and timeframes"
+    )
+    
+    stakeholder_roles = models.TextField(
+        blank=True,
+        help_text="Stakeholder roles and responsibilities"
+    )
+    
+    resource_requirements = models.TextField(
+        blank=True,
+        help_text="Resource requirements and sources"
+    )
+    
+    monitoring_evaluation = models.TextField(
+        blank=True,
+        help_text="Monitoring and evaluation mechanisms"
+    )
+    
+    # Validation and Review
+    validation_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date of validation workshop"
+    )
+    
+    validation_participants = models.TextField(
+        blank=True,
+        help_text="Validation workshop participants"
+    )
+    
+    validation_feedback = models.TextField(
+        blank=True,
+        help_text="Feedback from validation workshop"
+    )
+    
+    # Submission
+    submission_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date submitted to Office of Chief Minister"
+    )
+    
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='submitted_reports',
+        help_text="User who submitted the report"
+    )
+    
+    # Metadata
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='created_reports',
+        help_text="User who created this report"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'MANA Report'
+        verbose_name_plural = 'MANA Reports'
+    
+    def __str__(self):
+        return f"{self.title} - {self.get_report_status_display()}"
 
 
 class BaselineStudy(models.Model):
