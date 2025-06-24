@@ -32,22 +32,31 @@ class OrganizationAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'acronym', 'organization_type', 'sector', 'status')
-        }),
-        ('Details', {
-            'fields': ('description', 'mandate', 'target_beneficiaries')
+            'fields': ('name', 'acronym', 'organization_type', 'partnership_level', 'partnership_status')
         }),
         ('Contact Information', {
-            'fields': ('address', 'website', 'social_media_links')
+            'fields': ('address', 'mailing_address', 'phone', 'mobile', 'email', 'website', 'social_media')
         }),
-        ('Capacity', {
-            'fields': ('staff_count', 'annual_budget', 'geographic_coverage', 'service_areas')
+        ('Key Personnel', {
+            'fields': ('head_of_organization', 'head_position', 'focal_person', 'focal_person_position', 'focal_person_contact', 'focal_person_email')
         }),
-        ('Engagement', {
-            'fields': ('engagement_history', 'partnership_interest', 'collaboration_preferences')
+        ('Partnership Information', {
+            'fields': ('partnership_start_date',)
+        }),
+        ('Operational Details', {
+            'fields': ('areas_of_expertise', 'geographic_coverage', 'target_beneficiaries', 'annual_budget', 'staff_count')
+        }),
+        ('Administrative Information', {
+            'fields': ('registration_number', 'tax_identification_number', 'accreditation_details')
+        }),
+        ('Engagement History', {
+            'fields': ('last_engagement_date', 'engagement_frequency')
+        }),
+        ('Notes and Status', {
+            'fields': ('notes', 'is_active', 'is_priority')
         }),
         ('Metadata', {
-            'fields': ('notes', 'created_at', 'updated_at'),
+            'fields': ('created_by', 'created_at', 'updated_at'),
             'classes': ('collapse',)
         })
     )
