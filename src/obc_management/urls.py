@@ -40,6 +40,7 @@ urlpatterns = [
     
     # Main application URLs
     path('', include('common.urls')),
+    path('monitoring/', include('monitoring.urls')),
     
     # API Authentication
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
