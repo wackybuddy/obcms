@@ -1,23 +1,25 @@
-import google.generativeai as genai
-from django.conf import settings
-from django.utils import timezone
-from .cultural_context import BangsomoroCulturalContext
 import json
 import logging
 import time
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
+import google.generativeai as genai
+from django.conf import settings
+from django.utils import timezone
+
+from .cultural_context import BangsomoroCulturalContext
 
 logger = logging.getLogger(__name__)
 
 
 class GeminiAIEngine:
     """AI Engine for Google Gemini 2.5 Flash integration with OBC Management System."""
-    
+
     def __init__(self):
         """Initialize the Gemini AI engine with proper configuration."""
         # Configure Gemini API
         genai.configure(api_key=settings.GOOGLE_API_KEY)
-        
+
         # Initialize the model
         self.model = genai.GenerativeModel(
             model_name=settings.GEMINI_MODEL,
@@ -26,21 +28,21 @@ class GeminiAIEngine:
                 top_p=0.8,
                 top_k=40,
                 max_output_tokens=2048,
-            )
+            ),
         )
-        
+
         # Initialize cultural context
         self.cultural_context = BangsomoroCulturalContext()
-        
+
         # System prompts for different use cases
         self.system_prompts = {
-            'policy_chat': self._get_policy_chat_system_prompt(),
-            'document_generation': self._get_document_generation_system_prompt(),
-            'analysis': self._get_analysis_system_prompt(),
-            'evidence_review': self._get_evidence_review_system_prompt(),
-            'cultural_guidance': self._get_cultural_guidance_system_prompt(),
+            "policy_chat": self._get_policy_chat_system_prompt(),
+            "document_generation": self._get_document_generation_system_prompt(),
+            "analysis": self._get_analysis_system_prompt(),
+            "evidence_review": self._get_evidence_review_system_prompt(),
+            "cultural_guidance": self._get_cultural_guidance_system_prompt(),
         }
-    
+
     def _get_policy_chat_system_prompt(self) -> str:
         """Get system prompt for policy chat conversations."""
         return f"""You are an AI assistant for the Office for Other Bangsamoro Communities (OOBC) Management System. 
@@ -189,220 +191,240 @@ Guidelines:
 Current date: {timezone.now().strftime('%Y-%m-%d')}"""
 
     def generate_response(
-        self, 
-        prompt: str, 
-        conversation_type: str = 'policy_chat',
+        self,
+        prompt: str,
+        conversation_type: str = "policy_chat",
         context_data: Optional[Dict] = None,
-        conversation_history: Optional[List[Dict]] = None
+        conversation_history: Optional[List[Dict]] = None,
     ) -> Dict[str, Any]:
         """Generate AI response using Gemini 2.5 Flash."""
         start_time = time.time()
-        
+
         try:
             # Build conversation context
             full_prompt = self._build_conversation_prompt(
                 prompt, conversation_type, context_data, conversation_history
             )
-            
+
             # Generate response using Gemini
             response = self.model.generate_content(full_prompt)
-            
+
             # Process response
             response_time = time.time() - start_time
-            
+
             result = {
-                'success': True,
-                'response': response.text,
-                'model_used': 'gemini-2.5-flash',
-                'response_time': response_time,
-                'timestamp': timezone.now().isoformat(),
-                'conversation_type': conversation_type,
-                'metadata': {
-                    'prompt_length': len(full_prompt),
-                    'response_length': len(response.text),
-                    'cultural_context_applied': True,
-                }
+                "success": True,
+                "response": response.text,
+                "model_used": "gemini-2.5-flash",
+                "response_time": response_time,
+                "timestamp": timezone.now().isoformat(),
+                "conversation_type": conversation_type,
+                "metadata": {
+                    "prompt_length": len(full_prompt),
+                    "response_length": len(response.text),
+                    "cultural_context_applied": True,
+                },
             }
-            
+
             # Add any extracted insights
-            if conversation_type in ['analysis', 'evidence_review']:
-                result['insights'] = self._extract_insights(response.text, conversation_type)
-            
+            if conversation_type in ["analysis", "evidence_review"]:
+                result["insights"] = self._extract_insights(
+                    response.text, conversation_type
+                )
+
             logger.info(f"Gemini AI response generated in {response_time:.2f}s")
             return result
-            
+
         except Exception as e:
             logger.error(f"Error generating AI response: {str(e)}")
             return {
-                'success': False,
-                'error': str(e),
-                'response': "I apologize, but I encountered an error while processing your request. Please try again or contact support if the issue persists.",
-                'model_used': 'gemini-2.5-flash',
-                'response_time': time.time() - start_time,
-                'timestamp': timezone.now().isoformat(),
+                "success": False,
+                "error": str(e),
+                "response": "I apologize, but I encountered an error while processing your request. Please try again or contact support if the issue persists.",
+                "model_used": "gemini-2.5-flash",
+                "response_time": time.time() - start_time,
+                "timestamp": timezone.now().isoformat(),
             }
 
     def _build_conversation_prompt(
-        self, 
-        prompt: str, 
+        self,
+        prompt: str,
         conversation_type: str,
         context_data: Optional[Dict] = None,
-        conversation_history: Optional[List[Dict]] = None
+        conversation_history: Optional[List[Dict]] = None,
     ) -> str:
         """Build the full conversation prompt with system context."""
-        
+
         # Start with system prompt
-        full_prompt = self.system_prompts.get(conversation_type, self.system_prompts['policy_chat'])
-        
+        full_prompt = self.system_prompts.get(
+            conversation_type, self.system_prompts["policy_chat"]
+        )
+
         # Add specific context data if provided
         if context_data:
             full_prompt += "\n\nCurrent Context:\n"
-            if 'policy' in context_data:
-                policy = context_data['policy']
+            if "policy" in context_data:
+                policy = context_data["policy"]
                 full_prompt += f"Policy: {policy.get('title', '')}\n"
                 full_prompt += f"Category: {policy.get('category', '')}\n"
                 full_prompt += f"Status: {policy.get('status', '')}\n"
                 full_prompt += f"Description: {policy.get('description', '')}\n"
-            
-            if 'communities' in context_data:
-                communities = context_data['communities']
+
+            if "communities" in context_data:
+                communities = context_data["communities"]
                 full_prompt += f"Related Communities: {', '.join(communities)}\n"
-        
+
         # Add conversation history if provided
         if conversation_history:
             full_prompt += "\n\nConversation History:\n"
             for msg in conversation_history[-5:]:  # Last 5 messages for context
-                role = msg.get('role', 'user')
-                content = msg.get('content', '')
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
                 full_prompt += f"{role.title()}: {content}\n"
-        
+
         # Add current user prompt
         full_prompt += f"\n\nUser: {prompt}\n\nAssistant:"
-        
+
         return full_prompt
 
-    def _extract_insights(self, response_text: str, conversation_type: str) -> List[Dict]:
+    def _extract_insights(
+        self, response_text: str, conversation_type: str
+    ) -> List[Dict]:
         """Extract structured insights from AI response."""
         insights = []
-        
+
         try:
             # Look for key insights patterns in the response
-            if conversation_type == 'analysis':
+            if conversation_type == "analysis":
                 # Extract policy analysis insights
-                if 'recommendation' in response_text.lower():
-                    insights.append({
-                        'type': 'recommendation',
-                        'content': self._extract_recommendations(response_text)
-                    })
-                
-                if 'risk' in response_text.lower():
-                    insights.append({
-                        'type': 'risk_assessment',
-                        'content': self._extract_risks(response_text)
-                    })
-            
-            elif conversation_type == 'evidence_review':
+                if "recommendation" in response_text.lower():
+                    insights.append(
+                        {
+                            "type": "recommendation",
+                            "content": self._extract_recommendations(response_text),
+                        }
+                    )
+
+                if "risk" in response_text.lower():
+                    insights.append(
+                        {
+                            "type": "risk_assessment",
+                            "content": self._extract_risks(response_text),
+                        }
+                    )
+
+            elif conversation_type == "evidence_review":
                 # Extract evidence quality insights
-                if 'evidence' in response_text.lower():
-                    insights.append({
-                        'type': 'evidence_quality',
-                        'content': self._extract_evidence_assessment(response_text)
-                    })
-            
+                if "evidence" in response_text.lower():
+                    insights.append(
+                        {
+                            "type": "evidence_quality",
+                            "content": self._extract_evidence_assessment(response_text),
+                        }
+                    )
+
         except Exception as e:
             logger.warning(f"Could not extract insights: {str(e)}")
-        
+
         return insights
 
     def _extract_recommendations(self, text: str) -> List[str]:
         """Extract recommendations from response text."""
         recommendations = []
-        lines = text.split('\n')
-        
+        lines = text.split("\n")
+
         for line in lines:
             line = line.strip()
-            if any(keyword in line.lower() for keyword in ['recommend', 'suggest', 'should', 'propose']):
+            if any(
+                keyword in line.lower()
+                for keyword in ["recommend", "suggest", "should", "propose"]
+            ):
                 if len(line) > 20:  # Filter out very short lines
                     recommendations.append(line)
-        
+
         return recommendations[:5]  # Limit to top 5
 
     def _extract_risks(self, text: str) -> List[str]:
         """Extract risks from response text."""
         risks = []
-        lines = text.split('\n')
-        
+        lines = text.split("\n")
+
         for line in lines:
             line = line.strip()
-            if any(keyword in line.lower() for keyword in ['risk', 'challenge', 'concern', 'barrier']):
+            if any(
+                keyword in line.lower()
+                for keyword in ["risk", "challenge", "concern", "barrier"]
+            ):
                 if len(line) > 20:
                     risks.append(line)
-        
+
         return risks[:5]
 
     def _extract_evidence_assessment(self, text: str) -> Dict[str, Any]:
         """Extract evidence assessment from response text."""
         assessment = {
-            'quality_indicators': [],
-            'gaps_identified': [],
-            'recommendations': []
+            "quality_indicators": [],
+            "gaps_identified": [],
+            "recommendations": [],
         }
-        
-        lines = text.split('\n')
+
+        lines = text.split("\n")
         current_section = None
-        
+
         for line in lines:
             line = line.strip().lower()
-            if 'quality' in line:
-                current_section = 'quality_indicators'
-            elif 'gap' in line or 'missing' in line:
-                current_section = 'gaps_identified'
-            elif 'recommend' in line:
-                current_section = 'recommendations'
+            if "quality" in line:
+                current_section = "quality_indicators"
+            elif "gap" in line or "missing" in line:
+                current_section = "gaps_identified"
+            elif "recommend" in line:
+                current_section = "recommendations"
             elif current_section and len(line) > 20:
                 assessment[current_section].append(line)
-        
+
         return assessment
 
     def generate_document(
-        self, 
-        document_type: str, 
+        self,
+        document_type: str,
         policy_data: Dict,
-        additional_context: Optional[Dict] = None
+        additional_context: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         """Generate a structured document using Gemini."""
-        
-        prompt = self._build_document_prompt(document_type, policy_data, additional_context)
-        
+
+        prompt = self._build_document_prompt(
+            document_type, policy_data, additional_context
+        )
+
         response = self.generate_response(
             prompt=prompt,
-            conversation_type='document_generation',
-            context_data={'policy': policy_data}
+            conversation_type="document_generation",
+            context_data={"policy": policy_data},
         )
-        
-        if response['success']:
+
+        if response["success"]:
             # Parse document structure
-            content = response['response']
+            content = response["response"]
             sections = self._parse_document_sections(content)
-            
-            response['document_structure'] = {
-                'title': self._extract_title(content),
-                'sections': sections,
-                'key_points': self._extract_key_points(content)
+
+            response["document_structure"] = {
+                "title": self._extract_title(content),
+                "sections": sections,
+                "key_points": self._extract_key_points(content),
             }
-        
+
         return response
 
     def _build_document_prompt(
-        self, 
-        document_type: str, 
+        self,
+        document_type: str,
         policy_data: Dict,
-        additional_context: Optional[Dict] = None
+        additional_context: Optional[Dict] = None,
     ) -> str:
         """Build prompt for document generation."""
-        
+
         prompts = {
-            'policy_brief': f"""Generate a professional policy brief for the following policy recommendation:
+            "policy_brief": f"""Generate a professional policy brief for the following policy recommendation:
 
 Title: {policy_data.get('title', '')}
 Category: {policy_data.get('category', '')}
@@ -424,8 +446,7 @@ Create a comprehensive policy brief that includes:
 10. Conclusion and Next Steps
 
 Ensure the document is professional, evidence-based, and culturally sensitive.""",
-
-            'executive_summary': f"""Create an executive summary for the policy recommendation:
+            "executive_summary": f"""Create an executive summary for the policy recommendation:
 
 {policy_data.get('title', '')}
 
@@ -444,67 +465,79 @@ The executive summary should be concise (1-2 pages) and include:
 5. Resource Requirements
 6. Success Metrics""",
         }
-        
-        return prompts.get(document_type, prompts['policy_brief'])
+
+        return prompts.get(document_type, prompts["policy_brief"])
 
     def _parse_document_sections(self, content: str) -> List[Dict]:
         """Parse document content into structured sections."""
         sections = []
-        lines = content.split('\n')
+        lines = content.split("\n")
         current_section = None
         current_content = []
-        
+
         for line in lines:
             line = line.strip()
-            
+
             # Check if line is a section header (numbered or has header indicators)
-            if (line and (line[0].isdigit() and '.' in line[:5]) or 
-                line.startswith('#') or 
-                line.isupper() and len(line) < 100):
-                
+            if (
+                line
+                and (line[0].isdigit() and "." in line[:5])
+                or line.startswith("#")
+                or line.isupper()
+                and len(line) < 100
+            ):
+
                 # Save previous section if exists
                 if current_section:
-                    sections.append({
-                        'title': current_section,
-                        'content': '\n'.join(current_content).strip()
-                    })
-                
+                    sections.append(
+                        {
+                            "title": current_section,
+                            "content": "\n".join(current_content).strip(),
+                        }
+                    )
+
                 # Start new section
                 current_section = line
                 current_content = []
             else:
                 if line:  # Add non-empty lines to current section
                     current_content.append(line)
-        
+
         # Add last section
         if current_section:
-            sections.append({
-                'title': current_section,
-                'content': '\n'.join(current_content).strip()
-            })
-        
+            sections.append(
+                {
+                    "title": current_section,
+                    "content": "\n".join(current_content).strip(),
+                }
+            )
+
         return sections
 
     def _extract_title(self, content: str) -> str:
         """Extract document title from content."""
-        lines = content.split('\n')
+        lines = content.split("\n")
         for line in lines[:5]:  # Check first 5 lines
             line = line.strip()
-            if line and not line.startswith('#'):
+            if line and not line.startswith("#"):
                 return line
         return "Generated Document"
 
     def _extract_key_points(self, content: str) -> List[str]:
         """Extract key points from document content."""
         key_points = []
-        lines = content.split('\n')
-        
+        lines = content.split("\n")
+
         for line in lines:
             line = line.strip()
             # Look for bullet points or numbered items
-            if (line.startswith('•') or line.startswith('-') or 
-                line.startswith('*') or (line and line[0].isdigit() and '.' in line[:5])):
+            if (
+                line.startswith("•")
+                or line.startswith("-")
+                or line.startswith("*")
+                or (line and line[0].isdigit() and "." in line[:5])
+            ):
                 if len(line) > 10:  # Filter short lines
                     key_points.append(line)
-        
+
         return key_points[:10]  # Limit to top 10 key points

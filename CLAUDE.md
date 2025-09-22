@@ -8,15 +8,16 @@ Always use "Ultrathink" whenever you are responding or coding in Claude Code to 
 
 ## Development Environment Setup
 
-**Virtual Environment**: Always work from `venv/` directory
+**Virtual Environment**: Always work from Python 3.12 `venv/`
 ```bash
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+./scripts/bootstrap_venv.sh  # idempotent helper
+source venv/bin/activate     # On Windows: venv\Scripts\activate
 ```
 
 **Working Directory**: All Django commands must be run from the `src/` directory
 ```bash
 cd src
-python manage.py [command]
+./manage.py [command]
 ```
 
 ## Common Development Commands
@@ -24,15 +25,15 @@ python manage.py [command]
 ### Database Operations
 ```bash
 cd src
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
+./manage.py makemigrations
+./manage.py migrate
+./manage.py createsuperuser
 ```
 
 ### Development Server
 ```bash
 cd src
-python manage.py runserver
+./manage.py runserver
 # Server runs at http://localhost:8000
 # Admin interface: http://localhost:8000/admin/
 ```

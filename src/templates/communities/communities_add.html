@@ -1,0 +1,1887 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title|default:"Add Barangay OBC" }} - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:communities_home' %}" class="text-gray-600 hover:text-gray-900">OBC Data</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-900 font-medium">{{ breadcrumb_label|default:page_title|default:"Add Barangay OBC" }}</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">{{ page_title|default:"Add Barangay OBC" }}</h1>
+        <p class="mt-2 text-lg text-gray-600">
+            {{ page_subtitle|default:"Register a barangay-level OBC profile with comprehensive demographic, socio-economic, and cultural data." }}
+        </p>
+    </div>
+
+    <!-- Form Card with Modern Styling -->
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 mb-8">
+        <div class="p-6 lg:p-8">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-file-alt text-white text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">{{ form_heading|default:"Barangay OBC Form" }}</h2>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button type="button" onclick="showTab('identification')" id="identification-tab" class="tab-button border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600">
+                        <i class="fas fa-id-card mr-2"></i>Identification & Location
+                    </button>
+                    <button type="button" onclick="showTab('demographics')" id="demographics-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-users mr-2"></i>Demographics
+                    </button>
+                    <button type="button" onclick="showTab('services')" id="services-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-hand-holding-heart mr-2"></i>Basic Services
+                    </button>
+                    <button type="button" onclick="showTab('socioeconomic')" id="socioeconomic-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-chart-line mr-2"></i>Socio-Economic
+                    </button>
+                    <button type="button" onclick="showTab('religious')" id="religious-tab" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <i class="fas fa-landmark mr-2"></i>Cultural Facilities
+                    </button>
+                </nav>
+            </div>
+            
+            <form method="post" class="obc-form space-y-6">
+                {% csrf_token %}
+                
+                <!-- Form Errors -->
+                {% if form.errors %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    {% for field in form %}
+                                        {% if field.errors %}
+                                            {% for error in field.errors %}
+                                                <li>{{ field.label }}: {{ error }}</li>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Identification & Location Tab -->
+                    <div id="identification-content" class="tab-pane">
+                        <div class="bg-gray-50 rounded-lg p-6 space-y-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Identification & Location Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- OBC ID -->
+                            <div>
+                                <label for="{{ form.obc_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.obc_id.label }}
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.obc_id.name }}" 
+                                       id="{{ form.obc_id.id_for_label }}"
+                                       value="{{ form.obc_id.value|default_if_none:'' }}"
+                                       placeholder="e.g., R12-SK-PAL-001"
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                {% if form.obc_id.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.obc_id.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <!-- Location Hierarchy -->
+                            <div class="md:col-span-2">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {% if form.region %}
+                                    <div>
+                                        <label for="{{ form.region.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                            {{ form.region.label }} {% if form.region.field.required %}<span class="text-red-500">*</span>{% endif %}
+                                        </label>
+                                        <select name="{{ form.region.name }}"
+                                                id="{{ form.region.id_for_label }}"
+                                                data-level="region"
+                                                data-initial="{{ form.region.value|default_if_none:'' }}"
+                                                data-placeholder="{{ form.region.field.empty_label|default:'Select region...' }}"
+                                                {% if form.region.field.required %}required{% endif %}
+                                                class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                            <option value="">{{ form.region.field.empty_label|default:'Select region...' }}</option>
+                                            {% for option in form.region.field.queryset %}
+                                                <option value="{{ option.id }}" {% if option.id|stringformat:"s" == form.region.value|stringformat:"s" %}selected{% endif %}>
+                                                    Region {{ option.code }} - {{ option.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.region.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.region.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+
+                                    {% if form.province %}
+                                    <div>
+                                        <label for="{{ form.province.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                            {{ form.province.label }} {% if form.province.field.required %}<span class="text-red-500">*</span>{% endif %}
+                                        </label>
+                                        <select name="{{ form.province.name }}"
+                                                id="{{ form.province.id_for_label }}"
+                                                data-level="province"
+                                                data-initial="{{ form.province.value|default_if_none:'' }}"
+                                                data-placeholder="{{ form.province.field.empty_label|default:'Select province...' }}"
+                                                {% if form.province.field.required %}required{% endif %}
+                                                class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                            <option value="">{{ form.province.field.empty_label|default:'Select province...' }}</option>
+                                            {% for option in form.province.field.queryset %}
+                                                <option value="{{ option.id }}" {% if option.id|stringformat:"s" == form.province.value|stringformat:"s" %}selected{% endif %}>
+                                                    {{ option.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.province.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.province.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+
+                                    {% if form.municipality %}
+                                    <div>
+                                        <label for="{{ form.municipality.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                            {{ form.municipality.label }} {% if form.municipality.field.required %}<span class="text-red-500">*</span>{% endif %}
+                                        </label>
+                                        <select name="{{ form.municipality.name }}"
+                                                id="{{ form.municipality.id_for_label }}"
+                                                data-level="municipality"
+                                                data-initial="{{ form.municipality.value|default_if_none:'' }}"
+                                                data-placeholder="{{ form.municipality.field.empty_label|default:'Select municipality/city...' }}"
+                                                {% if form.municipality.field.required %}required{% endif %}
+                                                class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                            <option value="">{{ form.municipality.field.empty_label|default:'Select municipality/city...' }}</option>
+                                            {% for option in form.municipality.field.queryset %}
+                                                <option value="{{ option.id }}" {% if option.id|stringformat:"s" == form.municipality.value|stringformat:"s" %}selected{% endif %}>
+                                                    {{ option.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.municipality.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.municipality.errors.0 }}</p>
+                                        {% endif %}
+                                        {% if not show_barangay_field %}
+                                        <p id="municipality-population-preview" class="mt-2 text-sm text-gray-600 hidden">
+                                            <span class="font-medium">Total Population:</span>
+                                            <span id="municipality-population-value">—</span>
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+
+                                    {% if show_barangay_field %}
+                                    <div>
+                                        <label for="{{ form.barangay.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                            {{ form.barangay.label }} {% if form.barangay.field.required %}<span class="text-red-500">*</span>{% endif %}
+                                        </label>
+                                        <select name="{{ form.barangay.name }}"
+                                                id="{{ form.barangay.id_for_label }}"
+                                                data-level="barangay"
+                                                data-initial="{{ form.barangay.value|default_if_none:'' }}"
+                                                data-placeholder="{{ form.barangay.field.empty_label|default:'Select barangay...' }}"
+                                                {% if form.barangay.field.required %}required{% endif %}
+                                                class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                            <option value="">{{ form.barangay.field.empty_label|default:'Select barangay...' }}</option>
+                                            {% for option in form.barangay.field.queryset %}
+                                                <option value="{{ option.id }}" {% if option.id|stringformat:"s" == form.barangay.value|stringformat:"s" %}selected{% endif %}>
+                                                    {{ option.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% if form.barangay.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.barangay.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Community Names -->
+                            <div class="md:col-span-2">
+                                <label for="{{ form.community_names.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.community_names.label }}
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.community_names.name }}" 
+                                       id="{{ form.community_names.id_for_label }}"
+                                       value="{{ form.community_names.value|default_if_none:'' }}"
+                                       placeholder="Common name(s) used for the community"
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                {% if form.community_names.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.community_names.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Source Document Reference -->
+                            <div class="md:col-span-2">
+                                <label for="{{ form.source_document_reference.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.source_document_reference.label }}
+                                </label>
+                                <textarea name="{{ form.source_document_reference.name }}" 
+                                          id="{{ form.source_document_reference.id_for_label }}"
+                                          rows="3"
+                                          placeholder="e.g., OBC MANA Region 12, p.7"
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.source_document_reference.value|default_if_none:'' }}</textarea>
+                            </div>
+                            
+                            {% if show_barangay_field %}
+                            <!-- Location Details -->
+                            <div>
+                                <label for="{{ form.purok_sitio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.purok_sitio.label }}
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.purok_sitio.name }}" 
+                                       id="{{ form.purok_sitio.id_for_label }}"
+                                       value="{{ form.purok_sitio.value|default_if_none:'' }}"
+                                       placeholder="Specific Purok/Sitio"
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.specific_location.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.specific_location.label }}
+                                </label>
+                                <input type="text" 
+                                       name="{{ form.specific_location.name }}" 
+                                       id="{{ form.specific_location.id_for_label }}"
+                                       value="{{ form.specific_location.value|default_if_none:'' }}"
+                                       placeholder="Additional location details"
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Settlement Type & Proximity -->
+                            <div>
+                                <label for="{{ form.settlement_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.settlement_type.label }}
+                                </label>
+                                <select name="{{ form.settlement_type.name }}" 
+                                        id="{{ form.settlement_type.id_for_label }}"
+                                        class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                    {% for value, label in form.settlement_type.field.choices %}
+                                        <option value="{{ value }}" {% if value == form.settlement_type.value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.proximity_to_barmm.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.proximity_to_barmm.label }}
+                                </label>
+                                <select name="{{ form.proximity_to_barmm.name }}" 
+                                        id="{{ form.proximity_to_barmm.id_for_label }}"
+                                        class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                    <option value="">Select proximity...</option>
+                                    {% for value, label in form.proximity_to_barmm.field.choices %}
+                                        <option value="{{ value }}" {% if value == form.proximity_to_barmm.value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Geographic Coordinates -->
+                            <div>
+                                <label for="{{ form.latitude.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.latitude.label }}
+                                </label>
+                                <input type="number" 
+                                       name="{{ form.latitude.name }}" 
+                                       id="{{ form.latitude.id_for_label }}"
+                                       value="{{ form.latitude.value|default_if_none:'' }}"
+                                       step="any"
+                                       placeholder="e.g., 6.5000"
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.longitude.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.longitude.label }}
+                                </label>
+                                <input type="number" 
+                                       name="{{ form.longitude.name }}" 
+                                       id="{{ form.longitude.id_for_label }}"
+                                       value="{{ form.longitude.value|default_if_none:'' }}"
+                                       step="any"
+                                       placeholder="e.g., 124.5000"
+                                       class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    
+                    <!-- Demographics Tab -->
+                    <div id="demographics-content" class="tab-pane hidden">
+                        <div class="bg-gray-50 rounded-lg p-6 space-y-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Demographic Profile</h3>
+                            
+                            <!-- Population Statistics -->
+                            <h4 class="text-md font-medium text-gray-800 mb-3">Population Statistics</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                                <!-- Population -->
+                                <div>
+                                    <label for="{{ form.estimated_obc_population.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.estimated_obc_population.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.estimated_obc_population.name }}" 
+                                           id="{{ form.estimated_obc_population.id_for_label }}"
+                                           value="{{ form.estimated_obc_population.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.total_barangay_population.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.total_barangay_population.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.total_barangay_population.name }}" 
+                                           id="{{ form.total_barangay_population.id_for_label }}"
+                                           value="{{ form.total_barangay_population.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <!-- Households -->
+                                <div>
+                                    <label for="{{ form.households.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.households.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.households.name }}" 
+                                           id="{{ form.households.id_for_label }}"
+                                           value="{{ form.households.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <!-- Families -->
+                                <div>
+                                    <label for="{{ form.families.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.families.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.families.name }}" 
+                                           id="{{ form.families.id_for_label }}"
+                                           value="{{ form.families.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+                            
+                            <!-- Age Demographics -->
+                            <h4 class="text-md font-medium text-gray-800 mb-3">Age Demographics</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.children_0_9.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Children (0-9)
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.children_0_9.name }}"
+                                           id="{{ form.children_0_9.id_for_label }}"
+                                           value="{{ form.children_0_9.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.adolescents_10_14.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Adolescents (10-14)
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.adolescents_10_14.name }}"
+                                           id="{{ form.adolescents_10_14.id_for_label }}"
+                                           value="{{ form.adolescents_10_14.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.youth_15_30.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Youth (15-30)
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.youth_15_30.name }}"
+                                           id="{{ form.youth_15_30.id_for_label }}"
+                                           value="{{ form.youth_15_30.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.adults_31_59.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Adults (31-59)
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.adults_31_59.name }}" 
+                                           id="{{ form.adults_31_59.id_for_label }}"
+                                           value="{{ form.adults_31_59.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.seniors_60_plus.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Seniors (60+)
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.seniors_60_plus.name }}" 
+                                           id="{{ form.seniors_60_plus.id_for_label }}"
+                                           value="{{ form.seniors_60_plus.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+                            
+                            <!-- Ethnolinguistic Information -->
+                            <h4 class="text-md font-medium text-gray-800 mb-3">Ethnolinguistic Profile</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.primary_ethnolinguistic_group.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.primary_ethnolinguistic_group.label }}
+                                    </label>
+                                    <select name="{{ form.primary_ethnolinguistic_group.name }}" 
+                                            id="{{ form.primary_ethnolinguistic_group.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select group...</option>
+                                        {% for value, label in form.primary_ethnolinguistic_group.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.primary_ethnolinguistic_group.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.other_ethnolinguistic_groups.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.other_ethnolinguistic_groups.label }}
+                                    </label>
+                                    <input type="text" 
+                                           name="{{ form.other_ethnolinguistic_groups.name }}" 
+                                           id="{{ form.other_ethnolinguistic_groups.id_for_label }}"
+                                           value="{{ form.other_ethnolinguistic_groups.value|default_if_none:'' }}"
+                                           placeholder="Other groups (comma-separated)"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <div class="md:col-span-2">
+                                    <label for="{{ form.languages_spoken.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.languages_spoken.label }}
+                                    </label>
+                                    <input type="text" 
+                                           name="{{ form.languages_spoken.name }}" 
+                                           id="{{ form.languages_spoken.id_for_label }}"
+                                           value="{{ form.languages_spoken.value|default_if_none:'' }}"
+                                           placeholder="Languages spoken (comma-separated)"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+                            
+                            <!-- Vulnerable Sectors -->
+                            <h4 class="text-md font-medium text-gray-800 mb-3">Vulnerable Sectors Count</h4>
+
+                            <!-- Row 1: Women, Solo Parents, PWDs -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.women_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Women
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.women_count.name }}"
+                                           id="{{ form.women_count.id_for_label }}"
+                                           value="{{ form.women_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.solo_parents_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Solo Parents
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.solo_parents_count.name }}"
+                                           id="{{ form.solo_parents_count.id_for_label }}"
+                                           value="{{ form.solo_parents_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.pwd_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of PWDs
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.pwd_count.name }}"
+                                           id="{{ form.pwd_count.id_for_label }}"
+                                           value="{{ form.pwd_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+
+                            <!-- Row 2: Farmers, Fisherfolk, Unemployed -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.farmers_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Farmers
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.farmers_count.name }}"
+                                           id="{{ form.farmers_count.id_for_label }}"
+                                           value="{{ form.farmers_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.fisherfolk_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Fisherfolk
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.fisherfolk_count.name }}"
+                                           id="{{ form.fisherfolk_count.id_for_label }}"
+                                           value="{{ form.fisherfolk_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.unemployed_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Unemployed
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.unemployed_count.name }}"
+                                           id="{{ form.unemployed_count.id_for_label }}"
+                                           value="{{ form.unemployed_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+
+                            <!-- Row 3: Indigenous Peoples, IDPs, Migrants/Transients -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.indigenous_peoples_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Indigenous Peoples
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.indigenous_peoples_count.name }}"
+                                           id="{{ form.indigenous_peoples_count.id_for_label }}"
+                                           value="{{ form.indigenous_peoples_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.idps_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of IDPs
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.idps_count.name }}"
+                                           id="{{ form.idps_count.id_for_label }}"
+                                           value="{{ form.idps_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.migrants_transients_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Migrants/Transients
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.migrants_transients_count.name }}"
+                                           id="{{ form.migrants_transients_count.id_for_label }}"
+                                           value="{{ form.migrants_transients_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+
+                            <!-- Row 4: CSOs, Associations, Cooperatives -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.csos_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of CSOs
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.csos_count.name }}"
+                                           id="{{ form.csos_count.id_for_label }}"
+                                           value="{{ form.csos_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.associations_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Associations
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.associations_count.name }}"
+                                           id="{{ form.associations_count.id_for_label }}"
+                                           value="{{ form.associations_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.number_of_cooperatives.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Cooperatives
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.number_of_cooperatives.name }}"
+                                           id="{{ form.number_of_cooperatives.id_for_label }}"
+                                           value="{{ form.number_of_cooperatives.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+
+                            <!-- Other Vulnerable Sectors text field -->
+                            <div class="mb-6">
+                                <label for="{{ form.other_vulnerable_sectors.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Other Vulnerable Sectors
+                                </label>
+                                <textarea name="{{ form.other_vulnerable_sectors.name }}"
+                                         id="{{ form.other_vulnerable_sectors.id_for_label }}"
+                                         rows="3"
+                                         placeholder="List any other vulnerable sectors not mentioned above..."
+                                         class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">{{ form.other_vulnerable_sectors.value|default_if_none:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Socio-Economic Tab -->
+                    <div id="socioeconomic-content" class="tab-pane hidden">
+                        <div class="bg-gray-50 rounded-lg p-6 space-y-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Socio-Economic Profile</h3>
+                            
+                            <!-- Livelihoods -->
+                            <div>
+                                <label for="{{ form.primary_livelihoods.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.primary_livelihoods.label }}
+                                </label>
+                                <textarea name="{{ form.primary_livelihoods.name }}" 
+                                          id="{{ form.primary_livelihoods.id_for_label }}"
+                                          rows="3"
+                                          placeholder="e.g., Rice Farming, Coconut Production, Fishing"
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.primary_livelihoods.value|default_if_none:'' }}</textarea>
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.secondary_livelihoods.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.secondary_livelihoods.label }}
+                                </label>
+                                <textarea name="{{ form.secondary_livelihoods.name }}" 
+                                          id="{{ form.secondary_livelihoods.id_for_label }}"
+                                          rows="3"
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.secondary_livelihoods.value|default_if_none:'' }}</textarea>
+                            </div>
+                            
+                            <!-- Economic Status -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="{{ form.estimated_poverty_incidence.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.estimated_poverty_incidence.label }}
+                                    </label>
+                                    <select name="{{ form.estimated_poverty_incidence.name }}" 
+                                            id="{{ form.estimated_poverty_incidence.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select incidence level...</option>
+                                        {% for value, label in form.estimated_poverty_incidence.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.estimated_poverty_incidence.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.development_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.development_status.label }}
+                                    </label>
+                                    <select name="{{ form.development_status.name }}" 
+                                            id="{{ form.development_status.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        {% for value, label in form.development_status.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.development_status.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Economic Information -->
+                            <h4 class="text-md font-medium text-gray-800 mb-3">Employment and Financial Access</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.number_of_employed_obc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.number_of_employed_obc.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.number_of_employed_obc.name }}" 
+                                           id="{{ form.number_of_employed_obc.id_for_label }}"
+                                           value="{{ form.number_of_employed_obc.value|default_if_none:'' }}"
+                                           min="0"
+                                           placeholder="Number of employed OBC individuals"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.number_of_unbanked_obc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.number_of_unbanked_obc.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.number_of_unbanked_obc.name }}" 
+                                           id="{{ form.number_of_unbanked_obc.id_for_label }}"
+                                           value="{{ form.number_of_unbanked_obc.value|default_if_none:'' }}"
+                                           min="0"
+                                           placeholder="Number of unbanked OBC individuals"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+                            
+                            <!-- Business and Enterprises -->
+                            <h4 class="text-md font-medium text-gray-800 mb-3">Business and Enterprise Count</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.number_of_cooperatives.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.number_of_cooperatives.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.number_of_cooperatives.name }}" 
+                                           id="{{ form.number_of_cooperatives.id_for_label }}"
+                                           value="{{ form.number_of_cooperatives.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.number_of_social_enterprises.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.number_of_social_enterprises.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.number_of_social_enterprises.name }}" 
+                                           id="{{ form.number_of_social_enterprises.id_for_label }}"
+                                           value="{{ form.number_of_social_enterprises.value|default_if_none:'' }}"
+                                           min="0"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.number_of_micro_enterprises.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.number_of_micro_enterprises.label }}
+                                    </label>
+                                    <input type="number" 
+                                           name="{{ form.number_of_micro_enterprises.name }}" 
+                                           id="{{ form.number_of_micro_enterprises.id_for_label }}"
+                                           value="{{ form.number_of_micro_enterprises.value|default_if_none:'' }}"
+                                           min="0"
+                                           placeholder="e.g., Sari-Sari Stores"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+                            
+                            <!-- Land and Other Issues -->
+                            <div>
+                                <label for="{{ form.land_tenure_issues.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.land_tenure_issues.label }}
+                                </label>
+                                <textarea name="{{ form.land_tenure_issues.name }}" 
+                                          id="{{ form.land_tenure_issues.id_for_label }}"
+                                          rows="3"
+                                          placeholder="Land tenure issues, disputes, ancestral domain claims"
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.land_tenure_issues.value|default_if_none:'' }}</textarea>
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.financial_literacy_access.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{ form.financial_literacy_access.label }}
+                                </label>
+                                <textarea name="{{ form.financial_literacy_access.name }}" 
+                                          id="{{ form.financial_literacy_access.id_for_label }}"
+                                          rows="3"
+                                          placeholder="Financial literacy and access to financial services"
+                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.financial_literacy_access.value|default_if_none:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Basic Services Tab -->
+                    <div id="services-content" class="tab-pane hidden">
+                        <div class="bg-gray-50 rounded-lg p-6 space-y-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Access to Basic Services</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <!-- Education Access -->
+                                <div>
+                                    <label for="{{ form.access_formal_education.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.access_formal_education.label }}
+                                    </label>
+                                    <select name="{{ form.access_formal_education.name }}" 
+                                            id="{{ form.access_formal_education.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_formal_education.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_formal_education.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.access_als.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.access_als.label }}
+                                    </label>
+                                    <select name="{{ form.access_als.name }}" 
+                                            id="{{ form.access_als.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_als.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_als.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.access_madrasah.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.access_madrasah.label }}
+                                    </label>
+                                    <select name="{{ form.access_madrasah.name }}" 
+                                            id="{{ form.access_madrasah.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_madrasah.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_madrasah.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Healthcare & Basic Needs -->
+                                <div>
+                                    <label for="{{ form.access_healthcare.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.access_healthcare.label }}
+                                    </label>
+                                    <select name="{{ form.access_healthcare.name }}" 
+                                            id="{{ form.access_healthcare.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_healthcare.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_healthcare.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.access_clean_water.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.access_clean_water.label }}
+                                    </label>
+                                    <select name="{{ form.access_clean_water.name }}" 
+                                            id="{{ form.access_clean_water.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_clean_water.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_clean_water.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.access_sanitation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Access to Sanitation (Waste Management - presence of garbage collectors, MRFs, Sanitary Landfills)
+                                    </label>
+                                    <select name="{{ form.access_sanitation.name }}" 
+                                            id="{{ form.access_sanitation.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_sanitation.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_sanitation.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Infrastructure -->
+                                <div>
+                                    <label for="{{ form.access_electricity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.access_electricity.label }}
+                                    </label>
+                                    <select name="{{ form.access_electricity.name }}" 
+                                            id="{{ form.access_electricity.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_electricity.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_electricity.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.access_roads_transport.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.access_roads_transport.label }}
+                                    </label>
+                                    <select name="{{ form.access_roads_transport.name }}" 
+                                            id="{{ form.access_roads_transport.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_roads_transport.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_roads_transport.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.access_communication.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.access_communication.label }}
+                                    </label>
+                                    <select name="{{ form.access_communication.name }}" 
+                                            id="{{ form.access_communication.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.access_communication.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.access_communication.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cultural Facilities Tab -->
+                    <div id="religious-content" class="tab-pane hidden">
+                        <div class="bg-gray-50 rounded-lg p-6 space-y-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Cultural Facilities</h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                                <div>
+                                    <label for="{{ form.mosques_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Mosques
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.mosques_count.name }}"
+                                           id="{{ form.mosques_count.id_for_label }}"
+                                           value="{{ form.mosques_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           placeholder="Enter number of mosques"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.madrasah_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Madrasah
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.madrasah_count.name }}"
+                                           id="{{ form.madrasah_count.id_for_label }}"
+                                           value="{{ form.madrasah_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           placeholder="Enter number of madrasah"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.asatidz_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Asatidz
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.asatidz_count.name }}"
+                                           id="{{ form.asatidz_count.id_for_label }}"
+                                           value="{{ form.asatidz_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           placeholder="Enter number of Asatidz"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+
+                                <div>
+                                    <label for="{{ form.religious_leaders_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Number of Ulama / Religious Leaders
+                                    </label>
+                                    <input type="number"
+                                           name="{{ form.religious_leaders_count.name }}"
+                                           id="{{ form.religious_leaders_count.id_for_label }}"
+                                           value="{{ form.religious_leaders_count.value|default_if_none:'' }}"
+                                           min="0"
+                                           placeholder="Enter number of Ulama or religious leaders"
+                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                </div>
+                            </div>
+
+                            <!-- Other Cultural Facilities text field -->
+                            <div class="mb-6">
+                                <label for="{{ form.other_cultural_facilities.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Other Cultural Facilities / Assets
+                                </label>
+                                <textarea name="{{ form.other_cultural_facilities.name }}"
+                                         id="{{ form.other_cultural_facilities.id_for_label }}"
+                                         rows="3"
+                                         placeholder="List any other cultural facilities or assets not mentioned above..."
+                                         class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">{{ form.other_cultural_facilities.value|default_if_none:'' }}</textarea>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <div class="flex items-center">
+                                    <input type="checkbox" 
+                                           name="{{ form.is_active.name }}" 
+                                           id="{{ form.is_active.id_for_label }}"
+                                           value="on"
+                                           {% if form.is_active.value is not None %}{% if form.is_active.value %}checked{% endif %}{% else %}checked{% endif %}
+                                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-700">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="bg-white border-t border-gray-200 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2 text-sm text-gray-600">
+                            <i class="fas fa-info-circle"></i>
+                            <span>All fields marked with <span class="text-red-500">*</span> are required</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button type="button" 
+                                    onclick="saveDraft()"
+                                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
+                                <i class="fas fa-save mr-2"></i>
+                                Save Draft
+                            </button>
+                            <a href="{% url 'common:communities_manage' %}" 
+                               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
+                                <i class="fas fa-times mr-2"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" 
+                                    class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform hover:-translate-y-0.5 transition-all duration-200">
+                                <i class="fas fa-check mr-2"></i>
+                                Save & Submit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Quick Actions Section -->
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 mb-8">
+        <div class="p-6">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-bolt text-white text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Quick Actions</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Import from Excel/CSV -->
+                <button onclick="showImportModal()" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-file-import text-green-600 text-xl mr-3"></i>
+                        <h3 class="font-semibold text-gray-900">Import from Excel / CSV</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">Bulk import community data from Excel or CSV files</p>
+                </button>
+                
+                <!-- Export Data -->
+                <button onclick="showExportModal()" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-file-export text-blue-600 text-xl mr-3"></i>
+                        <h3 class="font-semibold text-gray-900">Export as Excel / CSV / PDF</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">Export community data in multiple formats</p>
+                </button>
+                
+                <!-- Generate Report -->
+                <button onclick="showReportModal()" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-chart-bar text-purple-600 text-xl mr-3"></i>
+                        <h3 class="font-semibold text-gray-900">Generate Report about OBC Data</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">Create comprehensive reports on OBC community data</p>
+                </button>
+                
+                <!-- Data Guidelines -->
+                <a href="{% url 'common:data_guidelines' %}" class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-left group">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-book text-orange-600 text-xl mr-3"></i>
+                        <h3 class="font-semibold text-gray-900">Data Guidelines</h3>
+                    </div>
+                    <p class="text-sm text-gray-600">View data collection standards and guidelines</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if recent_communities %}
+    <!-- Recent Communities Section -->
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 hover:shadow-2xl transition-shadow duration-300">
+        <div class="p-6 lg:p-8">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center mr-4">
+                    <i class="fas fa-clock text-white text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Recently Added Communities</h2>
+            </div>
+            
+            <div class="overflow-hidden rounded-lg border border-gray-200">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt mr-2 text-gray-500"></i>
+                                        Barangay
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-city mr-2 text-gray-500"></i>
+                                        Municipality
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt mr-2 text-gray-500"></i>
+                                        Province
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-globe mr-2 text-gray-500"></i>
+                                        Region
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar mr-2 text-gray-500"></i>
+                                        Added
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for community in recent_communities %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mr-3">
+                                            <span class="text-white font-bold text-sm">{{ community.barangay.name|first|upper }}</span>
+                                        </div>
+                                        <div class="text-sm font-medium text-gray-900">{{ community.barangay.name }}</div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                    {{ community.barangay.municipality.name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                    {{ community.barangay.municipality.province.name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ community.barangay.municipality.province.region.name }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-clock mr-2 text-gray-400"></i>
+                                        {{ community.created_at|date:"M d, Y" }}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-center">
+                <a href="{% url 'common:communities_manage' %}" 
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors duration-200">
+                    View All Communities
+                    <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Import Modal -->
+<div id="importModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Import Communities from Excel/CSV</h3>
+                <button onclick="closeModal('importModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select File</label>
+                    <input type="file" id="importFile" accept=".csv,.xlsx,.xls" 
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <p class="mt-1 text-xs text-gray-500">Supported formats: CSV, Excel (.xlsx, .xls)</p>
+                </div>
+                
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p class="text-sm text-yellow-800">
+                        <strong>Required columns:</strong> barangay_id, community_names<br>
+                        <strong>Optional:</strong> obc_id, estimated_obc_population, households, etc.
+                    </p>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal('importModal')" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button id="importBtn" onclick="handleImport()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-upload mr-2"></i>Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div id="exportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Export Communities Data</h3>
+                <button onclick="closeModal('exportModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Export Format</label>
+                    <select id="exportFormat" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="excel">Excel (.xlsx)</option>
+                        <option value="csv">CSV</option>
+                        <option value="pdf">PDF Report</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Include Fields</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="exportFields" value="basic" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Basic Information</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="exportFields" value="demographics" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Demographics</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="exportFields" value="services" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Access to Services</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="exportFields" value="location" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Location Data</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal('exportModal')" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button onclick="handleExport()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div id="reportModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Generate OBC Data Report</h3>
+                <button onclick="closeModal('reportModal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+                    <select id="reportType" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="summary">Summary Report</option>
+                        <option value="demographic">Demographic Analysis</option>
+                        <option value="geographic">Geographic Distribution</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Format</label>
+                    <select id="reportFormat" class="block w-full rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="pdf">PDF Document</option>
+                        <option value="excel">Excel Workbook</option>
+                    </select>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Reports include statistical analysis, charts, and comprehensive data summaries.
+                    </p>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeModal('reportModal')" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button onclick="handleReportGeneration()" 
+                            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-chart-bar mr-2"></i>Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ location_data|json_script:"location-data" }}
+
+<!-- JavaScript for Tab Functionality and Quick Actions -->
+<script>
+// Tab functionality
+function showTab(tabId) {
+    // Hide all tab panes
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.add('hidden');
+    });
+    
+    // Remove active state from all tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('border-blue-500', 'text-blue-600');
+        button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected tab pane
+    document.getElementById(tabId + '-content').classList.remove('hidden');
+    
+    // Add active state to selected tab button
+    const activeButton = document.getElementById(tabId + '-tab');
+    activeButton.classList.remove('border-transparent', 'text-gray-500');
+    activeButton.classList.add('border-blue-500', 'text-blue-600');
+    
+    // Save current tab to localStorage
+    localStorage.setItem('currentOBCTab', tabId);
+}
+
+function setupLocationSelectors() {
+    const dataElement = document.getElementById('location-data');
+    if (!dataElement) {
+        return;
+    }
+
+    let locationData;
+    try {
+        locationData = JSON.parse(dataElement.textContent);
+    } catch (error) {
+        console.error('Unable to parse location data.', error);
+        return;
+    }
+
+    const regionSelect = document.getElementById('id_region');
+    const provinceSelect = document.getElementById('id_province');
+    const municipalitySelect = document.getElementById('id_municipality');
+    const barangaySelect = document.getElementById('id_barangay');
+    const municipalityPopulationPreview = document.getElementById('municipality-population-preview');
+    const municipalityPopulationValue = document.getElementById('municipality-population-value');
+
+    if (!regionSelect && !provinceSelect && !municipalitySelect) {
+        return;
+    }
+
+    const provincesByRegion = new Map();
+    (locationData.provinces || []).forEach(province => {
+        const key = String(province.region_id);
+        if (!provincesByRegion.has(key)) {
+            provincesByRegion.set(key, []);
+        }
+        provincesByRegion.get(key).push(province);
+    });
+
+    const municipalitiesByProvince = new Map();
+    (locationData.municipalities || []).forEach(municipality => {
+        const key = String(municipality.province_id);
+        if (!municipalitiesByProvince.has(key)) {
+            municipalitiesByProvince.set(key, []);
+        }
+        municipalitiesByProvince.get(key).push(municipality);
+    });
+
+    const barangaysByMunicipality = new Map();
+    (locationData.barangays || []).forEach(barangay => {
+        const key = String(barangay.municipality_id);
+        if (!barangaysByMunicipality.has(key)) {
+            barangaysByMunicipality.set(key, []);
+        }
+        barangaysByMunicipality.get(key).push(barangay);
+    });
+
+    const getDatasetValue = (element, key, fallback = '') =>
+        element && element.dataset && element.dataset[key] !== undefined
+            ? element.dataset[key]
+            : fallback;
+
+    const regionPlaceholder = getDatasetValue(regionSelect, 'placeholder', 'Select region...');
+    const provincePlaceholder = getDatasetValue(provinceSelect, 'placeholder', 'Select province...');
+    const municipalityPlaceholder = getDatasetValue(
+        municipalitySelect,
+        'placeholder',
+        'Select municipality/city...'
+    );
+    const barangayPlaceholder = getDatasetValue(barangaySelect, 'placeholder', 'Select barangay...');
+
+    const initialRegion = getDatasetValue(regionSelect, 'initial', '');
+    const initialProvince = getDatasetValue(provinceSelect, 'initial', '');
+    const initialMunicipality = getDatasetValue(municipalitySelect, 'initial', '');
+    const initialBarangay = getDatasetValue(barangaySelect, 'initial', '');
+
+    const toStringId = value => (value === null || value === undefined ? '' : String(value));
+
+    const setOptions = (select, options, placeholder, selectedValue, getLabel) => {
+        if (!select) {
+            return;
+        }
+
+        const desiredValue = toStringId(selectedValue);
+        select.innerHTML = '';
+
+        const placeholderOption = document.createElement('option');
+        placeholderOption.value = '';
+        placeholderOption.textContent = placeholder;
+        placeholderOption.dataset.population = '';
+        select.appendChild(placeholderOption);
+
+        options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = String(option.id);
+            optionElement.textContent = getLabel ? getLabel(option) : option.name;
+            if (String(option.id) === desiredValue) {
+                optionElement.selected = true;
+            }
+            if (Object.prototype.hasOwnProperty.call(option, 'population') && option.population !== null && option.population !== undefined) {
+                optionElement.dataset.population = String(option.population);
+            } else {
+                optionElement.dataset.population = '';
+            }
+            select.appendChild(optionElement);
+        });
+
+        if (desiredValue && !options.some(option => String(option.id) === desiredValue)) {
+            select.value = '';
+        }
+    };
+
+    const getSelectedPopulation = select => {
+        if (!select) {
+            return '';
+        }
+        const selectedIndex = select.selectedIndex;
+        if (selectedIndex < 0) {
+            return '';
+        }
+        const option = select.options[selectedIndex];
+        return option && option.dataset ? option.dataset.population || '' : '';
+    };
+
+    const applyPopulationValue = (select, input, { clearOnEmpty = false } = {}) => {
+        if (!input || !select) {
+            return;
+        }
+        const population = getSelectedPopulation(select);
+        if (population) {
+            input.value = population;
+        } else if (clearOnEmpty) {
+            input.value = '';
+        }
+    };
+
+    const regionLabel = region =>
+        region && region.code ? `Region ${region.code} - ${region.name}` : region.name;
+
+    const updateProvinceOptions = (regionId, selectedValue) => {
+        if (!provinceSelect) {
+            return;
+        }
+        const options = regionId ? provincesByRegion.get(toStringId(regionId)) || [] : [];
+        setOptions(provinceSelect, options, provincePlaceholder, selectedValue);
+    };
+
+    const updateMunicipalityOptions = (provinceId, selectedValue) => {
+        if (!municipalitySelect) {
+            return;
+        }
+        const options = provinceId
+            ? municipalitiesByProvince.get(toStringId(provinceId)) || []
+            : [];
+        setOptions(municipalitySelect, options, municipalityPlaceholder, selectedValue);
+    };
+
+    const updateBarangayOptions = (municipalityId, selectedValue) => {
+        if (!barangaySelect) {
+            return;
+        }
+        const options = municipalityId
+            ? barangaysByMunicipality.get(toStringId(municipalityId)) || []
+            : [];
+        setOptions(barangaySelect, options, barangayPlaceholder, selectedValue);
+    };
+
+    const totalPopulationInput = document.getElementById('id_total_barangay_population');
+    const hasBarangayField = Boolean(barangaySelect);
+    const updateMunicipalityPreview = population => {
+        if (!municipalityPopulationPreview || !municipalityPopulationValue) {
+            return;
+        }
+        if (population) {
+            let formattedValue = population;
+            try {
+                formattedValue = Number(population).toLocaleString('en-PH');
+            } catch (error) {
+                formattedValue = Number(population).toLocaleString();
+            }
+            municipalityPopulationValue.textContent = formattedValue;
+            municipalityPopulationPreview.classList.remove('hidden');
+        } else {
+            municipalityPopulationValue.textContent = '—';
+            municipalityPopulationPreview.classList.add('hidden');
+        }
+    };
+
+    if (regionSelect) {
+        setOptions(regionSelect, locationData.regions || [], regionPlaceholder, initialRegion, regionLabel);
+        regionSelect.addEventListener('change', () => {
+            updateProvinceOptions(regionSelect.value, '');
+            updateMunicipalityOptions('', '');
+            updateBarangayOptions('', '');
+            applyPopulationValue(municipalitySelect, totalPopulationInput, {
+                clearOnEmpty: hasBarangayField,
+            });
+            if (!hasBarangayField) {
+                updateMunicipalityPreview('');
+            }
+        });
+    }
+
+    if (provinceSelect) {
+        provinceSelect.addEventListener('change', () => {
+            updateMunicipalityOptions(provinceSelect.value, '');
+            updateBarangayOptions('', '');
+            applyPopulationValue(municipalitySelect, totalPopulationInput, {
+                clearOnEmpty: hasBarangayField,
+            });
+            if (!hasBarangayField) {
+                updateMunicipalityPreview('');
+            }
+        });
+    }
+
+    if (municipalitySelect && barangaySelect) {
+        municipalitySelect.addEventListener('change', () => {
+            updateBarangayOptions(municipalitySelect.value, '');
+            applyPopulationValue(barangaySelect, totalPopulationInput, {
+                clearOnEmpty: true,
+            });
+        });
+    }
+
+    if (municipalitySelect) {
+        municipalitySelect.addEventListener('change', () => {
+            applyPopulationValue(
+                hasBarangayField ? barangaySelect : municipalitySelect,
+                totalPopulationInput,
+                { clearOnEmpty: hasBarangayField }
+            );
+            if (!hasBarangayField) {
+                updateMunicipalityPreview(getSelectedPopulation(municipalitySelect));
+            }
+        });
+    }
+
+    if (barangaySelect) {
+        barangaySelect.addEventListener('change', () => {
+            applyPopulationValue(barangaySelect, totalPopulationInput, {
+                clearOnEmpty: false,
+            });
+        });
+    }
+
+    if (regionSelect) {
+        regionSelect.dispatchEvent(new Event('change'));
+    }
+
+    if (provinceSelect && initialProvince) {
+        updateProvinceOptions(initialRegion, initialProvince);
+    }
+
+    if (municipalitySelect && initialMunicipality) {
+        updateMunicipalityOptions(initialProvince, initialMunicipality);
+        applyPopulationValue(
+            hasBarangayField ? barangaySelect : municipalitySelect,
+            totalPopulationInput,
+            { clearOnEmpty: hasBarangayField }
+        );
+        if (!hasBarangayField) {
+            updateMunicipalityPreview(getSelectedPopulation(municipalitySelect));
+        }
+    }
+
+    if (barangaySelect && initialBarangay) {
+        updateBarangayOptions(initialMunicipality, initialBarangay);
+        applyPopulationValue(barangaySelect, totalPopulationInput);
+    }
+}
+
+// Initialize tabs and cascading selects on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Restore last active tab or default to identification
+    const lastTab = localStorage.getItem('currentOBCTab') || 'identification';
+    showTab(lastTab);
+
+    setupLocationSelectors();
+});
+
+// Quick Actions Functions
+function showImportModal() {
+    document.getElementById('importModal').classList.remove('hidden');
+}
+
+function showExportModal() {
+    document.getElementById('exportModal').classList.remove('hidden');
+}
+
+function showReportModal() {
+    document.getElementById('reportModal').classList.remove('hidden');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
+
+function handleImport() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select a file to import.');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Show loading
+    const importBtn = document.getElementById('importBtn');
+    const originalText = importBtn.innerHTML;
+    importBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Importing...';
+    importBtn.disabled = true;
+    
+    fetch('{% url "common:import_communities" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Import successful! Created: ${data.created}, Updated: ${data.updated}`);
+            if (data.errors && data.errors.length > 0) {
+                console.log('Import errors:', data.errors);
+            }
+            closeModal('importModal');
+            // Optionally reload the page or update UI
+        } else {
+            alert('Import failed: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Import error:', error);
+        alert('Import failed: Network error');
+    })
+    .finally(() => {
+        importBtn.innerHTML = originalText;
+        importBtn.disabled = false;
+    });
+}
+
+function handleExport() {
+    const format = document.getElementById('exportFormat').value;
+    const fields = Array.from(document.querySelectorAll('input[name="exportFields"]:checked'))
+                       .map(cb => cb.value);
+    
+    let url = `{% url "common:export_communities" %}?format=${format}`;
+    if (fields.length > 0) {
+        fields.forEach(field => {
+            url += `&fields[]=${field}`;
+        });
+    }
+    
+    // Open in new window to trigger download
+    window.open(url, '_blank');
+    closeModal('exportModal');
+}
+
+function handleReportGeneration() {
+    const reportType = document.getElementById('reportType').value;
+    const reportFormat = document.getElementById('reportFormat').value;
+    
+    const url = `{% url "common:generate_obc_report" %}?type=${reportType}&format=${reportFormat}`;
+    
+    // Open in new window to trigger download
+    window.open(url, '_blank');
+    closeModal('reportModal');
+}
+
+function saveDraft() {
+    // Save form data to localStorage
+    const formData = new FormData(document.querySelector('form'));
+    const data = {};
+    for (let [key, value] of formData.entries()) {
+        data[key] = value;
+    }
+    const payload = { form: data, savedAt: new Date().toISOString() };
+    localStorage.setItem('obcDraftData', JSON.stringify(payload));
+    localStorage.removeItem('obcDraftHandled');
+    
+    // Show success message
+    alert('Draft saved successfully! Your data will be restored when you return.');
+}
+
+// Legacy functions for backward compatibility
+function autoFillFromPrevious() {
+    // This would fetch data from similar communities
+    const barangaySelect = document.querySelector('select[name="barangay"]');
+    if (!barangaySelect.value) {
+        alert('Please select a barangay first to find similar communities.');
+        return;
+    }
+    
+    alert('Auto-fill feature coming soon! This will suggest data based on similar communities in the same area.');
+}
+
+// Auto-save draft every 5 minutes
+setInterval(function() {
+    if (document.querySelector('form').checkValidity()) {
+        saveDraft();
+    }
+}, 300000); // 5 minutes
+
+// Restore draft data if available
+document.addEventListener('DOMContentLoaded', function() {
+    const draftDataRaw = localStorage.getItem('obcDraftData');
+    if (draftDataRaw) {
+        let parsedDraft;
+        try {
+            parsedDraft = JSON.parse(draftDataRaw);
+        } catch (error) {
+            parsedDraft = { form: {} };
+        }
+
+        const draftPayload = parsedDraft && parsedDraft.form ? parsedDraft : { form: parsedDraft || {} };
+        const savedAt = draftPayload.savedAt || 'legacy';
+        const handledRaw = localStorage.getItem('obcDraftHandled');
+        const handled = handledRaw ? JSON.parse(handledRaw) : null;
+        const alreadyHandled = handled && handled.savedAt === savedAt;
+
+        if (!alreadyHandled) {
+            const restoreConfirm = confirm('A draft was found. Would you like to restore your previous work?');
+
+            if (restoreConfirm) {
+                Object.keys(draftPayload.form).forEach(key => {
+                    const field = document.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        if (field.type === 'checkbox') {
+                            field.checked = draftPayload.form[key] === 'on';
+                        } else {
+                            field.value = draftPayload.form[key];
+                        }
+                    }
+                });
+                localStorage.setItem('obcDraftHandled', JSON.stringify({ savedAt, action: 'restored', handledAt: new Date().toISOString() }));
+            } else {
+                localStorage.removeItem('obcDraftData');
+                localStorage.removeItem('obcDraftHandled');
+            }
+        }
+    }
+});
+
+// Form validation helper
+function validateTab(tabId) {
+    const tabContent = document.getElementById(tabId + '-content');
+    const requiredFields = tabContent.querySelectorAll('[required]');
+    let isValid = true;
+    
+    requiredFields.forEach(field => {
+        if (!field.value) {
+            isValid = false;
+            field.classList.add('border-red-500');
+        } else {
+            field.classList.remove('border-red-500');
+        }
+    });
+    
+    return isValid;
+}
+
+// Progress indicator
+function updateProgress() {
+    const form = document.querySelector('form');
+    const totalFields = form.querySelectorAll('input, select, textarea').length;
+    const filledFields = Array.from(form.querySelectorAll('input, select, textarea')).filter(field => {
+        if (field.type === 'checkbox') return field.checked;
+        return field.value;
+    }).length;
+    
+    const progress = Math.round((filledFields / totalFields) * 100);
+    console.log(`Form completion: ${progress}%`);
+    
+    // You can add a progress bar UI element here
+}
+
+// Update progress on input change
+document.addEventListener('input', updateProgress);
+document.addEventListener('change', updateProgress);
+</script>
+{% endblock %}

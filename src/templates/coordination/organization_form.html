@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Organization - Coordination System{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                Dashboard
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <a href="{% url 'common:coordination_home' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">Coordination</a>
+            </div>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <a href="{% url 'common:coordination_organizations' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">Organizations</a>
+            </div>
+        </li>
+        <li aria-current="page">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Add Organization</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-building text-blue-600 mr-4"></i>
+                Register Partner Organization
+            </h1>
+            <p class="mt-2 text-gray-600">Capture organization details and primary contacts for coordination tracking.</p>
+        </div>
+        <a href="{{ return_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to directory
+        </a>
+    </div>
+
+    <form method="post" class="space-y-8" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {{ form.non_field_errors|join:' ' }}
+        </div>
+        {% endif %}
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-id-badge mr-3"></i>
+                    Basic Information
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {% if form.name.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.name.help_text }}</p>{% endif %}
+                        {% if form.name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.name.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.acronym.label }}</label>
+                        {{ form.acronym }}
+                        {% if form.acronym.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.acronym.help_text }}</p>{% endif %}
+                        {% if form.acronym.errors %}<p class="mt-1 text-sm text-red-600">{{ form.acronym.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.organization_type.label }}</label>
+                        {{ form.organization_type }}
+                        {% if form.organization_type.errors %}<p class="mt-1 text-sm text-red-600">{{ form.organization_type.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.partnership_level.label }}</label>
+                        {{ form.partnership_level }}
+                        {% if form.partnership_level.errors %}<p class="mt-1 text-sm text-red-600">{{ form.partnership_level.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.partnership_status.label }}</label>
+                        {{ form.partnership_status }}
+                        {% if form.partnership_status.errors %}<p class="mt-1 text-sm text-red-600">{{ form.partnership_status.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    {% if form.description.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.description.help_text }}</p>{% endif %}
+                    {% if form.description.errors %}<p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:' ' }}</p>{% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-slate-600 to-slate-700 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-address-book mr-3"></i>
+                    Contact Information
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.address.label }}</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}<p class="mt-1 text-sm text-red-600">{{ form.address.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.mailing_address.label }}</label>
+                        {{ form.mailing_address }}
+                        {% if form.mailing_address.errors %}<p class="mt-1 text-sm text-red-600">{{ form.mailing_address.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.phone.label }}</label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}<p class="mt-1 text-sm text-red-600">{{ form.phone.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.mobile.label }}</label>
+                        {{ form.mobile }}
+                        {% if form.mobile.errors %}<p class="mt-1 text-sm text-red-600">{{ form.mobile.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<p class="mt-1 text-sm text-red-600">{{ form.email.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.website.label }}</label>
+                        {{ form.website }}
+                        {% if form.website.errors %}<p class="mt-1 text-sm text-red-600">{{ form.website.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.social_media.label }}</label>
+                        {{ form.social_media }}
+                        {% if form.social_media.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.social_media.help_text }}</p>{% endif %}
+                        {% if form.social_media.errors %}<p class="mt-1 text-sm text-red-600">{{ form.social_media.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-user-tie mr-3"></i>
+                    Key Personnel
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.head_of_organization.label }}</label>
+                        {{ form.head_of_organization }}
+                        {% if form.head_of_organization.errors %}<p class="mt-1 text-sm text-red-600">{{ form.head_of_organization.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.head_position.label }}</label>
+                        {{ form.head_position }}
+                        {% if form.head_position.errors %}<p class="mt-1 text-sm text-red-600">{{ form.head_position.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.focal_person.label }}</label>
+                        {{ form.focal_person }}
+                        {% if form.focal_person.errors %}<p class="mt-1 text-sm text-red-600">{{ form.focal_person.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.focal_person_position.label }}</label>
+                        {{ form.focal_person_position }}
+                        {% if form.focal_person_position.errors %}<p class="mt-1 text-sm text-red-600">{{ form.focal_person_position.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.focal_person_contact.label }}</label>
+                        {{ form.focal_person_contact }}
+                        {% if form.focal_person_contact.errors %}<p class="mt-1 text-sm text-red-600">{{ form.focal_person_contact.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.focal_person_email.label }}</label>
+                        {{ form.focal_person_email }}
+                        {% if form.focal_person_email.errors %}<p class="mt-1 text-sm text-red-600">{{ form.focal_person_email.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-purple-500 to-blue-500 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-handshake mr-3"></i>
+                    Partnership Details
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.partnership_start_date.label }}</label>
+                        {{ form.partnership_start_date }}
+                        {% if form.partnership_start_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.partnership_start_date.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.engagement_frequency.label }}</label>
+                        {{ form.engagement_frequency }}
+                        {% if form.engagement_frequency.errors %}<p class="mt-1 text-sm text-red-600">{{ form.engagement_frequency.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <label class="inline-flex items-center space-x-2 text-sm font-medium text-gray-700">
+                            {{ form.is_active }}
+                            <span>{{ form.is_active.label }}</span>
+                        </label>
+                        <label class="inline-flex items-center space-x-2 text-sm font-medium text-gray-700">
+                            {{ form.is_priority }}
+                            <span>{{ form.is_priority.label }}</span>
+                        </label>
+                    </div>
+                </div>
+                {% if form.is_active.errors or form.is_priority.errors %}
+                <div class="text-sm text-red-600">
+                    {{ form.is_active.errors|join:' ' }} {{ form.is_priority.errors|join:' ' }}
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-briefcase mr-3"></i>
+                    Operational & Administrative Details
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.areas_of_expertise.label }}</label>
+                        {{ form.areas_of_expertise }}
+                        {% if form.areas_of_expertise.errors %}<p class="mt-1 text-sm text-red-600">{{ form.areas_of_expertise.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.geographic_coverage.label }}</label>
+                        {{ form.geographic_coverage }}
+                        {% if form.geographic_coverage.errors %}<p class="mt-1 text-sm text-red-600">{{ form.geographic_coverage.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.target_beneficiaries.label }}</label>
+                        {{ form.target_beneficiaries }}
+                        {% if form.target_beneficiaries.errors %}<p class="mt-1 text-sm text-red-600">{{ form.target_beneficiaries.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.annual_budget.label }}</label>
+                            {{ form.annual_budget }}
+                            {% if form.annual_budget.errors %}<p class="mt-1 text-sm text-red-600">{{ form.annual_budget.errors|join:' ' }}</p>{% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.staff_count.label }}</label>
+                            {{ form.staff_count }}
+                            {% if form.staff_count.errors %}<p class="mt-1 text-sm text-red-600">{{ form.staff_count.errors|join:' ' }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.registration_number.label }}</label>
+                        {{ form.registration_number }}
+                        {% if form.registration_number.errors %}<p class="mt-1 text-sm text-red-600">{{ form.registration_number.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.tax_identification_number.label }}</label>
+                        {{ form.tax_identification_number }}
+                        {% if form.tax_identification_number.errors %}<p class="mt-1 text-sm text-red-600">{{ form.tax_identification_number.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.accreditation_details.label }}</label>
+                        {{ form.accreditation_details }}
+                        {% if form.accreditation_details.errors %}<p class="mt-1 text-sm text-red-600">{{ form.accreditation_details.errors|join:' ' }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}<p class="mt-1 text-sm text-red-600">{{ form.notes.errors|join:' ' }}</p>{% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-users mr-3"></i>
+                    Organization Contacts
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                {{ formset.management_form }}
+                {% if formset.non_form_errors %}
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                    {{ formset.non_form_errors|join:' ' }}
+                </div>
+                {% endif %}
+
+                <div id="contacts-container" class="space-y-6" data-prefix="contacts">
+                    {% for contact_form in formset.forms %}
+                        {% with form=contact_form index=forloop.counter0 %}
+                            {% include 'coordination/_contact_form.html' %}
+                        {% endwith %}
+                    {% empty %}
+                        <p class="text-sm text-gray-500">No contact details added yet.</p>
+                    {% endfor %}
+                </div>
+
+                <button type="button" id="add-contact"
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white rounded-lg bg-gradient-to-r from-blue-500 to-indigo-500 shadow hover:shadow-lg transition">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Add another contact
+                </button>
+            </div>
+        </section>
+
+        <div class="flex items-center justify-end space-x-4">
+            <a href="{{ return_url }}" class="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" class="inline-flex items-center px-6 py-3 text-sm font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 shadow-lg hover:shadow-xl transition">
+                <i class="fas fa-save mr-2"></i>
+                Save organization
+            </button>
+        </div>
+    </form>
+</div>
+
+<template id="contact-empty-form">
+    {% with form=formset.empty_form index='__prefix__' %}
+        {% include 'coordination/_contact_form.html' %}
+    {% endwith %}
+</template>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const addButton = document.getElementById('add-contact');
+        const container = document.getElementById('contacts-container');
+        const managementTotal = document.getElementById('id_contacts-TOTAL_FORMS');
+        const template = document.getElementById('contact-empty-form');
+
+        if (!addButton || !container || !managementTotal || !template) {
+            return;
+        }
+
+        addButton.addEventListener('click', () => {
+            const currentCount = parseInt(managementTotal.value, 10);
+            const templateHTML = template.innerHTML.replace(/__prefix__/g, currentCount);
+
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = templateHTML.trim();
+            const newForm = wrapper.firstElementChild;
+
+            const heading = newForm.querySelector('h3');
+            if (heading) {
+                heading.textContent = `Contact ${currentCount + 1}`;
+            }
+
+            container.appendChild(newForm);
+            managementTotal.value = currentCount + 1;
+        });
+    });
+</script>
+{% endblock %}

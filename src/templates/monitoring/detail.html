@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}M&E · {{ entry.title }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-white/80 hover:text-white">Dashboard</a>
+    <span class="text-white/60 mx-1">/</span>
+</li>
+<li>
+    <a href="{% url 'monitoring:home' %}" class="text-white/80 hover:text-white">Monitoring &amp; Evaluation</a>
+    <span class="text-white/60 mx-1">/</span>
+</li>
+<li class="text-white font-semibold truncate max-w-xs">{{ entry.title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div class="bg-white border border-neutral-200 rounded-xl shadow">
+        <div class="px-6 py-5 border-b border-neutral-200 flex flex-col md:flex-row md:justify-between md:items-center">
+            <div>
+                <h1 class="text-2xl font-semibold text-neutral-900">{{ entry.title }}</h1>
+                <p class="text-sm text-neutral-500">{{ entry.get_category_display }}</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex flex-wrap gap-2">
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">{{ entry.get_status_display }}</span>
+                {% if entry.is_request and entry.request_status %}
+                    <span class="px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-700">{{ entry.get_request_status_display }}</span>
+                {% endif %}
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">Priority: {{ entry.get_priority_display }}</span>
+                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">Progress: {{ entry.progress }}%</span>
+            </div>
+        </div>
+        <div class="px-6 py-6 grid gap-6 md:grid-cols-2">
+            <div class="space-y-4">
+                {% if entry.summary %}
+                    <div>
+                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Overview</h2>
+                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.summary }}</p>
+                    </div>
+                {% endif %}
+                <div>
+                    <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Lead &amp; Coverage</h2>
+                    <ul class="mt-2 space-y-2 text-sm text-neutral-700">
+                        {% if entry.lead_organization %}
+                            <li><span class="font-semibold">Lead Organization:</span> {{ entry.lead_organization.name }}</li>
+                        {% elif entry.oobc_unit %}
+                            <li><span class="font-semibold">OOBC Unit:</span> {{ entry.oobc_unit }}</li>
+                        {% endif %}
+                        {% if entry.submitted_by_community %}
+                            <li><span class="font-semibold">Requesting OBC:</span> {{ entry.submitted_by_community.name }}</li>
+                        {% endif %}
+                        {% if entry.submitted_to_organization %}
+                            <li><span class="font-semibold">Receiving Office:</span> {{ entry.submitted_to_organization.name }}</li>
+                        {% endif %}
+                        {% with entry.supporting_organizations.all as support_orgs %}
+                            {% if support_orgs %}
+                                <li><span class="font-semibold">Supporting Partners:</span>
+                                    {% for org in support_orgs %}
+                                        {{ org.name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </li>
+                            {% endif %}
+                        {% endwith %}
+                        {% with entry.communities.all as target_communities %}
+                            {% if target_communities %}
+                                <li><span class="font-semibold">Beneficiary OBCs:</span>
+                                    {% for community in target_communities %}
+                                        {{ community.name }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </li>
+                            {% endif %}
+                        {% endwith %}
+                    </ul>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm text-neutral-700">
+                    {% if entry.start_date %}
+                        <div class="bg-neutral-50 rounded-lg border border-neutral-200 p-3">
+                            <p class="text-xs text-neutral-500 uppercase">Start</p>
+                            <p class="font-semibold">{{ entry.start_date|date:"M j, Y" }}</p>
+                        </div>
+                    {% endif %}
+                    {% if entry.target_end_date %}
+                        <div class="bg-neutral-50 rounded-lg border border-neutral-200 p-3">
+                            <p class="text-xs text-neutral-500 uppercase">Target End</p>
+                            <p class="font-semibold">{{ entry.target_end_date|date:"M j, Y" }}</p>
+                        </div>
+                    {% endif %}
+                    {% if entry.actual_end_date %}
+                        <div class="bg-neutral-50 rounded-lg border border-neutral-200 p-3">
+                            <p class="text-xs text-neutral-500 uppercase">Actual End</p>
+                            <p class="font-semibold">{{ entry.actual_end_date|date:"M j, Y" }}</p>
+                        </div>
+                    {% endif %}
+                    {% if entry.next_milestone_date %}
+                        <div class="bg-neutral-50 rounded-lg border border-neutral-200 p-3">
+                            <p class="text-xs text-neutral-500 uppercase">Next Milestone</p>
+                            <p class="font-semibold">{{ entry.next_milestone_date|date:"M j, Y" }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="space-y-4">
+                {% if entry.outcome_indicators %}
+                    <div>
+                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Outcome Indicators</h2>
+                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.outcome_indicators }}</p>
+                    </div>
+                {% endif %}
+                {% if entry.accomplishments %}
+                    <div>
+                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Accomplishments</h2>
+                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.accomplishments }}</p>
+                    </div>
+                {% endif %}
+                {% if entry.challenges %}
+                    <div>
+                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Challenges &amp; Risks</h2>
+                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.challenges }}</p>
+                    </div>
+                {% endif %}
+                {% if entry.support_required %}
+                    <div>
+                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Support Requested</h2>
+                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.support_required }}</p>
+                    </div>
+                {% endif %}
+                {% if entry.follow_up_actions %}
+                    <div>
+                        <h2 class="text-sm font-semibold text-neutral-700 uppercase tracking-wide">Follow-up Actions</h2>
+                        <p class="mt-2 text-sm text-neutral-700 whitespace-pre-line">{{ entry.follow_up_actions }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="px-6 py-4 bg-neutral-50 border-t border-neutral-200 grid gap-3 md:grid-cols-3 text-sm">
+            <div>
+                <p class="text-xs text-neutral-500 uppercase">Budget Allocation</p>
+                <p class="font-semibold text-neutral-800">{% if entry.budget_allocation %}{{ entry.budget_currency }} {{ entry.budget_allocation|floatformat:2 }}{% else %}—{% endif %}</p>
+            </div>
+            <div>
+                <p class="text-xs text-neutral-500 uppercase">Last Status Update</p>
+                <p class="font-semibold text-neutral-800">{% if entry.last_status_update %}{{ entry.last_status_update|date:"M j, Y" }}{% else %}—{% endif %}</p>
+            </div>
+            <div>
+                <p class="text-xs text-neutral-500 uppercase">Record Owners</p>
+                <p class="font-semibold text-neutral-800">Created by {{ entry.created_by|default:"N/A" }}{% if entry.updated_by %}, updated by {{ entry.updated_by }}{% endif %}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-2 bg-white border border-neutral-200 rounded-xl shadow">
+            <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-neutral-800">Timeline &amp; Updates</h2>
+                <span class="text-sm text-neutral-500">{{ updates|length }} records</span>
+            </div>
+            <div class="px-6 py-6 space-y-4">
+                {% for update in updates %}
+                    <div class="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-1 text-xs font-semibold rounded bg-blue-200 text-blue-900">{{ update.get_update_type_display }}</span>
+                                {% if update.status %}
+                                    <span class="text-xs font-semibold text-neutral-600">Status: {{ update.get_status_display }}</span>
+                                {% endif %}
+                                {% if update.request_status %}
+                                    <span class="text-xs font-semibold text-orange-600">Request: {{ update.get_request_status_display }}</span>
+                                {% endif %}
+                                {% if update.progress is not None %}
+                                    <span class="text-xs font-semibold text-emerald-600">Progress: {{ update.progress }}%</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-neutral-500">{{ update.created_at|date:"M j, Y H:i" }} · {{ update.created_by|default:"System" }}</div>
+                        </div>
+                        <p class="text-sm text-neutral-700 mt-3 whitespace-pre-line">{{ update.notes }}</p>
+                        {% if update.next_steps %}
+                            <p class="mt-2 text-xs text-neutral-600"><span class="font-semibold">Next steps:</span> {{ update.next_steps }}</p>
+                        {% endif %}
+                        {% if update.follow_up_date %}
+                            <p class="mt-2 text-xs text-neutral-600"><span class="font-semibold">Follow-up:</span> {{ update.follow_up_date|date:"M j, Y" }}</p>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="bg-neutral-50 border border-dashed border-neutral-200 rounded-lg px-4 py-8 text-center text-neutral-500">
+                        No updates logged yet. Add the first status note to kick off tracking.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="space-y-6">
+            <div class="bg-white border border-neutral-200 rounded-xl shadow">
+                <div class="px-6 py-4 border-b border-neutral-200">
+                    <h2 class="text-lg font-semibold text-neutral-800">Log an Update</h2>
+                    <p class="text-sm text-neutral-500">Capture coordination notes, milestones, or requests for support.</p>
+                </div>
+                <div class="px-6 py-6">
+                    <form method="post" class="space-y-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_update">
+                        {% for field in update_form %}
+                            <div>
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-neutral-700 mb-1">{{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <p class="mt-1 text-xs text-neutral-400">{{ field.help_text }}</p>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <p class="text-xs text-red-500 mt-1">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                        <button type="submit" class="w-full btn-primary py-2 rounded-lg font-semibold">Record Update</button>
+                    </form>
+                </div>
+            </div>
+            <div class="bg-white border border-neutral-200 rounded-xl shadow">
+                <div class="px-6 py-4 border-b border-neutral-200">
+                    <h2 class="text-lg font-semibold text-neutral-800">Linked Activities</h2>
+                    <p class="text-sm text-neutral-500">Cross-reference with MANA, Coordination, and Policy tracking.</p>
+                </div>
+                <div class="px-6 py-4 space-y-3 text-sm text-neutral-700">
+                    <p><span class="font-semibold">MANA Assessment:</span> {% if entry.related_assessment %}<a class="text-blue-600 hover:text-blue-800" href="{% url 'common:mana_manage_assessments' %}?focus={{ entry.related_assessment.pk }}">{{ entry.related_assessment.title|default:entry.related_assessment }}</a>{% else %}—{% endif %}</p>
+                    <p><span class="font-semibold">Coordination Event:</span> {% if entry.related_event %}<a class="text-blue-600 hover:text-blue-800" href="{% url 'common:coordination_events' %}?event={{ entry.related_event.pk }}">{{ entry.related_event.title|default:entry.related_event }}</a>{% else %}—{% endif %}</p>
+                    <p><span class="font-semibold">Policy Recommendation:</span> {% if entry.related_policy %}<a class="text-blue-600 hover:text-blue-800" href="{% url 'common:recommendations_manage' %}?policy={{ entry.related_policy.pk }}">{{ entry.related_policy.title|default:entry.related_policy }}</a>{% else %}—{% endif %}</p>
+                    {% if related_entries %}
+                        <div class="pt-3 border-t border-neutral-200">
+                            <p class="font-semibold text-neutral-700 mb-2">Connected OBC Items</p>
+                            <ul class="space-y-2">
+                                {% for related in related_entries %}
+                                    <li>
+                                        <a href="{% url 'monitoring:detail' related.pk %}" class="text-blue-600 hover:text-blue-800">{{ related.title }}</a>
+                                        <span class="text-xs text-neutral-500">· {{ related.get_category_display }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

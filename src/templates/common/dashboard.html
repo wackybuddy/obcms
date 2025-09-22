@@ -58,9 +58,20 @@
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-blue-100 text-sm font-medium">Total OBC Communities</p>
-                        <p class="text-3xl font-bold">{{ stats.communities.total|default:0 }}</p>
+                    <div class="w-full">
+                        <div class="flex items-center gap-2 text-blue-100 text-sm font-medium">
+                            <span>Total OBC Communities</span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-3xl font-bold">{{ stats.communities.barangay_total|default:0 }}</p>
+                                <p class="text-sm text-blue-100">Barangay OBCs</p>
+                            </div>
+                            <div>
+                                <p class="text-3xl font-bold">{{ stats.communities.municipal_total|default:0 }}</p>
+                                <p class="text-sm text-blue-100">Municipal OBCs</p>
+                            </div>
+                        </div>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                         <i class="fas fa-mosque text-2xl"></i>
@@ -144,20 +155,51 @@
                 </div>
             </div>
         </div>
+
+        <!-- Monitoring & Evaluation -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-teal-500 via-cyan-600 to-sky-600 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-cyan-100 text-sm font-medium">Monitoring &amp; Evaluation</p>
+                        <p class="text-3xl font-bold">{{ stats.monitoring.total|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-chart-pie text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-3 border-t border-cyan-400/30">
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.monitoring.pending_requests|default:0 }}</p>
+                        <p class="text-xs text-cyan-100">Pending Requests</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xl font-bold">{{ stats.monitoring.avg_progress|default:0|floatformat:0 }}%</p>
+                        <p class="text-xs text-cyan-100">Avg Progress</p>
+                    </div>
+                </div>
+                <div class="mt-3 text-xs text-cyan-100 flex items-center justify-between">
+                    <span>{{ stats.monitoring.moa_ppa|default:0 }} MOA PPAs</span>
+                    <span>{{ stats.monitoring.oobc_ppa|default:0 }} OOBC PPAs</span>
+                    <span>{{ stats.monitoring.obc_requests|default:0 }} Requests</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- System Modules -->
     <div class="mb-8">
         <h2 class="text-2xl font-bold text-gray-900 mb-6">System Modules</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- OBC Communities Module -->
+            <!-- OBC Data Module -->
             <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-users text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                        OBC Communities
+                        OBC Data
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
                         Manage community profiles and demographic data.
@@ -202,6 +244,25 @@
                     </p>
                     <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
                         <span>{{ stats.coordination.total_events|default:0 }} events</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Monitoring & Evaluation Module -->
+            <a href="{% url 'monitoring:home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-pie text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
+                        Monitoring &amp; Evaluation
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Track PPAs, OOBC initiatives, and OBC proposals.
+                    </p>
+                    <div class="mt-4 flex items-center text-teal-600 text-sm font-medium">
+                        <span>{{ stats.monitoring.total|default:0 }} records</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
@@ -323,6 +384,10 @@
                     <div class="flex items-center text-sm text-gray-600">
                         <i class="fas fa-check-circle text-green-500 mr-3"></i>
                         Policy tracking and recommendations
+                    </div>
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        Monitoring &amp; evaluation of PPAs and OBC requests
                     </div>
                 </div>
             </div>

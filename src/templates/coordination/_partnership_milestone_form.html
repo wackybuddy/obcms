@@ -1,0 +1,61 @@
+<div class="bg-blue-50 border border-blue-200 rounded-xl p-6 space-y-4 milestone-form" data-form-index="{{ index }}">
+    {% for hidden_field in form.hidden_fields %}
+        {{ hidden_field }}
+    {% endfor %}
+
+    {% if form.non_field_errors %}
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
+        {{ form.non_field_errors|join:' ' }}
+    </div>
+    {% endif %}
+
+    <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-blue-800">
+            {% if index == '__prefix__' %}
+                New milestone
+            {% else %}
+                Milestone {{ index|add:1 }}
+            {% endif %}
+        </h3>
+        {% if form.can_delete %}
+        <label class="flex items-center space-x-2 text-sm text-red-600 cursor-pointer">
+            {{ form.DELETE }}
+            <span>Remove</span>
+        </label>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.title.label }}</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.title.errors|join:' ' }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.due_date.label }}</label>
+            {{ form.due_date }}
+            {% if form.due_date.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.due_date.errors|join:' ' }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.status.label }}</label>
+            {{ form.status }}
+            {% if form.status.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.status.errors|join:' ' }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.progress_percentage.label }}</label>
+            {{ form.progress_percentage }}
+            {% if form.progress_percentage.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.progress_percentage.errors|join:' ' }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>

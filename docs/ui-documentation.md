@@ -166,7 +166,7 @@ src/
 #### Styles Not Loading
 - Verify static files are being served correctly
 - Check browser developer tools for 404 errors
-- Run `python manage.py collectstatic` if needed
+- Run `./manage.py collectstatic` if needed
 - Clear browser cache
 
 #### Responsive Issues

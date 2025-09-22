@@ -489,7 +489,7 @@ button:focus, input:focus, select:focus, textarea:focus, a:focus {
 **Solution**: 
 1. Check that `{% load static %}` is at the top of your template
 2. Verify the CSS file path in `{% static 'admin/css/custom.css' %}`
-3. Run `python manage.py collectstatic` if using static file serving
+3. Run `./manage.py collectstatic` if using static file serving
 4. Clear browser cache
 
 #### Responsive Issues

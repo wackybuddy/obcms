@@ -1,0 +1,1153 @@
+COTABATO	1,286,142
+	Alamada	71,523
+		Bao	9,275
+		Barangiran	4,801
+		Camansi	1,984
+		Dado	10,923
+		Guiling	6,743
+		Kitacubong	5,595
+		Macabasa	3,113
+		Malitubog	3,720
+		Mapurok	2,565
+		Pacao	2,116
+		Paruayan	2,318
+		Pigcawaran	4,388
+		Polayagan	3,581
+		Rangayen	4,621
+		Lower Dado	2,530
+		Mirasol	1,411
+		Raradangan	1,839
+	Carmen	79,741
+		Aroman	3,226
+		Bentangan	4,479
+		Cadiis	3,414
+		General Luna	2,236
+		Katanayanan	1,792
+		Kibenes	3,308
+		Kibugtongan	4,036
+		Kilala	1,131
+		Kimadzil	1,871
+		Lanoon	2,202
+		Liliongan	8,948
+		Ugalingan	3,960
+		Macabenban	2,646
+		Malapag	5,982
+		Manili	3,096
+		Palanggalan	2,992
+		Poblacion	12,960
+		Ranzo	2,356
+		Tacupan	3,430
+		Tambad	1,941
+		Tonganon	3,735
+	Kabacan	77,945
+		Aringay	4,164
+		Bangilan	1,908
+		Bannawag	3,287
+		Cuyapon	3,536
+		Dagupan	3,462
+		Katidtuan	5,023
+		Kayaga	11,726
+		Kilagasan	4,340
+		Magatos	4,258
+		Malamote	1,997
+		Malanduague	1,711
+		Osias	4,239
+		Paatan Lower	4,834
+		Paatan Upper	2,210
+		Pisan	3,090
+		Poblacion	17,037
+		Salapungan	1,123
+	Kidapawan City	160,864
+		Amas	7,540
+		Amazion	1,319
+		Balabag	2,004
+		Balindog	7,012
+		Benoligan	3,520
+		Berada	1,985
+		Gayola	1,587
+		Ginatilan	2,003
+		Ilomavis	4,396
+		Indangan	1,293
+		Junction	1,816
+		Kalaisan	3,650
+		Kalasuyan	5,054
+		Katipunan	1,720
+		Lanao	9,755
+		Linangcob	3,229
+		Luvimin	1,459
+		Macabolig	1,970
+		Malinan	956
+		Manongol	5,110
+		Marbel	1,506
+		Mateo	2,801
+		Meochao	1,805
+		Mua-an	2,597
+		New Bohol	2,360
+		Nuangan	5,288
+		Onica	1,514
+		Paco	4,901
+		Patadon	2,810
+		Perez	3,286
+		Poblacion	28,191
+		San Isidro	1,788
+		San Roque	1,078
+		Santo Niño	1,543
+		Sibawan	1,615
+		Sikitan	1,496
+		Singao	9,624
+		Sudapin	11,805
+		Sumbao	1,846
+		Magsaysay	5,632
+	Libungan	57,776
+		Abaga	2,241
+		Baguer	3,865
+		Barongis	2,891
+		Batiocan	1,842
+		Cabaruyan	6,470
+		Cabpangi	3,055
+		Demapaco	1,873
+		Grebona	1,698
+		Gumaga	5,078
+		Kapayawi	1,850
+		Kiloyao	1,156
+		Kitubod	2,468
+		Malengen	1,125
+		Montay	2,384
+		Nica-an	2,439
+		Palao	2,423
+		Poblacion	6,939
+		Sinapangan	2,832
+		Sinawingan	2,563
+		Ulamian	2,584
+	Magpet	55,255
+		Alibayon	1,112
+		Bagumbayan	920
+		Bangkal	1,011
+		Bantac	1,257
+		Basak	2,965
+		Binay	1,851
+		Bongolanon	1,833
+		Datu Celo	967
+		Del Pilar	730
+		Doles	1,468
+		Gubatan	2,112
+		Ilian	866
+		Inac	1,282
+		Kamada	1,273
+		Kauswagan	753
+		Kisandal	1,365
+		Magcaalam	1,006
+		Mahongcog	2,126
+		Manobo	3,369
+		Noa	2,067
+		Owas	784
+		Pangao-an	2,725
+		Poblacion	7,465
+		Sallab	1,781
+		Tagbac	2,071
+		Temporan	1,461
+		Amabel	1,479
+		Balete	1,710
+		Don Panaca	834
+		Imamaling	1,301
+		Kinarum	1,170
+		Manobisa	2,141
+	Makilala	88,522
+		Batasan	3,084
+		Bato	1,535
+		Biangan	1,458
+		Buena Vida	1,401
+		Buhay	2,002
+		Bulakanon	2,121
+		Cabilao	1,211
+		Concepcion	1,857
+		Dagupan	719
+		Garsika	1,403
+		Guangan	764
+		Indangan	2,248
+		Jose Rizal	1,934
+		Katipunan II	762
+		Kawayanon	983
+		Kisante	5,162
+		Leboce	381
+		Libertad	1,496
+		Luayon	1,939
+		Luna Norte	1,574
+		Luna Sur	1,174
+		Malabuan	1,610
+		Malasila	6,648
+		Malungon	764
+		New Baguio	1,298
+		New Bulatukan	2,215
+		New Cebu	1,495
+		Old Bulatukan	2,850
+		Poblacion	10,841
+		Rodero	1,339
+		Saguing	7,921
+		San Vicente	6,057
+		Santa Felomina	2,357
+		Santo Niño	1,380
+		Sinkatulan	1,722
+		Taluntalunan	2,274
+		Villaflores	581
+		New Israel	1,962
+	Matalam	81,610
+		New Alimodian	2,217
+		Arakan	1,649
+		Bangbang	1,101
+		Bato	757
+		Central Malamote	3,371
+		Dalapitan	3,407
+		Estado	1,779
+		Ilian	962
+		Kabulacan	2,204
+		Kibia	4,148
+		Kibudoc	1,337
+		Kidama	2,342
+		Kilada	5,363
+		Lampayan	3,266
+		Latagan	2,035
+		Linao	4,487
+		Lower Malamote	1,213
+		Manubuan	3,209
+		Manupal	993
+		Marbel	3,569
+		Minamaing	2,065
+		Natutungan	1,742
+		New Bugasong	2,128
+		New Pandan	1,918
+		Patadon West	1,209
+		Poblacion	6,721
+		Salvacion	1,885
+		Santa Maria	1,772
+		Sarayan	3,032
+		Taculen	1,025
+		Taguranao	4,345
+		Tamped	2,124
+		New Abra	1,157
+		Pinamaton	1,078
+	Midsayap	115,735
+		Agriculture	2,104
+		Anonang	3,366
+		Arizona	2,311
+		Bagumba	1,458
+		Baliki	2,476
+		Bitoka	1,014
+		Bual Norte	1,679
+		Bual Sur	1,955
+		Central Bulanan	2,131
+		Central Glad	3,074
+		Ilbocean	1,973
+		Central Katingawan	2,515
+		Kimagango	3,542
+		Lagumbingan	1,568
+		Lomopog	2,461
+		Lower Glad	2,603
+		Lower Katingawan	3,075
+		Macasendeg	3,213
+		Malamote	2,423
+		Milaya	984
+		Nalin	3,369
+		Nes	2,635
+		Patindeguen	2,009
+		Barangay Poblacion 1	2,785
+		Barangay Poblacion 2	4,475
+		Barangay Poblacion 3	3,107
+		Barangay Poblacion 4	1,245
+		Barangay Poblacion 5	2,496
+		Barangay Poblacion 6	3,650
+		Barangay Poblacion 7	2,772
+		Barangay Poblacion 8	6,357
+		Palongoguen	1,284
+		Rangaban	2,535
+		Sadaan	6,537
+		Salunayan	3,522
+		San Isidro	2,285
+		Santa Cruz	1,268
+		Bulanan Upper	1,970
+		Upper Glad I	3,246
+		Upper Glad II	1,071
+		Upper Labas	1,924
+		Villarica	4,883
+		Kiwanan	3,314
+		San Pedro	1,071
+	M'lang	98,646
+		Bagontapay	7,244
+		Bialong	4,169
+		Buayan	4,919
+		Calunasan	1,604
+		Dalipe	3,382
+		Dagong	3,899
+		Dungo-an	7,606
+		Gaunan	2,910
+		Inas	4,254
+		Katipunan	1,840
+		La Fortuna	1,143
+		La Suerte	765
+		Langkong	1,996
+		Lepaga	2,786
+		Liboo	1,616
+		Lika	4,716
+		Luz Village	1,851
+		Magallon	1,267
+		Malayan	912
+		New Antique	3,350
+		New Barbaza	1,529
+		New Kalibo	1,069
+		New Consolacion	1,105
+		New Esperanza	1,221
+		New Janiuay	2,458
+		New Lawa-an	1,895
+		New Rizal	2,813
+		Nueva Vida	2,225
+		Pag-asa	2,184
+		Poblacion	4,823
+		Pulang-lupa	1,332
+		Sangat	3,413
+		Tawantawan	2,163
+		Tibao	2,488
+		Ugpay	750
+		Palma-Perez	985
+		Poblacion B	3,964
+	Pigcawayan	53,593
+		Anick	1,338
+		Upper Baguer	3,357
+		Balogo	3,222
+		Banucagon	1,518
+		Bulucaon	2,957
+		Buluan	1,296
+		Capayuran	2,607
+		Central Panatan	1,709
+		Kimarayang	3,056
+		Malagakit	471
+		Maluao	1,760
+		North Manuangan	2,908
+		Midpapan I	2,347
+		Mulok	409
+		New Culasi	1,075
+		New Igbaras	891
+		New Panay	1,236
+		Payong-payong	1,276
+		Poblacion I	2,944
+		Poblacion II	2,174
+		Poblacion III	3,168
+		Presbitero	1,191
+		Renibon	1,041
+		South Manuangan	2,584
+		Tigbawan	1,520
+		Tubon	2,332
+		Midpapan II	1,567
+		Cabpangi	1,639
+	Pikit	67,220
+		Balabak	4,426
+		Balatican	1,827
+		Bulod	2,362
+		Calawag	1,142
+		Dalingaoen	3,390
+		Damalasak	759
+		Ginatilan	2,048
+		Inug-ug	3,523
+		Kalacacan	3,030
+		Katilacan	3,204
+		Kolambog	2,180
+		Ladtingan	2,455
+		Langayen	3,010
+		Paidu Pulangi	5,562
+		Poblacion	9,120
+		Punol	6,193
+		Silik	1,720
+		Takipan	3,287
+		Talitay	1,972
+		Tinutulan	6,010
+	President Roxas	51,245
+		Alegria	1,454
+		Bato-bato	1,306
+		Del Carmen	3,393
+		F. Cajelo	812
+		Idaoman	1,577
+		Ilustre	1,464
+		Kamarahan	1,437
+		Camasi	1,091
+		Kisupaan	2,369
+		La Esperanza	456
+		Labu-o	3,751
+		Lamalama	1,558
+		Lomonay	961
+		New Cebu	3,567
+		Poblacion	8,213
+		Sagcungan	1,353
+		Salat	1,036
+		Sarayan	1,755
+		Tuael	6,907
+		Greenhill	1,798
+		Cabangbangan	964
+		Datu Indang	935
+		Datu Sandongan	1,136
+		Kimaruhing	547
+		Mabuhay	1,405
+	Tulunan	61,901
+		Bagumbayan	2,292
+		Banayal	1,836
+		Batang	538
+		Bituan	914
+		Bual	6,050
+		Daig	1,572
+		Damawato	2,693
+		Dungos	3,432
+		Kanibong	1,689
+		La Esperanza	4,440
+		Lampagang	1,335
+		Bunawan	656
+		Magbok	779
+		Maybula	1,841
+		Minapan	3,354
+		New Caridad	1,131
+		New Culasi	1,830
+		New Panay	1,806
+		Paraiso	676
+		Poblacion	7,113
+		Popoyon	1,666
+		Sibsib	4,388
+		Tambac	1,194
+		Tuburan	1,037
+		F. Cajelo	1,569
+		Bacong	2,945
+		Galidan	1,712
+		Genoveva Baynosa	370
+		Nabundasan	1,043
+	Antipas	26,946
+		Camutan	1,995
+		Canaan	903
+		Dolores	1,009
+		Kiyaab	2,401
+		Luhong	1,901
+		Magsaysay	1,563
+		Malangag	1,059
+		Malatad	3,526
+		Malire	1,715
+		New Pontevedra	1,489
+		Poblacion	7,513
+		B. Cadungon	1,037
+		Datu Agod	835
+	Banisilan	48,013
+		Banisilan Poblacion	6,238
+		Busaon	2,455
+		Capayangan	1,332
+		Carugmanan	918
+		Gastay	2,174
+		Kalawaig	700
+		Kiaring	2,754
+		Malagap	2,779
+		Malinao	4,483
+		Miguel Macasarte	1,177
+		Pantar	1,893
+		Paradise	2,308
+		Pinamulaan	1,984
+		Poblacion II	3,252
+		Puti
+		Puting-bato	1,530
+		Solama	4,279
+		Thailand	1,859
+		Tinimbacan	1,942
+		Tumbao-Camalig	934
+		Wadya	3,022
+	Aleosan	38,023
+		Bagolibas	1,421
+		Cawilihan	1,390
+		Dualing	3,608
+		Katalicanan	1,367
+		Lawili	2,316
+		Lower Mingading	1,583
+		Luanan	1,582
+		Malapang	1,382
+		New Leon	2,231
+		New Panay	2,859
+		Pagangan	3,805
+		Palacat	942
+		Pentil	984
+		San Mateo	5,431
+		Santa Cruz	1,803
+		Tomado	2,849
+		Upper Mingading	2,470
+	Arakan	51,584
+		Allab	1,024
+		Anapolon	858
+		Badiangon	2,471
+		Binoongan	1,325
+		Dallag	1,594
+		Datu Ladayon	1,369
+		Datu Matangkil	761
+		Doroluman	3,996
+		Gambodes	835
+		Ganatan	2,887
+		Greenfield	6,125
+		Kabalantian	3,328
+		Katipunan	718
+		Kinawayan	1,154
+		Kulaman Valley	1,045
+		Lanao Kuran	1,870
+		Libertad	1,764
+		Makalangot	1,651
+		Malibatuan	3,425
+		Maria Caridad	828
+		Meocan	3,245
+		Naje	1,314
+		Napalico	1,250
+		Salasang	1,659
+		San Miguel	1,037
+		Santo Niño	1,757
+		Sumalili	721
+		Tumanding	1,573
+SARANGANI	580,915
+	Alabel	90,120
+		Alegria	8,983
+		Bagacay	4,977
+		Baluntay	4,788
+		Datal Anggas	4,787
+		Domolok	5,567
+		Kawas	7,541
+		Maribulan	8,100
+		Pag-asa	5,202
+		Paraiso	2,310
+		Poblacion	19,696
+		Spring	6,193
+		Tokawal	3,411
+		Ladol	5,120
+		New Canaan	3,445
+	Glan	117,017
+		Baliton	6,079
+		Batotuling	1,309
+		Batulaki	2,142
+		Big Margus	4,804
+		Burias	3,312
+		Cablalan	3,552
+		Calabanit	6,596
+		Calpidong	1,794
+		Congan	2,676
+		Cross	1,972
+		Datalbukay	7,451
+		E. Alegado	4,370
+		Glan Padidu	4,872
+		Gumasa	3,886
+		Ilaya	5,313
+		Kaltuad	2,335
+		Kapatan	3,643
+		Lago	1,958
+		Laguimit	3,488
+		Mudan	2,439
+		New Aklan	1,835
+		Pangyan	7,052
+		Poblacion	8,291
+		Rio Del Pilar	1,703
+		San Jose	1,778
+		San Vicente	3,321
+		Small Margus	3,834
+		Sufatubo	2,632
+		Taluya	6,893
+		Tango	2,542
+		Tapon	3,145
+	Kiamba	68,745
+		Badtasan	2,954
+		Datu Dani	2,793
+		Gasi	1,917
+		Kapate	2,291
+		Katubao	5,963
+		Kayupo	5,042
+		Kling	609
+		Lagundi	2,696
+		Lebe	1,102
+		Lomuyon	5,760
+		Luma	1,465
+		Maligang	2,640
+		Nalus	5,191
+		Poblacion	12,981
+		Salakit	2,310
+		Suli	2,850
+		Tablao	1,364
+		Tamadang	2,090
+		Tambilil	6,727
+	Maasim	67,907
+		Amsipit	5,005
+		Bales	2,169
+		Colon	5,972
+		Daliao	3,606
+		Kabatiol	3,503
+		Kablacan	8,733
+		Kamanga	4,598
+		Kanalo	2,088
+		Lumasal	4,980
+		Lumatil	2,953
+		Malbang	3,878
+		Nomoh	3,554
+		Pananag	1,891
+		Poblacion	7,773
+		Seven Hills	506
+		Tinoto	6,698
+	Maitum	46,120
+		Bati-an	1,283
+		Kalaneg	1,691
+		Kalaong	2,750
+		Kiambing	1,125
+		Kiayap	1,827
+		Mabay	4,469
+		Maguling	2,623
+		Malalag	3,990
+		Mindupok	3,009
+		New La Union	1,280
+		Old Poblacion	4,768
+		Pangi	1,142
+		Pinol	2,376
+		Sison	2,957
+		Ticulab	1,814
+		Tuanadatu	2,315
+		Upo	2,523
+		Wali	2,102
+		Zion	2,076
+	Malapatan	82,577
+		Daan Suyan	4,255
+		Kihan	4,085
+		Kinam	12,388
+		Libi	3,084
+		Lun Masla	5,384
+		Lun Padidu	13,438
+		Patag	2,107
+		Poblacion	17,823
+		Sapu Masla	6,384
+		Sapu Padidu	3,060
+		Tuyan	6,951
+		Upper Suyan	3,618
+	Malungon	108,429
+		Alkikan	1,318
+		Ampon	2,012
+		Atlae	2,331
+		Banahaw	2,122
+		Banate	3,914
+		B'laan	1,586
+		Datal Batong	3,048
+		Datal Bila	773
+		Datal Tampal	3,479
+		J.P. Laurel	2,683
+		Kawayan	2,048
+		Kibala	949
+		Kiblat	2,240
+		Kinabalan	2,073
+		Lower Mainit	2,123
+		Lutay	3,809
+		Malabod	1,556
+		Malalag Cogon	5,174
+		Malandag	15,755
+		Malungon Gamay	2,944
+		Nagpan	3,568
+		Panamin	2,617
+		Poblacion	9,871
+		San Juan	1,575
+		San Miguel	3,038
+		San Roque	5,035
+		Talus	2,847
+		Tamban	8,125
+		Upper Biangan	3,025
+		Upper Lumabat	2,598
+		Upper Mainit	4,193
+
+SOUTH COTABATO	1,010,009
+	Banga	91,536
+		Benitez	3,363
+		Cabudian	1,493
+		Cabuling	3,239
+		Cinco	7,940
+		Derilon	1,800
+		El Nonok	4,019
+		Improgo Village	1,339
+		Kusan	4,889
+		Lam-Apos	1,186
+		Lamba	7,946
+		Lambingi	3,583
+		Lampari	2,502
+		Liwanay	6,589
+		Malaya	4,337
+		Punong Grande	4,043
+		Rang-ay	5,574
+		Reyes	4,486
+		Rizal	5,077
+		Rizal Poblacion	4,881
+		San Jose	4,573
+		San Vicente	7,188
+		Yangco Poblacion	1,489
+	Koronadal City	201,844
+		Assumption	2,458
+		Avanceña	4,781
+		Cacub	2,818
+		Caloocan	5,468
+		Carpenter Hill	7,962
+		Concepcion	6,366
+		Esperanza	2,015
+		General Paulino Santos	22,025
+		Mabini	4,147
+		Magsaysay	3,391
+		Mambucal	1,434
+		Morales	9,539
+		Namnama	4,705
+		New Pangasinan	5,059
+		Paraiso	6,796
+		Zone I	4,025
+		Zone II	3,419
+		Zone III	12,614
+		Zone IV	7,283
+		Rotonda	4,841
+		San Isidro	9,088
+		San Jose	9,302
+		San Roque	4,537
+		Santa Cruz	20,544
+		Santo Niño	17,064
+		Sarabia	9,722
+		Zulueta	10,441
+	Norala	48,499
+		Dumaguil	3,135
+		Esperanza	2,543
+		Kibid	1,914
+		Lapuz	3,247
+		Liberty	2,210
+		Lopez Jaena	3,224
+		Matapol	2,182
+		Poblacion	13,495
+		Puti	2,383
+		San Jose	2,581
+		San Miguel	5,135
+		Simsiman	2,425
+		Tinago	2,326
+		Benigno Aquino, Jr.	1,699
+	Polomolok	176,671
+		Bentung	1,579
+		Crossing Palkan	2,698
+		Glamang	10,174
+		Kinilis	2,106
+		Klinan 6	4,318
+		Koronadal Proper	4,138
+		Lam-Caliaf	1,779
+		Landan	6,645
+		Lumakil	4,165
+		Maligo	3,952
+		Palkan	3,942
+		Poblacion	51,082
+		Polo	2,875
+		Magsaysay	14,223
+		Rubber	4,047
+		Silway 7	3,120
+		Silway 8	13,569
+		Sulit	6,173
+		Sumbakil	1,446
+		Upper Klinan	5,326
+		Lapu	2,237
+		Cannery Site	23,658
+		Pagalungan	3,419
+	Surallah	91,412
+		Buenavista	2,289
+		Centrala	12,195
+		Colongulo	6,978
+		Dajay	11,459
+		Duengas	1,363
+		Canahay	2,742
+		Lambontong	4,974
+		Lamian	3,866
+		Lamsugod	3,516
+		Libertad	14,986
+		Little Baguio	3,398
+		Moloy	3,966
+		Naci	5,453
+		Talahik	2,621
+		Tubiala	5,725
+		Upper Sepaka	4,007
+		Veterans	1,874
+	Tampakan	42,304
+		Albagan	760
+		Kipalbig	6,204
+		Lambayong	2,990
+		Liberty	2,463
+		Maltana	4,044
+		Poblacion	7,757
+		Tablu	2,374
+		Buto	2,129
+		Lampitak	2,911
+		Palo	947
+		Pula-bato	2,012
+		Danlag	2,774
+		San Isidro	1,792
+		Santa Cruz	3,147
+	Tantangan	48,570
+		Bukay Pait	4,669
+		Cabuling	2,447
+		Dumadalig	4,471
+		Libas	3,597
+		Magon	2,101
+		Maibo	3,355
+		Mangilala	1,387
+		New Iloilo	4,897
+		New Lambunao	2,374
+		Poblacion	9,097
+		San Felipe	6,213
+		New Cuyapo	1,135
+		Tinongcop	2,827
+	T'Boli	105,296
+		Basag	7,818
+		Edwards	4,545
+		Kematu	8,826
+		Laconon	10,322
+		Lamsalome	2,401
+		New Dumangas	6,238
+		Sinolon	4,525
+		Lambangan	2,102
+		Maan	6,647
+		Afus	2,311
+		Lambuling	4,273
+		Lamhako	2,381
+		Poblacion	10,860
+		Talcon	1,640
+		Talufo	2,761
+		Tudok	3,762
+		Aflek	2,196
+		Datal Bob	1,557
+		Desawo	2,152
+		Dlanag	3,270
+		Lemsnolon	4,110
+		Malugong	2,263
+		Mongocayo	2,355
+		Salacafe	4,764
+		T'bolok	1,217
+	Tupi	78,599
+		Acmonan	4,692
+		Bololmala	3,876
+		Bunao	6,422
+		Cebuano	6,928
+		Crossing Rubber	4,561
+		Kablon	6,275
+		Kalkam	2,026
+		Linan	3,733
+		Lunen	3,473
+		Miasong	3,713
+		Palian	3,141
+		Poblacion	16,065
+		Polonuling	7,847
+		Simbo	2,374
+		Tubeng	2,828
+		Juan-Loreto Tamayo	645
+	Santo Niño	41,026
+		Ambalgan	3,833
+		Guinsang-an	3,218
+		Katipunan	3,285
+		Manuel Roxas	4,766
+		Panay	3,550
+		Poblacion	10,855
+		San Isidro	3,822
+		San Vicente	3,430
+		Teresita	2,441
+		Sajaneba	1,826
+	Lake Sebu	84,252
+		Bacdulong	2,259
+		Denlag	2,962
+		Halilan	2,501
+		Hanoon	1,310
+		Klubi	4,694
+		Lake Lahit	2,903
+		Lamcade	3,073
+		Lamdalag	5,049
+		Lamfugon	6,047
+		Lamlahak	4,742
+		Lower Maculan	1,512
+		Luhib	3,023
+		Ned	18,718
+		Poblacion	8,767
+		Siluton	3,773
+		Talisay	3,082
+		Takunel	3,050
+		Upper Maculan	3,205
+		Tasiman	3,582
+CITY OF GENERAL SANTOS	722,059
+	General Santos City	722,059
+		Baluan	14,079
+		Buayan	11,748
+		Bula	31,356
+		Conel	17,555
+		Dadiangas East	3,345
+		Katangawan	18,047
+		Lagao	56,403
+		Labangal	81,223
+		Ligaya	7,232
+		Mabuhay	38,750
+		San Isidro	66,971
+		San Jose	13,767
+		Sinawal	19,223
+		Tambler	33,678
+		Tinagacan	8,465
+		Apopong	54,096
+		Siguel	15,985
+		Upper Labay	3,834
+		Batomelong	3,776
+		Calumpang	90,480
+		City Heights	24,539
+		Dadiangas North	6,731
+		Dadiangas South	4,755
+		Dadiangas West	13,009
+		Fatima	78,478
+		Olympog	4,534
+SULTAN KUDARAT	863,651
+	Bagumbayan	69,830
+		Bai Sarifinang	7,376
+		Biwang	5,531
+		Busok	3,520
+		Daguma	5,151
+		Kapaya	6,819
+		Kinayao	2,269
+		Masiag	6,159
+		Poblacion	6,321
+		South Sepaka	2,618
+		Tuka	4,751
+		Chua	2,487
+		Daluga	1,557
+		Kabulanan	1,749
+		Kanulay	788
+		Monteverde	2,073
+		Santo Niño	3,260
+		Sumilil	2,494
+		Titulok	2,110
+		Sison	2,797
+	Columbio	33,337
+		Bantangan	1,886
+		Datablao	3,761
+		Eday	889
+		Elbebe	1,258
+		Libertad	2,157
+		Lomoyon	1,736
+		Makat	704
+		Maligaya	1,530
+		Mayo	2,065
+		Natividad	965
+		Poblacion	7,758
+		Polomolok	1,393
+		Sinapulan	1,598
+		Sucob	1,291
+		Telafas	2,986
+		Lasak	1,360
+	Esperanza	73,822
+		Ala	2,770
+		Daladap	2,878
+		Dukay	2,974
+		Guiamalia	2,354
+		Ilian	3,606
+		Kangkong	2,328
+		Margues	3,893
+		New Panay	3,432
+		Numo	2,131
+		Pamantingan	4,479
+		Poblacion	8,150
+		Sagasa	4,467
+		Salabaca	3,725
+		Villamor	3,621
+		Laguinding	2,383
+		Magsaysay	1,207
+		Paitan	4,150
+		Saliao	6,697
+		Salumping	8,577
+	Isulan	101,455
+		Bambad	6,626
+		Bual	5,619
+		D'Lotilla	4,943
+		Dansuli	5,892
+		Impao	2,717
+		Kalawag I	11,195
+		Kalawag II	17,372
+		Kalawag III	5,997
+		Kenram	7,196
+		Kudanding	3,514
+		Kolambog	2,901
+		Lagandang	3,190
+		Laguilayan	10,623
+		Mapantig	2,585
+		New Pangasinan	2,527
+		Sampao	6,985
+		Tayugo	1,573
+	Kalamansig	52,257
+		Bantogon	5,320
+		Cadiz	3,026
+		Dumangas Nuevo	2,670
+		Hinalaan	3,285
+		Limulan	3,120
+		Obial	3,106
+		Paril	1,605
+		Poblacion	6,207
+		Sangay	3,377
+		Santa Maria	2,764
+		Datu Ito Andong	1,415
+		Datu Wasay	2,890
+		Nalilidan	3,809
+		Sabanal	3,518
+		Pag-asa	6,145
+	Lebak	93,312
+		Barurao	3,523
+		Basak	5,118
+		Bululawan	1,709
+		Capilan	2,716
+		Christiannuevo	3,470
+		Datu Karon	1,994
+		Kalamongog	3,059
+		Keytodac	5,702
+		Kinodalan	3,064
+		New Calinog	1,349
+		Nuling	3,307
+		Pansud	2,789
+		Pasandalan	3,328
+		Poblacion	3,598
+		Poloy-poloy	4,568
+		Purikay	3,067
+		Ragandang	2,137
+		Salaman	4,278
+		Salangsang	5,480
+		Taguisa	3,860
+		Tibpuan	7,313
+		Tran	2,940
+		Villamonte	3,662
+		Barurao II	2,228
+		Aurelio F. Freires	4,020
+		Poblacion III	2,668
+		Bolebok	2,365
+	Lutayan	65,425
+		Antong	4,283
+		Bayasong	3,939
+		Blingkong	6,873
+		Lutayan Proper	8,974
+		Maindang	5,065
+		Mamali	7,412
+		Manili	4,052
+		Sampao	4,344
+		Sisiman	4,805
+		Tamnag	9,133
+		Palavilla	6,545
+	Lambayong	81,288
+		Caridad	1,726
+		Didtaras	2,440
+		Gansing	2,028
+		Kabulakan	1,091
+		Kapingkong	3,165
+		Katitisan	2,610
+		Lagao	1,973
+		Lilit	2,674
+		Madanding	1,968
+		Maligaya	1,668
+		Mamali	2,742
+		Matiompong	2,568
+		Midtapok	3,497
+		New Cebu	2,264
+		Palumbi	2,526
+		Pidtiguian	3,147
+		Pimbalayan	4,971
+		Pinguiaman	2,297
+		Poblacion	10,832
+		Sadsalan	3,786
+		Seneben	3,974
+		Sigayan	4,001
+		Tambak	2,908
+		Tinumigues	3,889
+		Tumiao	2,733
+		Udtong	3,810
+	Palimbang	83,633
+		Akol	1,191
+		Badiangon	2,722
+		Baliango	1,583
+		Baranayan	1,218
+		Barongis	1,844
+		Batang-baglas	1,130
+		Butril	2,308
+		Domolol	1,243
+		Kabuling	1,434
+		Kalibuhan	3,144
+		Kanipaan	2,634
+		Kisek	1,305
+		Kidayan	2,346
+		Kiponget	1,715
+		Kulong-kulong	2,417
+		Kraan	1,661
+		Langali	1,679
+		Libua	2,369
+		Lumitan	1,832
+		Maganao	2,156
+		Maguid	1,886
+		Malatuneng	1,847
+		Malisbong	3,502
+		Milbuk	2,741
+		Molon	1,644
+		Namat Masla	2,414
+		Napnapon	1,292
+		Poblacion	6,560
+		San Roque	3,971
+		Colobe	3,003
+		Tibuhol	1,540
+		Wal	1,863
+		Bambanen	1,100
+		Lopoken	1,989
+		Mina	1,238
+		Medol	1,782
+		Wasag	984
+		Balwan	4,229
+		Ligao	1,293
+		Datu Maguiales	824
+	President Quirino	44,344
+		Bagumbayan	1,128
+		Bannawag	2,381
+		Bayawa	3,126
+		Estrella	2,669
+		Kalanawe I	1,761
+		Kalanawe II	2,916
+		Katico	3,003
+		Malingon	1,614
+		Mangalen	1,011
+		C. Mangilala	1,307
+		Pedtubo	1,989
+		Poblacion	7,794
+		Romualdez	1,421
+		San Jose	1,345
+		Sinakulay	2,336
+		Suben	1,214
+		Tinaungan	3,240
+		Tual	2,977
+		San Pedro	1,112
+	Tacurong City	116,945
+		Baras	3,815
+		Buenaflor	7,199
+		Calean	3,953
+		Carmen	4,109
+		D'Ledesma	1,564
+		Virginia Griño	7,825
+		Kalandagan	3,279
+		Enrique J.C. Montilla	7,831
+		New Isabela	12,361
+		New Lagao	4,055
+		New Passi	3,123
+		Poblacion	15,969
+		Rajah Nuda	3,947
+		San Antonio	1,507
+		San Emmanuel	8,462
+		San Pablo	16,757
+		Upper Katungal	4,916
+		Tina	3,622
+		San Rafael	1,176
+		Lancheta	1,475
+	Sen. Ninoy Aquino	48,003
+		Banali	2,370
+		Basag	2,006
+		Buenaflores	2,895
+		Bugso	3,766
+		Buklod	1,049
+		Gapok	1,652
+		Kadi	1,106
+		Kapatagan	933
+		Kiadsam	2,167
+		Kuden	4,465
+		Kulaman	5,479
+		Lagubang	2,986
+		Langgal	1,830
+		Limuhay	1,195
+		Malegdeg	2,823
+		Midtungok	3,872
+		Nati	1,595
+		Sewod	2,370
+		Tacupis	1,161
+		Tinalon	2,283

@@ -199,6 +199,67 @@
             color: white;
         }
 
+        /* Modern select styling for Barangay & Municipal OBC forms */
+        .obc-form select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding: 0.9rem 3rem 0.9rem 1rem;
+            min-height: 3.25rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--neutral-300);
+            background-color: #fff;
+            background-image:
+                linear-gradient(45deg, transparent 50%, var(--neutral-500) 50%),
+                linear-gradient(135deg, var(--neutral-500) 50%, transparent 50%),
+                linear-gradient(to right, var(--neutral-200), var(--neutral-200));
+            background-position:
+                calc(100% - 1.35rem) calc(50% - 0.35rem),
+                calc(100% - 1.05rem) calc(50% - 0.35rem),
+                calc(100% - 2.5rem) 50%;
+            background-size: 0.5rem 0.5rem, 0.5rem 0.5rem, 1px 65%;
+            background-repeat: no-repeat;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--neutral-800);
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.05);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+        }
+
+        .obc-form select:hover {
+            border-color: var(--neutral-400);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+        }
+
+        .obc-form select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .obc-form select:disabled {
+            background-color: var(--neutral-100);
+            color: var(--neutral-500);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .obc-form select[multiple],
+        .obc-form select[size]:not([size="1"]) {
+            background-image: none;
+            padding-right: 1rem;
+            min-height: 6rem;
+        }
+
+        .obc-form select option {
+            color: var(--neutral-800);
+        }
+
+        .obc-form select option[disabled] {
+            color: var(--neutral-400);
+        }
+
         /* Animation Classes */
         .gradient-shift {
             background: linear-gradient(270deg, var(--primary-blue), var(--primary-teal), var(--secondary-purple), var(--primary-blue));

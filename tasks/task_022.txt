@@ -32,10 +32,10 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run migrations
-python manage.py migrate
+./manage.py migrate
 
 # Collect static files
-python manage.py collectstatic --noinput
+./manage.py collectstatic --noinput
 
 # Restart the application
 sudo systemctl start gunicorn

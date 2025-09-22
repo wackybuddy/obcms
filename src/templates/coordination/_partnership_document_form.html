@@ -1,0 +1,63 @@
+<div class="bg-purple-50 border border-purple-200 rounded-xl p-6 space-y-4 document-form" data-form-index="{{ index }}">
+    {% for hidden_field in form.hidden_fields %}
+        {{ hidden_field }}
+    {% endfor %}
+
+    {% if form.non_field_errors %}
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
+        {{ form.non_field_errors|join:' ' }}
+    </div>
+    {% endif %}
+
+    <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-purple-800">
+            {% if index == '__prefix__' %}
+                New document
+            {% else %}
+                Document {{ index|add:1 }}
+            {% endif %}
+        </h3>
+        {% if form.can_delete %}
+        <label class="flex items-center space-x-2 text-sm text-red-600 cursor-pointer">
+            {{ form.DELETE }}
+            <span>Remove</span>
+        </label>
+        {% endif %}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.document_type.label }}</label>
+            {{ form.document_type }}
+            {% if form.document_type.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.document_type.errors|join:' ' }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.title.label }}</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.title.errors|join:' ' }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.file.label }}</label>
+            {{ form.file }}
+            {% if form.file.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.file.errors|join:' ' }}</p>
+            {% endif %}
+        </div>
+        <div>
+            <label class="inline-flex items-center space-x-2 text-sm font-medium text-gray-700">
+                {{ form.is_confidential }}
+                <span>{{ form.is_confidential.label }}</span>
+            </label>
+            {% if form.is_confidential.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.is_confidential.errors|join:' ' }}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>

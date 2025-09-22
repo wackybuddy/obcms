@@ -11,6 +11,7 @@ PROJECT_DIR="/var/www/obc-system"
 BACKUP_DIR="/var/backups/obc-system"
 VENV_DIR="$PROJECT_DIR/venv"
 SERVICE_NAME="obc-gunicorn"
+REQUIRED_PYTHON="3.12"
 
 # Colors for output
 RED='\033[0;31m'
@@ -50,6 +51,12 @@ fi
 
 cd "$PROJECT_DIR"
 
+# Ensure virtual environment exists and uses Python 3.12
+if [[ ! -d "$VENV_DIR" ]]; then
+    log "Virtual environment not found. Creating with python3.12..."
+    python3.12 -m venv "$VENV_DIR" || error "Failed to create virtual environment with python3.12"
+fi
+
 # Create backup
 log "Creating backup..."
 mkdir -p "$BACKUP_DIR"
@@ -85,6 +92,12 @@ fi
 log "Activating virtual environment..."
 source "$VENV_DIR/bin/activate"
 
+CURRENT_PYTHON="$(python -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+if [[ "$CURRENT_PYTHON" != "$REQUIRED_PYTHON" ]]; then
+    deactivate || true
+    error "Virtual environment must use Python ${REQUIRED_PYTHON} (found ${CURRENT_PYTHON}). Recreate the venv with python3.12."
+fi
+
 # Update dependencies
 log "Installing/updating dependencies..."
 pip install --upgrade pip
@@ -93,23 +106,23 @@ pip install -r "requirements/$ENVIRONMENT.txt"
 # Run database migrations
 log "Running database migrations..."
 cd src
-python manage.py migrate --noinput
+./manage.py migrate --noinput
 
 # Collect static files
 log "Collecting static files..."
-python manage.py collectstatic --noinput --clear
+./manage.py collectstatic --noinput --clear
 
 # Run Django system checks
 log "Running system checks..."
-python manage.py check --deploy
+./manage.py check --deploy
 
 # Create cache tables if needed
 log "Creating cache tables..."
-python manage.py createcachetable || true
+./manage.py createcachetable || true
 
 # Clear cache
 log "Clearing cache..."
-python manage.py shell -c "from django.core.cache import cache; cache.clear()" || true
+./manage.py shell -c "from django.core.cache import cache; cache.clear()" || true
 
 # Update file permissions
 log "Updating file permissions..."
@@ -143,7 +156,7 @@ fi
 # Health check
 log "Performing health check..."
 cd src
-python manage.py check
+./manage.py check
 
 # Send deployment notification (if configured)
 if [[ -n "$DEPLOYMENT_WEBHOOK" ]]; then

@@ -1,316 +1,279 @@
-from django.db import models
+import uuid
+
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
+from django.utils import timezone
+
 from communities.models import OBCCommunity
 from mana.models import Assessment
-import uuid
 
 User = get_user_model()
 
 
 class StakeholderEngagementType(models.Model):
     """Types of stakeholder engagement activities."""
-    
+
     ENGAGEMENT_CATEGORIES = [
-        ('consultation', 'Public Consultation'),
-        ('meeting', 'Coordination Meeting'),
-        ('workshop', 'Workshop/Training'),
-        ('focus_group', 'Focus Group Discussion'),
-        ('interview', 'Key Informant Interview'),
-        ('survey', 'Survey/Questionnaire'),
-        ('courtesy_call', 'Courtesy Call'),
-        ('field_visit', 'Field Visit'),
-        ('community_assembly', 'Community Assembly'),
-        ('validation', 'Validation Session'),
+        ("consultation", "Public Consultation"),
+        ("meeting", "Coordination Meeting"),
+        ("workshop", "Workshop/Training"),
+        ("focus_group", "Focus Group Discussion"),
+        ("interview", "Key Informant Interview"),
+        ("survey", "Survey/Questionnaire"),
+        ("courtesy_call", "Courtesy Call"),
+        ("field_visit", "Field Visit"),
+        ("community_assembly", "Community Assembly"),
+        ("validation", "Validation Session"),
     ]
-    
+
     name = models.CharField(
-        max_length=100,
-        unique=True,
-        help_text="Name of the engagement type"
+        max_length=100, unique=True, help_text="Name of the engagement type"
     )
-    
+
     category = models.CharField(
-        max_length=25,
-        choices=ENGAGEMENT_CATEGORIES,
-        help_text="Category of engagement"
+        max_length=25, choices=ENGAGEMENT_CATEGORIES, help_text="Category of engagement"
     )
-    
-    description = models.TextField(
-        help_text="Description of this engagement type"
-    )
-    
+
+    description = models.TextField(help_text="Description of this engagement type")
+
     icon = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="CSS icon class for this engagement type"
+        max_length=50, blank=True, help_text="CSS icon class for this engagement type"
     )
-    
+
     color = models.CharField(
-        max_length=7,
-        default='#007bff',
-        help_text="Color code for this engagement type"
+        max_length=7, default="#007bff", help_text="Color code for this engagement type"
     )
-    
+
     is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this engagement type is currently active"
+        default=True, help_text="Whether this engagement type is currently active"
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['category', 'name']
+        ordering = ["category", "name"]
         verbose_name_plural = "Stakeholder Engagement Types"
-    
+
     def __str__(self):
         return f"{self.name} ({self.get_category_display()})"
 
 
 class StakeholderEngagement(models.Model):
     """Model for tracking stakeholder engagement and consultation activities."""
-    
+
     STATUS_CHOICES = [
-        ('planned', 'Planned'),
-        ('scheduled', 'Scheduled'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('postponed', 'Postponed'),
-        ('cancelled', 'Cancelled'),
+        ("planned", "Planned"),
+        ("scheduled", "Scheduled"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+        ("postponed", "Postponed"),
+        ("cancelled", "Cancelled"),
     ]
-    
+
     PRIORITY_LEVELS = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
     ]
-    
+
     PARTICIPATION_LEVELS = [
-        ('inform', 'Inform'),
-        ('consult', 'Consult'),
-        ('involve', 'Involve'),
-        ('collaborate', 'Collaborate'),
-        ('empower', 'Empower'),
+        ("inform", "Inform"),
+        ("consult", "Consult"),
+        ("involve", "Involve"),
+        ("collaborate", "Collaborate"),
+        ("empower", "Empower"),
     ]
-    
+
     # Basic Information
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     title = models.CharField(
-        max_length=200,
-        help_text="Title of the engagement activity"
+        max_length=200, help_text="Title of the engagement activity"
     )
-    
+
     engagement_type = models.ForeignKey(
         StakeholderEngagementType,
         on_delete=models.PROTECT,
-        help_text="Type of engagement activity"
+        help_text="Type of engagement activity",
     )
-    
+
     description = models.TextField(
         help_text="Detailed description of the engagement activity"
     )
-    
-    objectives = models.TextField(
-        help_text="Objectives and expected outcomes"
-    )
-    
+
+    objectives = models.TextField(help_text="Objectives and expected outcomes")
+
     # Relationships
     community = models.ForeignKey(
         OBCCommunity,
         on_delete=models.CASCADE,
-        related_name='stakeholder_engagements',
-        help_text="Primary community involved"
+        related_name="stakeholder_engagements",
+        help_text="Primary community involved",
     )
-    
+
     related_assessment = models.ForeignKey(
         Assessment,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='stakeholder_engagements',
-        help_text="Related assessment (if applicable)"
+        related_name="stakeholder_engagements",
+        help_text="Related assessment (if applicable)",
     )
-    
+
     # Engagement Details
     status = models.CharField(
         max_length=15,
         choices=STATUS_CHOICES,
-        default='planned',
-        help_text="Current status of the engagement"
+        default="planned",
+        help_text="Current status of the engagement",
     )
-    
+
     priority = models.CharField(
         max_length=10,
         choices=PRIORITY_LEVELS,
-        default='medium',
-        help_text="Priority level of this engagement"
+        default="medium",
+        help_text="Priority level of this engagement",
     )
-    
+
     participation_level = models.CharField(
         max_length=12,
         choices=PARTICIPATION_LEVELS,
-        default='consult',
-        help_text="Level of participation (IAP2 framework)"
+        default="consult",
+        help_text="Level of participation (IAP2 framework)",
     )
-    
+
     # Timeline
     planned_date = models.DateTimeField(
         help_text="Planned date and time for the engagement"
     )
-    
+
     actual_start_datetime = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Actual start date and time"
+        null=True, blank=True, help_text="Actual start date and time"
     )
-    
+
     actual_end_datetime = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Actual end date and time"
+        null=True, blank=True, help_text="Actual end date and time"
     )
-    
+
     duration_minutes = models.IntegerField(
-        null=True,
-        blank=True,
-        help_text="Planned duration in minutes"
+        null=True, blank=True, help_text="Planned duration in minutes"
     )
-    
+
     # Location
     venue = models.CharField(
-        max_length=200,
-        help_text="Venue or location of the engagement"
+        max_length=200, help_text="Venue or location of the engagement"
     )
-    
-    address = models.TextField(
-        help_text="Full address of the venue"
-    )
-    
+
+    address = models.TextField(help_text="Full address of the venue")
+
     coordinates = models.JSONField(
         null=True,
         blank=True,
-        help_text="Geographic coordinates of the venue (GeoJSON format)"
+        help_text="Geographic coordinates of the venue (GeoJSON format)",
     )
-    
+
     # Participants
     facilitators = models.ManyToManyField(
         User,
-        through='EngagementFacilitator',
-        related_name='facilitated_engagements',
-        help_text="Staff members facilitating the engagement"
+        through="EngagementFacilitator",
+        related_name="facilitated_engagements",
+        help_text="Staff members facilitating the engagement",
     )
-    
-    target_participants = models.IntegerField(
-        help_text="Target number of participants"
-    )
-    
+
+    target_participants = models.IntegerField(help_text="Target number of participants")
+
     actual_participants = models.IntegerField(
-        default=0,
-        help_text="Actual number of participants"
+        default=0, help_text="Actual number of participants"
     )
-    
+
     stakeholder_groups = models.TextField(
         help_text="Description of stakeholder groups involved"
     )
-    
+
     # Methodology and Resources
     methodology = models.TextField(
         help_text="Methodology and approach for the engagement"
     )
-    
+
     materials_needed = models.TextField(
-        blank=True,
-        help_text="Materials and resources needed"
+        blank=True, help_text="Materials and resources needed"
     )
-    
+
     budget_allocated = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Budget allocated for this engagement"
+        help_text="Budget allocated for this engagement",
     )
-    
+
     actual_cost = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Actual cost incurred"
+        help_text="Actual cost incurred",
     )
-    
+
     # Results and Follow-up
-    key_outcomes = models.TextField(
-        blank=True,
-        help_text="Key outcomes and results"
-    )
-    
+    key_outcomes = models.TextField(blank=True, help_text="Key outcomes and results")
+
     feedback_summary = models.TextField(
-        blank=True,
-        help_text="Summary of feedback received"
+        blank=True, help_text="Summary of feedback received"
     )
-    
+
     action_items = models.TextField(
-        blank=True,
-        help_text="Action items and follow-up activities"
+        blank=True, help_text="Action items and follow-up activities"
     )
-    
+
     satisfaction_rating = models.IntegerField(
         choices=[(i, f"{i} stars") for i in range(1, 6)],
         null=True,
         blank=True,
-        help_text="Overall satisfaction rating (1-5 stars)"
+        help_text="Overall satisfaction rating (1-5 stars)",
     )
-    
+
     # Documentation
     meeting_minutes = models.TextField(
-        blank=True,
-        help_text="Meeting minutes or detailed notes"
+        blank=True, help_text="Meeting minutes or detailed notes"
     )
-    
+
     attendance_list = models.JSONField(
-        null=True,
-        blank=True,
-        help_text="List of attendees (JSON format)"
+        null=True, blank=True, help_text="List of attendees (JSON format)"
     )
-    
+
     # Metadata
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='created_engagements',
-        help_text="User who created this engagement"
+        related_name="created_engagements",
+        help_text="User who created this engagement",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['-planned_date']
+        ordering = ["-planned_date"]
         indexes = [
-            models.Index(fields=['community', 'status']),
-            models.Index(fields=['engagement_type', 'planned_date']),
-            models.Index(fields=['status', 'priority']),
+            models.Index(fields=["community", "status"]),
+            models.Index(fields=["engagement_type", "planned_date"]),
+            models.Index(fields=["status", "priority"]),
         ]
-    
+
     def __str__(self):
         return f"{self.title} - {self.community.name}"
-    
+
     def clean(self):
         if self.actual_end_datetime and self.actual_start_datetime:
             if self.actual_end_datetime <= self.actual_start_datetime:
                 raise ValidationError("End time must be after start time")
-    
+
     @property
     def actual_duration_minutes(self):
         """Calculate actual duration in minutes."""
@@ -318,14 +281,14 @@ class StakeholderEngagement(models.Model):
             delta = self.actual_end_datetime - self.actual_start_datetime
             return int(delta.total_seconds() / 60)
         return None
-    
+
     @property
     def is_overdue(self):
         """Check if engagement is overdue."""
-        if self.status in ['planned', 'scheduled'] and self.planned_date:
+        if self.status in ["planned", "scheduled"] and self.planned_date:
             return timezone.now() > self.planned_date
         return False
-    
+
     @property
     def participation_rate(self):
         """Calculate participation rate as percentage."""
@@ -336,555 +299,479 @@ class StakeholderEngagement(models.Model):
 
 class EngagementFacilitator(models.Model):
     """Through model for engagement facilitators with roles."""
-    
+
     FACILITATOR_ROLES = [
-        ('lead_facilitator', 'Lead Facilitator'),
-        ('co_facilitator', 'Co-Facilitator'),
-        ('note_taker', 'Note Taker'),
-        ('logistics_coordinator', 'Logistics Coordinator'),
-        ('translator', 'Translator/Interpreter'),
-        ('technical_expert', 'Technical Expert'),
-        ('observer', 'Observer'),
+        ("lead_facilitator", "Lead Facilitator"),
+        ("co_facilitator", "Co-Facilitator"),
+        ("note_taker", "Note Taker"),
+        ("logistics_coordinator", "Logistics Coordinator"),
+        ("translator", "Translator/Interpreter"),
+        ("technical_expert", "Technical Expert"),
+        ("observer", "Observer"),
     ]
-    
+
     engagement = models.ForeignKey(StakeholderEngagement, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     role = models.CharField(
         max_length=25,
         choices=FACILITATOR_ROLES,
-        help_text="Role of the facilitator in this engagement"
+        help_text="Role of the facilitator in this engagement",
     )
-    
+
     is_primary = models.BooleanField(
-        default=False,
-        help_text="Whether this is the primary facilitator"
+        default=False, help_text="Whether this is the primary facilitator"
     )
-    
+
     notes = models.TextField(
-        blank=True,
-        help_text="Additional notes about this facilitator's role"
+        blank=True, help_text="Additional notes about this facilitator's role"
     )
-    
+
     class Meta:
-        unique_together = ['engagement', 'user', 'role']
-    
+        unique_together = ["engagement", "user", "role"]
+
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.get_role_display()}"
 
 
 class ConsultationFeedback(models.Model):
     """Model for capturing feedback from stakeholder engagements."""
-    
+
     FEEDBACK_TYPES = [
-        ('verbal', 'Verbal Feedback'),
-        ('written', 'Written Feedback'),
-        ('survey', 'Survey Response'),
-        ('observation', 'Observation Notes'),
-        ('complaint', 'Complaint/Concern'),
-        ('suggestion', 'Suggestion/Recommendation'),
+        ("verbal", "Verbal Feedback"),
+        ("written", "Written Feedback"),
+        ("survey", "Survey Response"),
+        ("observation", "Observation Notes"),
+        ("complaint", "Complaint/Concern"),
+        ("suggestion", "Suggestion/Recommendation"),
     ]
-    
+
     SENTIMENT_CHOICES = [
-        ('positive', 'Positive'),
-        ('neutral', 'Neutral'),
-        ('negative', 'Negative'),
-        ('mixed', 'Mixed'),
+        ("positive", "Positive"),
+        ("neutral", "Neutral"),
+        ("negative", "Negative"),
+        ("mixed", "Mixed"),
     ]
-    
+
     engagement = models.ForeignKey(
         StakeholderEngagement,
         on_delete=models.CASCADE,
-        related_name='feedback_items',
-        help_text="Engagement this feedback relates to"
+        related_name="feedback_items",
+        help_text="Engagement this feedback relates to",
     )
-    
+
     feedback_type = models.CharField(
-        max_length=15,
-        choices=FEEDBACK_TYPES,
-        help_text="Type of feedback"
+        max_length=15, choices=FEEDBACK_TYPES, help_text="Type of feedback"
     )
-    
+
     participant_name = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Name of the participant (optional)"
+        max_length=100, blank=True, help_text="Name of the participant (optional)"
     )
-    
+
     participant_organization = models.CharField(
-        max_length=150,
-        blank=True,
-        help_text="Organization the participant represents"
+        max_length=150, blank=True, help_text="Organization the participant represents"
     )
-    
-    feedback_content = models.TextField(
-        help_text="Content of the feedback"
-    )
-    
+
+    feedback_content = models.TextField(help_text="Content of the feedback")
+
     topic_area = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Topic or subject area of the feedback"
+        max_length=100, blank=True, help_text="Topic or subject area of the feedback"
     )
-    
+
     sentiment = models.CharField(
         max_length=10,
         choices=SENTIMENT_CHOICES,
         null=True,
         blank=True,
-        help_text="Overall sentiment of the feedback"
+        help_text="Overall sentiment of the feedback",
     )
-    
+
     priority_level = models.CharField(
         max_length=10,
         choices=StakeholderEngagement.PRIORITY_LEVELS,
-        default='medium',
-        help_text="Priority level for addressing this feedback"
+        default="medium",
+        help_text="Priority level for addressing this feedback",
     )
-    
+
     # Response and Follow-up
     response_provided = models.TextField(
-        blank=True,
-        help_text="Response provided to the feedback"
+        blank=True, help_text="Response provided to the feedback"
     )
-    
+
     action_taken = models.TextField(
-        blank=True,
-        help_text="Action taken based on this feedback"
+        blank=True, help_text="Action taken based on this feedback"
     )
-    
+
     is_addressed = models.BooleanField(
-        default=False,
-        help_text="Whether this feedback has been addressed"
+        default=False, help_text="Whether this feedback has been addressed"
     )
-    
+
     addressed_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='addressed_feedback',
-        help_text="User who addressed this feedback"
+        related_name="addressed_feedback",
+        help_text="User who addressed this feedback",
     )
-    
+
     addressed_date = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Date when feedback was addressed"
+        null=True, blank=True, help_text="Date when feedback was addressed"
     )
-    
+
     # Metadata
     recorded_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='recorded_feedback',
-        help_text="User who recorded this feedback"
+        related_name="recorded_feedback",
+        help_text="User who recorded this feedback",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['-created_at']
-    
+        ordering = ["-created_at"]
+
     def __str__(self):
         return f"Feedback: {self.topic_area or 'General'} - {self.engagement.title}"
 
 
 class EngagementTracking(models.Model):
     """Model for tracking engagement metrics and analytics."""
-    
+
     TRACKING_PERIODS = [
-        ('weekly', 'Weekly'),
-        ('monthly', 'Monthly'),
-        ('quarterly', 'Quarterly'),
-        ('yearly', 'Yearly'),
+        ("weekly", "Weekly"),
+        ("monthly", "Monthly"),
+        ("quarterly", "Quarterly"),
+        ("yearly", "Yearly"),
     ]
-    
+
     community = models.ForeignKey(
         OBCCommunity,
         on_delete=models.CASCADE,
-        related_name='engagement_tracking',
-        help_text="Community being tracked"
+        related_name="engagement_tracking",
+        help_text="Community being tracked",
     )
-    
+
     period_type = models.CharField(
-        max_length=10,
-        choices=TRACKING_PERIODS,
-        help_text="Tracking period type"
+        max_length=10, choices=TRACKING_PERIODS, help_text="Tracking period type"
     )
-    
-    period_start = models.DateField(
-        help_text="Start date of the tracking period"
-    )
-    
-    period_end = models.DateField(
-        help_text="End date of the tracking period"
-    )
-    
+
+    period_start = models.DateField(help_text="Start date of the tracking period")
+
+    period_end = models.DateField(help_text="End date of the tracking period")
+
     # Engagement Metrics
     total_engagements = models.IntegerField(
-        default=0,
-        help_text="Total number of engagements in the period"
+        default=0, help_text="Total number of engagements in the period"
     )
-    
+
     completed_engagements = models.IntegerField(
-        default=0,
-        help_text="Number of completed engagements"
+        default=0, help_text="Number of completed engagements"
     )
-    
+
     total_participants = models.IntegerField(
-        default=0,
-        help_text="Total number of participants across all engagements"
+        default=0, help_text="Total number of participants across all engagements"
     )
-    
+
     unique_participants = models.IntegerField(
-        default=0,
-        help_text="Number of unique participants"
+        default=0, help_text="Number of unique participants"
     )
-    
+
     average_satisfaction = models.DecimalField(
         max_digits=3,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Average satisfaction rating"
+        help_text="Average satisfaction rating",
     )
-    
+
     # Feedback Metrics
     total_feedback_items = models.IntegerField(
-        default=0,
-        help_text="Total number of feedback items received"
+        default=0, help_text="Total number of feedback items received"
     )
-    
+
     positive_feedback_count = models.IntegerField(
-        default=0,
-        help_text="Number of positive feedback items"
+        default=0, help_text="Number of positive feedback items"
     )
-    
+
     negative_feedback_count = models.IntegerField(
-        default=0,
-        help_text="Number of negative feedback items"
+        default=0, help_text="Number of negative feedback items"
     )
-    
+
     feedback_response_rate = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Percentage of feedback items that received responses"
+        help_text="Percentage of feedback items that received responses",
     )
-    
+
     # Engagement Quality Indicators
     engagement_reach = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Percentage of community reached through engagements"
+        help_text="Percentage of community reached through engagements",
     )
-    
+
     repeat_participation_rate = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Percentage of participants who attended multiple engagements"
+        help_text="Percentage of participants who attended multiple engagements",
     )
-    
+
     diversity_index = models.DecimalField(
         max_digits=3,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Diversity index of participants (0-1 scale)"
+        help_text="Diversity index of participants (0-1 scale)",
     )
-    
+
     # Metadata
     calculated_by = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT,
-        help_text="User who calculated these metrics"
+        User, on_delete=models.PROTECT, help_text="User who calculated these metrics"
     )
-    
+
     calculated_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['-period_start']
-        unique_together = ['community', 'period_type', 'period_start']
-    
+        ordering = ["-period_start"]
+        unique_together = ["community", "period_type", "period_start"]
+
     def __str__(self):
         return f"{self.community.name} - {self.get_period_type_display()} ({self.period_start})"
 
 
 class Organization(models.Model):
     """Model for managing stakeholder organizations (BMOAs, LGUs, NGAs, etc.)."""
-    
+
     ORGANIZATION_TYPES = [
-        ('bmoa', 'BARMM Ministry/Agency/Office'),
-        ('lgu', 'Local Government Unit'),
-        ('nga', 'National Government Agency'),
-        ('ingo', 'International NGO'),
-        ('ngo', 'Non-Governmental Organization'),
-        ('cso', 'Civil Society Organization'),
-        ('academic', 'Academic Institution'),
-        ('religious', 'Religious Organization'),
-        ('private', 'Private Sector'),
-        ('media', 'Media Organization'),
-        ('donor', 'Donor Agency'),
-        ('tribal', 'Tribal/Indigenous Organization'),
-        ('other', 'Other'),
+        ("bmoa", "BARMM Ministry/Agency/Office"),
+        ("lgu", "Local Government Unit"),
+        ("nga", "National Government Agency"),
+        ("ingo", "International NGO"),
+        ("ngo", "Non-Governmental Organization"),
+        ("cso", "Civil Society Organization"),
+        ("academic", "Academic Institution"),
+        ("religious", "Religious Organization"),
+        ("private", "Private Sector"),
+        ("media", "Media Organization"),
+        ("donor", "Donor Agency"),
+        ("tribal", "Tribal/Indigenous Organization"),
+        ("other", "Other"),
     ]
-    
+
     PARTNERSHIP_LEVELS = [
-        ('implementing', 'Implementing Partner'),
-        ('funding', 'Funding Partner'),
-        ('technical', 'Technical Partner'),
-        ('coordinating', 'Coordinating Agency'),
-        ('beneficiary', 'Beneficiary Organization'),
-        ('observer', 'Observer'),
-        ('other', 'Other'),
+        ("implementing", "Implementing Partner"),
+        ("funding", "Funding Partner"),
+        ("technical", "Technical Partner"),
+        ("coordinating", "Coordinating Agency"),
+        ("beneficiary", "Beneficiary Organization"),
+        ("observer", "Observer"),
+        ("other", "Other"),
     ]
-    
+
     # Basic Information
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
-    name = models.CharField(
-        max_length=255,
-        help_text="Full name of the organization"
-    )
-    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    name = models.CharField(max_length=255, help_text="Full name of the organization")
+
     acronym = models.CharField(
         max_length=20,
         blank=True,
-        help_text="Organization acronym (e.g., MILF, ARMM, DOH)"
+        help_text="Organization acronym (e.g., MILF, ARMM, DOH)",
     )
-    
+
     organization_type = models.CharField(
-        max_length=15,
-        choices=ORGANIZATION_TYPES,
-        help_text="Type of organization"
+        max_length=15, choices=ORGANIZATION_TYPES, help_text="Type of organization"
     )
-    
+
     description = models.TextField(
-        blank=True,
-        help_text="Description of the organization and its mandate"
+        blank=True, help_text="Description of the organization and its mandate"
     )
-    
+
     # Contact Information
     address = models.TextField(
-        blank=True,
-        help_text="Physical address of the organization"
+        blank=True, help_text="Physical address of the organization"
     )
-    
+
     mailing_address = models.TextField(
-        blank=True,
-        help_text="Mailing address (if different from physical address)"
+        blank=True, help_text="Mailing address (if different from physical address)"
     )
-    
+
     phone = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Primary phone number"
+        max_length=50, blank=True, help_text="Primary phone number"
     )
-    
+
     mobile = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Mobile phone number"
+        max_length=50, blank=True, help_text="Mobile phone number"
     )
-    
-    email = models.EmailField(
-        blank=True,
-        help_text="Primary email address"
-    )
-    
-    website = models.URLField(
-        blank=True,
-        help_text="Organization website"
-    )
-    
+
+    email = models.EmailField(blank=True, help_text="Primary email address")
+
+    website = models.URLField(blank=True, help_text="Organization website")
+
     social_media = models.JSONField(
         null=True,
         blank=True,
-        help_text="Social media accounts (Facebook, Twitter, etc.)"
+        help_text="Social media accounts (Facebook, Twitter, etc.)",
     )
-    
+
     # Key Personnel
     head_of_organization = models.CharField(
         max_length=255,
         blank=True,
-        help_text="Name of the head of organization (e.g., Minister, Mayor, Director)"
+        help_text="Name of the head of organization (e.g., Minister, Mayor, Director)",
     )
-    
+
     head_position = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Position title of the head of organization"
+        help_text="Position title of the head of organization",
     )
-    
+
     focal_person = models.CharField(
         max_length=255,
         blank=True,
-        help_text="Name of the designated focal person for OBC matters"
+        help_text="Name of the designated focal person for OBC matters",
     )
-    
+
     focal_person_position = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Position of the focal person"
+        max_length=100, blank=True, help_text="Position of the focal person"
     )
-    
+
     focal_person_contact = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Contact information for the focal person"
+        max_length=100, blank=True, help_text="Contact information for the focal person"
     )
-    
+
     focal_person_email = models.EmailField(
-        blank=True,
-        help_text="Email address of the focal person"
+        blank=True, help_text="Email address of the focal person"
     )
-    
+
     # Partnership Information
     partnership_level = models.CharField(
         max_length=15,
         choices=PARTNERSHIP_LEVELS,
         blank=True,
-        help_text="Level of partnership with OOBC"
+        help_text="Level of partnership with OOBC",
     )
-    
+
     partnership_start_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when partnership was established"
+        null=True, blank=True, help_text="Date when partnership was established"
     )
-    
+
     partnership_status = models.CharField(
         max_length=20,
         choices=[
-            ('active', 'Active'),
-            ('inactive', 'Inactive'),
-            ('suspended', 'Suspended'),
-            ('terminated', 'Terminated'),
+            ("active", "Active"),
+            ("inactive", "Inactive"),
+            ("suspended", "Suspended"),
+            ("terminated", "Terminated"),
         ],
-        default='active',
-        help_text="Current partnership status"
+        default="active",
+        help_text="Current partnership status",
     )
-    
+
     # Operational Details
     areas_of_expertise = models.TextField(
-        blank=True,
-        help_text="Areas of expertise and services provided"
+        blank=True, help_text="Areas of expertise and services provided"
     )
-    
+
     geographic_coverage = models.TextField(
-        blank=True,
-        help_text="Geographic areas of operation"
+        blank=True, help_text="Geographic areas of operation"
     )
-    
+
     target_beneficiaries = models.TextField(
-        blank=True,
-        help_text="Target beneficiaries and communities served"
+        blank=True, help_text="Target beneficiaries and communities served"
     )
-    
+
     annual_budget = models.DecimalField(
         max_digits=15,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Annual budget (in PHP)"
+        help_text="Annual budget (in PHP)",
     )
-    
+
     staff_count = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="Number of staff members"
+        null=True, blank=True, help_text="Number of staff members"
     )
-    
+
     # Administrative Information
     registration_number = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Official registration number (SEC, DTI, etc.)"
+        help_text="Official registration number (SEC, DTI, etc.)",
     )
-    
+
     tax_identification_number = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Tax Identification Number (TIN)"
+        max_length=50, blank=True, help_text="Tax Identification Number (TIN)"
     )
-    
+
     accreditation_details = models.TextField(
-        blank=True,
-        help_text="Accreditation details and certifications"
+        blank=True, help_text="Accreditation details and certifications"
     )
-    
+
     # Engagement History
     last_engagement_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date of last engagement or communication"
+        null=True, blank=True, help_text="Date of last engagement or communication"
     )
-    
+
     engagement_frequency = models.CharField(
         max_length=20,
         choices=[
-            ('daily', 'Daily'),
-            ('weekly', 'Weekly'),
-            ('monthly', 'Monthly'),
-            ('quarterly', 'Quarterly'),
-            ('annually', 'Annually'),
-            ('as_needed', 'As Needed'),
+            ("daily", "Daily"),
+            ("weekly", "Weekly"),
+            ("monthly", "Monthly"),
+            ("quarterly", "Quarterly"),
+            ("annually", "Annually"),
+            ("as_needed", "As Needed"),
         ],
-        default='as_needed',
-        help_text="Frequency of engagement"
+        default="as_needed",
+        help_text="Frequency of engagement",
     )
-    
+
     # Notes and Status
-    notes = models.TextField(
-        blank=True,
-        help_text="Additional notes and observations"
-    )
-    
+    notes = models.TextField(blank=True, help_text="Additional notes and observations")
+
     is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this organization is currently active"
+        default=True, help_text="Whether this organization is currently active"
     )
-    
+
     is_priority = models.BooleanField(
-        default=False,
-        help_text="Whether this is a priority partner organization"
+        default=False, help_text="Whether this is a priority partner organization"
     )
-    
+
     # Metadata
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='created_organizations',
-        help_text="User who created this organization record"
+        related_name="created_organizations",
+        help_text="User who created this organization record",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
         indexes = [
-            models.Index(fields=['organization_type', 'partnership_status']),
-            models.Index(fields=['is_active', 'is_priority']),
-            models.Index(fields=['partnership_level', 'partnership_status']),
+            models.Index(fields=["organization_type", "partnership_status"]),
+            models.Index(fields=["is_active", "is_priority"]),
+            models.Index(fields=["partnership_level", "partnership_status"]),
         ]
-    
+
     def __str__(self):
         if self.acronym:
             return f"{self.name} ({self.acronym})"
         return self.name
-    
+
     @property
     def display_name(self):
         """Return display name with acronym if available."""
@@ -895,155 +782,123 @@ class Organization(models.Model):
 
 class OrganizationContact(models.Model):
     """Model for individual contacts within organizations."""
-    
+
     CONTACT_TYPES = [
-        ('primary', 'Primary Contact'),
-        ('secondary', 'Secondary Contact'),
-        ('technical', 'Technical Contact'),
-        ('administrative', 'Administrative Contact'),
-        ('executive', 'Executive Contact'),
-        ('field', 'Field Contact'),
-        ('emergency', 'Emergency Contact'),
+        ("primary", "Primary Contact"),
+        ("secondary", "Secondary Contact"),
+        ("technical", "Technical Contact"),
+        ("administrative", "Administrative Contact"),
+        ("executive", "Executive Contact"),
+        ("field", "Field Contact"),
+        ("emergency", "Emergency Contact"),
     ]
-    
+
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
-        related_name='contacts',
-        help_text="Organization this contact belongs to"
+        related_name="contacts",
+        help_text="Organization this contact belongs to",
     )
-    
+
     contact_type = models.CharField(
-        max_length=15,
-        choices=CONTACT_TYPES,
-        help_text="Type of contact"
+        max_length=15, choices=CONTACT_TYPES, help_text="Type of contact"
     )
-    
+
     # Personal Information
-    first_name = models.CharField(
-        max_length=100,
-        help_text="First name"
-    )
-    
-    last_name = models.CharField(
-        max_length=100,
-        help_text="Last name"
-    )
-    
-    middle_name = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Middle name"
-    )
-    
+    first_name = models.CharField(max_length=100, help_text="First name")
+
+    last_name = models.CharField(max_length=100, help_text="Last name")
+
+    middle_name = models.CharField(max_length=100, blank=True, help_text="Middle name")
+
     title = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Professional title (Mr., Ms., Dr., Eng., etc.)"
+        help_text="Professional title (Mr., Ms., Dr., Eng., etc.)",
     )
-    
+
     position = models.CharField(
-        max_length=150,
-        help_text="Position/designation in the organization"
+        max_length=150, help_text="Position/designation in the organization"
     )
-    
+
     department = models.CharField(
-        max_length=150,
-        blank=True,
-        help_text="Department or unit"
+        max_length=150, blank=True, help_text="Department or unit"
     )
-    
+
     # Contact Information
-    email = models.EmailField(
-        blank=True,
-        help_text="Email address"
-    )
-    
-    phone = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Phone number"
-    )
-    
-    mobile = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Mobile number"
-    )
-    
+    email = models.EmailField(blank=True, help_text="Email address")
+
+    phone = models.CharField(max_length=50, blank=True, help_text="Phone number")
+
+    mobile = models.CharField(max_length=50, blank=True, help_text="Mobile number")
+
     alternative_email = models.EmailField(
-        blank=True,
-        help_text="Alternative email address"
+        blank=True, help_text="Alternative email address"
     )
-    
+
     # Professional Details
     areas_of_responsibility = models.TextField(
-        blank=True,
-        help_text="Areas of responsibility and expertise"
+        blank=True, help_text="Areas of responsibility and expertise"
     )
-    
+
     languages_spoken = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text="Languages spoken (comma-separated)"
+        max_length=200, blank=True, help_text="Languages spoken (comma-separated)"
     )
-    
+
     # Preferences
     preferred_communication_method = models.CharField(
         max_length=20,
         choices=[
-            ('email', 'Email'),
-            ('phone', 'Phone'),
-            ('mobile', 'Mobile'),
-            ('letter', 'Official Letter'),
-            ('meeting', 'Face-to-face Meeting'),
+            ("email", "Email"),
+            ("phone", "Phone"),
+            ("mobile", "Mobile"),
+            ("letter", "Official Letter"),
+            ("meeting", "Face-to-face Meeting"),
         ],
-        default='email',
-        help_text="Preferred method of communication"
+        default="email",
+        help_text="Preferred method of communication",
     )
-    
+
     best_contact_time = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Best time to contact (e.g., 9AM-5PM weekdays)"
+        help_text="Best time to contact (e.g., 9AM-5PM weekdays)",
     )
-    
+
     # Status
     is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this contact is currently active"
+        default=True, help_text="Whether this contact is currently active"
     )
-    
+
     is_primary = models.BooleanField(
         default=False,
-        help_text="Whether this is the primary contact for the organization"
+        help_text="Whether this is the primary contact for the organization",
     )
-    
+
     notes = models.TextField(
-        blank=True,
-        help_text="Additional notes about this contact"
+        blank=True, help_text="Additional notes about this contact"
     )
-    
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['last_name', 'first_name']
+        ordering = ["last_name", "first_name"]
         indexes = [
-            models.Index(fields=['organization', 'contact_type']),
-            models.Index(fields=['is_active', 'is_primary']),
+            models.Index(fields=["organization", "contact_type"]),
+            models.Index(fields=["is_active", "is_primary"]),
         ]
-    
+
     def __str__(self):
         return f"{self.full_name} - {self.position} ({self.organization.name})"
-    
+
     @property
     def full_name(self):
         """Return full name of the contact."""
         names = [self.first_name, self.middle_name, self.last_name]
-        return ' '.join([name for name in names if name])
-    
+        return " ".join([name for name in names if name])
+
     @property
     def display_name(self):
         """Return display name with title if available."""
@@ -1054,970 +909,854 @@ class OrganizationContact(models.Model):
 
 class Communication(models.Model):
     """Model for tracking communications with stakeholder organizations."""
-    
+
     COMMUNICATION_TYPES = [
-        ('email', 'Email'),
-        ('letter', 'Official Letter'),
-        ('meeting', 'Meeting'),
-        ('phone', 'Phone Call'),
-        ('video_call', 'Video Conference'),
-        ('site_visit', 'Site Visit'),
-        ('workshop', 'Workshop/Training'),
-        ('consultation', 'Consultation'),
-        ('memo', 'Memorandum'),
-        ('report', 'Report Submission'),
-        ('request', 'Request/Application'),
-        ('response', 'Response/Reply'),
-        ('announcement', 'Announcement'),
-        ('invitation', 'Invitation'),
-        ('other', 'Other'),
+        ("email", "Email"),
+        ("letter", "Official Letter"),
+        ("meeting", "Meeting"),
+        ("phone", "Phone Call"),
+        ("video_call", "Video Conference"),
+        ("site_visit", "Site Visit"),
+        ("workshop", "Workshop/Training"),
+        ("consultation", "Consultation"),
+        ("memo", "Memorandum"),
+        ("report", "Report Submission"),
+        ("request", "Request/Application"),
+        ("response", "Response/Reply"),
+        ("announcement", "Announcement"),
+        ("invitation", "Invitation"),
+        ("other", "Other"),
     ]
-    
+
     DIRECTION_CHOICES = [
-        ('incoming', 'Incoming'),
-        ('outgoing', 'Outgoing'),
-        ('internal', 'Internal'),
+        ("incoming", "Incoming"),
+        ("outgoing", "Outgoing"),
+        ("internal", "Internal"),
     ]
-    
+
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('sent', 'Sent'),
-        ('received', 'Received'),
-        ('acknowledged', 'Acknowledged'),
-        ('responded', 'Responded'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
+        ("draft", "Draft"),
+        ("sent", "Sent"),
+        ("received", "Received"),
+        ("acknowledged", "Acknowledged"),
+        ("responded", "Responded"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
     ]
-    
+
     PRIORITY_LEVELS = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('urgent', 'Urgent'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("urgent", "Urgent"),
     ]
-    
+
     # Basic Information
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
-        related_name='communications',
-        help_text="Organization involved in this communication"
+        related_name="communications",
+        help_text="Organization involved in this communication",
     )
-    
+
     contact = models.ForeignKey(
         OrganizationContact,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='communications',
-        help_text="Specific contact person (if applicable)"
+        related_name="communications",
+        help_text="Specific contact person (if applicable)",
     )
-    
+
     related_engagement = models.ForeignKey(
         StakeholderEngagement,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='communications',
-        help_text="Related stakeholder engagement (if applicable)"
+        related_name="communications",
+        help_text="Related stakeholder engagement (if applicable)",
     )
-    
+
     # Communication Details
     communication_type = models.CharField(
-        max_length=15,
-        choices=COMMUNICATION_TYPES,
-        help_text="Type of communication"
+        max_length=15, choices=COMMUNICATION_TYPES, help_text="Type of communication"
     )
-    
+
     direction = models.CharField(
-        max_length=10,
-        choices=DIRECTION_CHOICES,
-        help_text="Direction of communication"
+        max_length=10, choices=DIRECTION_CHOICES, help_text="Direction of communication"
     )
-    
+
     status = models.CharField(
         max_length=15,
         choices=STATUS_CHOICES,
-        default='draft',
-        help_text="Current status of the communication"
+        default="draft",
+        help_text="Current status of the communication",
     )
-    
+
     priority = models.CharField(
         max_length=10,
         choices=PRIORITY_LEVELS,
-        default='medium',
-        help_text="Priority level of this communication"
+        default="medium",
+        help_text="Priority level of this communication",
     )
-    
+
     # Content
     subject = models.CharField(
-        max_length=255,
-        help_text="Subject or title of the communication"
+        max_length=255, help_text="Subject or title of the communication"
     )
-    
-    content = models.TextField(
-        help_text="Content or description of the communication"
-    )
-    
+
+    content = models.TextField(help_text="Content or description of the communication")
+
     reference_number = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Official reference number (for letters, memos, etc.)"
+        help_text="Official reference number (for letters, memos, etc.)",
     )
-    
+
     # Timeline
-    communication_date = models.DateField(
-        help_text="Date of the communication"
-    )
-    
+    communication_date = models.DateField(help_text="Date of the communication")
+
     communication_time = models.TimeField(
         null=True,
         blank=True,
-        help_text="Time of the communication (for calls, meetings, etc.)"
+        help_text="Time of the communication (for calls, meetings, etc.)",
     )
-    
+
     due_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Due date for response or action"
+        null=True, blank=True, help_text="Due date for response or action"
     )
-    
+
     # Participants
     sender = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="Name of the sender"
+        max_length=255, blank=True, help_text="Name of the sender"
     )
-    
+
     sender_position = models.CharField(
-        max_length=150,
-        blank=True,
-        help_text="Position of the sender"
+        max_length=150, blank=True, help_text="Position of the sender"
     )
-    
+
     recipient = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="Name of the recipient"
+        max_length=255, blank=True, help_text="Name of the recipient"
     )
-    
+
     recipient_position = models.CharField(
-        max_length=150,
-        blank=True,
-        help_text="Position of the recipient"
+        max_length=150, blank=True, help_text="Position of the recipient"
     )
-    
+
     cc_recipients = models.TextField(
-        blank=True,
-        help_text="CC recipients (one per line)"
+        blank=True, help_text="CC recipients (one per line)"
     )
-    
+
     # Follow-up
     requires_follow_up = models.BooleanField(
-        default=False,
-        help_text="Whether this communication requires follow-up"
+        default=False, help_text="Whether this communication requires follow-up"
     )
-    
+
     follow_up_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Scheduled follow-up date"
+        null=True, blank=True, help_text="Scheduled follow-up date"
     )
-    
+
     follow_up_notes = models.TextField(
-        blank=True,
-        help_text="Follow-up notes and action items"
+        blank=True, help_text="Follow-up notes and action items"
     )
-    
+
     follow_up_completed = models.BooleanField(
-        default=False,
-        help_text="Whether follow-up has been completed"
+        default=False, help_text="Whether follow-up has been completed"
     )
-    
+
     # Response Details
     response_received = models.BooleanField(
-        default=False,
-        help_text="Whether a response has been received"
+        default=False, help_text="Whether a response has been received"
     )
-    
+
     response_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date response was received"
+        null=True, blank=True, help_text="Date response was received"
     )
-    
+
     response_content = models.TextField(
-        blank=True,
-        help_text="Content of the response received"
+        blank=True, help_text="Content of the response received"
     )
-    
+
     # Documentation
     attachments = models.JSONField(
-        null=True,
-        blank=True,
-        help_text="List of attached files (JSON format)"
+        null=True, blank=True, help_text="List of attached files (JSON format)"
     )
-    
+
     meeting_minutes = models.TextField(
-        blank=True,
-        help_text="Meeting minutes (for meetings)"
+        blank=True, help_text="Meeting minutes (for meetings)"
     )
-    
+
     outcomes = models.TextField(
-        blank=True,
-        help_text="Outcomes and decisions from the communication"
+        blank=True, help_text="Outcomes and decisions from the communication"
     )
-    
+
     # Tags and Categories
     tags = models.CharField(
         max_length=500,
         blank=True,
-        help_text="Tags for categorization (comma-separated)"
+        help_text="Tags for categorization (comma-separated)",
     )
-    
+
     topic_areas = models.CharField(
-        max_length=500,
-        blank=True,
-        help_text="Topic areas discussed (comma-separated)"
+        max_length=500, blank=True, help_text="Topic areas discussed (comma-separated)"
     )
-    
+
     # Metadata
     recorded_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='recorded_communications',
-        help_text="User who recorded this communication"
+        related_name="recorded_communications",
+        help_text="User who recorded this communication",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['-communication_date', '-created_at']
+        ordering = ["-communication_date", "-created_at"]
         indexes = [
-            models.Index(fields=['organization', 'communication_type']),
-            models.Index(fields=['direction', 'status']),
-            models.Index(fields=['communication_date', 'priority']),
-            models.Index(fields=['requires_follow_up', 'follow_up_date']),
+            models.Index(fields=["organization", "communication_type"]),
+            models.Index(fields=["direction", "status"]),
+            models.Index(fields=["communication_date", "priority"]),
+            models.Index(fields=["requires_follow_up", "follow_up_date"]),
         ]
-    
+
     def __str__(self):
         return f"{self.subject} - {self.organization.name} ({self.communication_date})"
-    
+
     @property
     def is_overdue(self):
         """Check if communication is overdue."""
         if self.due_date:
             return timezone.now().date() > self.due_date
         return False
-    
+
     @property
     def follow_up_overdue(self):
         """Check if follow-up is overdue."""
-        if self.requires_follow_up and self.follow_up_date and not self.follow_up_completed:
+        if (
+            self.requires_follow_up
+            and self.follow_up_date
+            and not self.follow_up_completed
+        ):
             return timezone.now().date() > self.follow_up_date
         return False
 
 
 class CommunicationTemplate(models.Model):
     """Model for standardized communication templates."""
-    
+
     TEMPLATE_TYPES = [
-        ('email', 'Email Template'),
-        ('letter', 'Letter Template'),
-        ('memo', 'Memorandum Template'),
-        ('invitation', 'Invitation Template'),
-        ('announcement', 'Announcement Template'),
-        ('request', 'Request Template'),
-        ('response', 'Response Template'),
-        ('report', 'Report Template'),
-        ('other', 'Other Template'),
+        ("email", "Email Template"),
+        ("letter", "Letter Template"),
+        ("memo", "Memorandum Template"),
+        ("invitation", "Invitation Template"),
+        ("announcement", "Announcement Template"),
+        ("request", "Request Template"),
+        ("response", "Response Template"),
+        ("report", "Report Template"),
+        ("other", "Other Template"),
     ]
-    
-    name = models.CharField(
-        max_length=150,
-        help_text="Name of the template"
-    )
-    
+
+    name = models.CharField(max_length=150, help_text="Name of the template")
+
     template_type = models.CharField(
-        max_length=15,
-        choices=TEMPLATE_TYPES,
-        help_text="Type of template"
+        max_length=15, choices=TEMPLATE_TYPES, help_text="Type of template"
     )
-    
+
     description = models.TextField(
-        blank=True,
-        help_text="Description of when to use this template"
+        blank=True, help_text="Description of when to use this template"
     )
-    
+
     subject_template = models.CharField(
         max_length=255,
         blank=True,
-        help_text="Subject line template (with placeholders)"
+        help_text="Subject line template (with placeholders)",
     )
-    
+
     content_template = models.TextField(
         help_text="Content template (with placeholders like {{organization_name}}, {{date}}, etc.)"
     )
-    
+
     # Template Metadata
     language = models.CharField(
         max_length=15,
-        default='en',
+        default="en",
         choices=[
-            ('en', 'English'),
-            ('fil', 'Filipino'),
-            ('ar', 'Arabic'),
-            ('maguindanaon', 'Maguindanaon'),
-            ('maranao', 'Maranao'),
-            ('tausug', 'Tausug'),
+            ("en", "English"),
+            ("fil", "Filipino"),
+            ("ar", "Arabic"),
+            ("maguindanaon", "Maguindanaon"),
+            ("maranao", "Maranao"),
+            ("tausug", "Tausug"),
         ],
-        help_text="Language of the template"
+        help_text="Language of the template",
     )
-    
+
     formal_level = models.CharField(
         max_length=15,
         choices=[
-            ('formal', 'Formal'),
-            ('semi_formal', 'Semi-Formal'),
-            ('informal', 'Informal'),
+            ("formal", "Formal"),
+            ("semi_formal", "Semi-Formal"),
+            ("informal", "Informal"),
         ],
-        default='formal',
-        help_text="Level of formality"
+        default="formal",
+        help_text="Level of formality",
     )
-    
+
     # Usage Instructions
     usage_instructions = models.TextField(
-        blank=True,
-        help_text="Instructions on how to use this template"
+        blank=True, help_text="Instructions on how to use this template"
     )
-    
+
     placeholders = models.JSONField(
         null=True,
         blank=True,
-        help_text="List of available placeholders and their descriptions"
+        help_text="List of available placeholders and their descriptions",
     )
-    
+
     # Status
     is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this template is currently active"
+        default=True, help_text="Whether this template is currently active"
     )
-    
+
     is_default = models.BooleanField(
-        default=False,
-        help_text="Whether this is the default template for this type"
+        default=False, help_text="Whether this is the default template for this type"
     )
-    
+
     # Approval Process
     requires_approval = models.BooleanField(
         default=False,
-        help_text="Whether communications using this template require approval"
+        help_text="Whether communications using this template require approval",
     )
-    
+
     approver = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='template_approvals',
-        help_text="User who can approve communications using this template"
+        related_name="template_approvals",
+        help_text="User who can approve communications using this template",
     )
-    
+
     # Metadata
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='created_templates',
-        help_text="User who created this template"
+        related_name="created_templates",
+        help_text="User who created this template",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['template_type', 'name']
-        unique_together = ['template_type', 'is_default', 'language']
-    
+        ordering = ["template_type", "name"]
+        unique_together = ["template_type", "is_default", "language"]
+
     def __str__(self):
         return f"{self.name} ({self.get_template_type_display()})"
 
 
 class CommunicationSchedule(models.Model):
     """Model for scheduling and managing communication reminders."""
-    
+
     SCHEDULE_TYPES = [
-        ('one_time', 'One-time'),
-        ('recurring', 'Recurring'),
-        ('follow_up', 'Follow-up Reminder'),
-        ('deadline', 'Deadline Reminder'),
+        ("one_time", "One-time"),
+        ("recurring", "Recurring"),
+        ("follow_up", "Follow-up Reminder"),
+        ("deadline", "Deadline Reminder"),
     ]
-    
+
     RECURRENCE_PATTERNS = [
-        ('daily', 'Daily'),
-        ('weekly', 'Weekly'),
-        ('bi_weekly', 'Bi-weekly'),
-        ('monthly', 'Monthly'),
-        ('quarterly', 'Quarterly'),
-        ('semi_annual', 'Semi-annual'),
-        ('annual', 'Annual'),
+        ("daily", "Daily"),
+        ("weekly", "Weekly"),
+        ("bi_weekly", "Bi-weekly"),
+        ("monthly", "Monthly"),
+        ("quarterly", "Quarterly"),
+        ("semi_annual", "Semi-annual"),
+        ("annual", "Annual"),
     ]
-    
+
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
-        related_name='communication_schedules',
-        help_text="Organization for this scheduled communication"
+        related_name="communication_schedules",
+        help_text="Organization for this scheduled communication",
     )
-    
+
     contact = models.ForeignKey(
         OrganizationContact,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='communication_schedules',
-        help_text="Specific contact person (if applicable)"
+        related_name="communication_schedules",
+        help_text="Specific contact person (if applicable)",
     )
-    
+
     template = models.ForeignKey(
         CommunicationTemplate,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text="Communication template to use"
+        help_text="Communication template to use",
     )
-    
+
     # Scheduling Details
     schedule_type = models.CharField(
-        max_length=15,
-        choices=SCHEDULE_TYPES,
-        help_text="Type of schedule"
+        max_length=15, choices=SCHEDULE_TYPES, help_text="Type of schedule"
     )
-    
+
     title = models.CharField(
-        max_length=200,
-        help_text="Title or description of the scheduled communication"
+        max_length=200, help_text="Title or description of the scheduled communication"
     )
-    
+
     scheduled_date = models.DateField(
         help_text="Date when communication should be sent/performed"
     )
-    
+
     scheduled_time = models.TimeField(
         null=True,
         blank=True,
-        help_text="Time when communication should be sent/performed"
+        help_text="Time when communication should be sent/performed",
     )
-    
+
     # Recurrence Settings
     recurrence_pattern = models.CharField(
         max_length=15,
         choices=RECURRENCE_PATTERNS,
         blank=True,
-        help_text="Recurrence pattern (for recurring schedules)"
+        help_text="Recurrence pattern (for recurring schedules)",
     )
-    
+
     recurrence_end_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="End date for recurring schedule"
+        null=True, blank=True, help_text="End date for recurring schedule"
     )
-    
+
     # Communication Content
     subject = models.CharField(
-        max_length=255,
-        help_text="Subject or title of the communication"
+        max_length=255, help_text="Subject or title of the communication"
     )
-    
+
     message_content = models.TextField(
-        blank=True,
-        help_text="Pre-written message content"
+        blank=True, help_text="Pre-written message content"
     )
-    
+
     # Execution Status
     is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this schedule is currently active"
+        default=True, help_text="Whether this schedule is currently active"
     )
-    
+
     last_executed = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Date and time of last execution"
+        null=True, blank=True, help_text="Date and time of last execution"
     )
-    
-    next_execution = models.DateTimeField(
-        help_text="Date and time of next execution"
-    )
-    
+
+    next_execution = models.DateTimeField(help_text="Date and time of next execution")
+
     execution_count = models.PositiveIntegerField(
-        default=0,
-        help_text="Number of times this schedule has been executed"
+        default=0, help_text="Number of times this schedule has been executed"
     )
-    
+
     # Notification Settings
     send_reminder = models.BooleanField(
-        default=True,
-        help_text="Whether to send reminder notifications"
+        default=True, help_text="Whether to send reminder notifications"
     )
-    
+
     reminder_days_before = models.PositiveIntegerField(
-        default=1,
-        help_text="Days before scheduled date to send reminder"
+        default=1, help_text="Days before scheduled date to send reminder"
     )
-    
+
     assigned_to = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='assigned_communications',
-        help_text="User assigned to handle this communication"
+        related_name="assigned_communications",
+        help_text="User assigned to handle this communication",
     )
-    
+
     # Metadata
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='created_schedules',
-        help_text="User who created this schedule"
+        related_name="created_schedules",
+        help_text="User who created this schedule",
     )
-    
-    notes = models.TextField(
-        blank=True,
-        help_text="Additional notes and instructions"
-    )
-    
+
+    notes = models.TextField(blank=True, help_text="Additional notes and instructions")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['next_execution']
+        ordering = ["next_execution"]
         indexes = [
-            models.Index(fields=['organization', 'is_active']),
-            models.Index(fields=['next_execution', 'is_active']),
-            models.Index(fields=['assigned_to', 'is_active']),
+            models.Index(fields=["organization", "is_active"]),
+            models.Index(fields=["next_execution", "is_active"]),
+            models.Index(fields=["assigned_to", "is_active"]),
         ]
-    
+
     def __str__(self):
         return f"{self.title} - {self.organization.name} ({self.scheduled_date})"
-    
+
     def save(self, *args, **kwargs):
         if not self.next_execution:
             self.next_execution = timezone.make_aware(
-                timezone.datetime.combine(self.scheduled_date, self.scheduled_time or timezone.datetime.min.time())
+                timezone.datetime.combine(
+                    self.scheduled_date,
+                    self.scheduled_time or timezone.datetime.min.time(),
+                )
             )
         super().save(*args, **kwargs)
 
 
 class Event(models.Model):
     """Model for managing meetings, consultations, and other events."""
-    
+
     EVENT_TYPES = [
-        ('meeting', 'Coordination Meeting'),
-        ('consultation', 'Public Consultation'),
-        ('courtesy_call', 'Courtesy Call'),
-        ('workshop', 'Workshop/Training'),
-        ('forum', 'Public Forum'),
-        ('conference', 'Conference'),
-        ('seminar', 'Seminar'),
-        ('field_visit', 'Field Visit'),
-        ('assessment', 'Assessment Activity'),
-        ('validation', 'Validation Session'),
-        ('orientation', 'Orientation'),
-        ('briefing', 'Briefing'),
-        ('planning', 'Planning Session'),
-        ('review', 'Review Meeting'),
-        ('other', 'Other'),
+        ("meeting", "Coordination Meeting"),
+        ("consultation", "Public Consultation"),
+        ("courtesy_call", "Courtesy Call"),
+        ("workshop", "Workshop/Training"),
+        ("forum", "Public Forum"),
+        ("conference", "Conference"),
+        ("seminar", "Seminar"),
+        ("field_visit", "Field Visit"),
+        ("assessment", "Assessment Activity"),
+        ("validation", "Validation Session"),
+        ("orientation", "Orientation"),
+        ("briefing", "Briefing"),
+        ("planning", "Planning Session"),
+        ("review", "Review Meeting"),
+        ("other", "Other"),
     ]
-    
+
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('planned', 'Planned'),
-        ('scheduled', 'Scheduled'),
-        ('confirmed', 'Confirmed'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-        ('postponed', 'Postponed'),
-        ('rescheduled', 'Rescheduled'),
+        ("draft", "Draft"),
+        ("planned", "Planned"),
+        ("scheduled", "Scheduled"),
+        ("confirmed", "Confirmed"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+        ("postponed", "Postponed"),
+        ("rescheduled", "Rescheduled"),
     ]
-    
+
     PRIORITY_LEVELS = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
     ]
-    
+
     # Basic Information
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
-    title = models.CharField(
-        max_length=255,
-        help_text="Title of the event"
-    )
-    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    title = models.CharField(max_length=255, help_text="Title of the event")
+
     event_type = models.CharField(
-        max_length=15,
-        choices=EVENT_TYPES,
-        help_text="Type of event"
+        max_length=15, choices=EVENT_TYPES, help_text="Type of event"
     )
-    
-    description = models.TextField(
-        help_text="Detailed description of the event"
-    )
-    
+
+    description = models.TextField(help_text="Detailed description of the event")
+
     objectives = models.TextField(
-        blank=True,
-        help_text="Objectives and expected outcomes"
+        blank=True, help_text="Objectives and expected outcomes"
     )
-    
+
     # Relationships
     community = models.ForeignKey(
         OBCCommunity,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='events',
-        help_text="Primary community involved (if applicable)"
+        related_name="events",
+        help_text="Primary community involved (if applicable)",
     )
-    
+
     organizations = models.ManyToManyField(
         Organization,
-        related_name='events',
+        related_name="events",
         blank=True,
-        help_text="Organizations involved in this event"
+        help_text="Organizations involved in this event",
     )
-    
+
     related_engagement = models.ForeignKey(
         StakeholderEngagement,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='events',
-        help_text="Related stakeholder engagement (if applicable)"
+        related_name="events",
+        help_text="Related stakeholder engagement (if applicable)",
     )
-    
+
     related_assessment = models.ForeignKey(
         Assessment,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='events',
-        help_text="Related assessment (if applicable)"
+        related_name="events",
+        help_text="Related assessment (if applicable)",
     )
-    
+
     # Event Details
     status = models.CharField(
         max_length=15,
         choices=STATUS_CHOICES,
-        default='draft',
-        help_text="Current status of the event"
+        default="draft",
+        help_text="Current status of the event",
     )
-    
+
     priority = models.CharField(
         max_length=10,
         choices=PRIORITY_LEVELS,
-        default='medium',
-        help_text="Priority level of this event"
+        default="medium",
+        help_text="Priority level of this event",
     )
-    
+
     # Schedule
-    start_date = models.DateField(
-        help_text="Start date of the event"
-    )
-    
+    start_date = models.DateField(help_text="Start date of the event")
+
     end_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="End date of the event (if multi-day)"
+        null=True, blank=True, help_text="End date of the event (if multi-day)"
     )
-    
+
     start_time = models.TimeField(
-        null=True,
-        blank=True,
-        help_text="Start time of the event"
+        null=True, blank=True, help_text="Start time of the event"
     )
-    
+
     end_time = models.TimeField(
-        null=True,
-        blank=True,
-        help_text="End time of the event"
+        null=True, blank=True, help_text="End time of the event"
     )
-    
+
     duration_hours = models.DecimalField(
         max_digits=4,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Expected duration in hours"
+        help_text="Expected duration in hours",
     )
-    
+
     # Location
-    venue = models.CharField(
-        max_length=255,
-        help_text="Venue or location of the event"
-    )
-    
-    address = models.TextField(
-        help_text="Full address of the venue"
-    )
-    
+    venue = models.CharField(max_length=255, help_text="Venue or location of the event")
+
+    address = models.TextField(help_text="Full address of the venue")
+
     coordinates = models.JSONField(
         null=True,
         blank=True,
-        help_text="Geographic coordinates of the venue (GeoJSON format)"
+        help_text="Geographic coordinates of the venue (GeoJSON format)",
     )
-    
+
     is_virtual = models.BooleanField(
-        default=False,
-        help_text="Whether this is a virtual event"
+        default=False, help_text="Whether this is a virtual event"
     )
-    
+
     virtual_platform = models.CharField(
         max_length=100,
         blank=True,
-        help_text="Virtual platform used (Zoom, Teams, etc.)"
+        help_text="Virtual platform used (Zoom, Teams, etc.)",
     )
-    
-    virtual_link = models.URLField(
-        blank=True,
-        help_text="Link to virtual meeting"
-    )
-    
+
+    virtual_link = models.URLField(blank=True, help_text="Link to virtual meeting")
+
     virtual_meeting_id = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Virtual meeting ID/code"
+        max_length=100, blank=True, help_text="Virtual meeting ID/code"
     )
-    
+
     virtual_passcode = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Virtual meeting passcode"
+        max_length=50, blank=True, help_text="Virtual meeting passcode"
     )
-    
+
     # Organization and Management
     organizer = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='organized_events',
-        help_text="Primary organizer of the event"
+        related_name="organized_events",
+        help_text="Primary organizer of the event",
     )
-    
+
     co_organizers = models.ManyToManyField(
         User,
-        related_name='co_organized_events',
+        related_name="co_organized_events",
         blank=True,
-        help_text="Co-organizers of the event"
+        help_text="Co-organizers of the event",
     )
-    
+
     facilitators = models.ManyToManyField(
         User,
-        related_name='facilitated_events',
+        related_name="facilitated_events",
         blank=True,
-        help_text="Event facilitators"
+        help_text="Event facilitators",
     )
-    
+
     # Participants
     expected_participants = models.PositiveIntegerField(
-        default=0,
-        help_text="Expected number of participants"
+        default=0, help_text="Expected number of participants"
     )
-    
+
     actual_participants = models.PositiveIntegerField(
-        default=0,
-        help_text="Actual number of participants"
+        default=0, help_text="Actual number of participants"
     )
-    
+
     target_audience = models.TextField(
-        blank=True,
-        help_text="Description of target audience"
+        blank=True, help_text="Description of target audience"
     )
-    
+
     # Content and Documentation
-    agenda = models.TextField(
-        blank=True,
-        help_text="Event agenda and program"
-    )
-    
+    agenda = models.TextField(blank=True, help_text="Event agenda and program")
+
     materials_needed = models.TextField(
-        blank=True,
-        help_text="Materials and resources needed"
+        blank=True, help_text="Materials and resources needed"
     )
-    
-    minutes = models.TextField(
-        blank=True,
-        help_text="Meeting minutes and notes"
-    )
-    
-    outcomes = models.TextField(
-        blank=True,
-        help_text="Key outcomes and results"
-    )
-    
+
+    minutes = models.TextField(blank=True, help_text="Meeting minutes and notes")
+
+    outcomes = models.TextField(blank=True, help_text="Key outcomes and results")
+
     decisions_made = models.TextField(
-        blank=True,
-        help_text="Decisions made during the event"
+        blank=True, help_text="Decisions made during the event"
     )
-    
+
     key_discussions = models.TextField(
-        blank=True,
-        help_text="Summary of key discussions"
+        blank=True, help_text="Summary of key discussions"
     )
-    
+
     # Budget and Resources
     budget_allocated = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Budget allocated for this event"
+        help_text="Budget allocated for this event",
     )
-    
+
     actual_cost = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Actual cost incurred"
+        help_text="Actual cost incurred",
     )
-    
+
     # Feedback and Evaluation
     feedback_summary = models.TextField(
-        blank=True,
-        help_text="Summary of participant feedback"
+        blank=True, help_text="Summary of participant feedback"
     )
-    
+
     satisfaction_rating = models.IntegerField(
         choices=[(i, f"{i} stars") for i in range(1, 6)],
         null=True,
         blank=True,
-        help_text="Overall satisfaction rating (1-5 stars)"
+        help_text="Overall satisfaction rating (1-5 stars)",
     )
-    
+
     lessons_learned = models.TextField(
-        blank=True,
-        help_text="Lessons learned and recommendations"
+        blank=True, help_text="Lessons learned and recommendations"
     )
-    
+
     # Follow-up
     follow_up_required = models.BooleanField(
-        default=False,
-        help_text="Whether follow-up is required"
+        default=False, help_text="Whether follow-up is required"
     )
-    
+
     follow_up_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Scheduled follow-up date"
+        null=True, blank=True, help_text="Scheduled follow-up date"
     )
-    
+
     follow_up_notes = models.TextField(
-        blank=True,
-        help_text="Follow-up notes and actions"
+        blank=True, help_text="Follow-up notes and actions"
     )
-    
+
     # Recurrence
     is_recurring = models.BooleanField(
-        default=False,
-        help_text="Whether this is a recurring event"
+        default=False, help_text="Whether this is a recurring event"
     )
-    
+
     recurrence_pattern = models.CharField(
         max_length=20,
         choices=[
-            ('daily', 'Daily'),
-            ('weekly', 'Weekly'),
-            ('bi_weekly', 'Bi-weekly'),
-            ('monthly', 'Monthly'),
-            ('quarterly', 'Quarterly'),
-            ('annually', 'Annually'),
+            ("daily", "Daily"),
+            ("weekly", "Weekly"),
+            ("bi_weekly", "Bi-weekly"),
+            ("monthly", "Monthly"),
+            ("quarterly", "Quarterly"),
+            ("annually", "Annually"),
         ],
         blank=True,
-        help_text="Recurrence pattern (if recurring)"
+        help_text="Recurrence pattern (if recurring)",
     )
-    
+
     recurrence_end_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="End date for recurring events"
+        null=True, blank=True, help_text="End date for recurring events"
     )
-    
+
     parent_event = models.ForeignKey(
-        'self',
+        "self",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='recurring_instances',
-        help_text="Parent event (for recurring event instances)"
+        related_name="recurring_instances",
+        help_text="Parent event (for recurring event instances)",
     )
-    
+
     # Metadata
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='created_events',
-        help_text="User who created this event"
+        related_name="created_events",
+        help_text="User who created this event",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['-start_date', '-start_time']
+        ordering = ["-start_date", "-start_time"]
         indexes = [
-            models.Index(fields=['event_type', 'status']),
-            models.Index(fields=['start_date', 'priority']),
-            models.Index(fields=['community', 'status']),
-            models.Index(fields=['organizer', 'start_date']),
+            models.Index(fields=["event_type", "status"]),
+            models.Index(fields=["start_date", "priority"]),
+            models.Index(fields=["community", "status"]),
+            models.Index(fields=["organizer", "start_date"]),
         ]
-    
+
     def __str__(self):
         return f"{self.title} - {self.start_date}"
-    
+
     def clean(self):
         if self.end_date and self.start_date:
             if self.end_date < self.start_date:
                 raise ValidationError("End date cannot be before start date")
-        
+
         if self.end_time and self.start_time and not self.end_date:
             if self.end_time <= self.start_time:
                 raise ValidationError("End time must be after start time")
-    
+
     @property
     def is_multiday(self):
         """Check if event spans multiple days."""
         return self.end_date and self.end_date != self.start_date
-    
+
     @property
     def participation_rate(self):
         """Calculate participation rate as percentage."""
         if self.expected_participants > 0:
             return (self.actual_participants / self.expected_participants) * 100
         return 0
-    
+
     @property
     def is_past(self):
         """Check if event is in the past."""
         return self.start_date < timezone.now().date()
-    
+
     @property
     def is_today(self):
         """Check if event is today."""
         return self.start_date == timezone.now().date()
-    
+
     @property
     def is_upcoming(self):
         """Check if event is upcoming."""
@@ -2026,258 +1765,222 @@ class Event(models.Model):
 
 class EventParticipant(models.Model):
     """Model for tracking event participants."""
-    
+
     PARTICIPANT_TYPES = [
-        ('internal', 'Internal Staff'),
-        ('stakeholder', 'Community Stakeholder'),
-        ('organization', 'Organization Representative'),
-        ('guest', 'Guest/External'),
-        ('facilitator', 'Facilitator'),
-        ('observer', 'Observer'),
+        ("internal", "Internal Staff"),
+        ("stakeholder", "Community Stakeholder"),
+        ("organization", "Organization Representative"),
+        ("guest", "Guest/External"),
+        ("facilitator", "Facilitator"),
+        ("observer", "Observer"),
     ]
-    
+
     PARTICIPATION_ROLES = [
-        ('organizer', 'Organizer'),
-        ('facilitator', 'Facilitator'),
-        ('presenter', 'Presenter'),
-        ('participant', 'Participant'),
-        ('observer', 'Observer'),
-        ('resource_person', 'Resource Person'),
-        ('interpreter', 'Interpreter/Translator'),
-        ('documentor', 'Documentor'),
+        ("organizer", "Organizer"),
+        ("facilitator", "Facilitator"),
+        ("presenter", "Presenter"),
+        ("participant", "Participant"),
+        ("observer", "Observer"),
+        ("resource_person", "Resource Person"),
+        ("interpreter", "Interpreter/Translator"),
+        ("documentor", "Documentor"),
     ]
-    
+
     INVITATION_STATUS = [
-        ('not_sent', 'Not Sent'),
-        ('sent', 'Sent'),
-        ('delivered', 'Delivered'),
-        ('opened', 'Opened'),
-        ('bounced', 'Bounced'),
+        ("not_sent", "Not Sent"),
+        ("sent", "Sent"),
+        ("delivered", "Delivered"),
+        ("opened", "Opened"),
+        ("bounced", "Bounced"),
     ]
-    
+
     RESPONSE_STATUS = [
-        ('pending', 'Pending'),
-        ('accepted', 'Accepted'),
-        ('declined', 'Declined'),
-        ('tentative', 'Tentative'),
-        ('no_response', 'No Response'),
+        ("pending", "Pending"),
+        ("accepted", "Accepted"),
+        ("declined", "Declined"),
+        ("tentative", "Tentative"),
+        ("no_response", "No Response"),
     ]
-    
+
     event = models.ForeignKey(
         Event,
         on_delete=models.CASCADE,
-        related_name='participants',
-        help_text="Event this participant is associated with"
+        related_name="participants",
+        help_text="Event this participant is associated with",
     )
-    
+
     participant_type = models.CharField(
-        max_length=15,
-        choices=PARTICIPANT_TYPES,
-        help_text="Type of participant"
+        max_length=15, choices=PARTICIPANT_TYPES, help_text="Type of participant"
     )
-    
+
     participation_role = models.CharField(
         max_length=20,
         choices=PARTICIPATION_ROLES,
-        default='participant',
-        help_text="Role in the event"
+        default="participant",
+        help_text="Role in the event",
     )
-    
+
     # Internal Participant
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='event_participations',
-        help_text="Internal user (for internal staff)"
+        related_name="event_participations",
+        help_text="Internal user (for internal staff)",
     )
-    
+
     # External Participant
     organization = models.ForeignKey(
         Organization,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='event_participations',
-        help_text="Organization represented"
+        related_name="event_participations",
+        help_text="Organization represented",
     )
-    
+
     contact = models.ForeignKey(
         OrganizationContact,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='event_participations',
-        help_text="Specific organization contact"
+        related_name="event_participations",
+        help_text="Specific organization contact",
     )
-    
+
     # Manual Entry Fields
     name = models.CharField(
         max_length=255,
         blank=True,
-        help_text="Name of participant (for external/manual entry)"
+        help_text="Name of participant (for external/manual entry)",
     )
-    
+
     position = models.CharField(
-        max_length=150,
-        blank=True,
-        help_text="Position/title of participant"
+        max_length=150, blank=True, help_text="Position/title of participant"
     )
-    
-    email = models.EmailField(
-        blank=True,
-        help_text="Email address"
-    )
-    
-    phone = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Phone number"
-    )
-    
+
+    email = models.EmailField(blank=True, help_text="Email address")
+
+    phone = models.CharField(max_length=50, blank=True, help_text="Phone number")
+
     organization_name = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="Organization name (for manual entry)"
+        max_length=255, blank=True, help_text="Organization name (for manual entry)"
     )
-    
+
     # Invitation Management
     invitation_status = models.CharField(
         max_length=15,
         choices=INVITATION_STATUS,
-        default='not_sent',
-        help_text="Status of invitation"
+        default="not_sent",
+        help_text="Status of invitation",
     )
-    
+
     invitation_sent_date = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Date invitation was sent"
+        null=True, blank=True, help_text="Date invitation was sent"
     )
-    
+
     invitation_method = models.CharField(
         max_length=20,
         choices=[
-            ('email', 'Email'),
-            ('phone', 'Phone'),
-            ('letter', 'Letter'),
-            ('in_person', 'In Person'),
-            ('other', 'Other'),
+            ("email", "Email"),
+            ("phone", "Phone"),
+            ("letter", "Letter"),
+            ("in_person", "In Person"),
+            ("other", "Other"),
         ],
-        default='email',
-        help_text="Method used to send invitation"
+        default="email",
+        help_text="Method used to send invitation",
     )
-    
+
     # Response Management
     response_status = models.CharField(
         max_length=15,
         choices=RESPONSE_STATUS,
-        default='pending',
-        help_text="Response status"
+        default="pending",
+        help_text="Response status",
     )
-    
+
     response_date = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Date of response"
+        null=True, blank=True, help_text="Date of response"
     )
-    
+
     response_notes = models.TextField(
-        blank=True,
-        help_text="Additional notes from response"
+        blank=True, help_text="Additional notes from response"
     )
-    
+
     # Attendance
     attended = models.BooleanField(
-        default=False,
-        help_text="Whether participant attended the event"
+        default=False, help_text="Whether participant attended the event"
     )
-    
+
     check_in_time = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Time participant checked in"
+        null=True, blank=True, help_text="Time participant checked in"
     )
-    
+
     check_out_time = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Time participant checked out"
+        null=True, blank=True, help_text="Time participant checked out"
     )
-    
-    attendance_notes = models.TextField(
-        blank=True,
-        help_text="Notes about attendance"
-    )
-    
+
+    attendance_notes = models.TextField(blank=True, help_text="Notes about attendance")
+
     # Participation Details
     contribution_notes = models.TextField(
-        blank=True,
-        help_text="Notes about participant's contribution"
+        blank=True, help_text="Notes about participant's contribution"
     )
-    
+
     feedback_provided = models.TextField(
-        blank=True,
-        help_text="Feedback provided by participant"
+        blank=True, help_text="Feedback provided by participant"
     )
-    
+
     satisfaction_rating = models.IntegerField(
         choices=[(i, f"{i} stars") for i in range(1, 6)],
         null=True,
         blank=True,
-        help_text="Participant's satisfaction rating"
+        help_text="Participant's satisfaction rating",
     )
-    
+
     # Logistics
     transportation_required = models.BooleanField(
-        default=False,
-        help_text="Whether transportation is required"
+        default=False, help_text="Whether transportation is required"
     )
-    
+
     accommodation_required = models.BooleanField(
-        default=False,
-        help_text="Whether accommodation is required"
+        default=False, help_text="Whether accommodation is required"
     )
-    
+
     dietary_requirements = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="Dietary requirements or restrictions"
+        max_length=255, blank=True, help_text="Dietary requirements or restrictions"
     )
-    
+
     accessibility_needs = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="Accessibility needs"
+        max_length=255, blank=True, help_text="Accessibility needs"
     )
-    
+
     special_requirements = models.TextField(
-        blank=True,
-        help_text="Other special requirements"
+        blank=True, help_text="Other special requirements"
     )
-    
+
     # Metadata
     notes = models.TextField(
-        blank=True,
-        help_text="Additional notes about this participant"
+        blank=True, help_text="Additional notes about this participant"
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['name', 'user__last_name']
+        ordering = ["name", "user__last_name"]
         indexes = [
-            models.Index(fields=['event', 'participant_type']),
-            models.Index(fields=['response_status', 'attended']),
-            models.Index(fields=['organization', 'event']),
+            models.Index(fields=["event", "participant_type"]),
+            models.Index(fields=["response_status", "attended"]),
+            models.Index(fields=["organization", "event"]),
         ]
         unique_together = [
-            ['event', 'user'],  # Prevent duplicate user participation
-            ['event', 'contact'],  # Prevent duplicate contact participation
+            ["event", "user"],  # Prevent duplicate user participation
+            ["event", "contact"],  # Prevent duplicate contact participation
         ]
-    
+
     def __str__(self):
         if self.user:
             return f"{self.user.get_full_name()} - {self.event.title}"
@@ -2285,7 +1988,7 @@ class EventParticipant(models.Model):
             return f"{self.contact.full_name} - {self.event.title}"
         else:
             return f"{self.name} - {self.event.title}"
-    
+
     @property
     def participant_name(self):
         """Get participant name from various sources."""
@@ -2295,7 +1998,7 @@ class EventParticipant(models.Model):
             return self.contact.full_name
         else:
             return self.name
-    
+
     @property
     def participant_email(self):
         """Get participant email from various sources."""
@@ -2309,212 +2012,183 @@ class EventParticipant(models.Model):
 
 class ActionItem(models.Model):
     """Model for tracking action items from events."""
-    
+
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('in_progress', 'In Progress'),
-        ('on_hold', 'On Hold'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-        ('overdue', 'Overdue'),
+        ("pending", "Pending"),
+        ("in_progress", "In Progress"),
+        ("on_hold", "On Hold"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+        ("overdue", "Overdue"),
     ]
-    
+
     PRIORITY_LEVELS = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
     ]
-    
+
     event = models.ForeignKey(
         Event,
         on_delete=models.CASCADE,
-        related_name='action_items',
-        help_text="Event this action item originated from"
+        related_name="action_items",
+        help_text="Event this action item originated from",
     )
-    
+
     # Action Details
-    title = models.CharField(
-        max_length=255,
-        help_text="Title of the action item"
-    )
-    
+    title = models.CharField(max_length=255, help_text="Title of the action item")
+
     description = models.TextField(
         help_text="Detailed description of the action required"
     )
-    
+
     deliverable = models.TextField(
-        blank=True,
-        help_text="Expected deliverable or outcome"
+        blank=True, help_text="Expected deliverable or outcome"
     )
-    
+
     # Assignment
     assigned_to = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='assigned_action_items',
-        help_text="User assigned to complete this action"
+        related_name="assigned_action_items",
+        help_text="User assigned to complete this action",
     )
-    
+
     assigned_organization = models.ForeignKey(
         Organization,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='assigned_action_items',
-        help_text="Organization responsible for this action"
+        related_name="assigned_action_items",
+        help_text="Organization responsible for this action",
     )
-    
+
     assigned_to_external = models.CharField(
         max_length=255,
         blank=True,
-        help_text="External person/entity assigned (if not in system)"
+        help_text="External person/entity assigned (if not in system)",
     )
-    
+
     # Timeline
     due_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Due date for completion"
+        null=True, blank=True, help_text="Due date for completion"
     )
-    
+
     estimated_hours = models.DecimalField(
         max_digits=6,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Estimated hours to complete"
+        help_text="Estimated hours to complete",
     )
-    
+
     # Status and Progress
     status = models.CharField(
         max_length=15,
         choices=STATUS_CHOICES,
-        default='pending',
-        help_text="Current status of the action item"
+        default="pending",
+        help_text="Current status of the action item",
     )
-    
+
     priority = models.CharField(
         max_length=10,
         choices=PRIORITY_LEVELS,
-        default='medium',
-        help_text="Priority level"
+        default="medium",
+        help_text="Priority level",
     )
-    
+
     progress_percentage = models.IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        help_text="Progress percentage (0-100)"
+        help_text="Progress percentage (0-100)",
     )
-    
+
     # Completion
     completion_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date of completion"
+        null=True, blank=True, help_text="Date of completion"
     )
-    
-    completion_notes = models.TextField(
-        blank=True,
-        help_text="Notes about completion"
-    )
-    
+
+    completion_notes = models.TextField(blank=True, help_text="Notes about completion")
+
     verified_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='verified_action_items',
-        help_text="User who verified completion"
+        related_name="verified_action_items",
+        help_text="User who verified completion",
     )
-    
+
     verification_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date of verification"
+        null=True, blank=True, help_text="Date of verification"
     )
-    
+
     # Follow-up
     requires_follow_up = models.BooleanField(
-        default=False,
-        help_text="Whether this action requires follow-up"
+        default=False, help_text="Whether this action requires follow-up"
     )
-    
+
     follow_up_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Scheduled follow-up date"
+        null=True, blank=True, help_text="Scheduled follow-up date"
     )
-    
-    follow_up_notes = models.TextField(
-        blank=True,
-        help_text="Follow-up notes"
-    )
-    
+
+    follow_up_notes = models.TextField(blank=True, help_text="Follow-up notes")
+
     # Dependencies
     depends_on = models.ManyToManyField(
-        'self',
+        "self",
         symmetrical=False,
         blank=True,
-        related_name='dependent_actions',
-        help_text="Action items this depends on"
+        related_name="dependent_actions",
+        help_text="Action items this depends on",
     )
-    
+
     # Updates and Communication
-    last_update = models.TextField(
-        blank=True,
-        help_text="Latest update on progress"
-    )
-    
+    last_update = models.TextField(blank=True, help_text="Latest update on progress")
+
     last_update_date = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Date of last update"
+        null=True, blank=True, help_text="Date of last update"
     )
-    
+
     communication_history = models.JSONField(
-        null=True,
-        blank=True,
-        help_text="History of communications about this action"
+        null=True, blank=True, help_text="History of communications about this action"
     )
-    
+
     # Metadata
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='created_action_items',
-        help_text="User who created this action item"
+        related_name="created_action_items",
+        help_text="User who created this action item",
     )
-    
-    notes = models.TextField(
-        blank=True,
-        help_text="Additional notes"
-    )
-    
+
+    notes = models.TextField(blank=True, help_text="Additional notes")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['due_date', 'priority', 'created_at']
+        ordering = ["due_date", "priority", "created_at"]
         indexes = [
-            models.Index(fields=['event', 'status']),
-            models.Index(fields=['assigned_to', 'status']),
-            models.Index(fields=['due_date', 'priority']),
-            models.Index(fields=['assigned_organization', 'status']),
+            models.Index(fields=["event", "status"]),
+            models.Index(fields=["assigned_to", "status"]),
+            models.Index(fields=["due_date", "priority"]),
+            models.Index(fields=["assigned_organization", "status"]),
         ]
-    
+
     def __str__(self):
         return f"{self.title} - {self.event.title}"
-    
+
     @property
     def is_overdue(self):
         """Check if action item is overdue."""
-        if self.due_date and self.status not in ['completed', 'cancelled']:
+        if self.due_date and self.status not in ["completed", "cancelled"]:
             return timezone.now().date() > self.due_date
         return False
-    
+
     @property
     def days_until_due(self):
         """Calculate days until due date."""
@@ -2522,7 +2196,7 @@ class ActionItem(models.Model):
             delta = self.due_date - timezone.now().date()
             return delta.days
         return None
-    
+
     @property
     def assignee_name(self):
         """Get name of assignee from various sources."""
@@ -2536,89 +2210,73 @@ class ActionItem(models.Model):
 
 class EventDocument(models.Model):
     """Model for storing event-related documents."""
-    
+
     DOCUMENT_TYPES = [
-        ('agenda', 'Agenda'),
-        ('minutes', 'Minutes'),
-        ('presentation', 'Presentation'),
-        ('handout', 'Handout'),
-        ('photo', 'Photo'),
-        ('recording', 'Recording'),
-        ('attendance', 'Attendance Sheet'),
-        ('evaluation', 'Evaluation Form'),
-        ('report', 'Report'),
-        ('invitation', 'Invitation'),
-        ('other', 'Other'),
+        ("agenda", "Agenda"),
+        ("minutes", "Minutes"),
+        ("presentation", "Presentation"),
+        ("handout", "Handout"),
+        ("photo", "Photo"),
+        ("recording", "Recording"),
+        ("attendance", "Attendance Sheet"),
+        ("evaluation", "Evaluation Form"),
+        ("report", "Report"),
+        ("invitation", "Invitation"),
+        ("other", "Other"),
     ]
-    
+
     event = models.ForeignKey(
         Event,
         on_delete=models.CASCADE,
-        related_name='documents',
-        help_text="Event this document belongs to"
+        related_name="documents",
+        help_text="Event this document belongs to",
     )
-    
+
     document_type = models.CharField(
-        max_length=15,
-        choices=DOCUMENT_TYPES,
-        help_text="Type of document"
+        max_length=15, choices=DOCUMENT_TYPES, help_text="Type of document"
     )
-    
-    title = models.CharField(
-        max_length=255,
-        help_text="Title of the document"
-    )
-    
-    description = models.TextField(
-        blank=True,
-        help_text="Description of the document"
-    )
-    
-    file = models.FileField(
-        upload_to='events/%Y/%m/',
-        help_text="Document file"
-    )
-    
+
+    title = models.CharField(max_length=255, help_text="Title of the document")
+
+    description = models.TextField(blank=True, help_text="Description of the document")
+
+    file = models.FileField(upload_to="events/%Y/%m/", help_text="Document file")
+
     file_size = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="File size in bytes"
+        null=True, blank=True, help_text="File size in bytes"
     )
-    
+
     is_public = models.BooleanField(
-        default=False,
-        help_text="Whether this document is publicly accessible"
+        default=False, help_text="Whether this document is publicly accessible"
     )
-    
+
     is_confidential = models.BooleanField(
-        default=False,
-        help_text="Whether this document is confidential"
+        default=False, help_text="Whether this document is confidential"
     )
-    
+
     uploaded_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='uploaded_event_documents',
-        help_text="User who uploaded this document"
+        related_name="uploaded_event_documents",
+        help_text="User who uploaded this document",
     )
-    
+
     upload_date = models.DateTimeField(auto_now_add=True)
-    
+
     notes = models.TextField(
-        blank=True,
-        help_text="Additional notes about this document"
+        blank=True, help_text="Additional notes about this document"
     )
-    
+
     class Meta:
-        ordering = ['-upload_date']
+        ordering = ["-upload_date"]
         indexes = [
-            models.Index(fields=['event', 'document_type']),
-            models.Index(fields=['is_public', 'is_confidential']),
+            models.Index(fields=["event", "document_type"]),
+            models.Index(fields=["is_public", "is_confidential"]),
         ]
-    
+
     def __str__(self):
         return f"{self.title} - {self.event.title}"
-    
+
     def save(self, *args, **kwargs):
         if self.file:
             self.file_size = self.file.size
@@ -2627,306 +2285,261 @@ class EventDocument(models.Model):
 
 class Partnership(models.Model):
     """Model for managing MOAs, MOUs, and other formal partnerships."""
-    
+
     PARTNERSHIP_TYPES = [
-        ('moa', 'Memorandum of Agreement'),
-        ('mou', 'Memorandum of Understanding'),
-        ('contract', 'Service Contract'),
-        ('grant_agreement', 'Grant Agreement'),
-        ('cooperation_agreement', 'Cooperation Agreement'),
-        ('joint_venture', 'Joint Venture'),
-        ('consortium', 'Consortium Agreement'),
-        ('informal', 'Informal Partnership'),
-        ('other', 'Other'),
+        ("moa", "Memorandum of Agreement"),
+        ("mou", "Memorandum of Understanding"),
+        ("contract", "Service Contract"),
+        ("grant_agreement", "Grant Agreement"),
+        ("cooperation_agreement", "Cooperation Agreement"),
+        ("joint_venture", "Joint Venture"),
+        ("consortium", "Consortium Agreement"),
+        ("informal", "Informal Partnership"),
+        ("other", "Other"),
     ]
-    
+
     STATUS_CHOICES = [
-        ('concept', 'Concept/Planning'),
-        ('draft', 'Draft'),
-        ('review', 'Under Review'),
-        ('negotiation', 'Under Negotiation'),
-        ('pending_approval', 'Pending Approval'),
-        ('pending_signature', 'Pending Signature'),
-        ('active', 'Active'),
-        ('completed', 'Completed'),
-        ('terminated', 'Terminated'),
-        ('expired', 'Expired'),
-        ('suspended', 'Suspended'),
-        ('cancelled', 'Cancelled'),
+        ("concept", "Concept/Planning"),
+        ("draft", "Draft"),
+        ("review", "Under Review"),
+        ("negotiation", "Under Negotiation"),
+        ("pending_approval", "Pending Approval"),
+        ("pending_signature", "Pending Signature"),
+        ("active", "Active"),
+        ("completed", "Completed"),
+        ("terminated", "Terminated"),
+        ("expired", "Expired"),
+        ("suspended", "Suspended"),
+        ("cancelled", "Cancelled"),
     ]
-    
+
     PRIORITY_LEVELS = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
     ]
-    
+
     # Basic Information
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     title = models.CharField(
-        max_length=255,
-        help_text="Title of the partnership/agreement"
+        max_length=255, help_text="Title of the partnership/agreement"
     )
-    
+
     partnership_type = models.CharField(
         max_length=25,
         choices=PARTNERSHIP_TYPES,
-        help_text="Type of partnership or agreement"
+        help_text="Type of partnership or agreement",
     )
-    
-    description = models.TextField(
-        help_text="Detailed description of the partnership"
-    )
-    
-    objectives = models.TextField(
-        help_text="Objectives and goals of the partnership"
-    )
-    
-    scope = models.TextField(
-        help_text="Scope of work and responsibilities"
-    )
-    
+
+    description = models.TextField(help_text="Detailed description of the partnership")
+
+    objectives = models.TextField(help_text="Objectives and goals of the partnership")
+
+    scope = models.TextField(help_text="Scope of work and responsibilities")
+
     # Relationships
     organizations = models.ManyToManyField(
         Organization,
-        related_name='partnerships',
-        help_text="Organizations involved in this partnership"
+        related_name="partnerships",
+        help_text="Organizations involved in this partnership",
     )
-    
+
     communities = models.ManyToManyField(
         OBCCommunity,
-        related_name='partnerships',
+        related_name="partnerships",
         blank=True,
-        help_text="Communities involved or benefiting from this partnership"
+        help_text="Communities involved or benefiting from this partnership",
     )
-    
+
     lead_organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
-        related_name='led_partnerships',
-        help_text="Lead organization for this partnership"
+        related_name="led_partnerships",
+        help_text="Lead organization for this partnership",
     )
-    
+
     # Management
     focal_person = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='managed_partnerships',
-        help_text="OOBC focal person managing this partnership"
+        related_name="managed_partnerships",
+        help_text="OOBC focal person managing this partnership",
     )
-    
+
     backup_focal_person = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='backup_partnerships',
-        help_text="Backup focal person"
+        related_name="backup_partnerships",
+        help_text="Backup focal person",
     )
-    
+
     # Timeline
     concept_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when partnership concept was developed"
+        null=True, blank=True, help_text="Date when partnership concept was developed"
     )
-    
+
     negotiation_start_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when negotiations started"
+        null=True, blank=True, help_text="Date when negotiations started"
     )
-    
+
     signing_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when agreement was signed"
+        null=True, blank=True, help_text="Date when agreement was signed"
     )
-    
+
     start_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Official start date of the partnership"
+        null=True, blank=True, help_text="Official start date of the partnership"
     )
-    
+
     end_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="End date of the partnership"
+        null=True, blank=True, help_text="End date of the partnership"
     )
-    
+
     renewal_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date for renewal consideration"
+        null=True, blank=True, help_text="Date for renewal consideration"
     )
-    
+
     # Status and Progress
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='concept',
-        help_text="Current status of the partnership"
+        default="concept",
+        help_text="Current status of the partnership",
     )
-    
+
     priority = models.CharField(
         max_length=10,
         choices=PRIORITY_LEVELS,
-        default='medium',
-        help_text="Priority level of this partnership"
+        default="medium",
+        help_text="Priority level of this partnership",
     )
-    
+
     progress_percentage = models.IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        help_text="Overall progress percentage (0-100)"
+        help_text="Overall progress percentage (0-100)",
     )
-    
+
     # Financial Information
     total_budget = models.DecimalField(
         max_digits=15,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Total budget for the partnership (in PHP)"
+        help_text="Total budget for the partnership (in PHP)",
     )
-    
+
     oobc_contribution = models.DecimalField(
         max_digits=15,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="OOBC financial contribution (in PHP)"
+        help_text="OOBC financial contribution (in PHP)",
     )
-    
+
     partner_contribution = models.DecimalField(
         max_digits=15,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Partner financial contribution (in PHP)"
+        help_text="Partner financial contribution (in PHP)",
     )
-    
+
     # Documentation
     document_number = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="Official document/reference number"
+        max_length=100, blank=True, help_text="Official document/reference number"
     )
-    
+
     legal_reference = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text="Legal or regulatory reference"
+        max_length=200, blank=True, help_text="Legal or regulatory reference"
     )
-    
+
     # Performance and Impact
     key_performance_indicators = models.TextField(
-        blank=True,
-        help_text="Key performance indicators and metrics"
+        blank=True, help_text="Key performance indicators and metrics"
     )
-    
+
     expected_outcomes = models.TextField(
-        blank=True,
-        help_text="Expected outcomes and impact"
+        blank=True, help_text="Expected outcomes and impact"
     )
-    
-    actual_outcomes = models.TextField(
-        blank=True,
-        help_text="Actual outcomes achieved"
-    )
-    
+
+    actual_outcomes = models.TextField(blank=True, help_text="Actual outcomes achieved")
+
     lessons_learned = models.TextField(
-        blank=True,
-        help_text="Lessons learned during implementation"
+        blank=True, help_text="Lessons learned during implementation"
     )
-    
+
     # Risk Management
     risks_identified = models.TextField(
-        blank=True,
-        help_text="Identified risks and challenges"
+        blank=True, help_text="Identified risks and challenges"
     )
-    
+
     mitigation_strategies = models.TextField(
-        blank=True,
-        help_text="Risk mitigation strategies"
+        blank=True, help_text="Risk mitigation strategies"
     )
-    
+
     # Communication
     communication_plan = models.TextField(
-        blank=True,
-        help_text="Communication plan and protocols"
+        blank=True, help_text="Communication plan and protocols"
     )
-    
+
     reporting_requirements = models.TextField(
-        blank=True,
-        help_text="Reporting requirements and schedule"
+        blank=True, help_text="Reporting requirements and schedule"
     )
-    
+
     # Renewal and Termination
     is_renewable = models.BooleanField(
-        default=False,
-        help_text="Whether this partnership can be renewed"
+        default=False, help_text="Whether this partnership can be renewed"
     )
-    
-    renewal_criteria = models.TextField(
-        blank=True,
-        help_text="Criteria for renewal"
-    )
-    
+
+    renewal_criteria = models.TextField(blank=True, help_text="Criteria for renewal")
+
     termination_clause = models.TextField(
-        blank=True,
-        help_text="Termination conditions and procedures"
+        blank=True, help_text="Termination conditions and procedures"
     )
-    
+
     # Metadata
-    notes = models.TextField(
-        blank=True,
-        help_text="Additional notes and observations"
-    )
-    
+    notes = models.TextField(blank=True, help_text="Additional notes and observations")
+
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='created_partnerships',
-        help_text="User who created this partnership record"
+        related_name="created_partnerships",
+        help_text="User who created this partnership record",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['partnership_type', 'status']),
-            models.Index(fields=['status', 'priority']),
-            models.Index(fields=['focal_person', 'status']),
-            models.Index(fields=['start_date', 'end_date']),
+            models.Index(fields=["partnership_type", "status"]),
+            models.Index(fields=["status", "priority"]),
+            models.Index(fields=["focal_person", "status"]),
+            models.Index(fields=["start_date", "end_date"]),
         ]
-    
+
     def __str__(self):
         return f"{self.title} ({self.get_partnership_type_display()})"
-    
+
     @property
     def is_active(self):
         """Check if partnership is currently active."""
-        return self.status == 'active'
-    
+        return self.status == "active"
+
     @property
     def is_expired(self):
         """Check if partnership has expired."""
         if self.end_date:
             return timezone.now().date() > self.end_date
         return False
-    
+
     @property
     def days_until_expiry(self):
         """Calculate days until expiry."""
@@ -2934,7 +2547,7 @@ class Partnership(models.Model):
             delta = self.end_date - timezone.now().date()
             return delta.days
         return None
-    
+
     @property
     def duration_days(self):
         """Calculate total duration in days."""
@@ -2945,332 +2558,287 @@ class Partnership(models.Model):
 
 class PartnershipSignatory(models.Model):
     """Model for tracking partnership signatories."""
-    
+
     SIGNATORY_ROLES = [
-        ('primary', 'Primary Signatory'),
-        ('witness', 'Witness'),
-        ('approver', 'Approver'),
-        ('notary', 'Notary'),
-        ('legal_counsel', 'Legal Counsel'),
+        ("primary", "Primary Signatory"),
+        ("witness", "Witness"),
+        ("approver", "Approver"),
+        ("notary", "Notary"),
+        ("legal_counsel", "Legal Counsel"),
     ]
-    
+
     partnership = models.ForeignKey(
         Partnership,
         on_delete=models.CASCADE,
-        related_name='signatories',
-        help_text="Partnership this signatory belongs to"
+        related_name="signatories",
+        help_text="Partnership this signatory belongs to",
     )
-    
+
     organization = models.ForeignKey(
         Organization,
         on_delete=models.CASCADE,
-        help_text="Organization the signatory represents"
+        help_text="Organization the signatory represents",
     )
-    
+
     contact = models.ForeignKey(
         OrganizationContact,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text="Specific contact if available in system"
+        help_text="Specific contact if available in system",
     )
-    
+
     # Signatory Details
-    name = models.CharField(
-        max_length=255,
-        help_text="Full name of the signatory"
-    )
-    
+    name = models.CharField(max_length=255, help_text="Full name of the signatory")
+
     position = models.CharField(
-        max_length=150,
-        help_text="Position/title of the signatory"
+        max_length=150, help_text="Position/title of the signatory"
     )
-    
+
     role = models.CharField(
         max_length=15,
         choices=SIGNATORY_ROLES,
-        default='primary',
-        help_text="Role of this signatory"
+        default="primary",
+        help_text="Role of this signatory",
     )
-    
+
     # Contact Information
-    email = models.EmailField(
-        blank=True,
-        help_text="Email address"
-    )
-    
-    phone = models.CharField(
-        max_length=50,
-        blank=True,
-        help_text="Phone number"
-    )
-    
+    email = models.EmailField(blank=True, help_text="Email address")
+
+    phone = models.CharField(max_length=50, blank=True, help_text="Phone number")
+
     # Signing Details
     is_required = models.BooleanField(
-        default=True,
-        help_text="Whether this signatory's signature is required"
+        default=True, help_text="Whether this signatory's signature is required"
     )
-    
+
     signed = models.BooleanField(
-        default=False,
-        help_text="Whether this signatory has signed"
+        default=False, help_text="Whether this signatory has signed"
     )
-    
+
     signature_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when signature was provided"
+        null=True, blank=True, help_text="Date when signature was provided"
     )
-    
+
     signature_location = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="Location where signature was provided"
+        max_length=255, blank=True, help_text="Location where signature was provided"
     )
-    
+
     # Authorization
     has_authority = models.BooleanField(
-        default=True,
-        help_text="Whether signatory has authority to sign"
+        default=True, help_text="Whether signatory has authority to sign"
     )
-    
+
     authorization_document = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="Reference to authorization document"
+        max_length=255, blank=True, help_text="Reference to authorization document"
     )
-    
+
     # Metadata
     notes = models.TextField(
-        blank=True,
-        help_text="Additional notes about this signatory"
+        blank=True, help_text="Additional notes about this signatory"
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['organization__name', 'name']
-        unique_together = ['partnership', 'organization', 'name']
+        ordering = ["organization__name", "name"]
+        unique_together = ["partnership", "organization", "name"]
         indexes = [
-            models.Index(fields=['partnership', 'signed']),
-            models.Index(fields=['organization', 'signed']),
+            models.Index(fields=["partnership", "signed"]),
+            models.Index(fields=["organization", "signed"]),
         ]
-    
+
     def __str__(self):
         return f"{self.name} - {self.organization.name}"
 
 
 class PartnershipMilestone(models.Model):
     """Model for tracking partnership milestones and deliverables."""
-    
+
     STATUS_CHOICES = [
-        ('planned', 'Planned'),
-        ('in_progress', 'In Progress'),
-        ('completed', 'Completed'),
-        ('delayed', 'Delayed'),
-        ('on_hold', 'On Hold'),
-        ('cancelled', 'Cancelled'),
-        ('overdue', 'Overdue'),
+        ("planned", "Planned"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+        ("delayed", "Delayed"),
+        ("on_hold", "On Hold"),
+        ("cancelled", "Cancelled"),
+        ("overdue", "Overdue"),
     ]
-    
+
     MILESTONE_TYPES = [
-        ('deliverable', 'Deliverable'),
-        ('payment', 'Payment'),
-        ('review', 'Review/Evaluation'),
-        ('approval', 'Approval'),
-        ('event', 'Event/Activity'),
-        ('report', 'Report Submission'),
-        ('other', 'Other'),
+        ("deliverable", "Deliverable"),
+        ("payment", "Payment"),
+        ("review", "Review/Evaluation"),
+        ("approval", "Approval"),
+        ("event", "Event/Activity"),
+        ("report", "Report Submission"),
+        ("other", "Other"),
     ]
-    
+
     partnership = models.ForeignKey(
         Partnership,
         on_delete=models.CASCADE,
-        related_name='milestones',
-        help_text="Partnership this milestone belongs to"
+        related_name="milestones",
+        help_text="Partnership this milestone belongs to",
     )
-    
+
     # Milestone Details
-    title = models.CharField(
-        max_length=255,
-        help_text="Title of the milestone"
-    )
-    
-    description = models.TextField(
-        help_text="Detailed description of the milestone"
-    )
-    
+    title = models.CharField(max_length=255, help_text="Title of the milestone")
+
+    description = models.TextField(help_text="Detailed description of the milestone")
+
     milestone_type = models.CharField(
         max_length=15,
         choices=MILESTONE_TYPES,
-        default='deliverable',
-        help_text="Type of milestone"
+        default="deliverable",
+        help_text="Type of milestone",
     )
-    
+
     # Timeline
     planned_start_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Planned start date"
+        null=True, blank=True, help_text="Planned start date"
     )
-    
-    due_date = models.DateField(
-        help_text="Due date for this milestone"
-    )
-    
+
+    due_date = models.DateField(help_text="Due date for this milestone")
+
     actual_completion_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Actual completion date"
+        null=True, blank=True, help_text="Actual completion date"
     )
-    
+
     # Status and Progress
     status = models.CharField(
         max_length=15,
         choices=STATUS_CHOICES,
-        default='planned',
-        help_text="Current status"
+        default="planned",
+        help_text="Current status",
     )
-    
+
     progress_percentage = models.IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        help_text="Progress percentage (0-100)"
+        help_text="Progress percentage (0-100)",
     )
-    
+
     # Responsibility
     responsible_organization = models.ForeignKey(
         Organization,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='responsible_milestones',
-        help_text="Organization responsible for this milestone"
+        related_name="responsible_milestones",
+        help_text="Organization responsible for this milestone",
     )
-    
+
     responsible_person = models.CharField(
-        max_length=255,
-        blank=True,
-        help_text="Person responsible for this milestone"
+        max_length=255, blank=True, help_text="Person responsible for this milestone"
     )
-    
+
     oobc_focal_person = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='monitored_milestones',
-        help_text="OOBC person monitoring this milestone"
+        related_name="monitored_milestones",
+        help_text="OOBC person monitoring this milestone",
     )
-    
+
     # Dependencies
     depends_on = models.ManyToManyField(
-        'self',
+        "self",
         symmetrical=False,
         blank=True,
-        related_name='dependent_milestones',
-        help_text="Milestones this depends on"
+        related_name="dependent_milestones",
+        help_text="Milestones this depends on",
     )
-    
+
     # Deliverables and Evidence
     deliverable_description = models.TextField(
-        blank=True,
-        help_text="Description of expected deliverable"
+        blank=True, help_text="Description of expected deliverable"
     )
-    
+
     acceptance_criteria = models.TextField(
-        blank=True,
-        help_text="Criteria for accepting this milestone"
+        blank=True, help_text="Criteria for accepting this milestone"
     )
-    
+
     evidence_provided = models.TextField(
-        blank=True,
-        help_text="Evidence of completion provided"
+        blank=True, help_text="Evidence of completion provided"
     )
-    
+
     verification_notes = models.TextField(
-        blank=True,
-        help_text="Notes from verification process"
+        blank=True, help_text="Notes from verification process"
     )
-    
+
     verified_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='verified_milestones',
-        help_text="User who verified completion"
+        related_name="verified_milestones",
+        help_text="User who verified completion",
     )
-    
+
     verification_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date of verification"
+        null=True, blank=True, help_text="Date of verification"
     )
-    
+
     # Budget and Resources
     budget_allocated = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Budget allocated for this milestone"
+        help_text="Budget allocated for this milestone",
     )
-    
+
     actual_cost = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Actual cost incurred"
+        help_text="Actual cost incurred",
     )
-    
+
     # Issues and Risks
     issues_encountered = models.TextField(
-        blank=True,
-        help_text="Issues encountered during implementation"
+        blank=True, help_text="Issues encountered during implementation"
     )
-    
+
     resolution_actions = models.TextField(
-        blank=True,
-        help_text="Actions taken to resolve issues"
+        blank=True, help_text="Actions taken to resolve issues"
     )
-    
+
     # Metadata
-    notes = models.TextField(
-        blank=True,
-        help_text="Additional notes"
-    )
-    
+    notes = models.TextField(blank=True, help_text="Additional notes")
+
     created_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='created_milestones',
-        help_text="User who created this milestone"
+        related_name="created_milestones",
+        help_text="User who created this milestone",
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        ordering = ['due_date', 'created_at']
+        ordering = ["due_date", "created_at"]
         indexes = [
-            models.Index(fields=['partnership', 'status']),
-            models.Index(fields=['due_date', 'status']),
-            models.Index(fields=['responsible_organization', 'status']),
+            models.Index(fields=["partnership", "status"]),
+            models.Index(fields=["due_date", "status"]),
+            models.Index(fields=["responsible_organization", "status"]),
         ]
-    
+
     def __str__(self):
         return f"{self.title} - {self.partnership.title}"
-    
+
     @property
     def is_overdue(self):
         """Check if milestone is overdue."""
-        if self.status not in ['completed', 'cancelled']:
+        if self.status not in ["completed", "cancelled"]:
             return timezone.now().date() > self.due_date
         return False
-    
+
     @property
     def days_until_due(self):
         """Calculate days until due date."""
@@ -3280,148 +2848,119 @@ class PartnershipMilestone(models.Model):
 
 class PartnershipDocument(models.Model):
     """Model for managing partnership-related documents."""
-    
+
     DOCUMENT_TYPES = [
-        ('agreement', 'Main Agreement'),
-        ('amendment', 'Amendment'),
-        ('appendix', 'Appendix'),
-        ('addendum', 'Addendum'),
-        ('proposal', 'Proposal'),
-        ('presentation', 'Presentation'),
-        ('report', 'Report'),
-        ('correspondence', 'Correspondence'),
-        ('legal_opinion', 'Legal Opinion'),
-        ('authorization', 'Authorization'),
-        ('certificate', 'Certificate'),
-        ('other', 'Other'),
+        ("agreement", "Main Agreement"),
+        ("amendment", "Amendment"),
+        ("appendix", "Appendix"),
+        ("addendum", "Addendum"),
+        ("proposal", "Proposal"),
+        ("presentation", "Presentation"),
+        ("report", "Report"),
+        ("correspondence", "Correspondence"),
+        ("legal_opinion", "Legal Opinion"),
+        ("authorization", "Authorization"),
+        ("certificate", "Certificate"),
+        ("other", "Other"),
     ]
-    
+
     partnership = models.ForeignKey(
         Partnership,
         on_delete=models.CASCADE,
-        related_name='documents',
-        help_text="Partnership this document belongs to"
+        related_name="documents",
+        help_text="Partnership this document belongs to",
     )
-    
+
     document_type = models.CharField(
-        max_length=15,
-        choices=DOCUMENT_TYPES,
-        help_text="Type of document"
+        max_length=15, choices=DOCUMENT_TYPES, help_text="Type of document"
     )
-    
-    title = models.CharField(
-        max_length=255,
-        help_text="Title of the document"
-    )
-    
-    description = models.TextField(
-        blank=True,
-        help_text="Description of the document"
-    )
-    
+
+    title = models.CharField(max_length=255, help_text="Title of the document")
+
+    description = models.TextField(blank=True, help_text="Description of the document")
+
     version = models.CharField(
-        max_length=10,
-        default='1.0',
-        help_text="Document version"
+        max_length=10, default="1.0", help_text="Document version"
     )
-    
-    file = models.FileField(
-        upload_to='partnerships/%Y/%m/',
-        help_text="Document file"
-    )
-    
+
+    file = models.FileField(upload_to="partnerships/%Y/%m/", help_text="Document file")
+
     file_size = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text="File size in bytes"
+        null=True, blank=True, help_text="File size in bytes"
     )
-    
+
     # Access Control
     is_confidential = models.BooleanField(
-        default=False,
-        help_text="Whether this document is confidential"
+        default=False, help_text="Whether this document is confidential"
     )
-    
+
     is_public = models.BooleanField(
-        default=False,
-        help_text="Whether this document can be shared publicly"
+        default=False, help_text="Whether this document can be shared publicly"
     )
-    
+
     access_restrictions = models.TextField(
-        blank=True,
-        help_text="Access restrictions and guidelines"
+        blank=True, help_text="Access restrictions and guidelines"
     )
-    
+
     # Document Metadata
     document_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date of the document"
+        null=True, blank=True, help_text="Date of the document"
     )
-    
+
     effective_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when document becomes effective"
+        null=True, blank=True, help_text="Date when document becomes effective"
     )
-    
+
     expiry_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date when document expires"
+        null=True, blank=True, help_text="Date when document expires"
     )
-    
+
     # Workflow
     requires_approval = models.BooleanField(
-        default=False,
-        help_text="Whether this document requires approval"
+        default=False, help_text="Whether this document requires approval"
     )
-    
+
     approved = models.BooleanField(
-        default=False,
-        help_text="Whether this document has been approved"
+        default=False, help_text="Whether this document has been approved"
     )
-    
+
     approved_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='approved_partnership_documents',
-        help_text="User who approved this document"
+        related_name="approved_partnership_documents",
+        help_text="User who approved this document",
     )
-    
+
     approval_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date of approval"
+        null=True, blank=True, help_text="Date of approval"
     )
-    
+
     # Upload Details
     uploaded_by = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='uploaded_partnership_documents',
-        help_text="User who uploaded this document"
+        related_name="uploaded_partnership_documents",
+        help_text="User who uploaded this document",
     )
-    
+
     upload_date = models.DateTimeField(auto_now_add=True)
-    
+
     notes = models.TextField(
-        blank=True,
-        help_text="Additional notes about this document"
+        blank=True, help_text="Additional notes about this document"
     )
-    
+
     class Meta:
-        ordering = ['-upload_date']
+        ordering = ["-upload_date"]
         indexes = [
-            models.Index(fields=['partnership', 'document_type']),
-            models.Index(fields=['is_confidential', 'is_public']),
+            models.Index(fields=["partnership", "document_type"]),
+            models.Index(fields=["is_confidential", "is_public"]),
         ]
-    
+
     def __str__(self):
         return f"{self.title} v{self.version} - {self.partnership.title}"
-    
+
     def save(self, *args, **kwargs):
         if self.file:
             self.file_size = self.file.size

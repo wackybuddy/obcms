@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Log OOBC Initiative{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'monitoring:home' %}" class="text-neutral-500 hover:text-neutral-700">Monitoring &amp; Evaluation</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Log OOBC Initiative</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <header class="rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 text-white shadow-lg p-6">
+        <div class="flex items-center gap-4">
+            <span class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl"><i class="fas fa-hand-holding-heart"></i></span>
+            <div>
+                <h1 class="text-2xl font-semibold">Log OOBC Initiative</h1>
+                <p class="text-white/80">Capture an OOBC-led programme supporting Other Bangsamoro Communities.</p>
+            </div>
+        </div>
+    </header>
+
+    <form method="post" class="obc-form space-y-8">
+        {% csrf_token %}
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><i class="fas fa-info"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Initiative Overview</h2>
+                    <p class="text-sm text-neutral-500">Provide high-level details about the initiative.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2">
+                <div class="md:col-span-2">
+                    {% include "monitoring/includes/form_field.html" with field=form.title %}
+                </div>
+                <div class="md:col-span-2">
+                    {% include "monitoring/includes/form_field.html" with field=form.summary %}
+                </div>
+                {% include "monitoring/includes/form_field.html" with field=form.oobc_unit %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fas fa-map-marked-alt"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Coverage &amp; Partners</h2>
+                    <p class="text-sm text-neutral-500">Identify communities and supporting organizations.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2">
+                <div class="md:col-span-2">
+                    {% include "monitoring/includes/form_field.html" with field=form.communities %}
+                </div>
+                {% include "monitoring/includes/form_field.html" with field=form.supporting_organizations %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-neutral-200 rounded-2xl shadow-sm p-6 space-y-6">
+            <div class="flex items-center gap-3">
+                <span class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fas fa-rocket"></i></span>
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Implementation Plan</h2>
+                    <p class="text-sm text-neutral-500">Chart progress, schedule, and budget requirements.</p>
+                </div>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2">
+                {% include "monitoring/includes/form_field.html" with field=form.status %}
+                {% include "monitoring/includes/form_field.html" with field=form.progress %}
+                {% include "monitoring/includes/form_field.html" with field=form.start_date %}
+                {% include "monitoring/includes/form_field.html" with field=form.target_end_date %}
+                {% include "monitoring/includes/form_field.html" with field=form.budget_allocation %}
+                {% include "monitoring/includes/form_field.html" with field=form.budget_currency %}
+            </div>
+        </section>
+
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'monitoring:home' %}" class="px-4 py-2 rounded-lg border border-neutral-300 text-neutral-600 hover:bg-neutral-100">Cancel</a>
+            <button type="submit" class="px-4 py-2 rounded-lg btn-primary font-semibold">Save Initiative</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

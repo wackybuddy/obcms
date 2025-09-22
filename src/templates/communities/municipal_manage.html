@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Municipal OBC - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-900 font-medium">Municipal OBCs</span>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">Manage Municipal OBC</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-city text-indigo-600 mr-4"></i>
+            Manage Municipal OBC
+        </h1>
+        <p class="mt-2 text-lg text-gray-600">
+            View, edit, and manage municipality-level Bangsamoro coverage data
+        </p>
+    </div>
+
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium">Total Municipal Coverages</p>
+                        <p class="text-3xl font-bold">{{ stats.total_coverages|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-file-alt text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 rounded-xl shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-emerald-100 text-sm font-medium">Estimated OBC Population</p>
+                        <p class="text-3xl font-bold">{{ stats.total_population|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-users text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium">Identified Barangay OBCs</p>
+                        <p class="text-3xl font-bold">{{ stats.total_communities|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-orange-100 text-sm font-medium">Auto-Synced Records</p>
+                        <p class="text-3xl font-bold">{{ stats.auto_synced|default:0 }}</p>
+                        <span class="text-orange-200 text-xs">Manual updates: {{ stats.manual|default:0 }}</span>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-sync text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 mb-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-filter mr-3 text-2xl"></i>
+                Filters & Search
+            </h2>
+        </div>
+        <div class="p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Region</label>
+                    <select name="region" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Regions</option>
+                        {% for region in regions %}
+                        <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Sync Mode</label>
+                    <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Modes</option>
+                        <option value="auto" {% if current_status == "auto" %}selected{% endif %}>Auto-sync enabled</option>
+                        <option value="manual" {% if current_status == "manual" %}selected{% endif %}>Manual</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+                    <input type="text" name="search" value="{{ search_query }}"
+                           placeholder="Search municipality, province, region..."
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end space-x-2">
+                    <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
+                        <i class="fas fa-search mr-2"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'common:communities_manage_municipal' %}" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
+                        <i class="fas fa-undo mr-2"></i>Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-list mr-3 text-2xl"></i>
+                Municipal Coverage List
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            {% if coverages %}
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Municipality / City</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Province & Region</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coverage Snapshot</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programs & Barangays</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sync Mode</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for coverage in coverages %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                    <i class="fas fa-city"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ coverage.municipality.name }}</p>
+                                    <p class="text-xs text-gray-500">{{ coverage.municipality.get_municipality_type_display }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            <p class="font-medium text-gray-900">{{ coverage.municipality.province.name }}</p>
+                            <p class="text-xs text-gray-500">{{ coverage.municipality.province.region.name }}</p>
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            <p class="text-gray-900 font-semibold">{{ coverage.total_obc_communities|default:0 }} barangay OBCs</p>
+                            <p class="text-xs text-gray-500">Estimated population: {{ coverage.estimated_obc_population|default:0 }}</p>
+                            <p class="text-xs text-gray-500">Households: {{ coverage.households|default:0 }}</p>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {% if coverage.key_barangays %}
+                                <p class="text-xs text-gray-900 font-medium mb-1">Key Barangays:</p>
+                                <p class="text-xs text-gray-500 line-clamp-2">{{ coverage.key_barangays }}</p>
+                            {% else %}
+                                <span class="text-xs text-gray-400 italic">No barangays listed</span>
+                            {% endif %}
+                            {% if coverage.existing_support_programs %}
+                                <p class="text-xs text-gray-500 mt-2">{{ coverage.existing_support_programs }}</p>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if coverage.auto_sync %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">
+                                <i class="fas fa-sync mr-1"></i>Auto-sync
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">
+                                <i class="fas fa-hand-paper mr-1"></i>Manual
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-gray-500">
+                            <p>Updated {{ coverage.updated_at|date:"M d, Y" }}</p>
+                            <p>Created {{ coverage.created_at|date:"M d, Y" }}</p>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'common:communities_edit_municipal' coverage.id %}"
+                                   class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
+                                    <i class="fas fa-edit mr-1"></i>Edit
+                                </a>
+                                <form method="post" action="{% url 'common:communities_delete_municipal' coverage.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200" onclick="return confirm('Remove this municipal OBC coverage?');">
+                                        <i class="fas fa-trash-alt mr-1"></i>Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center py-12 text-gray-500">
+                <i class="fas fa-city text-4xl mb-4"></i>
+                <p class="text-lg font-medium">No municipal OBC records found</p>
+                <p class="text-sm">Try adjusting filters or add a new municipal coverage.</p>
+                <a href="{% url 'common:communities_add_municipality' %}" class="mt-4 inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>Add Municipal OBC
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a href="{% url 'common:communities_add_municipality' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-plus text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        Add Municipal OBC
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Register municipality-wide Bangsamoro coverage data.
+                    </p>
+                    <div class="mt-4 flex items-center text-indigo-600 text-sm font-medium">
+                        <span>Add Municipality</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'common:communities_stakeholders' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-users text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                        Manage Stakeholders
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Coordinate with municipal partners and focal persons.
+                    </p>
+                    <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                        <span>Open Stakeholder Registry</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-line text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                        View Dashboard
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Return to communities insights and KPIs.
+                    </p>
+                    <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
+                        <span>Open Dashboard</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

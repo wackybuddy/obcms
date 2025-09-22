@@ -1,20 +1,534 @@
+import re
+import unicodedata
+from pathlib import Path
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from common.models import Region, Province, Municipality, Barangay
+
+from common.models import Barangay, Municipality, Province, Region
+
+
+BASE_DIR = Path(__file__).resolve().parents[3]
+DATASET_DIR = BASE_DIR / "data_imports" / "datasets"
+
+POPULATION_DATASETS = {
+    "IX": DATASET_DIR / "region_ix_population_raw.txt",
+    "X": DATASET_DIR / "region_x_population_raw.txt",
+    "XI": DATASET_DIR / "region_xi_population_raw.txt",
+    "XII": DATASET_DIR / "region_xii_population_raw.txt",
+}
+
+
+REGION_STRUCTURE = {
+    "IX": {
+        "name": "Zamboanga Peninsula",
+        "description": "Region IX encompasses the Zamboanga Peninsula and nearby islands in western Mindanao.",
+        "provinces": [
+            {
+                "code": "ZAM_DEL_NORTE",
+                "name": "Zamboanga del Norte",
+                "capital": "Dipolog City",
+                "municipalities": [
+                    {"name": "Dipolog City", "municipality_type": "component_city"},
+                    {"name": "Dapitan City", "municipality_type": "component_city"},
+                    {"name": "Baliguian"},
+                    {"name": "Godod"},
+                    {"name": "Gutalac"},
+                    {"name": "Jose Dalman (Ponot)"},
+                    {"name": "Kalawit"},
+                    {"name": "Katipunan"},
+                    {"name": "La Libertad"},
+                    {"name": "Labason"},
+                    {"name": "Leon B. Postigo (Bacungan)"},
+                    {"name": "Liloy"},
+                    {"name": "Manukan"},
+                    {"name": "Mutia"},
+                    {"name": "Pinan (New Pinan)"},
+                    {"name": "Polanco"},
+                    {"name": "President Manuel A. Roxas"},
+                    {"name": "Rizal"},
+                    {"name": "Salug"},
+                    {"name": "Sergio Osmena Sr."},
+                    {"name": "Siayan"},
+                    {"name": "Sibuco"},
+                    {"name": "Sibutad"},
+                    {"name": "Sindangan"},
+                    {"name": "Siocon"},
+                    {"name": "Sirawai"},
+                    {"name": "Tampilisan"},
+                ],
+            },
+            {
+                "code": "ZAM_DEL_SUR",
+                "name": "Zamboanga del Sur",
+                "capital": "Pagadian City",
+                "municipalities": [
+                    {"name": "Pagadian City", "municipality_type": "component_city"},
+                    {"name": "Aurora"},
+                    {"name": "Bayog"},
+                    {"name": "Dimataling"},
+                    {"name": "Dinas"},
+                    {"name": "Dumalinao"},
+                    {"name": "Dumingag"},
+                    {"name": "Guipos"},
+                    {"name": "Josefina"},
+                    {"name": "Kumalarang"},
+                    {"name": "Labangan"},
+                    {"name": "Lakewood"},
+                    {"name": "Lapuyan"},
+                    {"name": "Mahayag"},
+                    {"name": "Margosatubig"},
+                    {"name": "Midsalip"},
+                    {"name": "Molave"},
+                    {"name": "Pitogo"},
+                    {"name": "Ramon Magsaysay"},
+                    {"name": "San Miguel"},
+                    {"name": "San Pablo"},
+                    {"name": "Sominot"},
+                    {"name": "Tabina"},
+                    {"name": "Tambulig"},
+                    {"name": "Tigbao"},
+                    {"name": "Tukuran"},
+                    {"name": "Vincenzo A. Sagun"},
+                ],
+            },
+            {
+                "code": "ZAM_SIBUGAY",
+                "name": "Zamboanga Sibugay",
+                "capital": "Ipil",
+                "municipalities": [
+                    {"name": "Alicia"},
+                    {"name": "Buug"},
+                    {"name": "Diplahan"},
+                    {"name": "Imelda"},
+                    {"name": "Ipil"},
+                    {"name": "Kabasalan"},
+                    {"name": "Mabuhay"},
+                    {"name": "Malangas"},
+                    {"name": "Naga"},
+                    {"name": "Olutanga"},
+                    {"name": "Payao"},
+                    {"name": "Roseller Lim"},
+                    {"name": "Siay"},
+                    {"name": "Talusan"},
+                    {"name": "Titay"},
+                    {"name": "Tungawan"},
+                ],
+            },
+            {
+                "code": "HUC_ZAMBOANGA_CITY",
+                "name": "Zamboanga City (HUC)",
+                "capital": "Zamboanga City",
+                "municipalities": [
+                    {
+                        "name": "Zamboanga City",
+                        "municipality_type": "independent_city",
+                    }
+                ],
+            },
+            {
+                "code": "HUC_ISABELA_CITY",
+                "name": "Isabela City (Administered by Region IX)",
+                "capital": "Isabela City",
+                "municipalities": [
+                    {
+                        "name": "Isabela City",
+                        "municipality_type": "independent_city",
+                    }
+                ],
+            },
+            {
+                "code": "SULU",
+                "name": "Sulu",
+                "capital": "Jolo",
+                "municipalities": [
+                    {"name": "Banguingui"},
+                    {"name": "Hadji Panglima Tahil"},
+                    {"name": "Indanan"},
+                    {"name": "Jolo", "municipality_type": "component_city"},
+                    {"name": "Kalingalan Caluang"},
+                    {"name": "Lugus"},
+                    {"name": "Luuk"},
+                    {"name": "Maimbung"},
+                    {"name": "Omar"},
+                    {"name": "Panamao"},
+                    {"name": "Pandami"},
+                    {"name": "Panglima Estino"},
+                    {"name": "Pangutaran"},
+                    {"name": "Parang"},
+                    {"name": "Pata"},
+                    {"name": "Patikul"},
+                    {"name": "Siasi"},
+                    {"name": "Talipao"},
+                    {"name": "Tapul"},
+                ],
+            },
+        ],
+    },
+    "X": {
+        "name": "Northern Mindanao",
+        "description": "Region X comprises the provinces of Bukidnon, Camiguin, Lanao del Norte, Misamis Occidental, and Misamis Oriental.",
+        "provinces": [
+            {
+                "code": "BUKIDNON",
+                "name": "Bukidnon",
+                "capital": "Malaybalay City",
+                "municipalities": [
+                    {"name": "Malaybalay City", "municipality_type": "component_city"},
+                    {"name": "Valencia City", "municipality_type": "component_city"},
+                    {"name": "Baungon"},
+                    {"name": "Cabanglasan"},
+                    {"name": "Damulog"},
+                    {"name": "Dangcagan"},
+                    {"name": "Don Carlos"},
+                    {"name": "Impasugong"},
+                    {"name": "Kadingilan"},
+                    {"name": "Kalilangan"},
+                    {"name": "Kibawe"},
+                    {"name": "Kitaotao"},
+                    {"name": "Lantapan"},
+                    {"name": "Libona"},
+                    {"name": "Malitbog"},
+                    {"name": "Manolo Fortich"},
+                    {"name": "Maramag"},
+                    {"name": "Pangantucan"},
+                    {"name": "Quezon"},
+                    {"name": "San Fernando"},
+                    {"name": "Sumilao"},
+                    {"name": "Talakag"},
+                ],
+            },
+            {
+                "code": "CAMIGUIN",
+                "name": "Camiguin",
+                "capital": "Mambajao",
+                "municipalities": [
+                    {"name": "Catarman"},
+                    {"name": "Guinsiliban"},
+                    {"name": "Mahinog"},
+                    {"name": "Mambajao"},
+                    {"name": "Sagay"},
+                ],
+            },
+            {
+                "code": "LANAO_DEL_NORTE",
+                "name": "Lanao del Norte",
+                "capital": "Tubod",
+                "municipalities": [
+                    {"name": "Bacolod"},
+                    {"name": "Baloi"},
+                    {"name": "Baroy"},
+                    {"name": "Kapatagan"},
+                    {"name": "Kauswagan"},
+                    {"name": "Kolambugan"},
+                    {"name": "Lala"},
+                    {"name": "Linamon"},
+                    {"name": "Magsaysay"},
+                    {"name": "Maigo"},
+                    {"name": "Matungao"},
+                    {"name": "Munai"},
+                    {"name": "Nunungan"},
+                    {"name": "Pantao Ragat"},
+                    {"name": "Pantar"},
+                    {"name": "Poona Piagapo"},
+                    {"name": "Salvador"},
+                    {"name": "Sapad"},
+                    {"name": "Sultan Naga Dimaporo"},
+                    {"name": "Tagoloan"},
+                    {"name": "Tangcal"},
+                    {"name": "Tubod"},
+                ],
+            },
+            {
+                "code": "MIS_OCCIDENTAL",
+                "name": "Misamis Occidental",
+                "capital": "Oroquieta City",
+                "municipalities": [
+                    {"name": "Oroquieta City", "municipality_type": "component_city"},
+                    {"name": "Ozamiz City", "municipality_type": "component_city"},
+                    {"name": "Tangub City", "municipality_type": "component_city"},
+                    {"name": "Aloran"},
+                    {"name": "Baliangao"},
+                    {"name": "Bonifacio"},
+                    {"name": "Calamba"},
+                    {"name": "Clarin"},
+                    {"name": "Concepcion"},
+                    {"name": "Don Victoriano Chiongbian"},
+                    {"name": "Jimenez"},
+                    {"name": "Lopez Jaena"},
+                    {"name": "Panaon"},
+                    {"name": "Plaridel"},
+                    {"name": "Sapang Dalaga"},
+                    {"name": "Sinacaban"},
+                    {"name": "Tudela"},
+                ],
+            },
+            {
+                "code": "MIS_ORIENTAL",
+                "name": "Misamis Oriental",
+                "capital": "Cagayan de Oro City",
+                "municipalities": [
+                    {"name": "El Salvador City", "municipality_type": "component_city"},
+                    {"name": "Gingoog City", "municipality_type": "component_city"},
+                    {"name": "Alubijid"},
+                    {"name": "Balingasag"},
+                    {"name": "Balingoan"},
+                    {"name": "Binuangan"},
+                    {"name": "Claveria"},
+                    {"name": "Gitagum"},
+                    {"name": "Initao"},
+                    {"name": "Jasaan"},
+                    {"name": "Kinoguitan"},
+                    {"name": "Lagonglong"},
+                    {"name": "Laguindingan"},
+                    {"name": "Libertad"},
+                    {"name": "Lugait"},
+                    {"name": "Magsaysay"},
+                    {"name": "Manticao"},
+                    {"name": "Medina"},
+                    {"name": "Naawan"},
+                    {"name": "Opol"},
+                    {"name": "Salay"},
+                    {"name": "Sugbongcogon"},
+                    {"name": "Tagoloan"},
+                    {"name": "Talisayan"},
+                    {"name": "Villanueva"},
+                ],
+            },
+            {
+                "code": "HUC_CAGAYAN_DE_ORO",
+                "name": "Cagayan de Oro City (HUC)",
+                "capital": "Cagayan de Oro City",
+                "municipalities": [
+                    {
+                        "name": "Cagayan de Oro City",
+                        "municipality_type": "independent_city",
+                    }
+                ],
+            },
+            {
+                "code": "HUC_ILIGAN_CITY",
+                "name": "Iligan City (HUC)",
+                "capital": "Iligan City",
+                "municipalities": [
+                    {
+                        "name": "Iligan City",
+                        "municipality_type": "independent_city",
+                    }
+                ],
+            },
+        ],
+    },
+    "XI": {
+        "name": "Davao Region",
+        "description": "Region XI comprises the provinces of Davao del Norte, Davao del Sur, Davao Oriental, Davao de Oro, and Davao Occidental.",
+        "provinces": [
+            {
+                "code": "DAVAO_DE_ORO",
+                "name": "Davao de Oro",
+                "capital": "Nabunturan",
+                "municipalities": [
+                    {"name": "Compostela"},
+                    {"name": "Laak"},
+                    {"name": "Mabini"},
+                    {"name": "Maco"},
+                    {"name": "Maragusan"},
+                    {"name": "Mawab"},
+                    {"name": "Monkayo"},
+                    {"name": "Montevista"},
+                    {"name": "Nabunturan"},
+                    {"name": "New Bataan"},
+                    {"name": "Pantukan"},
+                ],
+            },
+            {
+                "code": "DAVAO_DEL_NORTE",
+                "name": "Davao del Norte",
+                "capital": "Tagum City",
+                "municipalities": [
+                    {"name": "Tagum City", "municipality_type": "component_city"},
+                    {"name": "Panabo City", "municipality_type": "component_city"},
+                    {"name": "Island Garden City of Samal", "municipality_type": "component_city"},
+                    {"name": "Asuncion"},
+                    {"name": "Braulio E. Dujali"},
+                    {"name": "Carmen"},
+                    {"name": "Kapalong"},
+                    {"name": "New Corella"},
+                    {"name": "San Isidro"},
+                    {"name": "Santo Tomas"},
+                    {"name": "Talaingod"},
+                ],
+            },
+            {
+                "code": "DAVAO_DEL_SUR",
+                "name": "Davao del Sur",
+                "capital": "Digos City",
+                "municipalities": [
+                    {"name": "Digos City", "municipality_type": "component_city"},
+                    {"name": "Bansalan"},
+                    {"name": "Hagonoy"},
+                    {"name": "Kiblawan"},
+                    {"name": "Magsaysay"},
+                    {"name": "Malalag"},
+                    {"name": "Matanao"},
+                    {"name": "Padada"},
+                    {"name": "Santa Cruz"},
+                    {"name": "Sulop"},
+                ],
+            },
+            {
+                "code": "DAVAO_OCCIDENTAL",
+                "name": "Davao Occidental",
+                "capital": "Malita",
+                "municipalities": [
+                    {"name": "Don Marcelino"},
+                    {"name": "Jose Abad Santos"},
+                    {"name": "Malita"},
+                    {"name": "Santa Maria"},
+                    {"name": "Sarangani"},
+                ],
+            },
+            {
+                "code": "DAVAO_ORIENTAL",
+                "name": "Davao Oriental",
+                "capital": "Mati City",
+                "municipalities": [
+                    {"name": "Mati City", "municipality_type": "component_city"},
+                    {"name": "Baganga"},
+                    {"name": "Banaybanay"},
+                    {"name": "Boston"},
+                    {"name": "Caraga"},
+                    {"name": "Cateel"},
+                    {"name": "Governor Generoso"},
+                    {"name": "Lupon"},
+                    {"name": "Manay"},
+                    {"name": "San Isidro"},
+                    {"name": "Tarragona"},
+                ],
+            },
+            {
+                "code": "HUC_DAVAO_CITY",
+                "name": "Davao City (HUC)",
+                "capital": "Davao City",
+                "municipalities": [
+                    {
+                        "name": "Davao City",
+                        "municipality_type": "independent_city",
+                    }
+                ],
+            },
+        ],
+    },
+    "XII": {
+        "name": "SOCCSKSARGEN",
+        "description": "Region XII comprises South Cotabato, Cotabato, Sultan Kudarat, Sarangani, and the component cities in the area.",
+        "provinces": [
+            {
+                "code": "COTABATO",
+                "name": "Cotabato",
+                "capital": "Kidapawan City",
+                "municipalities": [
+                    {"name": "Kidapawan City", "municipality_type": "component_city"},
+                    {"name": "Alamada"},
+                    {"name": "Aleosan"},
+                    {"name": "Antipas"},
+                    {"name": "Arakan"},
+                    {"name": "Banisilan"},
+                    {"name": "Carmen"},
+                    {"name": "Kabacan"},
+                    {"name": "Libungan"},
+                    {"name": "M'lang"},
+                    {"name": "Magpet"},
+                    {"name": "Makilala"},
+                    {"name": "Matalam"},
+                    {"name": "Midsayap"},
+                    {"name": "Pigcawayan"},
+                    {"name": "Pikit"},
+                    {"name": "President Roxas"},
+                    {"name": "Tulunan"},
+                ],
+            },
+            {
+                "code": "SARANGANI",
+                "name": "Sarangani",
+                "capital": "Alabel",
+                "municipalities": [
+                    {"name": "Alabel"},
+                    {"name": "Glan"},
+                    {"name": "Kiamba"},
+                    {"name": "Maasim"},
+                    {"name": "Maitum"},
+                    {"name": "Malapatan"},
+                    {"name": "Malungon"},
+                ],
+            },
+            {
+                "code": "SOUTH_COTABATO",
+                "name": "South Cotabato",
+                "capital": "Koronadal City",
+                "municipalities": [
+                    {"name": "Koronadal City", "municipality_type": "component_city"},
+                    {"name": "Banga"},
+                    {"name": "Lake Sebu"},
+                    {"name": "Norala"},
+                    {"name": "Polomolok"},
+                    {"name": "Santo Nino"},
+                    {"name": "Surallah"},
+                    {"name": "T'Boli"},
+                    {"name": "Tampakan"},
+                    {"name": "Tantangan"},
+                    {"name": "Tupi"},
+                ],
+            },
+            {
+                "code": "SULTAN_KUDARAT",
+                "name": "Sultan Kudarat",
+                "capital": "Isulan",
+                "municipalities": [
+                    {"name": "Tacurong City", "municipality_type": "component_city"},
+                    {"name": "Bagumbayan"},
+                    {"name": "Columbio"},
+                    {"name": "Esperanza"},
+                    {"name": "Isulan"},
+                    {"name": "Kalamansig"},
+                    {"name": "Lambayong"},
+                    {"name": "Lebak"},
+                    {"name": "Lutayan"},
+                    {"name": "Palimbang"},
+                    {"name": "President Quirino"},
+                    {"name": "Senator Ninoy Aquino"},
+                ],
+            },
+            {
+                "code": "HUC_GENERAL_SANTOS_CITY",
+                "name": "General Santos City (HUC)",
+                "capital": "General Santos City",
+                "municipalities": [
+                    {
+                        "name": "General Santos City",
+                        "municipality_type": "independent_city",
+                    }
+                ],
+            },
+        ],
+    },
+}
 
 
 class Command(BaseCommand):
-    """
-    Management command to populate the administrative hierarchy with initial data.
-    Focus on Regions IX (Zamboanga Peninsula) and XII (SOCCSKSARGEN).
-    """
-    help = 'Populate administrative hierarchy with Region IX and XII data'
+    """Populate the administrative hierarchy for priority Mindanao regions."""
+
+    help = "Populate administrative hierarchy for Regions IX, X, XI, and XII"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.municipality_codes = {}
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--force',
-            action='store_true',
-            help='Force update existing data',
+            "--force",
+            action="store_true",
+            help="Force update existing data",
         )
 
     def handle(self, *args, **options):
@@ -22,319 +536,295 @@ class Command(BaseCommand):
             self.populate_regions()
             self.populate_provinces()
             self.populate_municipalities()
-            self.populate_sample_barangays()
-        
+            self.populate_barangays_and_population()
+
         self.stdout.write(
-            self.style.SUCCESS('Successfully populated administrative hierarchy')
+            self.style.SUCCESS("Successfully populated administrative hierarchy")
         )
 
-    def populate_regions(self):
-        """Populate regions with focus on IX and XII."""
-        regions_data = [
-            {
-                'code': 'IX',
-                'name': 'Zamboanga Peninsula',
-                'description': 'Region IX encompasses the Zamboanga Peninsula and nearby islands in western Mindanao.'
-            },
-            {
-                'code': 'XII',
-                'name': 'SOCCSKSARGEN',
-                'description': 'Region XII comprises South Cotabato, Cotabato, Sultan Kudarat, Sarangani, and General Santos City.'
-            },
-            # Additional regions that may have OBC communities
-            {
-                'code': 'XI',
-                'name': 'Davao Region',
-                'description': 'Region XI comprises the provinces of Davao del Norte, Davao del Sur, Davao Oriental, Davao de Oro, and Davao Occidental.'
-            },
-            {
-                'code': 'X',
-                'name': 'Northern Mindanao',
-                'description': 'Region X comprises the provinces of Bukidnon, Camiguin, Lanao del Norte, Misamis Occidental, and Misamis Oriental.'
-            },
-        ]
+    @staticmethod
+    def _normalize_code(value: str) -> str:
+        """Create a deterministic uppercase code from a human readable value."""
 
-        for region_data in regions_data:
-            region, created = Region.objects.get_or_create(
-                code=region_data['code'],
+        normalized = unicodedata.normalize("NFKD", value)
+        normalized = normalized.encode("ascii", "ignore").decode("ascii")
+        normalized = re.sub(r"[()]+", " ", normalized)
+        normalized = re.sub(r"[^A-Za-z0-9]+", "_", normalized).strip("_")
+        return normalized.upper()
+
+    def _municipality_code(self, province_code: str, name: str) -> str:
+        """Derive a unique code for a municipality within a province."""
+
+        base_code = self._normalize_code(name)
+        return f"{province_code}_{base_code}" if province_code else base_code
+
+    def populate_regions(self):
+        for code, data in REGION_STRUCTURE.items():
+            Region.objects.update_or_create(
+                code=code,
                 defaults={
-                    'name': region_data['name'],
-                    'description': region_data['description']
-                }
+                    "name": data["name"],
+                    "description": data["description"],
+                    "is_active": True,
+                },
             )
-            if created:
-                self.stdout.write(f'Created region: {region}')
-            else:
-                self.stdout.write(f'Region already exists: {region}')
+            self.stdout.write(f"Upserted region: {code} - {data['name']}")
 
     def populate_provinces(self):
-        """Populate provinces for Regions IX and XII."""
-        provinces_data = [
-            # Region IX - Zamboanga Peninsula
-            {
-                'region_code': 'IX',
-                'code': 'ZAM_DEL_NORTE',
-                'name': 'Zamboanga del Norte',
-                'capital': 'Dipolog City'
-            },
-            {
-                'region_code': 'IX',
-                'code': 'ZAM_DEL_SUR',
-                'name': 'Zamboanga del Sur',
-                'capital': 'Pagadian City'
-            },
-            {
-                'region_code': 'IX',
-                'code': 'ZAM_SIBUGAY',
-                'name': 'Zamboanga Sibugay',
-                'capital': 'Ipil'
-            },
-            # Region XII - SOCCSKSARGEN
-            {
-                'region_code': 'XII',
-                'code': 'SOUTH_COTABATO',
-                'name': 'South Cotabato',
-                'capital': 'Koronadal City'
-            },
-            {
-                'region_code': 'XII',
-                'code': 'COTABATO',
-                'name': 'Cotabato',
-                'capital': 'Kidapawan City'
-            },
-            {
-                'region_code': 'XII',
-                'code': 'SULTAN_KUDARAT',
-                'name': 'Sultan Kudarat',
-                'capital': 'Isulan'
-            },
-            {
-                'region_code': 'XII',
-                'code': 'SARANGANI',
-                'name': 'Sarangani',
-                'capital': 'Alabel'
-            },
-            # Additional provinces in other regions
-            {
-                'region_code': 'XI',
-                'code': 'DAVAO_DEL_NORTE',
-                'name': 'Davao del Norte',
-                'capital': 'Tagum City'
-            },
-            {
-                'region_code': 'X',
-                'code': 'BUKIDNON',
-                'name': 'Bukidnon',
-                'capital': 'Malaybalay City'
-            },
-        ]
-
-        for province_data in provinces_data:
+        for region_code, region_data in REGION_STRUCTURE.items():
             try:
-                region = Region.objects.get(code=province_data['region_code'])
-                province, created = Province.objects.get_or_create(
-                    code=province_data['code'],
-                    defaults={
-                        'region': region,
-                        'name': province_data['name'],
-                        'capital': province_data['capital']
-                    }
-                )
-                if created:
-                    self.stdout.write(f'Created province: {province}')
-                else:
-                    self.stdout.write(f'Province already exists: {province}')
+                region = Region.objects.get(code=region_code)
             except Region.DoesNotExist:
+                self.stdout.write(self.style.ERROR(f"Region {region_code} missing"))
+                continue
+
+            for province_data in region_data["provinces"]:
+                Province.objects.update_or_create(
+                    code=province_data["code"],
+                    defaults={
+                        "region": region,
+                        "name": province_data["name"],
+                        "capital": province_data["capital"],
+                        "is_active": True,
+                    },
+                )
                 self.stdout.write(
-                    self.style.ERROR(f'Region {province_data["region_code"]} not found')
+                    f"Upserted province: {province_data['code']} - {province_data['name']}"
                 )
 
     def populate_municipalities(self):
-        """Populate sample municipalities for each province."""
-        municipalities_data = [
-            # Zamboanga del Norte
-            {
-                'province_code': 'ZAM_DEL_NORTE',
-                'code': 'DIPOLOG',
-                'name': 'Dipolog',
-                'municipality_type': 'city'
-            },
-            {
-                'province_code': 'ZAM_DEL_NORTE',
-                'code': 'DAPITAN',
-                'name': 'Dapitan',
-                'municipality_type': 'city'
-            },
-            {
-                'province_code': 'ZAM_DEL_NORTE',
-                'code': 'POLANCO',
-                'name': 'Polanco',
-                'municipality_type': 'municipality'
-            },
-            # Zamboanga del Sur
-            {
-                'province_code': 'ZAM_DEL_SUR',
-                'code': 'PAGADIAN',
-                'name': 'Pagadian',
-                'municipality_type': 'city'
-            },
-            {
-                'province_code': 'ZAM_DEL_SUR',
-                'code': 'ZAMBOANGA_CITY',
-                'name': 'Zamboanga',
-                'municipality_type': 'independent_city'
-            },
-            {
-                'province_code': 'ZAM_DEL_SUR',
-                'code': 'AURORA',
-                'name': 'Aurora',
-                'municipality_type': 'municipality'
-            },
-            # South Cotabato
-            {
-                'province_code': 'SOUTH_COTABATO',
-                'code': 'KORONADAL',
-                'name': 'Koronadal',
-                'municipality_type': 'city'
-            },
-            {
-                'province_code': 'SOUTH_COTABATO',
-                'code': 'GENERAL_SANTOS',
-                'name': 'General Santos',
-                'municipality_type': 'independent_city'
-            },
-            {
-                'province_code': 'SOUTH_COTABATO',
-                'code': 'TBOLI',
-                'name': 'Tboli',
-                'municipality_type': 'municipality'
-            },
-            # Cotabato
-            {
-                'province_code': 'COTABATO',
-                'code': 'KIDAPAWAN',
-                'name': 'Kidapawan',
-                'municipality_type': 'city'
-            },
-            {
-                'province_code': 'COTABATO',
-                'code': 'MLANG',
-                'name': 'Mlang',
-                'municipality_type': 'municipality'
-            },
-        ]
+        for region_data in REGION_STRUCTURE.values():
+            for province_data in region_data["provinces"]:
+                try:
+                    province = Province.objects.get(code=province_data["code"])
+                except Province.DoesNotExist:
+                    self.stdout.write(
+                        self.style.ERROR(
+                            f"Province {province_data['code']} missing; skipping municipalities"
+                        )
+                    )
+                    continue
 
-        for municipality_data in municipalities_data:
+                for municipality in province_data["municipalities"]:
+                    name = municipality["name"].strip()
+                    municipality_type = municipality.get("municipality_type", "municipality")
+                    code = municipality.get("code") or self._municipality_code(
+                        province.code, name
+                    )
+
+                    Municipality.objects.update_or_create(
+                        code=code,
+                        defaults={
+                            "province": province,
+                            "name": name,
+                            "municipality_type": municipality_type,
+                            "is_active": True,
+                        },
+                    )
+
+                    key = (province.code, name.lower())
+                    self.municipality_codes[key] = code
+                    self.stdout.write(f"Upserted municipality: {code} - {name}")
+
+    def populate_barangays_and_population(self):
+        for region_code, dataset_path in POPULATION_DATASETS.items():
+            population_data = self.load_population_dataset(region_code)
+            if not population_data:
+                continue
+
+            for province_key, province_data in population_data.items():
+                province = self._resolve_province(province_key)
+                if not province:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f"Population dataset ({region_code}): province {province_key} not found"
+                        )
+                    )
+                    continue
+
+                province_population = province_data.get("population")
+                if province_population is not None:
+                    province.population_total = province_population
+                    province.save(update_fields=["population_total"])
+
+                for municipality_name, municipality_data in province_data.get(
+                    "municipalities", {}
+                ).items():
+                    municipality = self._resolve_municipality(
+                        province, municipality_name
+                    )
+                    if not municipality:
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"Population dataset ({region_code}): municipality {municipality_name} "
+                                f"not found in province {province.name}"
+                            )
+                        )
+                        continue
+
+                    population = municipality_data.get("population")
+                    if population is not None:
+                        municipality.population_total = population
+                        municipality.save(update_fields=["population_total"])
+
+                    self._upsert_barangays(
+                        municipality, municipality_data.get("barangays", {})
+                    )
+
+    def _resolve_province(self, identifier):
+        try:
+            return Province.objects.get(code=identifier)
+        except Province.DoesNotExist:
             try:
-                province = Province.objects.get(code=municipality_data['province_code'])
-                municipality, created = Municipality.objects.get_or_create(
-                    code=municipality_data['code'],
-                    defaults={
-                        'province': province,
-                        'name': municipality_data['name'],
-                        'municipality_type': municipality_data['municipality_type']
-                    }
-                )
-                if created:
-                    self.stdout.write(f'Created municipality: {municipality}')
-                else:
-                    self.stdout.write(f'Municipality already exists: {municipality}')
+                return Province.objects.get(name__iexact=identifier)
             except Province.DoesNotExist:
-                self.stdout.write(
-                    self.style.ERROR(f'Province {municipality_data["province_code"]} not found')
+                return None
+
+    def _resolve_municipality(self, province, name):
+        try:
+            return province.municipalities.get(name__iexact=name)
+        except Municipality.DoesNotExist:
+            return None
+
+    def _barangay_code(self, municipality_code, barangay_name):
+        base = self._normalize_code(barangay_name)
+        candidate = f"{municipality_code}_{base}" if municipality_code else base
+        if len(candidate) <= 64:
+            return candidate
+        suffix = base[:16] if base else "B"
+        return f"{(municipality_code or 'BRGY')[:32]}_{suffix}"[:64]
+
+    def _upsert_barangays(self, municipality, barangays):
+        for name, population in barangays.items():
+            normalized_name = name.strip()
+            barangay = Barangay.objects.filter(
+                municipality=municipality, name__iexact=normalized_name
+            ).first()
+
+            code = self._barangay_code(municipality.code, normalized_name)
+            if barangay:
+                updates = []
+                if barangay.code != code:
+                    barangay.code = code
+                    updates.append("code")
+                if barangay.population_total != population:
+                    barangay.population_total = population
+                    updates.append("population_total")
+                if not barangay.is_active:
+                    barangay.is_active = True
+                    updates.append("is_active")
+                if updates:
+                    barangay.save(update_fields=updates)
+            else:
+                Barangay.objects.create(
+                    municipality=municipality,
+                    name=normalized_name,
+                    code=code,
+                    population_total=population,
+                    is_active=True,
                 )
+                self.stdout.write(f"Upserted barangay: {code} - {normalized_name}")
 
-    def populate_sample_barangays(self):
-        """Populate sample barangays for key municipalities."""
-        barangays_data = [
-            # Dipolog City
-            {
-                'municipality_code': 'DIPOLOG',
-                'code': 'BIASONG',
-                'name': 'Biasong',
-                'is_urban': True
-            },
-            {
-                'municipality_code': 'DIPOLOG',
-                'code': 'CENTRAL',
-                'name': 'Central',
-                'is_urban': True
-            },
-            {
-                'municipality_code': 'DIPOLOG',
-                'code': 'GALAS',
-                'name': 'Galas',
-                'is_urban': False
-            },
-            # Zamboanga City
-            {
-                'municipality_code': 'ZAMBOANGA_CITY',
-                'code': 'CAMPO_ISLAM',
-                'name': 'Campo Islam',
-                'is_urban': True
-            },
-            {
-                'municipality_code': 'ZAMBOANGA_CITY',
-                'code': 'RIO_HONDO',
-                'name': 'Rio Hondo',
-                'is_urban': True
-            },
-            {
-                'municipality_code': 'ZAMBOANGA_CITY',
-                'code': 'SANTA_CATALINA',
-                'name': 'Santa Catalina',
-                'is_urban': True
-            },
-            # General Santos City
-            {
-                'municipality_code': 'GENERAL_SANTOS',
-                'code': 'DADIANGAS_NORTH',
-                'name': 'Dadiangas North',
-                'is_urban': True
-            },
-            {
-                'municipality_code': 'GENERAL_SANTOS',
-                'code': 'LABANGAL',
-                'name': 'Labangal',
-                'is_urban': True
-            },
-            {
-                'municipality_code': 'GENERAL_SANTOS',
-                'code': 'TAMBLER',
-                'name': 'Tambler',
-                'is_urban': False
-            },
-            # Tboli
-            {
-                'municipality_code': 'TBOLI',
-                'code': 'POBLACION',
-                'name': 'Poblacion',
-                'is_urban': True
-            },
-            {
-                'municipality_code': 'TBOLI',
-                'code': 'KEMATU',
-                'name': 'Kematu',
-                'is_urban': False
-            },
-        ]
+    def load_population_dataset(self, region_code):
+        dataset_path = POPULATION_DATASETS.get(region_code)
+        if not dataset_path or not dataset_path.exists():
+            return {}
 
-        for barangay_data in barangays_data:
-            try:
-                municipality = Municipality.objects.get(code=barangay_data['municipality_code'])
-                barangay, created = Barangay.objects.get_or_create(
-                    code=barangay_data['code'],
-                    defaults={
-                        'municipality': municipality,
-                        'name': barangay_data['name'],
-                        'is_urban': barangay_data['is_urban']
+        province_alias = {
+            "CITY OF ILIGAN": "HUC_ILIGAN_CITY",
+            "CITY OF CAGAYAN DE ORO": "HUC_CAGAYAN_DE_ORO",
+            "CITY OF GENERAL SANTOS": "HUC_GENERAL_SANTOS_CITY",
+            "DAVAO CITY (HUC)": "HUC_DAVAO_CITY",
+            "CITY OF DAVAO": "HUC_DAVAO_CITY",
+            "CITY OF ZAMBOANGA": "HUC_ZAMBOANGA_CITY",
+            "CITY OF ISABELA": "HUC_ISABELA_CITY",
+            "LANAO DEL NORTE *": "LANAO_DEL_NORTE",
+            "MISAMIS ORIENTAL*": "MIS_ORIENTAL",
+            "MISAMIS ORIENTAL *": "MIS_ORIENTAL",
+        }
+
+        municipality_alias = {
+            "CITY OF MALAYBALAY": "Malaybalay City",
+            "CITY OF VALENCIA": "Valencia City",
+            "CITY OF EL SALVADOR": "El Salvador City",
+            "CITY OF GINGOOG": "Gingoog City",
+            "CITY OF OROQUIETA": "Oroquieta City",
+            "CITY OF OZAMIZ": "Ozamiz City",
+            "CITY OF TANGUB": "Tangub City",
+            "ILIGAN CITY": "Iligan City",
+            "CAGAYAN DE ORO CITY": "Cagayan de Oro City",
+            "CITY OF PANABO": "Panabo City",
+            "CITY OF TAGUM": "Tagum City",
+            "CITY OF DIGOS": "Digos City",
+            "CITY OF MATI": "Mati City",
+            "GENERAL SANTOS CITY": "General Santos City",
+            "KIDAPAWAN CITY": "Kidapawan City",
+            "KORONADAL CITY": "Koronadal City",
+            "TACURONG CITY": "Tacurong City",
+            "MAITUM": "Maitum",
+            "M'LANG": "M'lang",
+            "SEN. NINOY AQUINO": "Senator Ninoy Aquino",
+            "CITY OF DAPITAN": "Dapitan City",
+            "CITY OF DIPOLOG": "Dipolog City",
+            "PRES. MANUEL A. ROXAS": "President Manuel A. Roxas",
+            "SERGIO OSMEÑA SR.": "Sergio Osmena Sr.",
+            "SERGIO OSMENA SR.": "Sergio Osmena Sr.",
+            "LEON T. POSTIGO 1": "Leon B. Postigo (Bacungan)",
+            "LEON T. POSTIGO": "Leon B. Postigo (Bacungan)",
+            "PINAN": "Pinan (New Pinan)",
+            "PIÑAN": "Pinan (New Pinan)",
+            "JOSE DALMAN": "Jose Dalman (Ponot)",
+            "CITY OF PAGADIAN": "Pagadian City",
+            "ZAMBOANGA CITY": "Zamboanga City",
+            "ISABELA CITY": "Isabela City",
+            "IMPASUG-ONG": "Impasugong",
+        }
+
+        def clean_number(value: str) -> int:
+            return int(value.replace(",", "").replace(" ", ""))
+
+        data = {}
+        province = None
+        municipality = None
+
+        with dataset_path.open("r", encoding="utf-8") as handle:
+            for raw_line in handle:
+                if not raw_line.strip():
+                    continue
+
+                stripped = raw_line.rstrip("\n")
+                parts = [part.strip() for part in stripped.split("\t") if part.strip()]
+                if len(parts) < 2:
+                    continue
+
+                name, value = parts[0], parts[-1]
+                try:
+                    population = clean_number(value)
+                except ValueError:
+                    continue
+
+                indent = len(raw_line) - len(raw_line.lstrip("\t"))
+
+                if indent == 0:
+                    province_key = province_alias.get(name.upper(), name.title())
+                    province = province_key
+                    data.setdefault(
+                        province,
+                        {"population": population, "municipalities": {}},
+                    )
+                    municipality = None
+                elif indent == 1:
+                    municipality_name = municipality_alias.get(name.upper(), name.title())
+                    data[province]["municipalities"][municipality_name] = {
+                        "population": population,
+                        "barangays": {},
                     }
-                )
-                if created:
-                    self.stdout.write(f'Created barangay: {barangay}')
+                    municipality = municipality_name
                 else:
-                    self.stdout.write(f'Barangay already exists: {barangay}')
-            except Municipality.DoesNotExist:
-                self.stdout.write(
-                    self.style.ERROR(f'Municipality {barangay_data["municipality_code"]} not found')
-                )
+                    if not municipality:
+                        continue
+                    data[province]["municipalities"][municipality]["barangays"][
+                        name
+                    ] = population
+
+        return data

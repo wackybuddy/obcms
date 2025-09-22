@@ -27,25 +27,27 @@ This system digitalizes the OOBC's core functions including:
 ```
 OBC-system/
 ├── src/                    # Django source code
-│   ├── obc_management/     # Main Django project
-│   ├── common/             # Common utilities and base models
+│   ├── obc_management/     # Project settings and URLs
+│   ├── common/             # Shared models, forms, and services
 │   ├── communities/        # OBC community management
-│   ├── mana/              # Mapping and Needs Assessment
-│   ├── coordination/      # Stakeholder coordination
-│   ├── policies/          # Policy recommendations
-│   ├── templates/         # HTML templates
-│   └── static/           # Static files (CSS, JS, images)
-├── requirements/          # Python dependencies
-├── scripts/              # Project scripts and documentation
-├── docs/                 # Project documentation
-└── venv/                # Python virtual environment
+│   ├── coordination/       # Stakeholder coordination
+│   ├── mana/               # Mapping and Needs Assessment
+│   ├── monitoring/         # Monitoring & evaluation workflows
+│   ├── recommendations/    # Recommendations namespace (policies, tracking, docs)
+│   ├── templates/          # Project-level templates grouped by app
+│   └── static/             # Static assets grouped by app
+├── var/                    # Runtime artefacts (SQLite, logs, media)
+├── requirements/           # Python dependency locks
+├── scripts/                # Project scripts
+├── docs/                   # Documentation
+└── venv/                   # Local virtual environment
 ```
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.12 (see `.python-version`)
 - pip (Python package manager)
 - Git
 
@@ -59,9 +61,10 @@ OBC-system/
 
 2. **Create and activate virtual environment**
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ./scripts/bootstrap_venv.sh       # idempotent helper (macOS/Linux)
+   source venv/bin/activate          # On Windows: venv\Scripts\activate
    ```
+   > Prefer to do it manually? Use `python3.12 -m venv venv` to ensure the interpreter matches the pinned version.
 
 3. **Install dependencies**
    ```bash
@@ -77,20 +80,22 @@ OBC-system/
 5. **Run database migrations**
    ```bash
    cd src
-   python manage.py migrate
+   ./manage.py migrate
    ```
 
 6. **Create a superuser (optional)**
    ```bash
-   python manage.py createsuperuser
+   ./manage.py createsuperuser
    ```
 
 7. **Start the development server**
    ```bash
-   python manage.py runserver
+   ./manage.py runserver
    ```
 
 The application will be available at `http://localhost:8000`
+
+Runtime data (SQLite database, uploads, and logs) is stored under `var/` so the Django project tree stays focused on code.
 
 ## Core Modules
 
@@ -106,11 +111,17 @@ The application will be available at `http://localhost:8000`
 - **Purpose**: Multi-stakeholder coordination
 - **Features**: Stakeholder directory, meeting management, MOA tracking, communication hub
 
-### 4. Policies Module
-- **Purpose**: Evidence-based policy recommendations
-- **Features**: Recommendation tracking, approval workflows, impact assessment
+### 4. Recommendations Module
+- **Purpose**: Evidence-based policy, program, and service recommendations
+- **Features**: Recommendation tracking, approval workflows, knowledge/document repository, impact assessment
+
+### 5. Monitoring & Evaluation Module
+- **Purpose**: Track implementation and outcomes of OOBC initiatives
+- **Features**: Monitoring entries, update workflows, performance dashboards, evidence attachments
 
 ## Development
+
+Templates live in `src/templates/<app>/` and static assets in `src/static/<app>/`, keeping UI files alongside their Django apps.
 
 ### Code Style
 
@@ -138,6 +149,8 @@ Run tests with coverage:
 coverage run -m pytest
 coverage report
 ```
+
+Each Django app stores its test suite inside `src/<app>/tests/` to keep scenarios close to the code they cover.
 
 ### API Documentation
 

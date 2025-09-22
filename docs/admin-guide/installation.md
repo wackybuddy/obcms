@@ -12,7 +12,7 @@ This guide provides step-by-step instructions for installing the OBC Management 
 
 ### Software Requirements
 - **Operating System**: Ubuntu 20.04 LTS or later / CentOS 8 or later
-- **Python**: 3.9 or later
+- **Python**: 3.12 (pinned via version manager)
 - **Database**: PostgreSQL 13 or later
 - **Web Server**: Nginx 1.18 or later
 - **SSL Certificate**: Let's Encrypt or commercial SSL certificate
@@ -26,8 +26,10 @@ sudo apt update && sudo apt upgrade -y
 
 ### 2. Install Required Packages
 ```bash
-sudo apt install -y python3 python3-pip python3-venv postgresql postgresql-contrib nginx git curl
+sudo apt install -y python3.12 python3.12-venv python3.12-dev python3-pip postgresql postgresql-contrib nginx git curl
 ```
+
+> **Note:** If your distribution does not provide Python 3.12, install it from the [deadsnakes PPA](https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa) or with a version manager such as pyenv/asdf to match the pinned interpreter.
 
 ### 3. Create System User
 ```bash
@@ -57,7 +59,7 @@ cd /var/www/obc-system
 
 ### 2. Create Virtual Environment
 ```bash
-sudo -u obc python3 -m venv venv
+sudo -u obc python3.12 -m venv venv
 sudo -u obc /var/www/obc-system/venv/bin/pip install --upgrade pip
 ```
 
