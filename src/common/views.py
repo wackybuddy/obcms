@@ -6,7 +6,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.utils import timezone
-from .models import User
+from .models import User, Region
 from .forms import UserRegistrationForm, CustomLoginForm
 
 # 5 Standard PPS (Policy, Program, Service) Areas for Recommendations
@@ -579,58 +579,166 @@ def communities_add(request):
     return render(request, 'common/communities_add.html', context)
 
 
-@login_required
-def communities_manage(request):
-    """Manage communities page."""
+def _render_manage_obc(request, scope='barangay'):
+    """Shared renderer for managing OBC records at different administrative levels."""
     from communities.models import OBCCommunity
     from django.db.models import Count, Sum
-    from django.db.models import Q # Import Q for complex lookups
-    
-    # Get all communities with related data
+    from django.db.models import Q
+
+    # Base queryset for communities with related data
     communities = OBCCommunity.objects.select_related(
         'barangay__municipality__province__region'
     ).annotate(
         stakeholder_count=Count('stakeholders')
     ).order_by('barangay__name')
-    
-    # Filter functionality
+
+    # Filters
     region_filter = request.GET.get('region')
     status_filter = request.GET.get('status')
-    search_query = request.GET.get('search') # Get the search query
-    
+    search_query = request.GET.get('search')
+
     if region_filter:
         communities = communities.filter(
             barangay__municipality__province__region__id=region_filter
         )
-    
+
     if status_filter:
         if status_filter == 'active':
             communities = communities.filter(is_active=True)
         elif status_filter == 'inactive':
             communities = communities.filter(is_active=False)
-            
-    if search_query: # Apply search filter
+
+    if search_query:
         communities = communities.filter(
             Q(barangay__name__icontains=search_query) |
             Q(barangay__municipality__name__icontains=search_query) |
             Q(barangay__municipality__province__name__icontains=search_query) |
             Q(barangay__municipality__province__region__name__icontains=search_query)
         )
-    
-    # Get filter options
-    from common.models import Region
+
+    total_communities = communities.count()
+    total_obc_population = communities.aggregate(
+        total=Sum('estimated_obc_population')
+    )['total'] or 0
+    municipality_ids = set(
+        communities.values_list('barangay__municipality_id', flat=True)
+    )
+    total_municipalities = len(municipality_ids)
+
+    # Municipal-level synchronization breakdown based on assessment activity
+    manual_municipality_ids = set(
+        communities.filter(needs_assessment_date__isnull=False).values_list(
+            'barangay__municipality_id', flat=True
+        )
+    )
+    manual_municipalities = len(manual_municipality_ids)
+    auto_synced_municipalities = max(total_municipalities - manual_municipalities, 0)
+
+    if scope == 'municipal':
+        page_title = 'Manage Municipal OBCs'
+        page_description = (
+            'Monitor municipal-level OBC records and synchronization status.'
+        )
+        stat_cards = [
+            {
+                'title': 'Total Municipal OBCs in the Database',
+                'value': total_municipalities,
+                'icon': 'fas fa-city',
+                'gradient': 'from-blue-500 via-blue-600 to-blue-700',
+                'text_color': 'text-blue-100',
+            },
+            {
+                'title': 'Total OBC Population from the Municipalities',
+                'value': total_obc_population,
+                'icon': 'fas fa-users',
+                'gradient': 'from-emerald-500 via-emerald-600 to-emerald-700',
+                'text_color': 'text-emerald-100',
+            },
+            {
+                'title': 'Auto-Synced Municipalities',
+                'value': auto_synced_municipalities,
+                'icon': 'fas fa-sync-alt',
+                'gradient': 'from-purple-500 via-purple-600 to-purple-700',
+                'text_color': 'text-purple-100',
+            },
+            {
+                'title': 'Manually Updated Municipalities',
+                'value': manual_municipalities,
+                'icon': 'fas fa-edit',
+                'gradient': 'from-orange-500 via-orange-600 to-orange-700',
+                'text_color': 'text-orange-100',
+            },
+        ]
+    else:
+        page_title = 'Manage Barangay OBCs'
+        page_description = (
+            'View, edit, and manage all registered barangay-level OBC communities.'
+        )
+        stat_cards = [
+            {
+                'title': 'Total Barangay OBCs in the Database',
+                'value': total_communities,
+                'icon': 'fas fa-users',
+                'gradient': 'from-blue-500 via-blue-600 to-blue-700',
+                'text_color': 'text-blue-100',
+            },
+            {
+                'title': 'Total OBC Population from Barangays',
+                'value': total_obc_population,
+                'icon': 'fas fa-user-friends',
+                'gradient': 'from-emerald-500 via-emerald-600 to-emerald-700',
+                'text_color': 'text-emerald-100',
+            },
+            {
+                'title': 'Total Municipalities OBCs in the Database',
+                'value': total_municipalities,
+                'icon': 'fas fa-city',
+                'gradient': 'from-purple-500 via-purple-600 to-purple-700',
+                'text_color': 'text-purple-100',
+            },
+        ]
+
+    lg_columns = 4 if len(stat_cards) >= 4 else 3
+    stat_cards_grid_class = (
+        f"mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{lg_columns} gap-6"
+    )
+
     regions = Region.objects.all().order_by('name')
-    
+
     context = {
         'communities': communities,
         'regions': regions,
         'current_region': region_filter,
         'current_status': status_filter,
-        'search_query': search_query, # Add search_query to context
-        'total_communities': communities.count(),
-        'total_population': communities.aggregate(total=Sum('total_barangay_population'))['total'] or 0,
+        'search_query': search_query,
+        'total_communities': total_communities,
+        'total_population': total_obc_population,
+        'total_municipalities': total_municipalities,
+        'stat_cards': stat_cards,
+        'stat_cards_grid_class': stat_cards_grid_class,
+        'page_title': page_title,
+        'page_description': page_description,
+        'view_scope': scope,
     }
     return render(request, 'common/communities_manage.html', context)
+
+
+@login_required
+def communities_manage(request):
+    """Manage communities page (barangay scope by default)."""
+    return _render_manage_obc(request, scope='barangay')
+
+
+@login_required
+def communities_manage_barangay_obc(request):
+    """Explicit barangay-level management view."""
+    return _render_manage_obc(request, scope='barangay')
+
+
+@login_required
+def communities_manage_municipal_obc(request):
+    """Municipal-level OBC management view."""
+    return _render_manage_obc(request, scope='municipal')
 
 
 @login_required
