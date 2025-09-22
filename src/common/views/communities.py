@@ -270,6 +270,11 @@ def communities_manage(request):
 
     regions = Region.objects.all().order_by("name")
 
+    total_barangay_obcs = communities.count()
+    total_barangay_population = (
+        communities.aggregate(total=Sum("estimated_obc_population"))["total"] or 0
+    )
+    total_municipality_obcs = municipality_coverages.count()
     total_municipality_population = (
         municipality_coverages.aggregate(total=Sum("estimated_obc_population"))["total"]
         or 0
@@ -279,21 +284,49 @@ def communities_manage(request):
         or 0
     )
 
+    stat_cards = [
+        {
+            "title": "Total Barangay OBCs in the Database",
+            "value": total_barangay_obcs,
+            "icon": "fas fa-users",
+            "gradient": "from-blue-500 via-blue-600 to-blue-700",
+            "text_color": "text-blue-100",
+        },
+        {
+            "title": "Total OBC Population from Barangays",
+            "value": total_barangay_population,
+            "icon": "fas fa-user-friends",
+            "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
+            "text_color": "text-emerald-100",
+        },
+        {
+            "title": "Total Municipalities OBCs in the Database",
+            "value": total_municipality_obcs,
+            "icon": "fas fa-city",
+            "gradient": "from-purple-500 via-purple-600 to-purple-700",
+            "text_color": "text-purple-100",
+        },
+    ]
+
+    lg_columns = 4 if len(stat_cards) >= 4 else 3
+    stat_cards_grid_class = (
+        f"mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{lg_columns} gap-6"
+    )
+
     context = {
         "communities": communities,
         "regions": regions,
         "current_region": region_filter,
         "current_status": status_filter,
         "search_query": search_query,
-        "total_communities": communities.count(),
-        "total_population": communities.aggregate(
-            total=Sum("total_barangay_population")
-        )["total"]
-        or 0,
+        "total_communities": total_barangay_obcs,
+        "total_population": total_barangay_population,
         "municipality_coverages": municipality_coverages,
-        "total_municipality_coverages": municipality_coverages.count(),
+        "total_municipality_coverages": total_municipality_obcs,
         "total_municipality_population": total_municipality_population,
         "total_municipality_communities": total_municipality_communities,
+        "stat_cards": stat_cards,
+        "stat_cards_grid_class": stat_cards_grid_class,
     }
     return render(request, "communities/communities_manage.html", context)
 
@@ -339,19 +372,56 @@ def communities_manage_municipal(request):
 
     regions = Region.objects.all().order_by("name")
 
+    total_coverages = coverages.count()
+    total_population = (
+        coverages.aggregate(total=Sum("estimated_obc_population"))["total"] or 0
+    )
+    total_communities = (
+        coverages.aggregate(total=Sum("total_obc_communities"))["total"] or 0
+    )
+    auto_synced = coverages.filter(auto_sync=True).count()
+    manual_updates = coverages.filter(auto_sync=False).count()
+
     stats = {
-        "total_coverages": coverages.count(),
-        "total_population": coverages.aggregate(
-            total=Sum("estimated_obc_population")
-        )["total"]
-        or 0,
-        "total_communities": coverages.aggregate(
-            total=Sum("total_obc_communities")
-        )["total"]
-        or 0,
-        "auto_synced": coverages.filter(auto_sync=True).count(),
-        "manual": coverages.filter(auto_sync=False).count(),
+        "total_coverages": total_coverages,
+        "total_population": total_population,
+        "total_communities": total_communities,
+        "auto_synced": auto_synced,
+        "manual": manual_updates,
     }
+
+    stat_cards = [
+        {
+            "title": "Total Municipal OBCs in the Database",
+            "value": total_coverages,
+            "icon": "fas fa-city",
+            "gradient": "from-blue-500 via-blue-600 to-blue-700",
+            "text_color": "text-blue-100",
+        },
+        {
+            "title": "Total OBC Population from the Municipalities",
+            "value": total_population,
+            "icon": "fas fa-users",
+            "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
+            "text_color": "text-emerald-100",
+        },
+        {
+            "title": "Auto-Synced Municipalities",
+            "value": auto_synced,
+            "icon": "fas fa-sync-alt",
+            "gradient": "from-purple-500 via-purple-600 to-purple-700",
+            "text_color": "text-purple-100",
+        },
+        {
+            "title": "Manually Updated Municipalities",
+            "value": manual_updates,
+            "icon": "fas fa-edit",
+            "gradient": "from-orange-500 via-orange-600 to-orange-700",
+            "text_color": "text-orange-100",
+        },
+    ]
+
+    stat_cards_grid_class = "mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
 
     context = {
         "coverages": coverages,
@@ -360,6 +430,8 @@ def communities_manage_municipal(request):
         "current_status": status_filter,
         "search_query": search_query,
         "stats": stats,
+        "stat_cards": stat_cards,
+        "stat_cards_grid_class": stat_cards_grid_class,
     }
     return render(request, "communities/municipal_manage.html", context)
 

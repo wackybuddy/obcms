@@ -20,20 +20,17 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Total Communities</p>
-                        <p class="text-3xl font-bold">{{ stats.communities.total|default:0 }}</p>
-                        <div class="mt-2 flex items-center text-sm">
-                            <span class="text-blue-200 font-medium">{{ stats.communities.active|default:0 }} active</span>
-                        </div>
+                        <p class="text-blue-100 text-sm font-medium">Total OBC Population in the Database</p>
+                        <p class="text-3xl font-bold">{{ stats.communities.total_obc_population_database|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-users text-2xl"></i>
+                        <i class="fas fa-user-friends text-2xl"></i>
                     </div>
                 </div>
             </div>
@@ -44,11 +41,11 @@
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-emerald-100 text-sm font-medium">Total Households</p>
-                        <p class="text-3xl font-bold">{{ stats.communities.total_households|default:0 }}</p>
+                        <p class="text-emerald-100 text-sm font-medium">Total Barangay OBCs in the Database</p>
+                        <p class="text-3xl font-bold">{{ stats.communities.total_barangay_obcs_database|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-users text-2xl"></i>
+                        <i class="fas fa-map-marker-alt text-2xl"></i>
                     </div>
                 </div>
             </div>
@@ -59,29 +56,11 @@
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-purple-100 text-sm font-medium">OBC Population</p>
-                        <p class="text-3xl font-bold">{{ stats.communities.total_population|default:0 }}</p>
+                        <p class="text-purple-100 text-sm font-medium">Total Municipal OBCs in the Database</p>
+                        <p class="text-3xl font-bold">{{ stats.communities.total_municipal_obcs_database|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-user-friends text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-orange-100 text-sm font-medium">With Islamic Facilities</p>
-                        <p class="text-3xl font-bold">{{ stats.communities.with_mosque|add:stats.communities.with_madrasah|default:0 }}</p>
-                        <div class="mt-2 flex items-center text-sm">
-                            <span class="text-orange-200 text-xs">{{ stats.communities.with_mosque|default:0 }} mosques, {{ stats.communities.with_madrasah|default:0 }} madrasah</span>
-                        </div>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                        <i class="fas fa-mosque text-2xl"></i>
+                        <i class="fas fa-city text-2xl"></i>
                     </div>
                 </div>
             </div>

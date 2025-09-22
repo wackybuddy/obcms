@@ -168,19 +168,33 @@ def profile(request):
     return render(request, 'common/profile.html', context)
 
 
-@login_required 
+@login_required
 def communities_home(request):
     """OBC Communities module home page."""
-    from communities.models import OBCCommunity, Stakeholder, CommunityInfrastructure
+    from communities.models import OBCCommunity, MunicipalityCoverage, Stakeholder, CommunityInfrastructure
     from django.db.models import Count, Sum, Q, Avg
-    
+
     # Get community statistics
     communities = OBCCommunity.objects.select_related(
         'barangay__municipality__province__region'
     ).annotate(
         stakeholder_count=Count('stakeholders')
     )
-    
+
+    # Get municipal coverage statistics
+    municipal_coverages = MunicipalityCoverage.objects.select_related(
+        'municipality__province__region'
+    )
+
+    # Calculate total OBC population from both sources
+    barangay_population = communities.aggregate(total=Sum('estimated_obc_population'))['total'] or 0
+    municipal_population = municipal_coverages.aggregate(total=Sum('estimated_obc_population'))['total'] or 0
+    total_obc_population = barangay_population + municipal_population
+
+    # Count of barangay and municipal OBCs
+    total_barangay_obcs = communities.count()
+    total_municipal_obcs = municipal_coverages.count()
+
     # Additional demographic statistics
     vulnerable_sectors = communities.aggregate(
         total_women=Sum('women_count'),
@@ -194,19 +208,19 @@ def communities_home(request):
         total_csos=Sum('csos_count'),
         total_associations=Sum('associations_count')
     )
-    
+
     # Infrastructure statistics
     infrastructure_stats = CommunityInfrastructure.objects.filter(
         availability_status__in=['limited', 'poor', 'none']
     ).values('infrastructure_type').annotate(
         count=Count('id')
     ).order_by('-count')[:5]
-    
+
     # Development status breakdown
     development_status = communities.values('development_status').annotate(
         count=Count('id')
     ).order_by('-count')
-    
+
     # Ethnolinguistic group distribution
     ethnolinguistic_groups = communities.exclude(
         primary_ethnolinguistic_group__isnull=True
@@ -215,7 +229,7 @@ def communities_home(request):
     ).values('primary_ethnolinguistic_group').annotate(
         count=Count('id')
     ).order_by('-count')
-    
+
     stats = {
         'communities': {
             'total': communities.count(),
@@ -229,6 +243,10 @@ def communities_home(request):
             'development_status': development_status,
             'with_madrasah': communities.filter(has_madrasah=True).count(),
             'with_mosque': communities.filter(has_mosque=True).count(),
+            # New statistics for the requested stat cards
+            'total_obc_population_database': total_obc_population,
+            'total_barangay_obcs_database': total_barangay_obcs,
+            'total_municipal_obcs_database': total_municipal_obcs,
         },
         'vulnerable_sectors': vulnerable_sectors,
         'infrastructure_needs': infrastructure_stats,

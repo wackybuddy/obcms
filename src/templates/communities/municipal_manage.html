@@ -25,64 +25,23 @@
         </p>
     </div>
 
-    <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl">
+    <div class="{{ stat_cards_grid_class|default:'mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' }}">
+        {% for card in stat_cards %}
+        <div class="relative overflow-hidden bg-gradient-to-br {{ card.gradient }} rounded-xl shadow-xl">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Total Municipal Coverages</p>
-                        <p class="text-3xl font-bold">{{ stats.total_coverages|default:0 }}</p>
+                        <p class="{{ card.text_color }} text-sm font-medium">{{ card.title }}</p>
+                        <p class="text-3xl font-bold">{{ card.value|default:0 }}</p>
                     </div>
                     <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-file-alt text-2xl"></i>
+                        <i class="{{ card.icon|default:'fas fa-database' }} text-2xl"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="relative overflow-hidden bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 rounded-xl shadow-xl">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-emerald-100 text-sm font-medium">Estimated OBC Population</p>
-                        <p class="text-3xl font-bold">{{ stats.total_population|default:0 }}</p>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-users text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-purple-100 text-sm font-medium">Identified Barangay OBCs</p>
-                        <p class="text-3xl font-bold">{{ stats.total_communities|default:0 }}</p>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-map-marker-alt text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl">
-            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
-            <div class="relative p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-orange-100 text-sm font-medium">Auto-Synced Records</p>
-                        <p class="text-3xl font-bold">{{ stats.auto_synced|default:0 }}</p>
-                        <span class="text-orange-200 text-xs">Manual updates: {{ stats.manual|default:0 }}</span>
-                    </div>
-                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
-                        <i class="fas fa-sync text-2xl"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 
     <div class="bg-white rounded-xl shadow-xl border border-gray-200 mb-8 overflow-hidden">
