@@ -18,6 +18,7 @@ class MunicipalOBCProfileHistorySerializer(serializers.ModelSerializer):
             "id",
             "change_type",
             "payload",
+            "diff",
             "changed_by",
             "changed_by_display",
             "note",

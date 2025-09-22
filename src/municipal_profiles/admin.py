@@ -22,7 +22,7 @@ class MunicipalOBCProfileHistoryAdmin(admin.ModelAdmin):
     list_display = ("profile", "change_type", "changed_by", "created_at")
     list_filter = ("change_type", "created_at")
     search_fields = ("profile__municipality__name", "note")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("payload", "diff", "created_at", "updated_at")
 
 
 @admin.register(OBCCommunityHistory)

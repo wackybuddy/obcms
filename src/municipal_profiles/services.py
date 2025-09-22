@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Dict, Iterable, Optional
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Avg, F, FloatField, Sum
 from django.forms.models import model_to_dict
 from django.utils import timezone
 
@@ -14,6 +14,12 @@ from .models import (
     AggregationResult,
     MunicipalOBCProfile,
     OBCCommunityHistory,
+)
+from .aggregation import (
+    build_empty_report,
+    flatten_metrics,
+    iter_metric_rules,
+    normalise_reported_metrics,
 )
 
 # Numeric fields that should be summed when computing aggregates.
@@ -95,20 +101,72 @@ def compute_aggregate_for_municipality(
 ) -> AggregationResult:
     """Aggregate barangay metrics for a municipality."""
 
-    queryset = OBCCommunity.objects.filter(barangay__municipality=municipality)
-    aggregated: Dict[str, int] = {}
-    for field in AGGREGATABLE_FIELDS:
-        aggregated[field] = queryset.aggregate(total=Sum(field))['total'] or 0
+    queryset = (
+        OBCCommunity.objects.filter(barangay__municipality=municipality)
+        .select_related("barangay__municipality")
+        .order_by("pk")
+    )
 
-    aggregated["community_count"] = queryset.count()
-    aggregated["barangay_count"] = queryset.values_list("barangay_id", flat=True).distinct().count()
-    aggregated["last_source_update"] = timezone.now().isoformat()
+    section_payload = build_empty_report()
+    aggregate_kwargs: Dict[str, object] = {}
+    metric_lookup: Dict[Tuple[str, str], str] = {}
+    weighted_rules: List[Tuple[str, str, object]] = []
+
+    for section_key, metric_key, rule in iter_metric_rules():
+        if rule.aggregation == "sum":
+            agg_name = f"{metric_key}__sum"
+            aggregate_kwargs[agg_name] = Sum(rule.source)
+            metric_lookup[(section_key, metric_key)] = agg_name
+        elif rule.aggregation == "avg":
+            agg_name = f"{metric_key}__avg"
+            aggregate_kwargs[agg_name] = Avg(rule.source)
+            metric_lookup[(section_key, metric_key)] = agg_name
+        elif rule.aggregation == "weighted_mean" and rule.weight_source:
+            weighted_rules.append((section_key, metric_key, rule))
+        else:
+            raise ValueError(
+                f"Unsupported aggregation '{rule.aggregation}' for metric {metric_key}"
+            )
+
+    aggregates = queryset.aggregate(**aggregate_kwargs) if aggregate_kwargs else {}
+
+    for section_key, metric_key, rule in iter_metric_rules():
+        if rule.aggregation in {"sum", "avg"}:
+            agg_name = metric_lookup[(section_key, metric_key)]
+            value = aggregates.get(agg_name) or 0
+            if rule.aggregation == "avg":
+                section_payload[section_key][metric_key] = round(float(value), 2)
+            else:
+                section_payload[section_key][metric_key] = int(value)
+
+    for section_key, metric_key, rule in weighted_rules:
+        numerator = queryset.aggregate(
+            total=Sum(
+                F(rule.source) * F(rule.weight_source), output_field=FloatField()
+            )
+        )["total"] or 0.0
+        denominator = queryset.aggregate(total=Sum(rule.weight_source))["total"] or 0
+        section_payload[section_key][metric_key] = round(numerator / denominator, 2) if denominator else 0
+
+    community_ids: List[int] = list(queryset.values_list("id", flat=True))
+    barangay_ids: List[int] = list(queryset.values_list("barangay_id", flat=True))
+
+    aggregated_flat = flatten_metrics(section_payload)
+    metadata = {
+        "community_count": len(community_ids),
+        "barangay_count": len(set(barangay_ids)),
+        "last_source_update": timezone.now().isoformat(),
+    }
 
     return AggregationResult(
         municipality=municipality,
-        aggregated_metrics=aggregated,
-        barangay_count=aggregated["barangay_count"],
-        communities_considered=queryset.values_list("id", flat=True),
+        aggregated_metrics={
+            "sections": section_payload,
+            "metadata": metadata,
+        },
+        barangay_count=metadata["barangay_count"],
+        communities_considered=community_ids,
+        aggregated_flat=aggregated_flat,
     )
 
 
@@ -120,13 +178,66 @@ def aggregate_and_store(
 ) -> MunicipalOBCProfile:
     """Compute aggregation and persist it on the municipal profile."""
 
-    result = compute_aggregate_for_municipality(municipality)
     profile = ensure_profile(municipality)
+    result = compute_aggregate_for_municipality(municipality)
+    discrepancies = calculate_discrepancies(
+        aggregated_flat=result.aggregated_flat,
+        profile=profile,
+    )
+    result.aggregated_metrics["discrepancies"] = discrepancies
     with transaction.atomic():
         profile.apply_aggregation(
             aggregated_payload=result.aggregated_metrics,
             changed_by=changed_by,
             note=note or "Automatic barangay roll-up",
-            history_payload=result.as_payload(),
+            history_payload=result.as_payload(discrepancies=discrepancies),
         )
     return profile
+
+
+def calculate_discrepancies(
+    *, aggregated_flat: Dict[str, int], profile: MunicipalOBCProfile
+) -> Dict[str, Dict[str, object]]:
+    """Compare aggregated results with reported metrics to flag variances."""
+
+    reported = profile.reported_metrics or {}
+    reported_sections = normalise_reported_metrics(reported.get("sections"))
+    provided_fields = set(reported.get("provided_fields", []))
+    reported_flat = flatten_metrics(reported_sections)
+
+    if not provided_fields and not any(reported_flat.values()):
+        return {}
+
+    discrepancies: Dict[str, Dict[str, object]] = {}
+
+    for metric_key, aggregated_value in aggregated_flat.items():
+        reported_present = metric_key in reported_flat
+        reported_value = reported_flat.get(metric_key, 0)
+
+        # Skip discrepancy if municipality has not provided a manual value yet.
+        if provided_fields and metric_key not in provided_fields:
+            continue
+
+        if not reported_present and aggregated_value == 0:
+            continue
+
+        delta = aggregated_value - reported_value
+        if delta == 0:
+            continue
+
+        baseline = reported_value if reported_value else aggregated_value or 1
+        percent_delta = delta / baseline if baseline else 0
+
+        severity = "info"
+        if abs(percent_delta) >= 0.1 and abs(delta) >= 10:
+            severity = "warning"
+
+        discrepancies[metric_key] = {
+            "aggregated": aggregated_value,
+            "reported": reported_value,
+            "delta": delta,
+            "percent_delta": round(percent_delta, 4),
+            "severity": severity,
+        }
+
+    return discrepancies

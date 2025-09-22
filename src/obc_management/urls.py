@@ -55,8 +55,8 @@ urlpatterns = [
     path('api/municipal-profiles/', include('municipal_profiles.api_urls')),
     path('api/mana/', include('mana.api_urls')),
     path('api/coordination/', include('coordination.api_urls')),
-    path('api/policies/', include('policies.api_urls')),
-    path('api/policy-tracking/', include('policy_tracking.api_urls')),
+    path('api/policies/', include('recommendations.policies.api_urls')),
+    path('api/policy-tracking/', include('recommendations.policy_tracking.api_urls')),
     
     # Browsable API authentication
     path('api-auth/', include('rest_framework.urls')),
@@ -69,11 +69,4 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     
-    # Add debug toolbar URLs
-    try:
-        import debug_toolbar
-        urlpatterns = [
-            path('__debug__/', include(debug_toolbar.urls)),
-        ] + urlpatterns
-    except ImportError:
-        pass
+    # Debug toolbar disabled for now

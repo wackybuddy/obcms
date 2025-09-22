@@ -70,11 +70,13 @@ LOCAL_APPS = [
     'common',
     'communities',
     'municipal_profiles',
-    'documents',
+    'monitoring',
     'mana',
     'coordination',
-    'policies',
-    'policy_tracking',
+    'recommendations',
+    'recommendations.documents',
+    'recommendations.policies',
+    'recommendations.policy_tracking',
     'data_imports',
 ]
 

@@ -32,6 +32,12 @@ def handle_community_saved(sender, instance: OBCCommunity, created: bool, **kwar
 def handle_community_deleted(sender, instance: OBCCommunity, **kwargs):
     """Recompute aggregates whenever a community is removed."""
 
+    record_community_history(
+        instance=instance,
+        source=OBCCommunityHistory.SOURCE_MANUAL,
+        note="Deleted",
+        changed_by=getattr(instance, "_history_user", None),
+    )
     municipality = instance.barangay.municipality
     aggregate_and_store(
         municipality=municipality,

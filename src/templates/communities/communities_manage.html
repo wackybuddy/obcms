@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Manage Communities - OBC Management System{% endblock %}
+{% block title %}Manage Barangay OBC - OBC Management System{% endblock %}
 
 {% block breadcrumbs %}
 <nav class="flex" aria-label="Breadcrumb">
@@ -19,7 +19,7 @@
         <li aria-current="page">
             <div class="flex items-center">
                 <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Manage Communities</span>
+                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Manage Barangay OBC</span>
             </div>
         </li>
     </ol>
@@ -32,10 +32,10 @@
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 flex items-center">
             <i class="fas fa-edit text-green-600 mr-4"></i>
-            {{ page_title|default:'Manage Communities' }}
+            {{ page_title|default:'Manage Barangay OBC' }}
         </h1>
         <p class="mt-2 text-lg text-gray-600">
-            {{ page_description|default:'View, edit, and manage all registered OBC communities' }}
+            {{ page_description|default:'View, edit, and manage barangay-level OBC communities' }}
         </p>
     </div>
 
@@ -192,16 +192,18 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
-                                <a href="/admin/communities/obccommunity/{{ community.id }}/change/" 
+                                <a href="{% url 'common:communities_edit' community.id %}"
                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
                                     <i class="fas fa-edit mr-1"></i>
                                     Edit
                                 </a>
-                                <a href="/admin/communities/obccommunity/{{ community.id }}/" 
-                                   class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
-                                    <i class="fas fa-eye mr-1"></i>
-                                    View
-                                </a>
+                                <form method="post" action="{% url 'common:communities_delete' community.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200" onclick="return confirm('Remove this barangay OBC record?');">
+                                        <i class="fas fa-trash-alt mr-1"></i>
+                                        Delete
+                                    </button>
+                                </form>
                             </div>
                         </td>
                     </tr>
@@ -216,7 +218,7 @@
                 <a href="{% url 'common:communities_add' %}" 
                    class="mt-4 inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
                     <i class="fas fa-plus mr-2"></i>
-                    Add New Community
+                    Add Barangay OBC
                 </a>
             </div>
             {% endif %}
@@ -233,13 +235,13 @@
                         <i class="fas fa-plus text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                        Add New Community
+                        Add Barangay OBC
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
-                        Register a new community profile.
+                        Register a new barangay-level OBC community.
                     </p>
                     <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
-                        <span>Add Community</span>
+                        <span>Add Barangay</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>

@@ -707,6 +707,12 @@ class OBCCommunity(CommunityProfileBase):
         ]
         verbose_name = "OBC Community"
         verbose_name_plural = "OBC Communities"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["barangay"],
+                name="unique_obccommunity_per_barangay",
+            )
+        ]
 
     def __str__(self):
         location = (
