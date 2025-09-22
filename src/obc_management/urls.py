@@ -51,6 +51,7 @@ urlpatterns = [
     path('api/v1/', include(api_router.urls)),
     path('api/administrative/', include('common.api_urls')),
     path('api/communities/', include('communities.api_urls')),
+    path('api/municipal-profiles/', include('municipal_profiles.api_urls')),
     path('api/mana/', include('mana.api_urls')),
     path('api/coordination/', include('coordination.api_urls')),
     path('api/policies/', include('policies.api_urls')),
