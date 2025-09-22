@@ -67,11 +67,33 @@ class OBCCommunitySerializer(serializers.ModelSerializer):
             'community_leader', 'leader_contact', 'is_active', 'notes',
             'livelihoods', 'infrastructure', 'stakeholders', 'created_at', 'updated_at'
         ]
-    
+
     def get_stakeholders(self, obj):
         """Return simplified stakeholder data for the community."""
         stakeholders = obj.stakeholders.filter(is_active=True).order_by('stakeholder_type', 'full_name')
         return StakeholderListSerializer(stakeholders, many=True).data
+
+    # History helpers -----------------------------------------------------
+    def _get_history_user(self):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+        if user is not None and getattr(user, 'is_authenticated', False):
+            return user
+        return None
+
+    def create(self, validated_data):
+        history_user = self._get_history_user()
+        instance = OBCCommunity(**validated_data)
+        if history_user:
+            instance._history_user = history_user
+        instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        history_user = self._get_history_user()
+        if history_user:
+            instance._history_user = history_user
+        return super().update(instance, validated_data)
 
 
 class OBCCommunityListSerializer(serializers.ModelSerializer):

@@ -69,6 +69,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'common',
     'communities',
+    'municipal_profiles',
     'documents',
     'mana',
     'coordination',
