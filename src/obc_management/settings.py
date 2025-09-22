@@ -12,43 +12,38 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 import os
 from pathlib import Path
-
 import environ
 
 # Initialize environment variables
 env = environ.Env(
     DEBUG=(bool, True),
-    ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1", "testserver"]),
+    ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1']),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-RUNTIME_ROOT = BASE_DIR.parent / "var"
 
 # Take environment variables from .env file if it exists
-environ.Env.read_env(os.path.join(BASE_DIR.parent, ".env"))
+environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env(
-    "SECRET_KEY",
-    default="django-insecure-!yaxjq5)03f=tclan4d=b+^bh%(gl9@lgze9*)+fu79)-y!)k5",
-)
+SECRET_KEY = env('SECRET_KEY', default="django-insecure-!yaxjq5)03f=tclan4d=b+^bh%(gl9@lgze9*)+fu79)-y!)k5")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG")
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
 # Custom User Model
-AUTH_USER_MODEL = "common.User"
+AUTH_USER_MODEL = 'common.User'
 
 # Authentication URLs
-LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "/dashboard/"
-LOGOUT_REDIRECT_URL = "/login/"
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/login/'
 
 # Application definition
 
@@ -63,24 +58,24 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
-    "rest_framework",
-    "rest_framework_simplejwt",
-    "corsheaders",
-    "django_filters",
-    "django_extensions",
-    "crispy_forms",
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'django_filters',
+    'django_extensions',
+    'crispy_forms',
 ]
 
 LOCAL_APPS = [
-    "common",
-    "communities",
-    "recommendations.documents",
-    "mana",
-    "coordination",
-    "recommendations.policies",
-    "recommendations.policy_tracking",
-    "data_imports",
-    "monitoring",
+    'common',
+    'communities',
+    'municipal_profiles',
+    'documents',
+    'mana',
+    'coordination',
+    'policies',
+    'policy_tracking',
+    'data_imports',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -125,7 +120,9 @@ WSGI_APPLICATION = "obc_management.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {"default": env.db(default="sqlite:///" + str((RUNTIME_ROOT / "db.sqlite3").resolve()))}
+DATABASES = {
+    'default': env.db(default='sqlite:///' + str(BASE_DIR / 'db.sqlite3'))
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -164,7 +161,7 @@ STATICFILES_DIRS = [
 
 # Media files
 MEDIA_URL = "media/"
-MEDIA_ROOT = RUNTIME_ROOT / "media"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -173,23 +170,23 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Django REST Framework settings
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 20,
-    "DEFAULT_FILTER_BACKENDS": [
-        "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.SearchFilter",
-        "rest_framework.filters.OrderingFilter",
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
     ],
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ],
 }
 
@@ -197,9 +194,9 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": True,
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
 }
 
 # CORS settings
@@ -211,83 +208,77 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Site settings
-SITE_NAME = env("SITE_NAME", default="OBC Management System")
-SITE_DESCRIPTION = env(
-    "SITE_DESCRIPTION", default="Other Bangsamoro Communities Management System"
-)
+SITE_NAME = env('SITE_NAME', default='OBC Management System')
+SITE_DESCRIPTION = env('SITE_DESCRIPTION', default='Other Bangsamoro Communities Management System')
 
 # Django Admin "View site" link
 SITE_ID = 1
-SITE_URL = "/auth/dashboard/"
+SITE_URL = '/auth/dashboard/'
 
 # Crispy Forms
-CRISPY_TEMPLATE_PACK = "bootstrap4"
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 # Email settings
-EMAIL_BACKEND = env(
-    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
-)
-if EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend":
-    EMAIL_HOST = env("EMAIL_HOST", default="")
-    EMAIL_PORT = env("EMAIL_PORT", default=587)
-    EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True)
-    EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
-    EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+if EMAIL_BACKEND != 'django.core.mail.backends.console.EmailBackend':
+    EMAIL_HOST = env('EMAIL_HOST', default='')
+    EMAIL_PORT = env('EMAIL_PORT', default=587)
+    EMAIL_USE_TLS = env('EMAIL_USE_TLS', default=True)
+    EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+    EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 
 # Celery Configuration (for background tasks)
-CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
+CELERY_BROKER_URL = env('REDIS_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = env('REDIS_URL', default='redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
 # Logging
 LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
         },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
-        },
-    },
-    "handlers": {
-        "file": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": RUNTIME_ROOT / "logs" / "django.log",
-            "formatter": "verbose",
-        },
-        "console": {
-            "level": "INFO",
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
         },
     },
-    "root": {
-        "handlers": ["console", "file"],
-        "level": "INFO",
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'django.log',
+            'formatter': 'verbose',
         },
-        "obc_management": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'obc_management': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }
 
 # Create logs directory if it doesn't exist
-os.makedirs(RUNTIME_ROOT, exist_ok=True)
-os.makedirs(RUNTIME_ROOT / "logs", exist_ok=True)
-os.makedirs(MEDIA_ROOT, exist_ok=True)
+os.makedirs(BASE_DIR / 'logs', exist_ok=True)
