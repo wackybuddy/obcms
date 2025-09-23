@@ -101,7 +101,7 @@ class OBCCommunitySerializer(serializers.ModelSerializer):
             "obc_id",
             "community_type",
             "settlement_type",
-            "development_status",
+            "unemployment_rate",
             "specific_location",
             "latitude",
             "longitude",
@@ -147,7 +147,7 @@ class OBCCommunityListSerializer(serializers.ModelSerializer):
             "community_names",
             "community_type",
             "settlement_type",
-            "development_status",
+            "unemployment_rate",
             "population",
             "households",
             "region_name",
@@ -166,7 +166,7 @@ class CommunityStatsSerializer(serializers.Serializer):
     total_population = serializers.IntegerField()
     total_households = serializers.IntegerField()
     average_household_size = serializers.FloatField()
-    development_status_distribution = serializers.DictField()
+    unemployment_rate_distribution = serializers.DictField()
     settlement_type_distribution = serializers.DictField()
     communities_by_region = serializers.DictField()
     infrastructure_gaps = serializers.DictField()

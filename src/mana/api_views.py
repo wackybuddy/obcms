@@ -3,12 +3,12 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from communities.models import GeographicDataLayer, MapVisualization, SpatialDataPoint
 from .models import (Assessment, AssessmentCategory, AssessmentTeamMember,
                      BaselineDataCollection, BaselineIndicator, BaselineStudy,
-                     BaselineStudyTeamMember, GeographicDataLayer,
-                     MappingActivity, MapVisualization, Need, NeedsCategory,
-                     NeedsPrioritization, NeedsPrioritizationItem,
-                     SpatialDataPoint, Survey, SurveyQuestion, SurveyResponse)
+                     BaselineStudyTeamMember, MappingActivity, Need, NeedsCategory,
+                     NeedsPrioritization, NeedsPrioritizationItem, Survey,
+                     SurveyQuestion, SurveyResponse)
 from .serializers import (AssessmentCategorySerializer,
                           AssessmentListSerializer, AssessmentSerializer,
                           AssessmentTeamMemberSerializer,

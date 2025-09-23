@@ -81,7 +81,7 @@ COMMUNITY_PROFILE_WIDGETS = {
     ),
     "latitude": forms.NumberInput(attrs={"class": "form-control", "step": "any"}),
     "longitude": forms.NumberInput(attrs={"class": "form-control", "step": "any"}),
-    "number_of_employed_obc": forms.NumberInput(
+    "number_of_peoples_organizations": forms.NumberInput(
         attrs={"class": "form-control", "min": "0"}
     ),
     "number_of_cooperatives": forms.NumberInput(
@@ -100,7 +100,8 @@ COMMUNITY_PROFILE_WIDGETS = {
     "proximity_to_barmm": forms.Select(attrs={"class": "form-control"}),
     "primary_ethnolinguistic_group": forms.Select(attrs={"class": "form-control"}),
     "estimated_poverty_incidence": forms.Select(attrs={"class": "form-control"}),
-    "development_status": forms.Select(attrs={"class": "form-control"}),
+    "unemployment_rate": forms.Select(attrs={"class": "form-control"}),
+    "financial_access_level": forms.Select(attrs={"class": "form-control"}),
     "relationship_with_lgu": forms.Select(attrs={"class": "form-control"}),
     "access_formal_education": forms.Select(attrs={"class": "form-control"}),
     "access_als": forms.Select(attrs={"class": "form-control"}),
@@ -117,9 +118,6 @@ COMMUNITY_PROFILE_WIDGETS = {
     "primary_livelihoods": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
     "secondary_livelihoods": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
     "land_tenure_issues": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-    "financial_literacy_access": forms.Textarea(
-        attrs={"class": "form-control", "rows": 3}
-    ),
     "brief_historical_background": forms.Textarea(
         attrs={"class": "form-control", "rows": 3}
     ),
@@ -210,12 +208,12 @@ COMMUNITY_PROFILE_LABELS = {
     "migrants_transients_count": "Number of Migrants/Transients",
     "other_vulnerable_sectors": "Other Vulnerable Sectors",
     "estimated_poverty_incidence": "Estimated Poverty Incidence",
-    "number_of_employed_obc": "Number of Employed OBC Individuals",
+    "number_of_peoples_organizations": "Number of People's Organizations",
     "number_of_cooperatives": "Number of Cooperatives",
     "number_of_social_enterprises": "Number of Social Enterprises",
     "number_of_micro_enterprises": "Number of Micro-Enterprises",
     "number_of_unbanked_obc": "Number of Unbanked OBC Individuals",
-    "financial_literacy_access": "Financial Literacy Access",
+    "financial_access_level": "Access to Banking and Financial Services",
     "access_formal_education": "Access to Formal Education",
     "access_als": "Access to ALS",
     "access_madrasah": "Access to Madrasah",
@@ -237,7 +235,7 @@ COMMUNITY_PROFILE_LABELS = {
     "mosques_count": "Number of Mosques",
     "madrasah_count": "Number of Madrasah",
     "asatidz_count": "Number of Asatidz",
-    "other_cultural_facilities": "Other Cultural Facilities / Assets",
+    "other_cultural_facilities": "Other Cultural Facilities / Artefacts / Assets",
     "formal_political_representation": "Formal Political Representation",
     "informal_leadership_structures": "Informal Leadership Structures",
     "community_organizations": "Community Organizations",
@@ -264,7 +262,7 @@ COMMUNITY_PROFILE_LABELS = {
     "cultural_preservation_priorities": "Cultural Preservation Priorities",
     "peace_security_priorities": "Peace & Security Priorities",
     "specific_project_proposals": "Specific Project Proposals",
-    "development_status": "Development Status",
+    "unemployment_rate": "Unemployment Rate",
     "needs_assessment_date": "Needs Assessment Date",
     "key_findings_last_assessment": "Key Findings (Last Assessment)",
     "assessment_data_sources": "Assessment Data Sources",

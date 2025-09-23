@@ -93,7 +93,7 @@ def import_communities_csv(request):
                     "primary_ethnolinguistic_group": row.get(
                         "primary_ethnolinguistic_group", ""
                     ),
-                    "development_status": row.get("development_status", "developing"),
+                    "unemployment_rate": row.get("unemployment_rate", "unknown"),
                     "settlement_type": row.get("settlement_type", "village"),
                     "latitude": (
                         row.get("latitude") if pd.notna(row.get("latitude")) else None
@@ -316,7 +316,7 @@ def _export_to_csv(communities, include_fields):
             community.get_primary_ethnolinguistic_group_display() or "",
             community.latitude or "",
             community.longitude or "",
-            community.get_development_status_display(),
+            community.get_unemployment_rate_display(),
         ]
         writer.writerow(row)
 
@@ -394,7 +394,7 @@ def _export_to_pdf(communities, include_fields):
                 location[:35] + "..." if len(location) > 35 else location,
                 str(community.estimated_obc_population or "N/A"),
                 str(community.households or "N/A"),
-                community.get_development_status_display(),
+                community.get_unemployment_rate_display(),
             ]
         )
 
@@ -533,17 +533,17 @@ def _generate_summary_report(format_type):
         elements.append(region_table)
         elements.append(Spacer(1, 20))
 
-        # Development status distribution
-        dev_status_data = {}
+        # Unemployment rate distribution
+        unemployment_data = {}
         for community in communities:
-            status = community.get_development_status_display()
-            dev_status_data[status] = dev_status_data.get(status, 0) + 1
+            rate = community.get_unemployment_rate_display()
+            unemployment_data[rate] = unemployment_data.get(rate, 0) + 1
 
-        status_table_data = [["Development Status", "Count", "Percentage"]]
+        status_table_data = [["Unemployment Rate", "Count", "Percentage"]]
         total = communities.count()
-        for status, count in dev_status_data.items():
+        for rate, count in unemployment_data.items():
             percentage = (count / total * 100) if total > 0 else 0
-            status_table_data.append([status, str(count), f"{percentage:.1f}%"])
+            status_table_data.append([rate, str(count), f"{percentage:.1f}%"])
 
         status_table = Table(
             status_table_data, colWidths=[2.5 * inch, 1 * inch, 1 * inch]

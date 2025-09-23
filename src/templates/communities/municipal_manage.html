@@ -52,36 +52,38 @@
             </h2>
         </div>
         <div class="p-6">
-            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+                <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Region</label>
-                    <select name="region" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <select name="region" data-initial="{{ current_region|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                         <option value="">All Regions</option>
                         {% for region in regions %}
                         <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Sync Mode</label>
-                    <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">All Modes</option>
-                        <option value="auto" {% if current_status == "auto" %}selected{% endif %}>Auto-sync enabled</option>
-                        <option value="manual" {% if current_status == "manual" %}selected{% endif %}>Manual</option>
+                <div class="lg:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Province</label>
+                    <select name="province" data-initial="{{ current_province|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                        <option value="">All Provinces</option>
+                        {% for province in provinces %}
+                        <option value="{{ province.id }}" {% if current_province == province.id|stringformat:"s" %}selected{% endif %}>{{ province.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
-                <div>
+                <div class="lg:col-span-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
                     <input type="text" name="search" value="{{ search_query }}"
-                           placeholder="Search municipality, province, region..."
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                           placeholder="Search municipality, province, or region..."
+                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                 </div>
-                <div class="flex items-end space-x-2">
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
-                        <i class="fas fa-search mr-2"></i>Apply Filters
+                <div class="lg:col-span-2 flex flex-col sm:flex-row gap-3 lg:items-end">
+                    <button type="submit" class="w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
+                        Apply
                     </button>
-                    <a href="{% url 'common:communities_manage_municipal' %}" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
-                        <i class="fas fa-undo mr-2"></i>Clear
+                    <a href="{% url 'common:communities_manage_municipal' %}"
+                       class="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
+                        Clear
                     </a>
                 </div>
             </form>
@@ -92,7 +94,7 @@
         <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
             <h2 class="text-xl font-bold text-white flex items-center">
                 <i class="fas fa-list mr-3 text-2xl"></i>
-                Municipal Coverage List
+                Municipal OBC List
             </h2>
         </div>
         <div class="overflow-x-auto">
@@ -103,7 +105,6 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Municipality / City</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Province & Region</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coverage Snapshot</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Programs & Barangays</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sync Mode</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -125,22 +126,15 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">
                             <p class="font-medium text-gray-900">{{ coverage.municipality.province.name }}</p>
-                            <p class="text-xs text-gray-500">{{ coverage.municipality.province.region.name }}</p>
+                            <p class="text-xs text-gray-500">Region {{ coverage.municipality.province.region.code }} · {{ coverage.municipality.province.region.name }}</p>
                         </td>
                         <td class="px-6 py-4 text-sm">
-                            <p class="text-gray-900 font-semibold">{{ coverage.total_obc_communities|default:0 }} barangay OBCs</p>
-                            <p class="text-xs text-gray-500">Estimated population: {{ coverage.estimated_obc_population|default:0 }}</p>
+                            <p class="text-gray-900 font-semibold">{{ coverage.total_obc_communities|default:0 }} barangay OBCs tracked</p>
+                            <p class="text-xs text-gray-500">Est. OBC Population: {{ coverage.estimated_obc_population|default:0 }}</p>
+                            <p class="text-xs text-gray-500">Total Population: {{ coverage.total_barangay_population|default:0 }}</p>
                             <p class="text-xs text-gray-500">Households: {{ coverage.households|default:0 }}</p>
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
                             {% if coverage.key_barangays %}
-                                <p class="text-xs text-gray-900 font-medium mb-1">Key Barangays:</p>
-                                <p class="text-xs text-gray-500 line-clamp-2">{{ coverage.key_barangays }}</p>
-                            {% else %}
-                                <span class="text-xs text-gray-400 italic">No barangays listed</span>
-                            {% endif %}
-                            {% if coverage.existing_support_programs %}
-                                <p class="text-xs text-gray-500 mt-2">{{ coverage.existing_support_programs }}</p>
+                                <p class="text-xs text-gray-500 mt-2"><span class="font-semibold text-gray-700">Key Barangays:</span> {{ coverage.key_barangays }}</p>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4">
@@ -160,6 +154,10 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
+                                <a href="{% url 'common:communities_view_municipal' coverage.id %}"
+                                   class="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
+                                    <i class="fas fa-eye mr-1"></i>View
+                                </a>
                                 <a href="{% url 'common:communities_edit_municipal' coverage.id %}"
                                    class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
                                     <i class="fas fa-edit mr-1"></i>Edit
@@ -248,4 +246,65 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+    {% if province_options_json %}
+        {{ province_options_json|json_script:"municipal-province-options" }}
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const dataElement = document.getElementById("municipal-province-options");
+                if (!dataElement) {
+                    return;
+                }
+
+                let provinceOptions;
+                try {
+                    provinceOptions = JSON.parse(dataElement.textContent);
+                } catch (error) {
+                    console.error("Failed to parse province options", error);
+                    provinceOptions = [];
+                }
+
+                const regionSelect = document.querySelector('form select[name="region"]');
+                const provinceSelect = document.querySelector('form select[name="province"]');
+                if (!regionSelect || !provinceSelect) {
+                    return;
+                }
+
+                const populateProvinces = (regionId, preserveValue) => {
+                    const normalizedId = regionId ? String(regionId) : "";
+                    const previousValue = preserveValue || "";
+                    const filtered = normalizedId
+                        ? provinceOptions.filter((option) => option.region_id === normalizedId)
+                        : provinceOptions;
+
+                    provinceSelect.innerHTML = "";
+                    const defaultOption = document.createElement("option");
+                    defaultOption.value = "";
+                    defaultOption.textContent = "All Provinces";
+                    provinceSelect.appendChild(defaultOption);
+
+                    filtered.forEach((option) => {
+                        const opt = document.createElement("option");
+                        opt.value = option.id;
+                        opt.textContent = option.name;
+                        provinceSelect.appendChild(opt);
+                    });
+
+                    if (previousValue && filtered.some((option) => option.id === previousValue)) {
+                        provinceSelect.value = previousValue;
+                    }
+                };
+
+                const initialRegion = regionSelect.dataset.initial || regionSelect.value || "";
+                const initialProvince = provinceSelect.dataset.initial || provinceSelect.value || "";
+                populateProvinces(initialRegion, initialProvince);
+
+                regionSelect.addEventListener("change", () => {
+                    populateProvinces(regionSelect.value, "");
+                });
+            });
+        </script>
+    {% endif %}
 {% endblock %}

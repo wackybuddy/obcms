@@ -76,12 +76,12 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
             by_region[region_name] += 1
 
         # By development status
-        by_development_status = {}
+    by_unemployment_rate = {}
         for community in communities:
-            status = community.get_development_status_display()
-            if status not in by_development_status:
-                by_development_status[status] = 0
-            by_development_status[status] += 1
+        rate = community.get_unemployment_rate_display()
+        if rate not in by_unemployment_rate:
+            by_unemployment_rate[rate] = 0
+        by_unemployment_rate[rate] += 1
 
         # By settlement type
         by_settlement_type = {}
@@ -122,7 +122,7 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
             "total_population": total_population,
             "total_households": total_households,
             "by_region": by_region,
-            "by_development_status": by_development_status,
+            "by_unemployment_rate": by_unemployment_rate,
             "by_settlement_type": by_settlement_type,
             "religious_facilities": religious_facilities,
             "average_household_size": round(average_household_size, 1),

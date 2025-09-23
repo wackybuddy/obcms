@@ -217,6 +217,25 @@
                                     {% endif %}
                                 </div>
                             </div>
+
+                            <div id="geodata-notice"
+                                 data-base-url="{% url 'common:mana_geographic_data' %}"
+                                 class="md:col-span-2 hidden">
+                                <div class="flex items-start bg-blue-50 border border-blue-100 rounded-lg px-4 py-3">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <i class="fas fa-map-marker-alt text-blue-500"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p id="geodata-notice-text" class="text-sm font-medium text-blue-800"></p>
+                                        <a id="geodata-notice-link"
+                                           href="{% url 'common:mana_geographic_data' %}"
+                                           class="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-700 mt-1">
+                                            <span>Open Geographic Data</span>
+                                            <i class="fas fa-external-link-alt ml-2 text-xs"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                             
                             <!-- Community Names -->
                             <div class="md:col-span-2">
@@ -714,33 +733,34 @@
                                 </div>
                                 
                                 <div>
-                                    <label for="{{ form.development_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        {{ form.development_status.label }}
+                                    <label for="{{ form.unemployment_rate.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.unemployment_rate.label }}
                                     </label>
-                                    <select name="{{ form.development_status.name }}" 
-                                            id="{{ form.development_status.id_for_label }}"
+                                    <select name="{{ form.unemployment_rate.name }}" 
+                                            id="{{ form.unemployment_rate.id_for_label }}"
                                             class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
-                                        {% for value, label in form.development_status.field.choices %}
-                                            <option value="{{ value }}" {% if value == form.development_status.value %}selected{% endif %}>{{ label }}</option>
+                                        {% for value, label in form.unemployment_rate.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.unemployment_rate.value %}selected{% endif %}>{{ label }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                             </div>
                             
                             <!-- Economic Information -->
-                            <h4 class="text-md font-medium text-gray-800 mb-3">Employment and Financial Access</h4>
+                            <h4 class="text-md font-medium text-gray-800 mb-3">Financial Access</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <div>
-                                    <label for="{{ form.number_of_employed_obc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                        {{ form.number_of_employed_obc.label }}
+                                    <label for="{{ form.financial_access_level.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ form.financial_access_level.label }}
                                     </label>
-                                    <input type="number" 
-                                           name="{{ form.number_of_employed_obc.name }}" 
-                                           id="{{ form.number_of_employed_obc.id_for_label }}"
-                                           value="{{ form.number_of_employed_obc.value|default_if_none:'' }}"
-                                           min="0"
-                                           placeholder="Number of employed OBC individuals"
-                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                    <select name="{{ form.financial_access_level.name }}" 
+                                            id="{{ form.financial_access_level.id_for_label }}"
+                                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                                        <option value="">Select access level...</option>
+                                        {% for value, label in form.financial_access_level.field.choices %}
+                                            <option value="{{ value }}" {% if value == form.financial_access_level.value %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </div>
                                 
                                 <div>
@@ -810,16 +830,6 @@
                                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.land_tenure_issues.value|default_if_none:'' }}</textarea>
                             </div>
                             
-                            <div>
-                                <label for="{{ form.financial_literacy_access.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                                    {{ form.financial_literacy_access.label }}
-                                </label>
-                                <textarea name="{{ form.financial_literacy_access.name }}" 
-                                          id="{{ form.financial_literacy_access.id_for_label }}"
-                                          rows="3"
-                                          placeholder="Financial literacy and access to financial services"
-                                          class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200">{{ form.financial_literacy_access.value|default_if_none:'' }}</textarea>
-                            </div>
                         </div>
                     </div>
                     
@@ -1456,6 +1466,11 @@ function setupLocationSelectors() {
         barangaysByMunicipality.get(key).push(barangay);
     });
 
+    const geodataNotice = document.getElementById('geodata-notice');
+    const geodataNoticeText = document.getElementById('geodata-notice-text');
+    const geodataNoticeLink = document.getElementById('geodata-notice-link');
+    const geodataBaseUrl = geodataNotice ? geodataNotice.dataset.baseUrl || geodataNoticeLink.getAttribute('href') : '';
+
     const getDatasetValue = (element, key, fallback = '') =>
         element && element.dataset && element.dataset[key] !== undefined
             ? element.dataset[key]
@@ -1477,36 +1492,101 @@ function setupLocationSelectors() {
 
     const toStringId = value => (value === null || value === undefined ? '' : String(value));
 
+    const datasetSuffix = count => {
+        const numeric = Number(count || 0);
+        if (!numeric) {
+            return '';
+        }
+        let formatted = numeric;
+        try {
+            formatted = numeric.toLocaleString('en-PH');
+        } catch (error) {
+            formatted = numeric.toLocaleString();
+        }
+        return ` • ${formatted} dataset${numeric === 1 ? '' : 's'}`;
+    };
+
+    const regionLabel = region =>
+        region && region.code ? `Region ${region.code} - ${region.name}` : region.name;
+    const provinceLabel = province => province.name;
+    const municipalityLabel = municipality => municipality.name;
+    const barangayLabel = barangay => barangay.name;
+
     const setOptions = (select, options, placeholder, selectedValue, getLabel) => {
         if (!select) {
             return;
         }
 
         const desiredValue = toStringId(selectedValue);
+        const previousValue = toStringId(select.value);
         select.innerHTML = '';
 
         const placeholderOption = document.createElement('option');
         placeholderOption.value = '';
         placeholderOption.textContent = placeholder;
         placeholderOption.dataset.population = '';
+        placeholderOption.dataset.geodataCount = '';
+        placeholderOption.dataset.geodataCommunities = '';
+        placeholderOption.dataset.geodataLayers = '';
+        placeholderOption.dataset.geodataVisualizations = '';
+        placeholderOption.dataset.geodataPoints = '';
+        placeholderOption.dataset.displayLabel = placeholder;
         select.appendChild(placeholderOption);
 
         options.forEach(option => {
             const optionElement = document.createElement('option');
-            optionElement.value = String(option.id);
-            optionElement.textContent = getLabel ? getLabel(option) : option.name;
-            if (String(option.id) === desiredValue) {
+            const optionId = toStringId(option.id);
+            optionElement.value = optionId;
+            const baseLabel = getLabel ? getLabel(option) : option.name;
+            optionElement.textContent = `${baseLabel}${datasetSuffix(option.geodata_count)}`;
+            optionElement.dataset.displayLabel = baseLabel;
+
+            if (optionId === desiredValue || (!desiredValue && optionId === previousValue)) {
                 optionElement.selected = true;
             }
-            if (Object.prototype.hasOwnProperty.call(option, 'population') && option.population !== null && option.population !== undefined) {
+
+            if (
+                Object.prototype.hasOwnProperty.call(option, 'population') &&
+                option.population !== null &&
+                option.population !== undefined
+            ) {
                 optionElement.dataset.population = String(option.population);
             } else {
                 optionElement.dataset.population = '';
             }
+
+            optionElement.dataset.geodataCount =
+                option.geodata_count !== undefined && option.geodata_count !== null
+                    ? String(option.geodata_count)
+                    : '';
+            optionElement.dataset.geodataCommunities =
+                option.geodata_communities !== undefined && option.geodata_communities !== null
+                    ? String(option.geodata_communities)
+                    : '';
+            optionElement.dataset.geodataLayers =
+                option.geodata_layers !== undefined && option.geodata_layers !== null
+                    ? String(option.geodata_layers)
+                    : '';
+            optionElement.dataset.geodataVisualizations =
+                option.geodata_visualizations !== undefined && option.geodata_visualizations !== null
+                    ? String(option.geodata_visualizations)
+                    : '';
+            optionElement.dataset.geodataPoints =
+                option.geodata_points !== undefined && option.geodata_points !== null
+                    ? String(option.geodata_points)
+                    : '';
+            optionElement.dataset.hasGeodata = option.has_geodata ? 'true' : '';
+
             select.appendChild(optionElement);
         });
 
-        if (desiredValue && !options.some(option => String(option.id) === desiredValue)) {
+        const targetValue = desiredValue || previousValue;
+        if (targetValue) {
+            select.value = targetValue;
+            if (select.value !== targetValue) {
+                select.value = '';
+            }
+        } else {
             select.value = '';
         }
     };
@@ -1535,15 +1615,12 @@ function setupLocationSelectors() {
         }
     };
 
-    const regionLabel = region =>
-        region && region.code ? `Region ${region.code} - ${region.name}` : region.name;
-
     const updateProvinceOptions = (regionId, selectedValue) => {
         if (!provinceSelect) {
             return;
         }
         const options = regionId ? provincesByRegion.get(toStringId(regionId)) || [] : [];
-        setOptions(provinceSelect, options, provincePlaceholder, selectedValue);
+        setOptions(provinceSelect, options, provincePlaceholder, selectedValue, provinceLabel);
     };
 
     const updateMunicipalityOptions = (provinceId, selectedValue) => {
@@ -1553,7 +1630,13 @@ function setupLocationSelectors() {
         const options = provinceId
             ? municipalitiesByProvince.get(toStringId(provinceId)) || []
             : [];
-        setOptions(municipalitySelect, options, municipalityPlaceholder, selectedValue);
+        setOptions(
+            municipalitySelect,
+            options,
+            municipalityPlaceholder,
+            selectedValue,
+            municipalityLabel,
+        );
     };
 
     const updateBarangayOptions = (municipalityId, selectedValue) => {
@@ -1563,7 +1646,7 @@ function setupLocationSelectors() {
         const options = municipalityId
             ? barangaysByMunicipality.get(toStringId(municipalityId)) || []
             : [];
-        setOptions(barangaySelect, options, barangayPlaceholder, selectedValue);
+        setOptions(barangaySelect, options, barangayPlaceholder, selectedValue, barangayLabel);
     };
 
     const totalPopulationInput = document.getElementById('id_total_barangay_population');
@@ -1587,6 +1670,86 @@ function setupLocationSelectors() {
         }
     };
 
+    const updateGeodataNotice = () => {
+        if (!geodataNotice || !geodataNoticeText || !geodataNoticeLink) {
+            return;
+        }
+
+        const selectionOrder = [
+            { level: 'barangay', select: barangaySelect },
+            { level: 'municipality', select: municipalitySelect },
+            { level: 'province', select: provinceSelect },
+            { level: 'region', select: regionSelect },
+        ];
+
+        const activeSelection = selectionOrder.find(({ select }) => select && select.value);
+        if (!activeSelection) {
+            geodataNotice.classList.add('hidden');
+            return;
+        }
+
+        const selectedOption = activeSelection.select.options[activeSelection.select.selectedIndex];
+        if (!selectedOption) {
+            geodataNotice.classList.add('hidden');
+            return;
+        }
+
+        const geodataCount = Number(selectedOption.dataset.geodataCount || 0);
+        if (!geodataCount) {
+            geodataNotice.classList.add('hidden');
+            return;
+        }
+
+        let formattedCount = geodataCount;
+        try {
+            formattedCount = geodataCount.toLocaleString('en-PH');
+        } catch (error) {
+            formattedCount = geodataCount.toLocaleString();
+        }
+
+        const datasetLabel = geodataCount === 1 ? 'dataset' : 'datasets';
+        const communitiesCount = Number(selectedOption.dataset.geodataCommunities || 0);
+        let communitiesSuffix = '';
+        if (communitiesCount) {
+            let formattedCommunities = communitiesCount;
+            try {
+                formattedCommunities = communitiesCount.toLocaleString('en-PH');
+            } catch (error) {
+                formattedCommunities = communitiesCount.toLocaleString();
+            }
+            communitiesSuffix = ` across ${formattedCommunities} community${communitiesCount === 1 ? '' : 'ies'}`;
+        }
+
+        const levelLabels = {
+            barangay: 'Barangay',
+            municipality: 'Municipality / City',
+            province: 'Province',
+            region: 'Region',
+        };
+
+        const locationLabel = selectedOption.dataset.displayLabel || selectedOption.textContent.trim();
+        geodataNoticeText.textContent = `${formattedCount} geographic ${datasetLabel}${communitiesSuffix} available for ${levelLabels[activeSelection.level]} ${locationLabel}.`;
+
+        const params = new URLSearchParams();
+        if (regionSelect && regionSelect.value) {
+            params.set('region', regionSelect.value);
+        }
+        if (provinceSelect && provinceSelect.value) {
+            params.set('province', provinceSelect.value);
+        }
+        if (municipalitySelect && municipalitySelect.value) {
+            params.set('municipality', municipalitySelect.value);
+        }
+        if (barangaySelect && barangaySelect.value) {
+            params.set('barangay', barangaySelect.value);
+        }
+
+        const baseUrl = geodataBaseUrl || '#';
+        const query = params.toString();
+        geodataNoticeLink.href = query ? `${baseUrl}?${query}` : baseUrl;
+        geodataNotice.classList.remove('hidden');
+    };
+
     if (regionSelect) {
         setOptions(regionSelect, locationData.regions || [], regionPlaceholder, initialRegion, regionLabel);
         regionSelect.addEventListener('change', () => {
@@ -1599,6 +1762,7 @@ function setupLocationSelectors() {
             if (!hasBarangayField) {
                 updateMunicipalityPreview('');
             }
+            updateGeodataNotice();
         });
     }
 
@@ -1612,20 +1776,19 @@ function setupLocationSelectors() {
             if (!hasBarangayField) {
                 updateMunicipalityPreview('');
             }
-        });
-    }
-
-    if (municipalitySelect && barangaySelect) {
-        municipalitySelect.addEventListener('change', () => {
-            updateBarangayOptions(municipalitySelect.value, '');
-            applyPopulationValue(barangaySelect, totalPopulationInput, {
-                clearOnEmpty: true,
-            });
+            updateGeodataNotice();
         });
     }
 
     if (municipalitySelect) {
         municipalitySelect.addEventListener('change', () => {
+            if (barangaySelect) {
+                updateBarangayOptions(municipalitySelect.value, '');
+                applyPopulationValue(barangaySelect, totalPopulationInput, {
+                    clearOnEmpty: true,
+                });
+            }
+
             applyPopulationValue(
                 hasBarangayField ? barangaySelect : municipalitySelect,
                 totalPopulationInput,
@@ -1634,6 +1797,8 @@ function setupLocationSelectors() {
             if (!hasBarangayField) {
                 updateMunicipalityPreview(getSelectedPopulation(municipalitySelect));
             }
+
+            updateGeodataNotice();
         });
     }
 
@@ -1642,6 +1807,7 @@ function setupLocationSelectors() {
             applyPopulationValue(barangaySelect, totalPopulationInput, {
                 clearOnEmpty: false,
             });
+            updateGeodataNotice();
         });
     }
 
@@ -1669,6 +1835,8 @@ function setupLocationSelectors() {
         updateBarangayOptions(initialMunicipality, initialBarangay);
         applyPopulationValue(barangaySelect, totalPopulationInput);
     }
+
+    updateGeodataNotice();
 }
 
 // Initialize tabs and cascading selects on page load

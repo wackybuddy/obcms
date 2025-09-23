@@ -518,7 +518,7 @@ class MunicipalityCoverageFormTest(TestCase):
                 "key_barangays": "Barangay Zone I, Barangay Zone II",
                 "auto_sync": False,
                 "settlement_type": "village",
-                "development_status": "developing",
+                "unemployment_rate": "moderate",
                 "religious_leaders_count": 0,
                 "mosques_count": 0,
                 "madrasah_count": 0,
@@ -538,7 +538,7 @@ class MunicipalityCoverageFormTest(TestCase):
                 "municipality": str(self.municipality_b.id),
                 "total_obc_communities": 1,
                 "settlement_type": "village",
-                "development_status": "developing",
+                "unemployment_rate": "moderate",
                 "religious_leaders_count": 0,
             }
         )
@@ -564,7 +564,7 @@ class MunicipalityCoverageFormTest(TestCase):
                 "municipality": str(other_municipality.id),
                 "total_obc_communities": 2,
                 "settlement_type": "village",
-                "development_status": "developing",
+                "unemployment_rate": "moderate",
                 "religious_leaders_count": 0,
             }
         )
@@ -623,7 +623,7 @@ class OBCCommunityFormTest(TestCase):
                 "barangay": str(self.barangay.id),
                 "community_names": "Sample OBC Community",
                 "settlement_type": "village",
-                "development_status": "developing",
+                "unemployment_rate": "moderate",
                 "mosques_count": 0,
                 "madrasah_count": 0,
                 "religious_leaders_count": 0,
@@ -643,7 +643,7 @@ class OBCCommunityFormTest(TestCase):
                 "barangay": str(self.other_barangay.id),
                 "community_names": "Mismatch OBC",
                 "settlement_type": "village",
-                "development_status": "developing",
+                "unemployment_rate": "moderate",
             }
         )
         self.assertFalse(form.is_valid())
@@ -658,7 +658,7 @@ class OBCCommunityFormTest(TestCase):
                 "barangay": str(self.barangay.id),
                 "community_names": "Region Mismatch",
                 "settlement_type": "village",
-                "development_status": "developing",
+                "unemployment_rate": "moderate",
             }
         )
         self.assertFalse(form.is_valid())
@@ -725,7 +725,7 @@ class MunicipalityCoverageViewTest(TestCase):
                 "notes": "Priority for housing assistance",
                 "auto_sync": False,
                 "settlement_type": "village",
-                "development_status": "developing",
+                "unemployment_rate": "moderate",
                 "religious_leaders_count": 0,
                 "mosques_count": 0,
                 "madrasah_count": 0,

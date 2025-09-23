@@ -85,7 +85,7 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter,
     ]
     filterset_fields = [
-        "development_status",
+        "unemployment_rate",
         "settlement_type",
         "mosques_count",
         "madrasah_count",
@@ -112,7 +112,7 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
         "population",
         "households",
         "established_year",
-        "development_status",
+        "unemployment_rate",
         "created_at",
         "updated_at",
     ]
@@ -169,11 +169,11 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
             .values_list("barangay__municipality__province__region__name", "count")
         )
 
-        # By development status
-        by_development_status = dict(
-            communities.values("development_status")
+        # By unemployment rate
+        by_unemployment_rate = dict(
+            communities.values("unemployment_rate")
             .annotate(count=Count("id"))
-            .values_list("development_status", "count")
+            .values_list("unemployment_rate", "count")
         )
 
         # By settlement type
@@ -208,7 +208,7 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
             "total_population": total_population,
             "total_households": total_households,
             "by_region": by_region,
-            "by_development_status": by_development_status,
+            "unemployment_rate_distribution": by_unemployment_rate,
             "by_settlement_type": by_settlement_type,
             "religious_facilities": religious_facilities,
             "average_household_size": (
@@ -252,9 +252,9 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def vulnerable(self, request):
-        """Get communities with vulnerable or at-risk status."""
+        """Get communities with high unemployment rates."""
         communities = self.get_queryset().filter(
-            development_status__in=["vulnerable", "at_risk"]
+            unemployment_rate__in=["high", "very_high", "extremely_high"]
         )
         serializer = self.get_serializer(communities, many=True)
         return Response(serializer.data)
@@ -278,7 +278,7 @@ class CommunityLivelihoodViewSet(viewsets.ModelViewSet):
         "seasonal",
         "income_level",
         "community",
-        "community__development_status",
+        "community__unemployment_rate",
         "community__barangay__municipality__province__region",
     ]
     search_fields = ["specific_activity", "description", "challenges", "opportunities"]
@@ -308,7 +308,7 @@ class CommunityInfrastructureViewSet(viewsets.ModelViewSet):
         "condition",
         "priority_for_improvement",
         "community",
-        "community__development_status",
+        "community__unemployment_rate",
         "community__barangay__municipality__province__region",
     ]
     search_fields = ["description", "notes"]
@@ -361,7 +361,7 @@ class StakeholderViewSet(viewsets.ModelViewSet):
         "is_active",
         "is_verified",
         "community",
-        "community__development_status",
+        "community__unemployment_rate",
         "community__barangay__municipality__province__region",
     ]
     search_fields = [
@@ -541,7 +541,7 @@ class StakeholderEngagementViewSet(viewsets.ModelViewSet):
         "stakeholder",
         "stakeholder__stakeholder_type",
         "stakeholder__community",
-        "stakeholder__community__development_status",
+        "stakeholder__community__unemployment_rate",
     ]
     search_fields = [
         "title",

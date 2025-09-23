@@ -1,10 +1,14 @@
 """Views for OBC communities management screens."""
 
+import json
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
+
+from django.core.serializers.json import DjangoJSONEncoder
 
 from ..forms import MunicipalityCoverageForm, OBCCommunityForm
 from ..models import Barangay, Region
@@ -43,7 +47,7 @@ def communities_home(request):
         total_migrants_transients=Sum("migrants_transients_count"),
         total_csos=Sum("csos_count"),
         total_associations=Sum("associations_count"),
-        total_cooperatives=Sum("number_of_cooperatives"),
+        total_peoples_organizations=Sum("number_of_peoples_organizations"),
     )
 
     infrastructure_stats = (
@@ -55,8 +59,8 @@ def communities_home(request):
         .order_by("-count")[:5]
     )
 
-    development_status = (
-        communities.values("development_status")
+    unemployment_rates = (
+        communities.values("unemployment_rate")
         .annotate(count=Count("id"))
         .order_by("-count")
     )
@@ -82,6 +86,14 @@ def communities_home(request):
         .order_by("-communities_count")[:5]
     )
 
+    # Calculate totals for the new stat cards
+    # Include barangay populations + non-auto-synced municipal populations to avoid double-counting
+    barangay_population = communities.aggregate(total=Sum("estimated_obc_population"))["total"] or 0
+    municipal_population = municipality_coverages.filter(auto_sync=False).aggregate(total=Sum("estimated_obc_population"))["total"] or 0
+    total_obc_population = barangay_population + municipal_population
+    total_barangay_obcs = communities.count()
+    total_municipal_obcs = municipality_coverages.count()
+
     stats = {
         "communities": {
             "total": communities.count(),
@@ -98,9 +110,13 @@ def communities_home(request):
             .annotate(count=Count("id"))
             .order_by("-count"),
             "recent": communities.order_by("-created_at")[:10],
-            "development_status": development_status,
+            "unemployment_rates": unemployment_rates,
             "with_madrasah": communities.filter(madrasah_count__gt=0).count(),
             "with_mosque": communities.filter(mosques_count__gt=0).count(),
+            # New statistics for the requested stat cards
+            "total_obc_population_database": total_obc_population,
+            "total_barangay_obcs_database": total_barangay_obcs,
+            "total_municipal_obcs_database": total_municipal_obcs,
         },
         "vulnerable_sectors": vulnerable_sectors,
         "infrastructure_needs": infrastructure_stats,
@@ -237,7 +253,7 @@ def communities_manage(request):
     )
 
     region_filter = request.GET.get("region")
-    status_filter = request.GET.get("status")
+    province_filter = request.GET.get("province")
     search_query = request.GET.get("search")
 
     if region_filter:
@@ -248,11 +264,13 @@ def communities_manage(request):
             municipality__province__region__id=region_filter
         )
 
-    if status_filter:
-        if status_filter == "active":
-            communities = communities.filter(is_active=True)
-        elif status_filter == "inactive":
-            communities = communities.filter(is_active=False)
+    if province_filter:
+        communities = communities.filter(
+            barangay__municipality__province__id=province_filter
+        )
+        municipality_coverages = municipality_coverages.filter(
+            municipality__province__id=province_filter
+        )
 
     if search_query:
         communities = communities.filter(
@@ -269,6 +287,28 @@ def communities_manage(request):
         )
 
     regions = Region.objects.all().order_by("name")
+
+    # Get provinces and prepare client-side filtering metadata
+    from ..models import Province
+
+    base_provinces_qs = Province.objects.select_related("region").order_by(
+        "region__name", "name"
+    )
+    provinces = base_provinces_qs
+    if region_filter:
+        provinces = provinces.filter(region__id=region_filter)
+
+    province_options = [
+        {
+            "id": str(province.id),
+            "name": province.name,
+            "region_id": str(province.region_id),
+            "region_code": province.region.code,
+        }
+        for province in base_provinces_qs
+    ]
+
+    province_options_json = json.dumps(province_options, cls=DjangoJSONEncoder)
 
     total_barangay_obcs = communities.count()
     total_barangay_population = (
@@ -316,9 +356,11 @@ def communities_manage(request):
     context = {
         "communities": communities,
         "regions": regions,
+        "provinces": provinces,
         "current_region": region_filter,
-        "current_status": status_filter,
+        "current_province": province_filter,
         "search_query": search_query,
+        "province_options_json": province_options_json,
         "total_communities": total_barangay_obcs,
         "total_population": total_barangay_population,
         "municipality_coverages": municipality_coverages,
@@ -349,7 +391,7 @@ def communities_manage_municipal(request):
     )
 
     region_filter = request.GET.get("region")
-    status_filter = request.GET.get("status")
+    province_filter = request.GET.get("province")
     search_query = request.GET.get("search")
 
     if region_filter:
@@ -357,10 +399,10 @@ def communities_manage_municipal(request):
             municipality__province__region__id=region_filter
         )
 
-    if status_filter == "auto":
-        coverages = coverages.filter(auto_sync=True)
-    elif status_filter == "manual":
-        coverages = coverages.filter(auto_sync=False)
+    if province_filter:
+        coverages = coverages.filter(
+            municipality__province__id=province_filter
+        )
 
     if search_query:
         coverages = coverages.filter(
@@ -371,6 +413,28 @@ def communities_manage_municipal(request):
         )
 
     regions = Region.objects.all().order_by("name")
+
+    # Get provinces and prepare client-side filtering metadata
+    from ..models import Province
+
+    base_provinces_qs = Province.objects.select_related("region").order_by(
+        "region__name", "name"
+    )
+    provinces = base_provinces_qs
+    if region_filter:
+        provinces = provinces.filter(region__id=region_filter)
+
+    province_options = [
+        {
+            "id": str(province.id),
+            "name": province.name,
+            "region_id": str(province.region_id),
+            "region_code": province.region.code,
+        }
+        for province in base_provinces_qs
+    ]
+
+    province_options_json = json.dumps(province_options, cls=DjangoJSONEncoder)
 
     total_coverages = coverages.count()
     total_population = (
@@ -426,14 +490,70 @@ def communities_manage_municipal(request):
     context = {
         "coverages": coverages,
         "regions": regions,
+        "provinces": provinces,
         "current_region": region_filter,
-        "current_status": status_filter,
+        "current_province": province_filter,
         "search_query": search_query,
+        "province_options_json": province_options_json,
         "stats": stats,
         "stat_cards": stat_cards,
         "stat_cards_grid_class": stat_cards_grid_class,
     }
     return render(request, "communities/municipal_manage.html", context)
+
+
+@login_required
+def communities_view(request, community_id):
+    """Display a read-only view of a barangay-level OBC community."""
+    from communities.models import MunicipalityCoverage, OBCCommunity
+
+    community = get_object_or_404(
+        OBCCommunity.objects.select_related(
+            "barangay__municipality__province__region"
+        ),
+        pk=community_id,
+    )
+
+    municipality_coverage = None
+    try:
+        municipality_coverage = MunicipalityCoverage.objects.select_related(
+            "municipality__province__region"
+        ).get(municipality=community.barangay.municipality)
+    except MunicipalityCoverage.DoesNotExist:
+        municipality_coverage = None
+
+    context = {
+        "community": community,
+        "municipality_coverage": municipality_coverage,
+    }
+    return render(request, "communities/communities_view.html", context)
+
+
+@login_required
+def communities_view_municipal(request, coverage_id):
+    """Display a read-only view of a municipal-level OBC coverage."""
+    from communities.models import MunicipalityCoverage, OBCCommunity
+
+    coverage = get_object_or_404(
+        MunicipalityCoverage.objects.select_related(
+            "municipality__province__region"
+        ),
+        pk=coverage_id,
+    )
+
+    related_communities = (
+        OBCCommunity.objects.select_related(
+            "barangay__municipality__province__region"
+        )
+        .filter(barangay__municipality=coverage.municipality)
+        .order_by("barangay__name")
+    )
+
+    context = {
+        "coverage": coverage,
+        "related_communities": related_communities,
+    }
+    return render(request, "communities/municipal_view.html", context)
 
 
 @login_required

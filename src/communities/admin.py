@@ -1,8 +1,10 @@
 from django.contrib import admin
+from django.urls import reverse
 from django.utils.html import format_html
 
 from .models import (CommunityInfrastructure, CommunityLivelihood,
-                     MunicipalityCoverage, OBCCommunity, Stakeholder,
+                     GeographicDataLayer, MapVisualization, MunicipalityCoverage,
+                     OBCCommunity, SpatialDataPoint, Stakeholder,
                      StakeholderEngagement)
 
 
@@ -63,11 +65,11 @@ class OBCCommunityAdmin(admin.ModelAdmin):
         "region",
         "estimated_obc_population",
         "households",
-        "development_status",
+        "unemployment_rate",
         "is_active",
     )
     list_filter = (
-        "development_status",
+        "unemployment_rate",
         "settlement_type",
         "is_active",
         "barangay__municipality__province__region",
@@ -145,7 +147,8 @@ class OBCCommunityAdmin(admin.ModelAdmin):
                     ("women_count", "solo_parents_count", "pwd_count"),
                     ("farmers_count", "fisherfolk_count", "unemployed_count"),
                     ("indigenous_peoples_count", "idps_count", "migrants_transients_count"),
-                    ("csos_count", "associations_count", "number_of_cooperatives"),
+                    ("csos_count", "associations_count", "number_of_peoples_organizations"),
+                    ("number_of_cooperatives", "number_of_social_enterprises", "number_of_micro_enterprises"),
                     ("other_vulnerable_sectors",),
                 ),
                 "classes": ("collapse",),
@@ -158,12 +161,7 @@ class OBCCommunityAdmin(admin.ModelAdmin):
                     ("primary_livelihoods", "secondary_livelihoods"),
                     ("estimated_poverty_incidence",),
                     ("land_tenure_issues",),
-                    ("number_of_employed_obc", "number_of_unbanked_obc"),
-                    (
-                        "number_of_social_enterprises",
-                        "number_of_micro_enterprises",
-                    ),
-                    ("financial_literacy_access",),
+                    ("financial_access_level", "number_of_unbanked_obc"),
                 ),
                 "classes": ("collapse",),
             },
@@ -242,10 +240,10 @@ class OBCCommunityAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Development Status & Assessment",
+            "Unemployment & Assessment",
             {
                 "fields": (
-                    ("development_status",),
+                    ("unemployment_rate",),
                     ("needs_assessment_date", "key_findings_last_assessment"),
                     ("assessment_data_sources", "identified_gaps"),
                 )
@@ -291,46 +289,48 @@ class OBCCommunityAdmin(admin.ModelAdmin):
     region.short_description = "Region"
     region.admin_order_field = "barangay__municipality__province__region__name"
 
-    def colored_status(self, obj):
-        """Display development status with color coding."""
+    def colored_unemployment_rate(self, obj):
+        """Display unemployment rate with color coding."""
         colors = {
-            "developing": "orange",
-            "established": "green",
-            "vulnerable": "red",
-            "thriving": "blue",
-            "at_risk": "darkred",
+            "very_low": "#16a34a",
+            "low": "#22c55e",
+            "moderate": "#f97316",
+            "high": "#f97316",
+            "very_high": "#ef4444",
+            "extremely_high": "#b91c1c",
+            "unknown": "#6b7280",
         }
-        color = colors.get(obj.development_status, "black")
+        color = colors.get(obj.unemployment_rate, "#374151")
         return format_html(
             '<span style="color: {};">{}</span>',
             color,
-            obj.get_development_status_display(),
+            obj.get_unemployment_rate_display(),
         )
 
-    colored_status.short_description = "Status"
+    colored_unemployment_rate.short_description = "Unemployment Rate"
+    actions = [
+        "mark_unemployment_low",
+        "mark_unemployment_moderate",
+        "mark_unemployment_high",
+    ]
 
-    actions = ["mark_as_established", "mark_as_vulnerable", "mark_as_thriving"]
+    def mark_unemployment_low(self, request, queryset):
+        updated = queryset.update(unemployment_rate="low")
+        self.message_user(request, f"{updated} communities marked with low unemployment.")
 
-    def mark_as_established(self, request, queryset):
-        """Mark selected communities as established."""
-        updated = queryset.update(development_status="established")
-        self.message_user(request, f"{updated} communities marked as established.")
+    mark_unemployment_low.short_description = "Mark unemployment rate as Low"
 
-    mark_as_established.short_description = "Mark as Established"
+    def mark_unemployment_moderate(self, request, queryset):
+        updated = queryset.update(unemployment_rate="moderate")
+        self.message_user(request, f"{updated} communities marked with moderate unemployment.")
 
-    def mark_as_vulnerable(self, request, queryset):
-        """Mark selected communities as vulnerable."""
-        updated = queryset.update(development_status="vulnerable")
-        self.message_user(request, f"{updated} communities marked as vulnerable.")
+    mark_unemployment_moderate.short_description = "Mark unemployment rate as Moderate"
 
-    mark_as_vulnerable.short_description = "Mark as Vulnerable"
+    def mark_unemployment_high(self, request, queryset):
+        updated = queryset.update(unemployment_rate="high")
+        self.message_user(request, f"{updated} communities marked with high unemployment.")
 
-    def mark_as_thriving(self, request, queryset):
-        """Mark selected communities as thriving."""
-        updated = queryset.update(development_status="thriving")
-        self.message_user(request, f"{updated} communities marked as thriving.")
-
-    mark_as_thriving.short_description = "Mark as Thriving"
+    mark_unemployment_high.short_description = "Mark unemployment rate as High"
 
 
 @admin.register(CommunityLivelihood)
@@ -352,7 +352,7 @@ class CommunityLivelihoodAdmin(admin.ModelAdmin):
         "is_primary_livelihood",
         "seasonal",
         "income_level",
-        "community__development_status",
+        "community__unemployment_rate",
         "community__barangay__municipality__province__region",
     )
     search_fields = ("specific_activity", "description", "community__barangay__name")
@@ -406,7 +406,7 @@ class CommunityInfrastructureAdmin(admin.ModelAdmin):
         "availability_status",
         "condition",
         "priority_for_improvement",
-        "community__development_status",
+        "community__unemployment_rate",
         "community__barangay__municipality__province__region",
     )
     search_fields = ("description", "notes", "community__barangay__name")
@@ -514,7 +514,7 @@ class StakeholderAdmin(admin.ModelAdmin):
         "is_active",
         "is_verified",
         "community__barangay__municipality__province__region",
-        "community__development_status",
+        "community__unemployment_rate",
     )
     search_fields = (
         "full_name",
@@ -867,7 +867,8 @@ class MunicipalityCoverageAdmin(admin.ModelAdmin):
                     ("women_count", "solo_parents_count", "pwd_count"),
                     ("farmers_count", "fisherfolk_count", "unemployed_count"),
                     ("indigenous_peoples_count", "idps_count", "migrants_transients_count"),
-                    ("csos_count", "associations_count", "number_of_cooperatives"),
+                    ("csos_count", "associations_count", "number_of_peoples_organizations"),
+                    ("number_of_cooperatives", "number_of_social_enterprises", "number_of_micro_enterprises"),
                     ("other_vulnerable_sectors",),
                 ),
                 "classes": ("collapse",),
@@ -880,12 +881,7 @@ class MunicipalityCoverageAdmin(admin.ModelAdmin):
                     ("primary_livelihoods", "secondary_livelihoods"),
                     ("estimated_poverty_incidence",),
                     ("land_tenure_issues",),
-                    ("number_of_employed_obc", "number_of_unbanked_obc"),
-                    (
-                        "number_of_social_enterprises",
-                        "number_of_micro_enterprises",
-                    ),
-                    ("financial_literacy_access",),
+                    ("financial_access_level", "number_of_unbanked_obc"),
                     ("existing_support_programs",),
                 ),
                 "classes": ("collapse",),
@@ -965,10 +961,10 @@ class MunicipalityCoverageAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Development Status & Assessment",
+            "Unemployment & Assessment",
             {
                 "fields": (
-                    ("development_status",),
+                    ("unemployment_rate",),
                     ("needs_assessment_date", "key_findings_last_assessment"),
                     ("assessment_data_sources", "identified_gaps"),
                 )
@@ -985,3 +981,394 @@ class MunicipalityCoverageAdmin(admin.ModelAdmin):
         ),
         ("Administrative", {"fields": ("notes",), "classes": ("collapse",)}),
     )
+
+
+# ============================================================================
+# GEOGRAPHIC DATA ADMIN (Moved from mana app for better organization)
+# ============================================================================
+
+
+@admin.register(GeographicDataLayer)
+class GeographicDataLayerAdmin(admin.ModelAdmin):
+    """Admin interface for Geographic Data Layers."""
+
+    list_display = [
+        "name",
+        "layer_type",
+        "data_source",
+        "administrative_level_display",
+        "community_link",
+        "visibility_status",
+        "feature_count",
+        "created_by",
+        "created_at",
+    ]
+    list_filter = [
+        "layer_type",
+        "data_source",
+        "is_public",
+        "is_visible",
+        "created_at",
+        "data_collection_date",
+    ]
+    search_fields = [
+        "name",
+        "description",
+        "community__barangay__name",
+        "region__name",
+        "province__name",
+        "municipality__name",
+        "barangay__name",
+    ]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+    autocomplete_fields = [
+        "community",
+        "assessment",
+        "region",
+        "province",
+        "municipality",
+        "barangay",
+        "created_by",
+    ]
+    readonly_fields = ["created_at", "updated_at", "administrative_level", "full_administrative_path"]
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {"fields": ("name", "description", "layer_type", "data_source")},
+        ),
+        (
+            "Administrative Location",
+            {
+                "fields": (
+                    ("region", "province"),
+                    ("municipality", "barangay"),
+                    ("administrative_level", "full_administrative_path"),
+                ),
+                "description": "Link this layer to specific administrative levels. Fill in the most specific level that applies.",
+            },
+        ),
+        (
+            "Related Objects",
+            {"fields": ("community", "assessment"), "classes": ("collapse",)},
+        ),
+        (
+            "Geographic Data",
+            {
+                "fields": (
+                    "geojson_data",
+                    ("bounding_box", "center_point"),
+                    ("coordinate_system", "accuracy_meters"),
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Display Settings",
+            {
+                "fields": (
+                    ("is_visible", "is_public"),
+                    ("opacity", "zoom_level_min", "zoom_level_max"),
+                    "style_properties",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    ("data_collection_date", "feature_count", "file_size_bytes"),
+                    ("attribution", "license_info"),
+                    "access_groups",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "System Information",
+            {
+                "fields": ("created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    def administrative_level_display(self, obj):
+        """Display the administrative level with path."""
+        level = obj.administrative_level
+        if level == "none":
+            return format_html('<span style="color: orange;">No administrative assignment</span>')
+
+        colors = {
+            "region": "#007bff",
+            "province": "#28a745",
+            "municipality": "#ffc107",
+            "barangay": "#dc3545",
+            "community": "#6f42c1",
+        }
+        color = colors.get(level, "#6c757d")
+
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            level.title(),
+        )
+
+    administrative_level_display.short_description = "Admin Level"
+
+    def community_link(self, obj):
+        """Link to community if available."""
+        if obj.community:
+            url = reverse("admin:communities_obccommunity_change", args=[obj.community.pk])
+            return format_html('<a href="{}">{}</a>', url, obj.community.display_name)
+        return "-"
+
+    community_link.short_description = "Community"
+
+    def visibility_status(self, obj):
+        """Display visibility and public status."""
+        if obj.is_visible and obj.is_public:
+            return format_html('<span style="color: green;">✓ Public & Visible</span>')
+        elif obj.is_visible:
+            return format_html('<span style="color: blue;">✓ Visible</span>')
+        elif obj.is_public:
+            return format_html('<span style="color: orange;">Public Only</span>')
+        else:
+            return format_html('<span style="color: red;">✗ Hidden</span>')
+
+    visibility_status.short_description = "Visibility"
+
+
+@admin.register(MapVisualization)
+class MapVisualizationAdmin(admin.ModelAdmin):
+    """Admin interface for Map Visualizations."""
+
+    list_display = [
+        "title",
+        "visualization_type",
+        "community_link",
+        "assessment_link",
+        "visibility_status",
+        "layers_count",
+        "basemap_provider",
+        "created_at",
+    ]
+    list_filter = [
+        "visualization_type",
+        "basemap_provider",
+        "is_public",
+        "is_interactive",
+        "created_at",
+    ]
+    search_fields = [
+        "title",
+        "description",
+        "community__barangay__name",
+        "assessment__title",
+    ]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+    autocomplete_fields = ["community", "assessment", "created_by"]
+    filter_horizontal = ["layers"]
+    readonly_fields = ["created_at", "updated_at"]
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {"fields": ("title", "description", "visualization_type")},
+        ),
+        (
+            "Related Objects",
+            {"fields": ("community", "assessment", "layers")},
+        ),
+        (
+            "Map Configuration",
+            {
+                "fields": (
+                    ("basemap_provider", "initial_zoom"),
+                    "initial_center",
+                    "bounding_box",
+                ),
+            },
+        ),
+        (
+            "Visualization Settings",
+            {
+                "fields": (
+                    "color_scheme",
+                    "legend_configuration",
+                    "popup_template",
+                    "filters_configuration",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Interactivity",
+            {
+                "fields": (
+                    ("is_interactive", "is_public"),
+                    ("enable_clustering", "enable_search", "enable_drawing"),
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "System Information",
+            {
+                "fields": ("created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    def community_link(self, obj):
+        """Link to community if available."""
+        if obj.community:
+            url = reverse("admin:communities_obccommunity_change", args=[obj.community.pk])
+            return format_html('<a href="{}">{}</a>', url, obj.community.display_name)
+        return "-"
+
+    community_link.short_description = "Community"
+
+    def assessment_link(self, obj):
+        """Link to assessment if available."""
+        if obj.assessment:
+            url = reverse("admin:mana_assessment_change", args=[obj.assessment.pk])
+            return format_html('<a href="{}">{}</a>', url, obj.assessment.title)
+        return "-"
+
+    assessment_link.short_description = "Assessment"
+
+    def visibility_status(self, obj):
+        """Display visibility and interactivity status."""
+        status_parts = []
+        if obj.is_public:
+            status_parts.append('<span style="color: green;">Public</span>')
+        else:
+            status_parts.append('<span style="color: orange;">Private</span>')
+
+        if obj.is_interactive:
+            status_parts.append('<span style="color: blue;">Interactive</span>')
+        else:
+            status_parts.append('<span style="color: gray;">Static</span>')
+
+        return format_html(" | ".join(status_parts))
+
+    visibility_status.short_description = "Status"
+
+    def layers_count(self, obj):
+        """Count of associated layers."""
+        count = obj.layers.count()
+        if count > 0:
+            return format_html('<span style="color: green;">{} layers</span>', count)
+        return format_html('<span style="color: orange;">No layers</span>')
+
+    layers_count.short_description = "Layers"
+
+
+@admin.register(SpatialDataPoint)
+class SpatialDataPointAdmin(admin.ModelAdmin):
+    """Admin interface for Spatial Data Points."""
+
+    list_display = [
+        "name",
+        "data_layer_link",
+        "point_type",
+        "coordinates_display",
+        "status",
+        "is_verified",
+        "created_at",
+    ]
+    list_filter = [
+        "point_type",
+        "status",
+        "is_verified",
+        "collection_method",
+        "data_layer__layer_type",
+        "data_layer__data_source",
+        "created_at",
+    ]
+    search_fields = [
+        "name",
+        "description",
+        "data_layer__name",
+        "community__barangay__name",
+    ]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+    autocomplete_fields = ["data_layer", "community", "assessment", "collected_by", "verified_by"]
+    readonly_fields = ["created_at", "updated_at", "coordinates_display"]
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {"fields": ("name", "data_layer", "point_type", "description", "status")},
+        ),
+        (
+            "Location",
+            {"fields": ("community", "assessment")},
+        ),
+        (
+            "Geographic Data",
+            {
+                "fields": (
+                    ("latitude", "longitude"),
+                    "coordinates_display",
+                    ("elevation", "accuracy_meters"),
+                ),
+            },
+        ),
+        (
+            "Collection Data",
+            {
+                "fields": (
+                    ("collected_date", "collected_by"),
+                    "collection_method",
+                    ("photo_url", "media_files"),
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Verification",
+            {
+                "fields": (
+                    ("is_verified", "verified_by"),
+                    "verification_date",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Attributes",
+            {"fields": ("attributes",), "classes": ("collapse",)},
+        ),
+        (
+            "System Information",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    def data_layer_link(self, obj):
+        """Link to geographic data layer."""
+        if obj.data_layer:
+            url = reverse("admin:communities_geographicdatalayer_change", args=[obj.data_layer.pk])
+            return format_html('<a href="{}">{}</a>', url, obj.data_layer.name)
+        return "-"
+
+    data_layer_link.short_description = "Data Layer"
+
+    def coordinates_display(self, obj):
+        """Display coordinates in a readable format."""
+        if obj.latitude is not None and obj.longitude is not None:
+            return f"[{obj.longitude:.6f}, {obj.latitude:.6f}]"
+        return "No coordinates"
+
+    coordinates_display.short_description = "Coordinates"

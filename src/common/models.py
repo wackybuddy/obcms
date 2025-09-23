@@ -94,6 +94,24 @@ class Region(models.Model):
     is_active = models.BooleanField(
         default=True, help_text="Whether this region is active in the system"
     )
+
+    # Geographic boundary information
+    boundary_geojson = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="GeoJSON polygon defining the region boundary"
+    )
+    center_coordinates = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Geographic center point [longitude, latitude]"
+    )
+    bounding_box = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Bounding box [min_lng, min_lat, max_lng, max_lat]"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -110,6 +128,35 @@ class Region(models.Model):
     def province_count(self):
         """Return the number of provinces in this region."""
         return self.provinces.filter(is_active=True).count()
+
+    @property
+    def has_geographic_boundary(self):
+        """Check if this region has geographic boundary data."""
+        return bool(self.boundary_geojson)
+
+    @property
+    def geographic_layers_count(self):
+        """Return the number of geographic layers associated with this region."""
+        return self.geographic_layers.count()
+
+    def get_contained_coordinates(self, coordinates):
+        """Check if given coordinates [lng, lat] are within region boundary."""
+        if not self.boundary_geojson:
+            return False
+        # Placeholder for actual geometric containment check
+        # In production, this would use proper GIS libraries like Shapely
+        return True
+
+    def get_all_geographic_layers(self):
+        """Get all geographic layers at this level and below."""
+        from mana.models import GeographicDataLayer
+        return GeographicDataLayer.objects.filter(
+            models.Q(region=self) |
+            models.Q(province__region=self) |
+            models.Q(municipality__province__region=self) |
+            models.Q(barangay__municipality__province__region=self) |
+            models.Q(community__barangay__municipality__province__region=self)
+        )
 
 
 class Province(models.Model):
@@ -138,6 +185,24 @@ class Province(models.Model):
         blank=True,
         help_text="Total population based on latest PSA census",
     )
+
+    # Geographic boundary information
+    boundary_geojson = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="GeoJSON polygon defining the province boundary"
+    )
+    center_coordinates = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Geographic center point [longitude, latitude]"
+    )
+    bounding_box = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Bounding box [min_lng, min_lat, max_lng, max_lat]"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -159,6 +224,26 @@ class Province(models.Model):
     def full_path(self):
         """Return the full administrative path."""
         return f"Region {self.region.code} > {self.name}"
+
+    @property
+    def has_geographic_boundary(self):
+        """Check if this province has geographic boundary data."""
+        return bool(self.boundary_geojson)
+
+    @property
+    def geographic_layers_count(self):
+        """Return the number of geographic layers associated with this province."""
+        return self.geographic_layers.count()
+
+    def get_all_geographic_layers(self):
+        """Get all geographic layers at this level and below."""
+        from mana.models import GeographicDataLayer
+        return GeographicDataLayer.objects.filter(
+            models.Q(province=self) |
+            models.Q(municipality__province=self) |
+            models.Q(barangay__municipality__province=self) |
+            models.Q(community__barangay__municipality__province=self)
+        )
 
 
 class Municipality(models.Model):
@@ -197,6 +282,24 @@ class Municipality(models.Model):
         blank=True,
         help_text="Total population based on latest PSA census",
     )
+
+    # Geographic boundary information
+    boundary_geojson = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="GeoJSON polygon defining the municipality boundary"
+    )
+    center_coordinates = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Geographic center point [longitude, latitude]"
+    )
+    bounding_box = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Bounding box [min_lng, min_lat, max_lng, max_lat]"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -220,6 +323,25 @@ class Municipality(models.Model):
         """Return the full administrative path."""
         return (
             f"Region {self.province.region.code} > {self.province.name} > {self.name}"
+        )
+
+    @property
+    def has_geographic_boundary(self):
+        """Check if this municipality has geographic boundary data."""
+        return bool(self.boundary_geojson)
+
+    @property
+    def geographic_layers_count(self):
+        """Return the number of geographic layers associated with this municipality."""
+        return self.geographic_layers.count()
+
+    def get_all_geographic_layers(self):
+        """Get all geographic layers at this level and below."""
+        from mana.models import GeographicDataLayer
+        return GeographicDataLayer.objects.filter(
+            models.Q(municipality=self) |
+            models.Q(barangay__municipality=self) |
+            models.Q(community__barangay__municipality=self)
         )
 
 
@@ -250,6 +372,24 @@ class Barangay(models.Model):
         blank=True,
         help_text="Total population based on latest PSA census",
     )
+
+    # Geographic boundary information
+    boundary_geojson = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="GeoJSON polygon defining the barangay boundary"
+    )
+    center_coordinates = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Geographic center point [longitude, latitude]"
+    )
+    bounding_box = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Bounding box [min_lng, min_lat, max_lng, max_lat]"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -281,3 +421,21 @@ class Barangay(models.Model):
     def province(self):
         """Return the province this barangay belongs to."""
         return self.municipality.province
+
+    @property
+    def has_geographic_boundary(self):
+        """Check if this barangay has geographic boundary data."""
+        return bool(self.boundary_geojson)
+
+    @property
+    def geographic_layers_count(self):
+        """Return the number of geographic layers associated with this barangay."""
+        return self.geographic_layers.count()
+
+    def get_all_geographic_layers(self):
+        """Get all geographic layers at this level and below."""
+        from mana.models import GeographicDataLayer
+        return GeographicDataLayer.objects.filter(
+            models.Q(barangay=self) |
+            models.Q(community__barangay=self)
+        )

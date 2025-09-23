@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}View Municipal OBC - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:communities_manage_municipal' %}" class="text-gray-600 hover:text-gray-900">Manage Municipal OBC</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">{{ coverage.municipality.name }}</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="mb-8 flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-city text-indigo-600 mr-3"></i>
+                {{ coverage.municipality.name }} Municipal OBC
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                Region {{ coverage.municipality.province.region.code }} · {{ coverage.municipality.province.region.name }}
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'common:communities_edit_municipal' coverage.id %}"
+               class="inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                <i class="fas fa-edit mr-2"></i>Edit
+            </a>
+            <a href="{% url 'common:communities_manage_municipal' %}"
+               class="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white border border-blue-100 rounded-xl p-5 shadow-sm">
+            <p class="text-sm text-blue-500 font-medium uppercase">Barangay OBCs</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ coverage.total_obc_communities|default:0 }}</p>
+            <p class="text-xs text-gray-500 mt-1">Registered communities</p>
+        </div>
+        <div class="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
+            <p class="text-sm text-emerald-500 font-medium uppercase">Est. OBC Population</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ coverage.estimated_obc_population|default:0 }}</p>
+        </div>
+        <div class="bg-white border border-purple-100 rounded-xl p-5 shadow-sm">
+            <p class="text-sm text-purple-500 font-medium uppercase">Total Population</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ coverage.total_barangay_population|default:0 }}</p>
+        </div>
+        <div class="bg-white border border-orange-100 rounded-xl p-5 shadow-sm">
+            <p class="text-sm text-orange-500 font-medium uppercase">Households</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ coverage.households|default:0 }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-map"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Location Details</h2>
+            </div>
+            <dl class="space-y-3 text-sm text-gray-700">
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Region</dt>
+                    <dd class="text-right">Region {{ coverage.municipality.province.region.code }} · {{ coverage.municipality.province.region.name }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Province</dt>
+                    <dd class="text-right">{{ coverage.municipality.province.name }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Municipality / City</dt>
+                    <dd class="text-right">{{ coverage.municipality.name }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Sync Mode</dt>
+                    <dd class="text-right">
+                        {% if coverage.auto_sync %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                <i class="fas fa-sync mr-1"></i>Auto-sync
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-hand-paper mr-1"></i>Manual
+                            </span>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Key Barangays</h2>
+            </div>
+            {% if coverage.key_barangays %}
+                <p class="text-sm text-gray-700 leading-relaxed">{{ coverage.key_barangays }}</p>
+            {% else %}
+                <p class="text-sm text-gray-400 italic">No barangays recorded yet.</p>
+            {% endif %}
+            {% if coverage.existing_support_programs %}
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Support Programs</h3>
+                    <p class="text-sm text-gray-600 leading-relaxed mt-1">{{ coverage.existing_support_programs }}</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6 lg:col-span-2">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Barangay OBCs in {{ coverage.municipality.name }}</h2>
+            </div>
+            {% if related_communities %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Barangay</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Est. OBC Population</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Households</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Primary Group</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                        {% for community in related_communities %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-2 font-medium text-gray-900">{{ community.barangay.name }}</td>
+                            <td class="px-4 py-2 text-gray-700">{{ community.estimated_obc_population|default:"N/A" }}</td>
+                            <td class="px-4 py-2 text-gray-700">{{ community.households|default:"0" }}</td>
+                            <td class="px-4 py-2 text-gray-700">
+                                {% if community.primary_ethnolinguistic_group %}
+                                    {{ community.get_primary_ethnolinguistic_group_display }}
+                                {% else %}
+                                    <span class="text-gray-400">Not specified</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-2 text-gray-700">
+                                <a href="{% url 'common:communities_view' community.id %}"
+                                   class="text-indigo-600 hover:text-indigo-800 font-semibold text-xs">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p class="text-sm text-gray-400 italic">No barangay-level OBC communities recorded for this municipality yet.</p>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

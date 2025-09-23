@@ -3,6 +3,9 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+from ..models import Barangay, Municipality, Province, Region
+from ..services.locations import build_location_data
+
 
 @login_required
 def mana_home(request):
@@ -154,37 +157,166 @@ def mana_manage_assessments(request):
 
 @login_required
 def mana_geographic_data(request):
-    """MANA geographic data and mapping page."""
+    """MANA geographic data and mapping page with location-aware filters."""
     from django.db.models import Count
 
     from communities.models import OBCCommunity
     from mana.models import GeographicDataLayer, MapVisualization
 
-    data_layers = GeographicDataLayer.objects.all().order_by("name")
-    visualizations = MapVisualization.objects.select_related("community").order_by(
-        "-created_at"
-    )[:10]
+    def parse_identifier(value):
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
 
-    communities = OBCCommunity.objects.annotate(
-        visualizations_count=Count("map_visualizations")
-    ).filter(visualizations_count__gt=0)
+    region_id = parse_identifier(request.GET.get("region"))
+    province_id = parse_identifier(request.GET.get("province"))
+    municipality_id = parse_identifier(request.GET.get("municipality"))
+    barangay_id = parse_identifier(request.GET.get("barangay"))
+
+    selected_region = (
+        Region.objects.filter(pk=region_id, is_active=True).first() if region_id else None
+    )
+
+    selected_province = None
+    if province_id:
+        selected_province = (
+            Province.objects.filter(pk=province_id, is_active=True)
+            .select_related("region")
+            .first()
+        )
+        if not selected_province:
+            province_id = None
+        else:
+            region_id = selected_province.region_id
+            if not selected_region or selected_region.pk != region_id:
+                selected_region = selected_province.region
+
+    selected_municipality = None
+    if municipality_id:
+        selected_municipality = (
+            Municipality.objects.filter(pk=municipality_id, is_active=True)
+            .select_related("province__region")
+            .first()
+        )
+        if not selected_municipality:
+            municipality_id = None
+        else:
+            province_id = selected_municipality.province_id
+            selected_province = selected_municipality.province
+            region_id = selected_province.region_id
+            selected_region = selected_province.region
+
+    selected_barangay = None
+    if barangay_id:
+        selected_barangay = (
+            Barangay.objects.filter(pk=barangay_id, is_active=True)
+            .select_related("municipality__province__region")
+            .first()
+        )
+        if not selected_barangay:
+            barangay_id = None
+        else:
+            municipality_id = selected_barangay.municipality_id
+            selected_municipality = selected_barangay.municipality
+            province_id = selected_municipality.province_id
+            selected_province = selected_municipality.province
+            region_id = selected_province.region_id
+            selected_region = selected_province.region
+
+    layer_filters = {}
+    visualization_filters = {}
+    community_filters = {}
+
+    if barangay_id:
+        layer_filters["community__barangay_id"] = barangay_id
+        visualization_filters["community__barangay_id"] = barangay_id
+        community_filters["barangay_id"] = barangay_id
+    elif municipality_id:
+        layer_filters["community__barangay__municipality_id"] = municipality_id
+        visualization_filters["community__barangay__municipality_id"] = municipality_id
+        community_filters["barangay__municipality_id"] = municipality_id
+    elif province_id:
+        layer_filters["community__barangay__municipality__province_id"] = province_id
+        visualization_filters[
+            "community__barangay__municipality__province_id"
+        ] = province_id
+        community_filters["barangay__municipality__province_id"] = province_id
+    elif region_id:
+        layer_filters[
+            "community__barangay__municipality__province__region_id"
+        ] = region_id
+        visualization_filters[
+            "community__barangay__municipality__province__region_id"
+        ] = region_id
+        community_filters["barangay__municipality__province__region_id"] = region_id
+
+    data_layers_qs = GeographicDataLayer.objects.all().order_by("name")
+    if layer_filters:
+        data_layers_qs = data_layers_qs.filter(**layer_filters)
+
+    visualizations_qs = MapVisualization.objects.select_related("community").order_by(
+        "-created_at"
+    )
+    if visualization_filters:
+        visualizations_qs = visualizations_qs.filter(**visualization_filters)
+
+    communities_qs = (
+        OBCCommunity.objects.annotate(
+            visualizations_count=Count("map_visualizations")
+        )
+        .filter(visualizations_count__gt=0)
+        .order_by("barangay__name")
+    )
+    if community_filters:
+        communities_qs = communities_qs.filter(**community_filters)
 
     stats = {
-        "total_layers": data_layers.count(),
-        "total_visualizations": visualizations.count(),
-        "communities_mapped": communities.count(),
+        "total_layers": data_layers_qs.count(),
+        "total_visualizations": visualizations_qs.count(),
+        "communities_mapped": communities_qs.count(),
         "active_layers": (
-            data_layers.filter(is_active=True).count()
+            data_layers_qs.filter(is_active=True).count()
             if hasattr(GeographicDataLayer, "is_active")
-            else data_layers.count()
+            else data_layers_qs.count()
         ),
     }
 
+    # Limit visualizations display but keep counts accurate.
+    visualizations = visualizations_qs[:10]
+
+    filter_summary_parts = []
+    if selected_barangay:
+        filter_summary_parts.append(
+            f"Barangay {selected_barangay.name}, {selected_municipality.name}"
+        )
+    elif selected_municipality:
+        filter_summary_parts.append(
+            f"{selected_municipality.name}, {selected_province.name}"
+        )
+    elif selected_province:
+        filter_summary_parts.append(f"Province {selected_province.name}")
+    elif selected_region:
+        filter_summary_parts.append(f"Region {selected_region.code} - {selected_region.name}")
+
     context = {
-        "data_layers": data_layers,
+        "data_layers": data_layers_qs,
         "visualizations": visualizations,
-        "communities": communities,
+        "communities": communities_qs,
         "stats": stats,
+        "location_data": build_location_data(),
+        "current_region": str(region_id or ""),
+        "current_province": str(province_id or ""),
+        "current_municipality": str(municipality_id or ""),
+        "current_barangay": str(barangay_id or ""),
+        "selected_region": selected_region,
+        "selected_province": selected_province,
+        "selected_municipality": selected_municipality,
+        "selected_barangay": selected_barangay,
+        "filter_summary": ", ".join(filter_summary_parts),
+        "filters_applied": any(
+            identifier for identifier in [region_id, province_id, municipality_id, barangay_id]
+        ),
     }
     return render(request, "mana/mana_geographic_data.html", context)
 

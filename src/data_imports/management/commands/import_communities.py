@@ -72,7 +72,7 @@ class Command(BaseCommand):
             "primary_language": "primary_language",
             "established_year": "established_year",
             "settlement_type": "settlement_type",
-            "development_status": "development_status",
+            "unemployment_rate": "unemployment_rate",
         }
 
         # Merge with provided mapping
@@ -202,8 +202,8 @@ class Command(BaseCommand):
                                         field_mapping.get("settlement_type", ""),
                                         "village",
                                     ),
-                                    "development_status": row.get(
-                                        field_mapping.get("development_status", ""),
+                                    "unemployment_rate": row.get(
+                                        field_mapping.get("unemployment_rate", ""),
                                         "developing",
                                     ),
                                 }

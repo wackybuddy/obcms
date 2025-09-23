@@ -112,6 +112,11 @@ class MunicipalityCoverageSyncTest(TestCase):
             name="Barangay Dos",
         )
 
+    def tearDown(self):
+        from municipal_profiles.models import OBCCommunityHistory
+
+        OBCCommunityHistory.objects.all().delete()
+
     def test_coverage_created_and_updated_from_communities(self):
         # Initial community creation should spawn coverage automatically
         OBCCommunity.objects.create(

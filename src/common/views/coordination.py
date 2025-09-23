@@ -3,6 +3,11 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+from coordination.views import (
+    organization_create as _organization_create,
+    partnership_create as _partnership_create,
+)
+
 
 @login_required
 def coordination_home(request):
@@ -198,6 +203,13 @@ def coordination_organizations(request):
 
 
 @login_required
+def organization_create(request):
+    """Proxy to coordination frontend organization creation view."""
+
+    return _organization_create(request)
+
+
+@login_required
 def coordination_partnerships(request):
     """Manage coordination partnerships page."""
     from django.db.models import Count
@@ -244,6 +256,13 @@ def coordination_partnerships(request):
         "stats": stats,
     }
     return render(request, "coordination/coordination_partnerships.html", context)
+
+
+@login_required
+def partnership_create(request):
+    """Proxy to coordination frontend partnership creation view."""
+
+    return _partnership_create(request)
 
 
 @login_required

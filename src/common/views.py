@@ -186,10 +186,8 @@ def communities_home(request):
         'municipality__province__region'
     )
 
-    # Calculate total OBC population from both sources
-    barangay_population = communities.aggregate(total=Sum('estimated_obc_population'))['total'] or 0
-    municipal_population = municipal_coverages.aggregate(total=Sum('estimated_obc_population'))['total'] or 0
-    total_obc_population = barangay_population + municipal_population
+    # Calculate total OBC population (avoid double-counting since municipal data is auto-synced from barangay data)
+    total_obc_population = communities.aggregate(total=Sum('estimated_obc_population'))['total'] or 0
 
     # Count of barangay and municipal OBCs
     total_barangay_obcs = communities.count()
@@ -216,8 +214,8 @@ def communities_home(request):
         count=Count('id')
     ).order_by('-count')[:5]
 
-    # Development status breakdown
-    development_status = communities.values('development_status').annotate(
+    # Unemployment rate breakdown
+    unemployment_rates = communities.values('unemployment_rate').annotate(
         count=Count('id')
     ).order_by('-count')
 
@@ -240,7 +238,7 @@ def communities_home(request):
                 'barangay__municipality__province__region__name'
             ).annotate(count=Count('id')).order_by('-count'),
             'recent': communities.order_by('-created_at')[:10],
-            'development_status': development_status,
+            'unemployment_rates': unemployment_rates,
             'with_madrasah': communities.filter(has_madrasah=True).count(),
             'with_mosque': communities.filter(has_mosque=True).count(),
             # New statistics for the requested stat cards
@@ -879,37 +877,10 @@ def mana_manage_assessments(request):
 
 @login_required
 def mana_geographic_data(request):
-    """MANA geographic data and mapping page."""
-    from mana.models import GeographicDataLayer, MapVisualization
-    from communities.models import OBCCommunity
-    from django.db.models import Count
-    
-    # Get geographic data layers and visualizations
-    data_layers = GeographicDataLayer.objects.all().order_by('name')
-    visualizations = MapVisualization.objects.select_related(
-        'community'
-    ).order_by('-created_at')[:10]
-    
-    # Get communities with geographic data
-    communities = OBCCommunity.objects.annotate(
-        visualizations_count=Count('map_visualizations')
-    ).filter(visualizations_count__gt=0)
-    
-    # Statistics
-    stats = {
-        'total_layers': data_layers.count(),
-        'total_visualizations': visualizations.count(),
-        'communities_mapped': communities.count(),
-        'active_layers': data_layers.filter(is_active=True).count() if hasattr(GeographicDataLayer, 'is_active') else data_layers.count(),
-    }
-    
-    context = {
-        'data_layers': data_layers,
-        'visualizations': visualizations,
-        'communities': communities,
-        'stats': stats,
-    }
-    return render(request, 'common/mana_geographic_data.html', context)
+    """Delegate to domain-specific MANA geographic data view."""
+    from .mana import mana_geographic_data as module_mana_geographic_data
+
+    return module_mana_geographic_data(request)
 
 
 @login_required

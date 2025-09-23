@@ -97,6 +97,7 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% if user.is_staff %}
+            <!-- Add Actions First -->
             <a href="{% url 'common:communities_add' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
@@ -110,24 +111,6 @@
                     </p>
                     <div class="mt-4 flex items-center text-blue-600 text-sm font-medium">
                         <span>Open Barangay Form</span>
-                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{% url 'common:communities_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-edit text-white text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
-                        Manage Barangay OBC
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-600">
-                        View and update barangay-level community records.
-                    </p>
-                    <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
-                        <span>Open Barangay Management</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
@@ -151,24 +134,6 @@
                 </div>
             </a>
 
-            <a href="{% url 'common:communities_manage_municipal' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-clipboard-list text-white text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
-                        Manage Municipal OBC
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Review and maintain municipal-level coverage data.
-                    </p>
-                    <div class="mt-4 flex items-center text-teal-600 text-sm font-medium">
-                        <span>Open Municipal Management</span>
-                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-                </div>
-            </a>
-
             <a href="/admin/mana/geographicdatalayer/add/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
@@ -182,6 +147,43 @@
                     </p>
                     <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
                         <span>Open Layer Form</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Manage Actions Second -->
+            <a href="{% url 'common:communities_manage' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-edit text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                        Manage Barangay OBC
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        View and update barangay-level community records.
+                    </p>
+                    <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
+                        <span>Open Barangay Management</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <a href="{% url 'common:communities_manage_municipal' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-clipboard-list text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
+                        Manage Municipal OBC
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Review and maintain municipal-level coverage data.
+                    </p>
+                    <div class="mt-4 flex items-center text-teal-600 text-sm font-medium">
+                        <span>Open Municipal Management</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>

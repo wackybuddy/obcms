@@ -2,28 +2,15 @@
 
 {% block title %}Manage Barangay OBC - OBC Management System{% endblock %}
 
-{% block breadcrumbs %}
-<nav class="flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-        <li class="inline-flex items-center">
-            <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                Dashboard
-            </a>
-        </li>
-        <li>
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <a href="{% url 'common:communities_home' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">Communities</a>
-            </div>
-        </li>
-        <li aria-current="page">
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Manage Barangay OBC</span>
-            </div>
-        </li>
-    </ol>
-</nav>
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:communities_home' %}" class="text-gray-600 hover:text-gray-900">Communities</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">Manage Barangay OBC</span>
+</li>
 {% endblock %}
 
 {% block content %}
@@ -68,10 +55,10 @@
             </h2>
         </div>
         <div class="p-6">
-            <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+                <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Region</label>
-                    <select name="region" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <select name="region" data-initial="{{ current_region|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                         <option value="">All Regions</option>
                         {% for region in regions %}
                         <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>
@@ -80,30 +67,30 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                    <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">All Status</option>
-                        <option value="active" {% if current_status == "active" %}selected{% endif %}>Active</option>
-                        <option value="inactive" {% if current_status == "inactive" %}selected{% endif %}>Inactive</option>
+                <div class="lg:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Province</label>
+                    <select name="province" data-initial="{{ current_province|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                        <option value="">All Provinces</option>
+                        {% for province in provinces %}
+                        <option value="{{ province.id }}" {% if current_province == province.id|stringformat:"s" %}selected{% endif %}>
+                            {{ province.name }}
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
-                <div>
+                <div class="lg:col-span-4">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
-                    <input type="text" name="search" value="{{ search_query }}" 
-                           placeholder="Search by barangay, municipality..." 
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" name="search" value="{{ search_query }}"
+                           placeholder="Search by barangay, municipality, or province..."
+                           class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
                 </div>
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
-                        <i class="fas fa-search mr-2"></i>
-                        Apply Filters
+                <div class="lg:col-span-2 flex flex-col sm:flex-row gap-3 lg:items-end">
+                    <button type="submit" class="w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
+                        Apply
                     </button>
-                </div>
-                <div class="flex items-end">
-                    <a href="{% url 'common:communities_manage' %}" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
-                        <i class="fas fa-undo mr-2"></i>
-                        Clear Filters
+                    <a href="{% url 'common:communities_manage' %}"
+                       class="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
+                        Clear
                     </a>
                 </div>
             </form>
@@ -115,7 +102,7 @@
         <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
             <h2 class="text-xl font-bold text-white flex items-center">
                 <i class="fas fa-list mr-3 text-2xl"></i>
-                Communities List
+                Barangay OBC List
             </h2>
         </div>
         <div class="overflow-x-auto">
@@ -125,9 +112,8 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Community</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Demographics</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ethnolinguistic</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Development Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coverage Snapshot</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ethnolinguistic Groups</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Facilities</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -150,31 +136,25 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">{{ community.barangay.municipality.name }}</div>
-                            <div class="text-xs text-gray-500">{{ community.barangay.municipality.province.name }}, {{ community.barangay.municipality.province.region.name }}</div>
+                            <div class="text-xs text-gray-500">{{ community.barangay.municipality.province.name }}</div>
+                            <div class="text-xs text-gray-400">Region {{ community.barangay.municipality.province.region.code }} · {{ community.barangay.municipality.province.region.name }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">Pop: {{ community.estimated_obc_population|default:"N/A" }}</div>
-                            <div class="text-xs text-gray-500">{{ community.households|default:"0" }} households</div>
+                            <div class="text-sm font-semibold text-gray-900">Est. OBC Population: {{ community.estimated_obc_population|default:"N/A" }}</div>
+                            <div class="text-xs text-gray-500">Total Population: {{ community.total_barangay_population|default:"N/A" }}</div>
+                            <div class="text-xs text-gray-500">Households: {{ community.households|default:"0" }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if community.primary_ethnolinguistic_group %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                {{ community.get_primary_ethnolinguistic_group_display }}
-                            </span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    {{ community.get_primary_ethnolinguistic_group_display }}
+                                </span>
+                                {% if community.other_ethnolinguistic_groups %}
+                                    <p class="text-xs text-gray-500 mt-2">Other groups: {{ community.other_ethnolinguistic_groups }}</p>
+                                {% endif %}
                             {% else %}
-                            <span class="text-xs text-gray-400">Not specified</span>
+                                <span class="text-xs text-gray-400">Not specified</span>
                             {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                {% if community.development_status == 'thriving' %}bg-green-100 text-green-800
-                                {% elif community.development_status == 'established' %}bg-blue-100 text-blue-800
-                                {% elif community.development_status == 'developing' %}bg-yellow-100 text-yellow-800
-                                {% elif community.development_status == 'vulnerable' %}bg-orange-100 text-orange-800
-                                {% elif community.development_status == 'at_risk' %}bg-red-100 text-red-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {{ community.get_development_status_display }}
-                            </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-xs">
                             <div class="flex space-x-1">
@@ -192,6 +172,11 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
+                                <a href="{% url 'common:communities_view' community.id %}"
+                                   class="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    View
+                                </a>
                                 <a href="{% url 'common:communities_edit' community.id %}"
                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
                                     <i class="fas fa-edit mr-1"></i>
@@ -285,4 +270,65 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+    {% if province_options_json %}
+        {{ province_options_json|json_script:"barangay-province-options" }}
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const dataElement = document.getElementById("barangay-province-options");
+                if (!dataElement) {
+                    return;
+                }
+
+                let provinceOptions;
+                try {
+                    provinceOptions = JSON.parse(dataElement.textContent);
+                } catch (error) {
+                    console.error("Failed to parse province options", error);
+                    provinceOptions = [];
+                }
+
+                const regionSelect = document.querySelector('form select[name="region"]');
+                const provinceSelect = document.querySelector('form select[name="province"]');
+                if (!regionSelect || !provinceSelect) {
+                    return;
+                }
+
+                const populateProvinces = (regionId, preserveValue) => {
+                    const normalizedId = regionId ? String(regionId) : "";
+                    const previousValue = preserveValue || "";
+                    const filtered = normalizedId
+                        ? provinceOptions.filter((option) => option.region_id === normalizedId)
+                        : provinceOptions;
+
+                    provinceSelect.innerHTML = "";
+                    const defaultOption = document.createElement("option");
+                    defaultOption.value = "";
+                    defaultOption.textContent = "All Provinces";
+                    provinceSelect.appendChild(defaultOption);
+
+                    filtered.forEach((option) => {
+                        const opt = document.createElement("option");
+                        opt.value = option.id;
+                        opt.textContent = option.name;
+                        provinceSelect.appendChild(opt);
+                    });
+
+                    if (previousValue && filtered.some((option) => option.id === previousValue)) {
+                        provinceSelect.value = previousValue;
+                    }
+                };
+
+                const initialRegion = regionSelect.dataset.initial || regionSelect.value || "";
+                const initialProvince = provinceSelect.dataset.initial || provinceSelect.value || "";
+                populateProvinces(initialRegion, initialProvince);
+
+                regionSelect.addEventListener("change", () => {
+                    populateProvinces(regionSelect.value, "");
+                });
+            });
+        </script>
+    {% endif %}
 {% endblock %}

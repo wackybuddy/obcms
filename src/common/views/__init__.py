@@ -6,6 +6,8 @@ from .communities import (
     communities_add_municipality,
     communities_delete,
     communities_delete_municipal,
+    communities_view,
+    communities_view_municipal,
     communities_home,
     communities_manage,
     communities_manage_municipal,
@@ -19,6 +21,8 @@ from .coordination import (
     coordination_organizations,
     coordination_partnerships,
     coordination_view_all,
+    organization_create,
+    partnership_create,
 )
 from .dashboard import dashboard
 from .mana import (
@@ -43,6 +47,8 @@ __all__ = [
     "communities_home",
     "communities_add",
     "communities_add_municipality",
+    "communities_view",
+    "communities_view_municipal",
     "communities_manage",
     "communities_manage_municipal",
     "communities_edit",
@@ -59,6 +65,8 @@ __all__ = [
     "coordination_partnerships",
     "coordination_events",
     "coordination_view_all",
+    "organization_create",
+    "partnership_create",
     "recommendations_home",
     "recommendations_new",
     "recommendations_manage",

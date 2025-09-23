@@ -102,6 +102,76 @@
         </div>
     </div>
 
+    <!-- Location Filters -->
+    <div class="mb-8 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-filter mr-3 text-2xl"></i>
+                Filter by Location
+            </h2>
+        </div>
+        <div class="p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+                <div class="lg:col-span-3">
+                    <label for="geodata-region" class="block text-sm font-semibold text-gray-700 mb-2">Region</label>
+                    <select id="geodata-region"
+                            name="region"
+                            data-initial="{{ current_region }}"
+                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] transition-all duration-200">
+                        <option value="">All Regions</option>
+                    </select>
+                </div>
+                <div class="lg:col-span-3">
+                    <label for="geodata-province" class="block text-sm font-semibold text-gray-700 mb-2">Province</label>
+                    <select id="geodata-province"
+                            name="province"
+                            data-initial="{{ current_province }}"
+                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] transition-all duration-200">
+                        <option value="">All Provinces</option>
+                    </select>
+                </div>
+                <div class="lg:col-span-3">
+                    <label for="geodata-municipality" class="block text-sm font-semibold text-gray-700 mb-2">Municipality / City</label>
+                    <select id="geodata-municipality"
+                            name="municipality"
+                            data-initial="{{ current_municipality }}"
+                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] transition-all duration-200">
+                        <option value="">All Municipalities / Cities</option>
+                    </select>
+                </div>
+                <div class="lg:col-span-3">
+                    <label for="geodata-barangay" class="block text-sm font-semibold text-gray-700 mb-2">Barangay</label>
+                    <select id="geodata-barangay"
+                            name="barangay"
+                            data-initial="{{ current_barangay }}"
+                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] transition-all duration-200">
+                        <option value="">All Barangays</option>
+                    </select>
+                </div>
+                <div class="lg:col-span-3 flex flex-col sm:flex-row gap-3 lg:items-end">
+                    <button type="submit" class="w-full sm:flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
+                        Apply
+                    </button>
+                    <a href="{% url 'common:mana_geographic_data' %}"
+                       class="w-full sm:flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
+                        Clear
+                    </a>
+                </div>
+            </form>
+            {% if filter_summary %}
+            <div class="mt-4 inline-flex items-center px-4 py-2 rounded-lg bg-purple-50 border border-purple-100 text-sm text-purple-700">
+                <i class="fas fa-map-marker-alt mr-2"></i>
+                <span>Showing geographic data for {{ filter_summary }}.</span>
+            </div>
+            {% elif filters_applied %}
+            <div class="mt-4 inline-flex items-center px-4 py-2 rounded-lg bg-purple-50 border border-purple-100 text-sm text-purple-700">
+                <i class="fas fa-info-circle mr-2"></i>
+                <span>Location filters applied. Adjust selections to refine results.</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Data Layers -->
         <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
@@ -327,4 +397,180 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+    {% if location_data %}
+        {{ location_data|json_script:"geodata-location-data" }}
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const dataElement = document.getElementById('geodata-location-data');
+            if (!dataElement) {
+                return;
+            }
+
+            let locationData;
+            try {
+                locationData = JSON.parse(dataElement.textContent);
+            } catch (error) {
+                console.error('Unable to parse geographic location data.', error);
+                return;
+            }
+
+            const regionSelect = document.getElementById('geodata-region');
+            const provinceSelect = document.getElementById('geodata-province');
+            const municipalitySelect = document.getElementById('geodata-municipality');
+            const barangaySelect = document.getElementById('geodata-barangay');
+
+            if (!regionSelect || !provinceSelect || !municipalitySelect || !barangaySelect) {
+                return;
+            }
+
+            const toStringId = (value) => (value === null || value === undefined ? '' : String(value));
+
+            const provincesByRegion = new Map();
+            (locationData.provinces || []).forEach((province) => {
+                const key = toStringId(province.region_id);
+                if (!provincesByRegion.has(key)) {
+                    provincesByRegion.set(key, []);
+                }
+                provincesByRegion.get(key).push(province);
+            });
+
+            const municipalitiesByProvince = new Map();
+            (locationData.municipalities || []).forEach((municipality) => {
+                const key = toStringId(municipality.province_id);
+                if (!municipalitiesByProvince.has(key)) {
+                    municipalitiesByProvince.set(key, []);
+                }
+                municipalitiesByProvince.get(key).push(municipality);
+            });
+
+            const barangaysByMunicipality = new Map();
+            (locationData.barangays || []).forEach((barangay) => {
+                const key = toStringId(barangay.municipality_id);
+                if (!barangaysByMunicipality.has(key)) {
+                    barangaysByMunicipality.set(key, []);
+                }
+                barangaysByMunicipality.get(key).push(barangay);
+            });
+
+            const datasetSuffix = (count) => {
+                const numeric = Number(count || 0);
+                if (!numeric) {
+                    return '';
+                }
+                return ` • ${numeric.toLocaleString()} dataset${numeric === 1 ? '' : 's'}`;
+            };
+
+            const regionLabel = (option) => {
+                const prefix = option.code ? `Region ${option.code} - ` : '';
+                return `${prefix}${option.name}${datasetSuffix(option.geodata_count)}`;
+            };
+
+            const genericLabel = (option) => `${option.name}${datasetSuffix(option.geodata_count)}`;
+
+            const setOptions = (select, options, placeholder, selectedValue, labelBuilder) => {
+                const desiredValue = toStringId(selectedValue);
+                const previousValue = toStringId(select.value);
+                select.innerHTML = '';
+
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = '';
+                placeholderOption.textContent = placeholder;
+                select.appendChild(placeholderOption);
+
+                options.forEach((option) => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = toStringId(option.id);
+                    optionElement.textContent = labelBuilder ? labelBuilder(option) : option.name;
+
+                    if (option.geodata_count !== undefined) {
+                        optionElement.dataset.geodataCount = option.geodata_count;
+                    }
+                    if (option.geodata_communities !== undefined) {
+                        optionElement.dataset.geodataCommunities = option.geodata_communities;
+                    }
+                    if (option.geodata_layers !== undefined) {
+                        optionElement.dataset.geodataLayers = option.geodata_layers;
+                    }
+                    if (option.geodata_visualizations !== undefined) {
+                        optionElement.dataset.geodataVisualizations = option.geodata_visualizations;
+                    }
+                    if (option.geodata_points !== undefined) {
+                        optionElement.dataset.geodataPoints = option.geodata_points;
+                    }
+                    if (option.has_geodata) {
+                        optionElement.dataset.hasGeodata = 'true';
+                    }
+
+                    select.appendChild(optionElement);
+                });
+
+                const targetValue = desiredValue || previousValue;
+                if (targetValue) {
+                    select.value = targetValue;
+                    if (select.value !== targetValue) {
+                        select.value = '';
+                    }
+                }
+            };
+
+            const updateProvinceOptions = (regionId, selectedValue) => {
+                const key = toStringId(regionId);
+                const options = key ? provincesByRegion.get(key) || [] : (locationData.provinces || []);
+                setOptions(provinceSelect, options, 'All Provinces', selectedValue, genericLabel);
+            };
+
+            const updateMunicipalityOptions = (provinceId, selectedValue) => {
+                const key = toStringId(provinceId);
+                const options = key ? municipalitiesByProvince.get(key) || [] : (locationData.municipalities || []);
+                setOptions(
+                    municipalitySelect,
+                    options,
+                    'All Municipalities / Cities',
+                    selectedValue,
+                    genericLabel,
+                );
+            };
+
+            const updateBarangayOptions = (municipalityId, selectedValue) => {
+                const key = toStringId(municipalityId);
+                const options = key ? barangaysByMunicipality.get(key) || [] : (locationData.barangays || []);
+                setOptions(
+                    barangaySelect,
+                    options,
+                    'All Barangays',
+                    selectedValue,
+                    genericLabel,
+                );
+            };
+
+            const initialRegion = toStringId(regionSelect.dataset.initial || '');
+            const initialProvince = toStringId(provinceSelect.dataset.initial || '');
+            const initialMunicipality = toStringId(municipalitySelect.dataset.initial || '');
+            const initialBarangay = toStringId(barangaySelect.dataset.initial || '');
+
+            setOptions(regionSelect, locationData.regions || [], 'All Regions', initialRegion, regionLabel);
+            updateProvinceOptions(initialRegion, initialProvince);
+            updateMunicipalityOptions(initialProvince, initialMunicipality);
+            updateBarangayOptions(initialMunicipality, initialBarangay);
+
+            regionSelect.addEventListener('change', () => {
+                updateProvinceOptions(regionSelect.value, '');
+                updateMunicipalityOptions('', '');
+                updateBarangayOptions('', '');
+            });
+
+            provinceSelect.addEventListener('change', () => {
+                updateMunicipalityOptions(provinceSelect.value, '');
+                updateBarangayOptions('', '');
+            });
+
+            municipalitySelect.addEventListener('change', () => {
+                updateBarangayOptions(municipalitySelect.value, '');
+            });
+        });
+        </script>
+    {% endif %}
 {% endblock %}

@@ -411,7 +411,7 @@ class Command(BaseCommand):
                             "cultural_background": community_data["primary_ethnicity"],
                             "primary_language": community_data["primary_ethnicity"],
                             "settlement_type": "village",
-                            "development_status": "developing",
+                            "unemployment_rate": "unknown",
                             "specific_location": f"OBC community in {barangay_name}",
                             "is_active": True,
                         }

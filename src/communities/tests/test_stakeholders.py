@@ -36,7 +36,7 @@ class StakeholderModelTest(TestCase):
             barangay=self.barangay,
             population=500,
             households=100,
-            development_status="developing",
+            unemployment_rate="moderate",
         )
 
     def test_stakeholder_creation(self):

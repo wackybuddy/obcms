@@ -1,15 +1,25 @@
 """Frontend views for the coordination module."""
 
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from .forms import (OrganizationContactFormSet, OrganizationForm,
-                    PartnershipDocumentFormSet, PartnershipForm,
-                    PartnershipMilestoneFormSet, PartnershipSignatoryFormSet)
+from .forms import (
+    OrganizationContactFormSet,
+    OrganizationForm,
+    PartnershipDocumentFormSet,
+    PartnershipForm,
+    PartnershipMilestoneFormSet,
+    PartnershipSignatoryFormSet,
+)
 from .models import Organization, Partnership
+
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -37,6 +47,15 @@ def organization_create(request):
             formset.save()
             messages.success(request, "Organization successfully created.")
             return redirect("common:coordination_organizations")
+        messages.error(request, "Please correct the errors below before submitting.")
+        if form.errors:
+            logger.warning("Organization form errors: %s", form.errors)
+        if formset.errors or formset.non_form_errors():
+            logger.warning(
+                "Organization contact formset errors: %s | non-form: %s",
+                formset.errors,
+                formset.non_form_errors(),
+            )
     else:
         form = OrganizationForm()
         formset = OrganizationContactFormSet(

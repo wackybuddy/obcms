@@ -212,10 +212,10 @@ AGGREGATION_SECTIONS: "OrderedDict[str, SectionRule]" = OrderedDict(
                 metrics=OrderedDict(
                     [
                         (
-                            "number_of_employed_obc",
+                            "number_of_peoples_organizations",
                             MetricRule(
-                                source="number_of_employed_obc",
-                                label="Employed OBC",
+                                source="number_of_peoples_organizations",
+                                label="People's Organizations",
                             ),
                         ),
                         (

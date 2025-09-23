@@ -1,22 +1,16 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 
-from common.models import Barangay, Municipality
+from common.models import Barangay, Municipality, Province, Region
 
 User = get_user_model()
 
 
 class CommunityProfileBase(models.Model):
     """Shared socio-demographic profile fields for communities and municipalities."""
-
-    DEVELOPMENT_STATUS_CHOICES = [
-        ("developing", "Developing"),
-        ("established", "Established"),
-        ("vulnerable", "Vulnerable"),
-        ("thriving", "Thriving"),
-        ("at_risk", "At Risk"),
-    ]
 
     SETTLEMENT_TYPE_CHOICES = [
         ("village", "Village"),
@@ -229,12 +223,13 @@ class CommunityProfileBase(models.Model):
 
     # Poverty and economic status
     POVERTY_INCIDENCE_CHOICES = [
-        ("very_high", "Very High (>70%)"),
-        ("high", "High (50-70%)"),
-        ("moderate", "Moderate (30-50%)"),
-        ("low", "Low (10-30%)"),
-        ("very_low", "Very Low (<10%)"),
         ("unknown", "Unknown"),
+        ("very_low", "Very Low (<10%)"),
+        ("low", "Low (10-20%)"),
+        ("moderate", "Moderate (20-30%)"),
+        ("high", "High (30-40%)"),
+        ("very_high", "Very High (40-50%)"),
+        ("extremely_high", "Extremely High (>50%)"),
     ]
 
     estimated_poverty_incidence = models.CharField(
@@ -322,8 +317,8 @@ class CommunityProfileBase(models.Model):
         help_text="Land tenure issues (lack of titles, disputes, ancestral domain claims)",
     )
 
-    number_of_employed_obc = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Number of Employed OBC Individuals"
+    number_of_peoples_organizations = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Number of People's Organizations in the community"
     )
 
     number_of_cooperatives = models.PositiveIntegerField(
@@ -346,8 +341,11 @@ class CommunityProfileBase(models.Model):
         help_text="Number of OBC Individuals without Access to Financial Services (Unbanked)",
     )
 
-    financial_literacy_access = models.TextField(
-        blank=True, help_text="Financial literacy and access to financial services"
+    financial_access_level = models.CharField(
+        max_length=20,
+        choices=ACCESS_RATING_CHOICES,
+        blank=True,
+        help_text="Access to banking and financial services",
     )
 
     # IV. CULTURAL AND HISTORICAL CONTEXT
@@ -411,7 +409,7 @@ class CommunityProfileBase(models.Model):
 
     other_cultural_facilities = models.TextField(
         blank=True,
-        help_text="Other cultural facilities or assets not listed above",
+        help_text="Other cultural facilities, artefacts, or assets not listed above",
     )
 
     # V. GOVERNANCE AND COMMUNITY LEADERSHIP
@@ -541,12 +539,23 @@ class CommunityProfileBase(models.Model):
         blank=True, help_text="Specific project proposals/ideas from the community"
     )
 
-    # Development Status
-    development_status = models.CharField(
+    # Employment context
+    UNEMPLOYMENT_RATE_CHOICES = [
+        ("", "Select..."),
+        ("unknown", "Unknown"),
+        ("very_low", "Very Low (<10%)"),
+        ("low", "Low (10-20%)"),
+        ("moderate", "Moderate (20-30%)"),
+        ("high", "High (30-40%)"),
+        ("very_high", "Very High (40-50%)"),
+        ("extremely_high", "Extremely High (>50%)"),
+    ]
+
+    unemployment_rate = models.CharField(
         max_length=20,
-        choices=DEVELOPMENT_STATUS_CHOICES,
-        default="developing",
-        help_text="Current development status of the community",
+        choices=UNEMPLOYMENT_RATE_CHOICES,
+        blank=True,
+        help_text="Estimated unemployment rate within the community",
     )
 
     # X. NEEDS ASSESSMENT DATA
@@ -1449,7 +1458,7 @@ class MunicipalityCoverage(CommunityProfileBase):
             "migrants_transients_count",
             "csos_count",
             "associations_count",
-            "number_of_employed_obc",
+            "number_of_peoples_organizations",
             "number_of_cooperatives",
             "number_of_social_enterprises",
             "number_of_micro_enterprises",
@@ -1487,3 +1496,581 @@ class MunicipalityCoverage(CommunityProfileBase):
         coverage, _ = cls.objects.get_or_create(municipality=municipality)
         coverage.refresh_from_communities()
         return coverage
+
+
+# ============================================================================
+# GEOGRAPHIC DATA MODELS (Moved from mana app for better organization)
+# ============================================================================
+
+
+class GeographicDataLayer(models.Model):
+    """Model for managing geographic data layers for mapping and visualization."""
+
+    LAYER_TYPES = [
+        ("point", "Point Data"),
+        ("line", "Line/Route Data"),
+        ("polygon", "Polygon/Area Data"),
+        ("raster", "Raster/Satellite Data"),
+        ("heatmap", "Heatmap Data"),
+        ("cluster", "Clustered Data"),
+    ]
+
+    DATA_SOURCES = [
+        ("field_survey", "Field Survey"),
+        ("satellite_imagery", "Satellite Imagery"),
+        ("government_data", "Government Dataset"),
+        ("community_mapping", "Community Mapping"),
+        ("third_party", "Third Party Source"),
+        ("mobile_app", "Mobile Application"),
+        ("gps_tracking", "GPS Tracking"),
+    ]
+
+    name = models.CharField(
+        max_length=150, help_text="Name of the geographic data layer"
+    )
+
+    description = models.TextField(
+        help_text="Description of the data layer and its purpose"
+    )
+
+    layer_type = models.CharField(
+        max_length=15, choices=LAYER_TYPES, help_text="Type of geographic data"
+    )
+
+    data_source = models.CharField(
+        max_length=20, choices=DATA_SOURCES, help_text="Source of the geographic data"
+    )
+
+    # Community and Assessment Relations
+    community = models.ForeignKey(
+        "OBCCommunity",
+        on_delete=models.CASCADE,
+        related_name="geographic_layers",
+        null=True,
+        blank=True,
+        help_text="Community this layer relates to (if applicable)",
+    )
+
+    assessment = models.ForeignKey(
+        "mana.Assessment",
+        on_delete=models.CASCADE,
+        related_name="geographic_layers",
+        null=True,
+        blank=True,
+        help_text="Assessment this layer was created for (if applicable)",
+    )
+
+    # Administrative Relations (for direct geographic data linkage)
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.CASCADE,
+        related_name="geographic_layers",
+        null=True,
+        blank=True,
+        help_text="Region this layer covers or relates to",
+    )
+
+    province = models.ForeignKey(
+        Province,
+        on_delete=models.CASCADE,
+        related_name="geographic_layers",
+        null=True,
+        blank=True,
+        help_text="Province this layer covers or relates to",
+    )
+
+    municipality = models.ForeignKey(
+        Municipality,
+        on_delete=models.CASCADE,
+        related_name="geographic_layers",
+        null=True,
+        blank=True,
+        help_text="Municipality this layer covers or relates to",
+    )
+
+    barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.CASCADE,
+        related_name="geographic_layers",
+        null=True,
+        blank=True,
+        help_text="Barangay this layer covers or relates to",
+    )
+
+    # Geographic Data
+    geojson_data = models.JSONField(help_text="GeoJSON data for the layer")
+
+    bounding_box = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Bounding box coordinates [min_lng, min_lat, max_lng, max_lat]",
+    )
+
+    center_point = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Center point coordinates [longitude, latitude]",
+    )
+
+    # Styling and Display
+    style_properties = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Styling properties for map display (colors, symbols, etc.)",
+    )
+
+    zoom_level_min = models.IntegerField(
+        default=1, help_text="Minimum zoom level for layer visibility"
+    )
+
+    zoom_level_max = models.IntegerField(
+        default=18, help_text="Maximum zoom level for layer visibility"
+    )
+
+    is_visible = models.BooleanField(
+        default=True, help_text="Whether the layer is visible by default"
+    )
+
+    opacity = models.FloatField(
+        default=1.0,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text="Layer opacity (0.0 to 1.0)",
+    )
+
+    # Metadata and Attribution
+    data_collection_date = models.DateField(
+        null=True, blank=True, help_text="Date when the data was collected"
+    )
+
+    accuracy_meters = models.FloatField(
+        null=True, blank=True, help_text="Estimated accuracy in meters"
+    )
+
+    coordinate_system = models.CharField(
+        max_length=50,
+        default="EPSG:4326",
+        help_text="Coordinate reference system (e.g., EPSG:4326)",
+    )
+
+    attribution = models.TextField(
+        blank=True, help_text="Data attribution and source credits"
+    )
+
+    license_info = models.CharField(
+        max_length=100, blank=True, help_text="License information for the data"
+    )
+
+    # Access Control
+    is_public = models.BooleanField(
+        default=False, help_text="Whether this layer is publicly accessible"
+    )
+
+    access_groups = models.JSONField(
+        null=True, blank=True, help_text="User groups that have access to this layer"
+    )
+
+    # Technical Properties
+    feature_count = models.IntegerField(
+        default=0, help_text="Number of features in the layer"
+    )
+
+    file_size_bytes = models.BigIntegerField(
+        null=True, blank=True, help_text="Size of the data in bytes"
+    )
+
+    # Metadata
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_geo_layers",
+        help_text="User who created this layer",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["community", "layer_type"]),
+            models.Index(fields=["assessment", "data_source"]),
+            models.Index(fields=["is_public", "is_visible"]),
+        ]
+
+    def clean(self):
+        """Validate administrative hierarchy relationships."""
+        super().clean()
+
+        # Check administrative hierarchy consistency
+        if self.barangay and self.municipality and self.barangay.municipality != self.municipality:
+            raise ValidationError("Barangay must belong to the specified municipality")
+
+        if self.municipality and self.province and self.municipality.province != self.province:
+            raise ValidationError("Municipality must belong to the specified province")
+
+        if self.province and self.region and self.province.region != self.region:
+            raise ValidationError("Province must belong to the specified region")
+
+    @property
+    def administrative_level(self):
+        """Return the most specific administrative level this layer covers."""
+        if self.barangay:
+            return "barangay"
+        elif self.municipality:
+            return "municipality"
+        elif self.province:
+            return "province"
+        elif self.region:
+            return "region"
+        elif self.community:
+            return "community"
+        return "none"
+
+    @property
+    def full_administrative_path(self):
+        """Return the full administrative path for this layer."""
+        if self.barangay:
+            return self.barangay.full_path
+        elif self.municipality:
+            return self.municipality.full_path
+        elif self.province:
+            return self.province.full_path
+        elif self.region:
+            return f"Region {self.region.code} - {self.region.name}"
+        elif self.community:
+            return self.community.full_location
+        return "No administrative assignment"
+
+    def get_related_obc_communities(self):
+        """Get OBC Communities that fall within this layer's administrative scope."""
+        if self.barangay:
+            return self.barangay.obc_communities.all()
+        elif self.municipality:
+            return OBCCommunity.objects.filter(barangay__municipality=self.municipality)
+        elif self.province:
+            return OBCCommunity.objects.filter(barangay__municipality__province=self.province)
+        elif self.region:
+            return OBCCommunity.objects.filter(barangay__municipality__province__region=self.region)
+        elif self.community:
+            return [self.community]
+        return []
+
+    def __str__(self):
+        return f"{self.name} ({self.get_layer_type_display()})"
+
+
+class MapVisualization(models.Model):
+    """Model for managing map visualizations and configurations."""
+
+    VISUALIZATION_TYPES = [
+        ("basic_map", "Basic Map"),
+        ("choropleth", "Choropleth Map"),
+        ("heat_map", "Heat Map"),
+        ("cluster_map", "Cluster Map"),
+        ("timeline_map", "Timeline Map"),
+        ("comparison_map", "Comparison Map"),
+        ("story_map", "Story Map"),
+    ]
+
+    MAP_PROVIDERS = [
+        ("openstreetmap", "OpenStreetMap"),
+        ("satellite", "Satellite Imagery"),
+        ("terrain", "Terrain Map"),
+        ("dark", "Dark Theme"),
+        ("light", "Light Theme"),
+        ("custom", "Custom Basemap"),
+    ]
+
+    title = models.CharField(max_length=200, help_text="Title of the map visualization")
+
+    description = models.TextField(
+        help_text="Description and purpose of the visualization"
+    )
+
+    visualization_type = models.CharField(
+        max_length=20,
+        choices=VISUALIZATION_TYPES,
+        help_text="Type of map visualization",
+    )
+
+    # Relations
+    community = models.ForeignKey(
+        "OBCCommunity",
+        on_delete=models.CASCADE,
+        related_name="map_visualizations",
+        null=True,
+        blank=True,
+        help_text="Community this visualization focuses on",
+    )
+
+    assessment = models.ForeignKey(
+        "mana.Assessment",
+        on_delete=models.CASCADE,
+        related_name="map_visualizations",
+        null=True,
+        blank=True,
+        help_text="Assessment this visualization was created for",
+    )
+
+    layers = models.ManyToManyField(
+        GeographicDataLayer,
+        related_name="visualizations",
+        help_text="Geographic layers included in this visualization",
+    )
+
+    # Map Configuration
+    basemap_provider = models.CharField(
+        max_length=20,
+        choices=MAP_PROVIDERS,
+        default="openstreetmap",
+        help_text="Base map provider",
+    )
+
+    initial_zoom = models.IntegerField(
+        default=10,
+        validators=[MinValueValidator(1), MaxValueValidator(18)],
+        help_text="Initial zoom level",
+    )
+
+    initial_center = models.JSONField(
+        help_text="Initial center point [longitude, latitude]"
+    )
+
+    bounding_box = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Map bounding box [min_lng, min_lat, max_lng, max_lat]",
+    )
+
+    # Visualization Settings
+    color_scheme = models.JSONField(
+        null=True, blank=True, help_text="Color scheme configuration"
+    )
+
+    legend_configuration = models.JSONField(
+        null=True, blank=True, help_text="Legend display configuration"
+    )
+
+    popup_template = models.TextField(
+        blank=True, help_text="HTML template for feature popups"
+    )
+
+    filters_configuration = models.JSONField(
+        null=True, blank=True, help_text="Interactive filters configuration"
+    )
+
+    # Interactivity
+    is_interactive = models.BooleanField(
+        default=True, help_text="Whether the map allows user interaction"
+    )
+
+    enable_clustering = models.BooleanField(
+        default=False, help_text="Whether to enable point clustering"
+    )
+
+    enable_search = models.BooleanField(
+        default=False, help_text="Whether to enable location search"
+    )
+
+    enable_drawing = models.BooleanField(
+        default=False, help_text="Whether to enable drawing tools"
+    )
+
+    # Sharing and Access
+    is_public = models.BooleanField(
+        default=False, help_text="Whether this visualization is publicly accessible"
+    )
+
+    is_embedded = models.BooleanField(
+        default=False, help_text="Whether this visualization can be embedded"
+    )
+
+    share_token = models.CharField(
+        max_length=50,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Unique token for sharing the visualization",
+    )
+
+    # Analytics
+    view_count = models.IntegerField(
+        default=0, help_text="Number of times this visualization has been viewed"
+    )
+
+    last_viewed = models.DateTimeField(
+        null=True, blank=True, help_text="Last time this visualization was viewed"
+    )
+
+    # Metadata
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_visualizations",
+        help_text="User who created this visualization",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.get_visualization_type_display()})"
+
+    def save(self, *args, **kwargs):
+        """Generate share token if needed."""
+        if not self.share_token:
+            import secrets
+
+            self.share_token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+
+
+class SpatialDataPoint(models.Model):
+    """Model for individual spatial data points with attributes."""
+
+    POINT_TYPES = [
+        ("community_center", "Community Center"),
+        ("health_facility", "Health Facility"),
+        ("school", "Educational Facility"),
+        ("mosque", "Mosque/Religious Site"),
+        ("government_office", "Government Office"),
+        ("market", "Market/Commerce"),
+        ("infrastructure", "Infrastructure"),
+        ("natural_resource", "Natural Resource"),
+        ("cultural_site", "Cultural Site"),
+        ("hazard_area", "Hazard/Risk Area"),
+        ("project_site", "Project Location"),
+        ("assessment_point", "Assessment Point"),
+    ]
+
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("inactive", "Inactive"),
+        ("planned", "Planned"),
+        ("under_construction", "Under Construction"),
+        ("abandoned", "Abandoned"),
+        ("needs_verification", "Needs Verification"),
+    ]
+
+    # Basic Information
+    name = models.CharField(max_length=200, help_text="Name or identifier of the point")
+
+    description = models.TextField(blank=True, help_text="Description of the point")
+
+    point_type = models.CharField(
+        max_length=25, choices=POINT_TYPES, help_text="Type of spatial point"
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="active",
+        help_text="Current status of the point",
+    )
+
+    # Geographic Information
+    latitude = models.FloatField(help_text="Latitude coordinate")
+
+    longitude = models.FloatField(help_text="Longitude coordinate")
+
+    elevation = models.FloatField(
+        null=True, blank=True, help_text="Elevation in meters above sea level"
+    )
+
+    accuracy_meters = models.FloatField(
+        null=True, blank=True, help_text="GPS accuracy in meters"
+    )
+
+    # Relations
+    community = models.ForeignKey(
+        "OBCCommunity",
+        on_delete=models.CASCADE,
+        related_name="spatial_points",
+        help_text="Community this point belongs to",
+    )
+
+    assessment = models.ForeignKey(
+        "mana.Assessment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="spatial_points",
+        help_text="Assessment that identified this point",
+    )
+
+    data_layer = models.ForeignKey(
+        GeographicDataLayer,
+        on_delete=models.CASCADE,
+        related_name="data_points",
+        help_text="Geographic layer this point belongs to",
+    )
+
+    # Attributes
+    attributes = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Additional attributes and properties (JSON format)",
+    )
+
+    # Data Collection Information
+    collected_date = models.DateTimeField(
+        default=timezone.now, help_text="Date and time when point was collected"
+    )
+
+    collection_method = models.CharField(
+        max_length=50, blank=True, help_text="Method used to collect this point"
+    )
+
+    is_verified = models.BooleanField(
+        default=False, help_text="Whether this point has been verified"
+    )
+
+    verified_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="verified_points",
+        help_text="User who verified this point",
+    )
+
+    verification_date = models.DateTimeField(
+        null=True, blank=True, help_text="Date when point was verified"
+    )
+
+    # Photo and Media
+    photo_url = models.URLField(blank=True, help_text="URL to photo of the location")
+
+    media_files = models.JSONField(
+        null=True, blank=True, help_text="References to associated media files"
+    )
+
+    # Metadata
+    collected_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="collected_points",
+        help_text="User who collected this point",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-collected_date"]
+        indexes = [
+            models.Index(fields=["community", "point_type"]),
+            models.Index(fields=["latitude", "longitude"]),
+            models.Index(fields=["data_layer", "status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_point_type_display()})"
+
+    @property
+    def coordinates(self):
+        """Return coordinates as [longitude, latitude] for GeoJSON."""
+        return [self.longitude, self.latitude]

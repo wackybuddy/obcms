@@ -44,7 +44,7 @@ AGGREGATABLE_FIELDS = {
     "csos_count",
     "associations_count",
     "teachers_asatidz_count",
-    "number_of_employed_obc",
+    "number_of_peoples_organizations",
     "number_of_cooperatives",
     "number_of_social_enterprises",
     "number_of_micro_enterprises",

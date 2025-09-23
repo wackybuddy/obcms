@@ -6,12 +6,10 @@ from django.utils.safestring import mark_safe
 
 from .models import (Assessment, AssessmentCategory, AssessmentTeamMember,
                      BaselineDataCollection, BaselineIndicator, BaselineStudy,
-                     BaselineStudyTeamMember, GeographicDataLayer, MANAReport,
-                     MappingActivity, MapVisualization, Need, NeedsCategory,
-                     NeedsPrioritization, NeedsPrioritizationItem,
-                     SpatialDataPoint, Survey, SurveyQuestion, SurveyResponse,
-                     WorkshopActivity, WorkshopOutput, WorkshopParticipant,
-                     WorkshopSession)
+                     BaselineStudyTeamMember, MANAReport, MappingActivity, Need,
+                     NeedsCategory, NeedsPrioritization, NeedsPrioritizationItem,
+                     Survey, SurveyQuestion, SurveyResponse, WorkshopActivity,
+                     WorkshopOutput, WorkshopParticipant, WorkshopSession)
 
 
 @admin.register(AssessmentCategory)

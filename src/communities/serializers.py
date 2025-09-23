@@ -38,7 +38,7 @@ class OBCCommunitySerializer(serializers.ModelSerializer):
     full_location = serializers.ReadOnlyField()
     total_age_demographics = serializers.ReadOnlyField()
     average_household_size = serializers.ReadOnlyField()
-    development_status_display = serializers.CharField(source='get_development_status_display', read_only=True)
+    unemployment_rate_display = serializers.CharField(source='get_unemployment_rate_display', read_only=True)
     settlement_type_display = serializers.CharField(source='get_settlement_type_display', read_only=True)
     
     # Administrative location details
@@ -63,7 +63,7 @@ class OBCCommunitySerializer(serializers.ModelSerializer):
             'primary_language', 'other_languages', 'cultural_background', 'religious_practices',
             'has_mosque', 'has_madrasah', 'religious_leaders_count',
             'established_year', 'origin_story', 'migration_history',
-            'development_status', 'development_status_display', 'needs_assessment_date', 'priority_needs',
+            'unemployment_rate', 'unemployment_rate_display', 'needs_assessment_date', 'priority_needs',
             'community_leader', 'leader_contact', 'is_active', 'notes',
             'livelihoods', 'infrastructure', 'stakeholders', 'created_at', 'updated_at'
         ]
@@ -99,7 +99,7 @@ class OBCCommunitySerializer(serializers.ModelSerializer):
 class OBCCommunityListSerializer(serializers.ModelSerializer):
     """Simplified serializer for OBC Community list view."""
     full_location = serializers.ReadOnlyField()
-    development_status_display = serializers.CharField(source='get_development_status_display', read_only=True)
+    unemployment_rate_display = serializers.CharField(source='get_unemployment_rate_display', read_only=True)
     settlement_type_display = serializers.CharField(source='get_settlement_type_display', read_only=True)
     
     # Administrative location details
@@ -118,7 +118,7 @@ class OBCCommunityListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'full_location', 'settlement_type', 'settlement_type_display',
             'region', 'region_code', 'province', 'municipality', 'barangay_name',
-            'population', 'households', 'development_status', 'development_status_display',
+            'population', 'households', 'unemployment_rate', 'unemployment_rate_display',
             'primary_language', 'has_mosque', 'has_madrasah', 'community_leader',
             'livelihood_count', 'infrastructure_count', 'is_active', 'updated_at'
         ]
@@ -138,7 +138,7 @@ class CommunityStatsSerializer(serializers.Serializer):
     total_population = serializers.IntegerField()
     total_households = serializers.IntegerField()
     by_region = serializers.DictField()
-    by_development_status = serializers.DictField()
+    by_unemployment_rate = serializers.DictField()
     by_settlement_type = serializers.DictField()
     religious_facilities = serializers.DictField()
     average_household_size = serializers.FloatField()
