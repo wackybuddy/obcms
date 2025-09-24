@@ -1797,7 +1797,7 @@ class MapVisualization(models.Model):
     community = models.ForeignKey(
         "OBCCommunity",
         on_delete=models.CASCADE,
-        related_name="map_visualizations",
+        related_name="community_map_visualizations",
         null=True,
         blank=True,
         help_text="Community this visualization focuses on",

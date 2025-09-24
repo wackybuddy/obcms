@@ -40,6 +40,7 @@ urlpatterns = [
     
     # Main application URLs
     path('', include('common.urls')),
+    path('communities/', include('communities.urls')),
     path('monitoring/', include('monitoring.urls')),
     path('documents/', include(('recommendations.documents.urls', 'documents'), namespace='documents')),
     

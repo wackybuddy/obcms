@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Update MOA PPAs Status{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+<li>
+    <a href="{% url 'monitoring:home' %}" class="text-neutral-500 hover:text-neutral-700">M&E</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+<li>
+    <a href="{% url 'monitoring:moa_ppas' %}" class="text-neutral-500 hover:text-neutral-700">MOA PPAs</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+<li class="text-neutral-800 font-semibold">Bulk Update</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <!-- Header -->
+    <header class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-neutral-800">Bulk Update MOA PPAs Status</h1>
+            <p class="text-neutral-600 mt-1">Select multiple MOA PPAs and update their status or progress simultaneously</p>
+        </div>
+        <a href="{% url 'monitoring:moa_ppas' %}" class="inline-flex items-center px-4 py-2 border border-neutral-300 rounded-lg text-sm font-medium text-neutral-700 bg-white hover:bg-neutral-50">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to MOA PPAs
+        </a>
+    </header>
+
+    <!-- Bulk Update Form -->
+    <form method="post" id="bulkUpdateForm">
+        {% csrf_token %}
+
+        <!-- Update Controls -->
+        <div class="bg-white rounded-xl border border-neutral-200 shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-semibold text-neutral-800 mb-4">Update Settings</h2>
+
+            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <label for="new_status" class="block text-sm font-medium text-neutral-700 mb-2">New Status</label>
+                    <select name="new_status" id="new_status" class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Keep current status</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label for="new_progress" class="block text-sm font-medium text-neutral-700 mb-2">New Progress (%)</label>
+                    <input type="number" name="new_progress" id="new_progress" min="0" max="100"
+                           placeholder="Keep current progress"
+                           class="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <div class="flex items-end">
+                    <button type="submit" disabled id="updateButton"
+                            class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-neutral-300 disabled:cursor-not-allowed">
+                        <i class="fas fa-save mr-2"></i>
+                        Update Selected PPAs
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mt-1 mr-2"></i>
+                    <div class="text-sm text-yellow-800">
+                        <p class="font-medium">Important:</p>
+                        <p>Select the MOA PPAs you want to update from the list below, then choose the new status or progress values above.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOA PPAs Selection -->
+        <div class="bg-white rounded-xl border border-neutral-200 shadow-sm">
+            <div class="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-neutral-800">Select MOA PPAs to Update</h2>
+                    <p class="text-sm text-neutral-600 mt-1">Choose the entries you want to update</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button type="button" id="selectAll" class="text-sm text-blue-600 hover:text-blue-800">
+                        Select All
+                    </button>
+                    <button type="button" id="selectNone" class="text-sm text-blue-600 hover:text-blue-800">
+                        Select None
+                    </button>
+                    <span id="selectedCount" class="text-sm text-neutral-500">0 selected</span>
+                </div>
+            </div>
+
+            {% if page_obj %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-neutral-200 text-sm">
+                    <thead class="bg-neutral-50">
+                        <tr>
+                            <th class="px-4 py-3 w-8">
+                                <input type="checkbox" id="masterCheckbox" class="rounded border-neutral-300 text-blue-600 focus:ring-blue-500">
+                            </th>
+                            <th class="px-4 py-3 text-left font-medium text-neutral-700">Title</th>
+                            <th class="px-4 py-3 text-left font-medium text-neutral-700">Current Status</th>
+                            <th class="px-4 py-3 text-left font-medium text-neutral-700">Current Progress</th>
+                            <th class="px-4 py-3 text-left font-medium text-neutral-700">Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-100">
+                        {% for entry in page_obj %}
+                        <tr class="hover:bg-neutral-50">
+                            <td class="px-4 py-3">
+                                <input type="checkbox" name="selected_entries" value="{{ entry.id }}"
+                                       class="entry-checkbox rounded border-neutral-300 text-blue-600 focus:ring-blue-500">
+                            </td>
+                            <td class="px-4 py-3">
+                                <div>
+                                    <p class="font-medium text-neutral-800">{{ entry.title }}</p>
+                                    {% if entry.implementing_moa %}
+                                    <p class="text-xs text-blue-600">{{ entry.implementing_moa.name }}</p>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {% if entry.status == 'completed' %}bg-green-100 text-green-800{% elif entry.status == 'ongoing' %}bg-blue-100 text-blue-800{% elif entry.status == 'planning' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ entry.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-16 bg-neutral-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: {{ entry.progress }}%"></div>
+                                    </div>
+                                    <span class="text-xs font-medium">{{ entry.progress }}%</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 text-neutral-600">
+                                {{ entry.updated_at|date:"M j, Y" }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="px-6 py-4 border-t border-neutral-200 flex items-center justify-between">
+                <div class="text-sm text-neutral-500">
+                    Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+                </div>
+                <div class="flex items-center space-x-1">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}"
+                       class="px-3 py-2 text-sm text-neutral-500 hover:text-neutral-700">Previous</a>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <span class="px-3 py-2 text-sm bg-blue-500 text-white rounded">{{ num }}</span>
+                        {% else %}
+                        <a href="?page={{ num }}"
+                           class="px-3 py-2 text-sm text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}"
+                       class="px-3 py-2 text-sm text-neutral-500 hover:text-neutral-700">Next</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="px-6 py-8 text-center">
+                <i class="fas fa-folder-open text-neutral-300 text-4xl mb-4"></i>
+                <h3 class="text-lg font-medium text-neutral-900 mb-2">No MOA PPAs Found</h3>
+                <p class="text-neutral-500">There are no MOA PPAs available for bulk update.</p>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const masterCheckbox = document.getElementById('masterCheckbox');
+    const entryCheckboxes = document.querySelectorAll('.entry-checkbox');
+    const selectedCount = document.getElementById('selectedCount');
+    const updateButton = document.getElementById('updateButton');
+    const selectAllBtn = document.getElementById('selectAll');
+    const selectNoneBtn = document.getElementById('selectNone');
+
+    function updateSelectedCount() {
+        const checked = document.querySelectorAll('.entry-checkbox:checked').length;
+        selectedCount.textContent = `${checked} selected`;
+        updateButton.disabled = checked === 0;
+
+        // Update master checkbox state
+        if (checked === 0) {
+            masterCheckbox.indeterminate = false;
+            masterCheckbox.checked = false;
+        } else if (checked === entryCheckboxes.length) {
+            masterCheckbox.indeterminate = false;
+            masterCheckbox.checked = true;
+        } else {
+            masterCheckbox.indeterminate = true;
+        }
+    }
+
+    // Master checkbox functionality
+    masterCheckbox.addEventListener('change', function() {
+        entryCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateSelectedCount();
+    });
+
+    // Individual checkbox functionality
+    entryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+
+    // Select all/none buttons
+    selectAllBtn.addEventListener('click', function() {
+        entryCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updateSelectedCount();
+    });
+
+    selectNoneBtn.addEventListener('click', function() {
+        entryCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        updateSelectedCount();
+    });
+
+    // Form submission confirmation
+    document.getElementById('bulkUpdateForm').addEventListener('submit', function(e) {
+        const checkedCount = document.querySelectorAll('.entry-checkbox:checked').length;
+        const newStatus = document.getElementById('new_status').value;
+        const newProgress = document.getElementById('new_progress').value;
+
+        if (checkedCount === 0) {
+            e.preventDefault();
+            alert('Please select at least one MOA PPA to update.');
+            return;
+        }
+
+        if (!newStatus && !newProgress) {
+            e.preventDefault();
+            alert('Please specify either a new status or new progress value.');
+            return;
+        }
+
+        const message = `Are you sure you want to update ${checkedCount} MOA PPAs?`;
+        if (!confirm(message)) {
+            e.preventDefault();
+        }
+    });
+
+    // Initialize count
+    updateSelectedCount();
+});
+</script>
+{% endblock %}

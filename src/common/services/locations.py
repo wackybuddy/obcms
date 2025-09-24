@@ -45,7 +45,7 @@ def build_location_data(include_barangays: bool = True) -> Dict[str, List[dict]]
             OBCCommunity.objects.filter(is_active=True)
             .annotate(
                 geo_layers_count=Count("geographic_layers", distinct=True),
-                map_visualizations_count=Count("map_visualizations", distinct=True),
+                map_visualizations_count=Count("community_map_visualizations", distinct=True),
                 spatial_points_count=Count("spatial_points", distinct=True),
             )
             .values(

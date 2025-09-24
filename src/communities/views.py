@@ -9,7 +9,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from openpyxl import Workbook
@@ -26,8 +27,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import (CommunityInfrastructure, CommunityLivelihood,
-                     MunicipalityCoverage, OBCCommunity, Stakeholder,
-                     StakeholderEngagement)
+                     GeographicDataLayer, MapVisualization, MunicipalityCoverage,
+                     OBCCommunity, Stakeholder, StakeholderEngagement)
+from .forms import GeographicDataLayerForm, MapVisualizationForm
 from .serializers import (CommunityInfrastructureSerializer,
                           CommunityLivelihoodSerializer,
                           CommunityStatsSerializer, OBCCommunityListSerializer,
@@ -76,12 +78,12 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
             by_region[region_name] += 1
 
         # By development status
-    by_unemployment_rate = {}
+        by_unemployment_rate = {}
         for community in communities:
-        rate = community.get_unemployment_rate_display()
-        if rate not in by_unemployment_rate:
-            by_unemployment_rate[rate] = 0
-        by_unemployment_rate[rate] += 1
+            rate = community.get_unemployment_rate_display()
+            if rate not in by_unemployment_rate:
+                by_unemployment_rate[rate] = 0
+            by_unemployment_rate[rate] += 1
 
         # By settlement type
         by_settlement_type = {}
@@ -352,3 +354,68 @@ class CommunityInfrastructureViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(community_id=community_id)
 
         return queryset
+
+
+# Geographic Data Views
+
+@login_required
+def add_data_layer(request):
+    """Create a new geographic data layer."""
+    if request.method == 'POST':
+        form = GeographicDataLayerForm(request.POST, user=request.user)
+        if form.is_valid():
+            layer = form.save()
+            messages.success(request, f'Geographic data layer "{layer.name}" has been created successfully.')
+            return redirect('communities:geographic_data_list')
+    else:
+        form = GeographicDataLayerForm(user=request.user)
+
+    context = {
+        'form': form,
+        'title': 'Add Geographic Data Layer',
+    }
+    return render(request, 'communities/add_data_layer.html', context)
+
+
+@login_required
+def create_visualization(request):
+    """Create a new map visualization."""
+    if request.method == 'POST':
+        form = MapVisualizationForm(request.POST, user=request.user)
+        if form.is_valid():
+            visualization = form.save()
+            messages.success(request, f'Map visualization "{visualization.title}" has been created successfully.')
+            return redirect('communities:geographic_data_list')
+    else:
+        form = MapVisualizationForm(user=request.user)
+
+    context = {
+        'form': form,
+        'title': 'Create Map Visualization',
+    }
+    return render(request, 'communities/create_visualization.html', context)
+
+
+@login_required
+def geographic_data_list(request):
+    """List geographic data layers and visualizations."""
+    data_layers = GeographicDataLayer.objects.all().order_by('-created_at')
+    visualizations = MapVisualization.objects.all().order_by('-created_at')
+
+    # Basic statistics
+    stats = {
+        'total_layers': data_layers.count(),
+        'total_visualizations': visualizations.count(),
+        'communities_mapped': OBCCommunity.objects.filter(
+            Q(geographic_layers__isnull=False) | Q(community_map_visualizations__isnull=False)
+        ).distinct().count(),
+        'active_layers': data_layers.filter(is_visible=True).count(),
+    }
+
+    context = {
+        'data_layers': data_layers[:10],  # Show first 10
+        'visualizations': visualizations[:10],  # Show first 10
+        'stats': stats,
+        'title': 'Geographic Data & Mapping',
+    }
+    return render(request, 'communities/geographic_data_list.html', context)

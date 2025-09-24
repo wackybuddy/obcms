@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Communities{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                Dashboard
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <a href="{% url 'communities:geographic_data_list' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">Geographic Data</a>
+            </div>
+        </li>
+        <li aria-current="page">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Create Visualization</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-map text-blue-600 mr-4"></i>
+            {{ title }}
+        </h1>
+        <p class="mt-2 text-lg text-gray-600">
+            Create a new map visualization for data analysis and presentation
+        </p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-chart-area mr-3 text-2xl"></i>
+                Map Visualization Configuration
+            </h2>
+        </div>
+
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            <!-- Basic Information -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Visualization Title <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.visualization_type.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Visualization Type <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.visualization_type }}
+                    {% if form.visualization_type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.visualization_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Context -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.community.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Related Community
+                    </label>
+                    {{ form.community }}
+                    {% if form.community.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.community.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.assessment.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Related Assessment
+                    </label>
+                    {{ form.assessment }}
+                    {% if form.assessment.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.assessment.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Map Configuration -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Map Configuration</h3>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.basemap_provider.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Base Map Provider
+                        </label>
+                        {{ form.basemap_provider }}
+                        {% if form.basemap_provider.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.basemap_provider.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.initial_zoom.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Initial Zoom Level
+                        </label>
+                        {{ form.initial_zoom }}
+                        {% if form.initial_zoom.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.initial_zoom.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                    <div>
+                        <label for="{{ form.initial_center.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Initial Center Point <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.initial_center }}
+                        {% if form.initial_center.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.initial_center.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">[longitude, latitude]</p>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.bounding_box.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Bounding Box
+                        </label>
+                        {{ form.bounding_box }}
+                        {% if form.bounding_box.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.bounding_box.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">[min_lng, min_lat, max_lng, max_lat]</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Layers -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Data Layers</h3>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Select Geographic Data Layers to Include
+                    </label>
+                    {{ form.layers }}
+                    {% if form.layers.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.layers.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Choose which data layers to display in this visualization</p>
+                </div>
+            </div>
+
+            <!-- Interactive Features -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Interactive Features</h3>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            {{ form.is_interactive }}
+                            <label for="{{ form.is_interactive.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                Allow user interaction
+                            </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            {{ form.enable_clustering }}
+                            <label for="{{ form.enable_clustering.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                Enable point clustering
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            {{ form.enable_search }}
+                            <label for="{{ form.enable_search.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                Enable location search
+                            </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            {{ form.enable_drawing }}
+                            <label for="{{ form.enable_drawing.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                                Enable drawing tools
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sharing Settings -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Sharing Settings</h3>
+
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        {{ form.is_public }}
+                        <label for="{{ form.is_public.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                            Publicly accessible
+                        </label>
+                    </div>
+
+                    <div class="flex items-center">
+                        {{ form.is_embedded }}
+                        <label for="{{ form.is_embedded.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                            Allow embedding in other websites
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Configuration -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Advanced Configuration (Optional)</h3>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.color_scheme.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Color Scheme
+                        </label>
+                        {{ form.color_scheme }}
+                        {% if form.color_scheme.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.color_scheme.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">JSON color scheme configuration</p>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.legend_configuration.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Legend Configuration
+                        </label>
+                        {{ form.legend_configuration }}
+                        {% if form.legend_configuration.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.legend_configuration.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">JSON legend display configuration</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                    <div>
+                        <label for="{{ form.popup_template.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Popup Template
+                        </label>
+                        {{ form.popup_template }}
+                        {% if form.popup_template.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.popup_template.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">HTML template for feature popups</p>
+                    </div>
+
+                    <div>
+                        <label for="{{ form.filters_configuration.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Filters Configuration
+                        </label>
+                        {{ form.filters_configuration }}
+                        {% if form.filters_configuration.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.filters_configuration.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">JSON interactive filters configuration</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="border-t border-gray-200 pt-6 flex flex-col sm:flex-row gap-4 sm:justify-end">
+                <a href="{% url 'communities:geographic_data_list' %}"
+                   class="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-save mr-2"></i>
+                    Create Visualization
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -4,10 +4,9 @@ from django.utils import timezone
 
 from common.models import Barangay, Municipality, Province, Region
 from communities.models import (CommunityInfrastructure, CommunityLivelihood,
-                                OBCCommunity, Stakeholder)
+                                GeographicDataLayer, OBCCommunity, Stakeholder)
 from mana.models import (Assessment, AssessmentCategory, BaselineStudy,
-                         BaselineStudyTeamMember, GeographicDataLayer, Need,
-                         NeedsCategory)
+                         BaselineStudyTeamMember, Need, NeedsCategory)
 
 
 class Command(BaseCommand):

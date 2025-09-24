@@ -163,25 +163,25 @@
                         <i class="fas fa-chevron-down text-xs ml-1 transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180"></i>
                     </a>
                     <div class="hidden group-hover:flex group-focus-within:flex flex-col absolute left-0 top-full w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 transition-all duration-200" role="menu" aria-label="M&amp;E Submodules">
-                        <a href="{% url 'monitoring:home' %}?filter=moa-ppas" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
+                        <a href="{% url 'monitoring:moa_ppas' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
                             <i class="fas fa-file-contract text-blue-500 mt-1"></i>
                             <span>
                                 <span class="block font-semibold text-gray-900">MOA PPAs</span>
-                                <span class="block text-xs text-gray-500">Monitor agreements and implementation status.</span>
+                                <span class="block text-xs text-gray-500">Monitor Ministries, Offices, and Agencies programs.</span>
                             </span>
                         </a>
-                        <a href="{% url 'monitoring:home' %}?filter=oobc-initiatives" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
-                            <i class="fas fa-seedling text-green-500 mt-1"></i>
+                        <a href="{% url 'monitoring:oobc_initiatives' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
+                            <i class="fas fa-hand-holding-heart text-emerald-500 mt-1"></i>
                             <span>
                                 <span class="block font-semibold text-gray-900">OOBC Initiatives</span>
-                                <span class="block text-xs text-gray-500">Track projects led by the OOBC office.</span>
+                                <span class="block text-xs text-gray-500">Office-led programs supporting OBC communities.</span>
                             </span>
                         </a>
-                        <a href="{% url 'monitoring:home' %}?filter=obc-requests" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
-                            <i class="fas fa-inbox text-indigo-500 mt-1"></i>
+                        <a href="{% url 'monitoring:obc_requests' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
+                            <i class="fas fa-file-signature text-indigo-500 mt-1"></i>
                             <span>
                                 <span class="block font-semibold text-gray-900">OBC Requests</span>
-                                <span class="block text-xs text-gray-500">Review assistance and support requests.</span>
+                                <span class="block text-xs text-gray-500">Community proposals and assistance requests.</span>
                             </span>
                         </a>
                     </div>
@@ -357,17 +357,17 @@
                     <span>M&amp;E</span>
                 </div>
                 <div class="mt-2 space-y-1">
-                    <a href="{% url 'monitoring:home' %}?filter=moa-ppas" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'monitoring:moa_ppas' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         MOA PPAs
-                        <span class="block text-xs text-white text-opacity-70">Track agreements and implementation status</span>
+                        <span class="block text-xs text-white text-opacity-70">Monitor Ministries, Offices, and Agencies programs</span>
                     </a>
-                    <a href="{% url 'monitoring:home' %}?filter=oobc-initiatives" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'monitoring:oobc_initiatives' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         OOBC Initiatives
-                        <span class="block text-xs text-white text-opacity-70">Monitor office-led projects and outcomes</span>
+                        <span class="block text-xs text-white text-opacity-70">Office-led programs supporting OBC communities</span>
                     </a>
-                    <a href="{% url 'monitoring:home' %}?filter=obc-requests" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'monitoring:obc_requests' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         OBC Requests
-                        <span class="block text-xs text-white text-opacity-70">Review incoming assistance requests</span>
+                        <span class="block text-xs text-white text-opacity-70">Community proposals and assistance requests</span>
                     </a>
                 </div>
             </div>

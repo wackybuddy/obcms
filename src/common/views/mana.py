@@ -160,8 +160,7 @@ def mana_geographic_data(request):
     """MANA geographic data and mapping page with location-aware filters."""
     from django.db.models import Count
 
-    from communities.models import OBCCommunity
-    from mana.models import GeographicDataLayer, MapVisualization
+    from communities.models import GeographicDataLayer, MapVisualization, OBCCommunity
 
     def parse_identifier(value):
         try:
@@ -263,7 +262,7 @@ def mana_geographic_data(request):
 
     communities_qs = (
         OBCCommunity.objects.annotate(
-            visualizations_count=Count("map_visualizations")
+            visualizations_count=Count("community_map_visualizations")
         )
         .filter(visualizations_count__gt=0)
         .order_by("barangay__name")

@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Communities{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                Dashboard
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <a href="{% url 'communities:geographic_data_list' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">Geographic Data</a>
+            </div>
+        </li>
+        <li aria-current="page">
+            <div class="flex items-center">
+                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Add Data Layer</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-plus-circle text-purple-600 mr-4"></i>
+            {{ title }}
+        </h1>
+        <p class="mt-2 text-lg text-gray-600">
+            Create a new geographic data layer for mapping and visualization
+        </p>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-layer-group mr-3 text-2xl"></i>
+                Geographic Data Layer Information
+            </h2>
+        </div>
+
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            <!-- Basic Information -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Layer Name <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.layer_type.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Layer Type <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.layer_type }}
+                    {% if form.layer_type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.layer_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Data Source and Geography -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.data_source.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Data Source <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.data_source }}
+                    {% if form.data_source.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.data_source.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.community.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Related Community
+                    </label>
+                    {{ form.community }}
+                    {% if form.community.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.community.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Administrative Divisions -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                <div>
+                    <label for="{{ form.region.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Region
+                    </label>
+                    {{ form.region }}
+                    {% if form.region.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.region.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.province.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Province
+                    </label>
+                    {{ form.province }}
+                    {% if form.province.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.province.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.municipality.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Municipality
+                    </label>
+                    {{ form.municipality }}
+                    {% if form.municipality.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.municipality.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.barangay.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Barangay
+                    </label>
+                    {{ form.barangay }}
+                    {% if form.barangay.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.barangay.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- GeoJSON Data -->
+            <div>
+                <label for="{{ form.geojson_data.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    GeoJSON Data <span class="text-red-500">*</span>
+                </label>
+                {{ form.geojson_data }}
+                {% if form.geojson_data.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.geojson_data.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-sm text-gray-500">Enter valid GeoJSON data for this layer</p>
+            </div>
+
+            <!-- Display Settings -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Display Settings</h3>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label for="{{ form.zoom_level_min.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Min Zoom Level
+                        </label>
+                        {{ form.zoom_level_min }}
+                        {% if form.zoom_level_min.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.zoom_level_min.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.zoom_level_max.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Max Zoom Level
+                        </label>
+                        {{ form.zoom_level_max }}
+                        {% if form.zoom_level_max.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.zoom_level_max.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.opacity.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Opacity (0.0 - 1.0)
+                        </label>
+                        {{ form.opacity }}
+                        {% if form.opacity.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.opacity.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-4">
+                    <div class="flex items-center">
+                        {{ form.is_visible }}
+                        <label for="{{ form.is_visible.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                            Visible by default
+                        </label>
+                    </div>
+
+                    <div class="flex items-center">
+                        {{ form.is_public }}
+                        <label for="{{ form.is_public.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                            Publicly accessible
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metadata -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Metadata (Optional)</h3>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.data_collection_date.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Data Collection Date
+                        </label>
+                        {{ form.data_collection_date }}
+                        {% if form.data_collection_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.data_collection_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.accuracy_meters.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Accuracy (meters)
+                        </label>
+                        {{ form.accuracy_meters }}
+                        {% if form.accuracy_meters.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.accuracy_meters.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                    <div>
+                        <label for="{{ form.attribution.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            Attribution
+                        </label>
+                        {{ form.attribution }}
+                        {% if form.attribution.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.attribution.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.license_info.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                            License Information
+                        </label>
+                        {{ form.license_info }}
+                        {% if form.license_info.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.license_info.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="border-t border-gray-200 pt-6 flex flex-col sm:flex-row gap-4 sm:justify-end">
+                <a href="{% url 'communities:geographic_data_list' %}"
+                   class="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold text-center transition-colors duration-200">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-save mr-2"></i>
+                    Create Data Layer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}MOA PPAs Report{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+<li>
+    <a href="{% url 'monitoring:home' %}" class="text-neutral-500 hover:text-neutral-700">M&E</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+<li>
+    <a href="{% url 'monitoring:moa_ppas' %}" class="text-neutral-500 hover:text-neutral-700">MOA PPAs</a>
+    <span class="text-neutral-400 mx-1">/</span>
+</li>
+<li class="text-neutral-800 font-semibold">Report</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <!-- Report Header -->
+    <header class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-neutral-800">MOA PPAs Comprehensive Report</h1>
+            <p class="text-neutral-600 mt-1">Generated on {{ report_date|date:"F j, Y" }} at {{ report_date|date:"g:i A" }}</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="window.print()" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <i class="fas fa-print mr-2"></i>
+                Print Report
+            </button>
+            <a href="{% url 'monitoring:moa_ppas' %}" class="inline-flex items-center px-4 py-2 border border-neutral-300 rounded-lg text-neutral-700 bg-white hover:bg-neutral-50">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back
+            </a>
+        </div>
+    </header>
+
+    <!-- Executive Summary -->
+    <div class="bg-white rounded-xl border border-neutral-200 shadow-sm p-6">
+        <h2 class="text-xl font-semibold text-neutral-800 mb-4">Executive Summary</h2>
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div class="text-center">
+                <p class="text-3xl font-bold text-blue-600">{{ total_entries }}</p>
+                <p class="text-sm text-neutral-600">Total MOA PPAs</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold text-green-600">{{ completed_entries }}</p>
+                <p class="text-sm text-neutral-600">Completed</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold text-yellow-600">{{ ongoing_entries }}</p>
+                <p class="text-sm text-neutral-600">Ongoing</p>
+            </div>
+            <div class="text-center">
+                <p class="text-3xl font-bold text-gray-600">{{ planning_entries }}</p>
+                <p class="text-sm text-neutral-600">Planning</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Analysis -->
+    <div class="grid gap-6 lg:grid-cols-2">
+        <div class="bg-white rounded-xl border border-neutral-200 shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-neutral-800 mb-4">Budget Analysis</h3>
+            <div class="space-y-4">
+                <div>
+                    <p class="text-sm text-neutral-600">Total Budget Allocation</p>
+                    <p class="text-2xl font-bold text-green-600">₱{{ total_budget.total_budget|default:0|floatformat:0 }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-neutral-600">OBC-Specific Budget</p>
+                    <p class="text-2xl font-bold text-blue-600">₱{{ total_budget.total_obc_budget|default:0|floatformat:0 }}</p>
+                </div>
+                {% if total_budget.total_budget and total_budget.total_obc_budget %}
+                <div>
+                    <p class="text-sm text-neutral-600">OBC Budget Percentage</p>
+                    <p class="text-lg font-semibold text-purple-600">
+                    {% widthratio total_budget.total_obc_budget total_budget.total_budget 100 %}%
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-neutral-200 shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-neutral-800 mb-4">Progress Analysis</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">High Progress (75%+)</span>
+                    <span class="font-semibold text-green-600">{{ progress_analysis.high_progress }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">Medium Progress (50-74%)</span>
+                    <span class="font-semibold text-yellow-600">{{ progress_analysis.medium_progress }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-neutral-600">Low Progress (<50%)</span>
+                    <span class="font-semibold text-red-600">{{ progress_analysis.low_progress }}</span>
+                </div>
+                <div class="pt-3 border-t border-neutral-200">
+                    <span class="text-sm text-neutral-600">Average Progress</span>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-1 bg-neutral-200 rounded-full h-3">
+                            <div class="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full" style="width: {{ progress_analysis.avg_progress }}%"></div>
+                        </div>
+                        <span class="font-semibold text-neutral-800">{{ progress_analysis.avg_progress|floatformat:1 }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regional Distribution -->
+    <div class="bg-white rounded-xl border border-neutral-200 shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-neutral-800 mb-4">Geographic Distribution</h3>
+        {% if regional_distribution %}
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {% for region in regional_distribution %}
+            <div class="flex justify-between items-center p-3 bg-neutral-50 rounded-lg">
+                <span class="text-sm font-medium text-neutral-700">{{ region.coverage_region__name }}</span>
+                <span class="font-semibold text-blue-600">{{ region.count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-neutral-500">No regional coverage data available.</p>
+        {% endif %}
+    </div>
+
+    <!-- Upcoming Deadlines -->
+    <div class="bg-white rounded-xl border border-neutral-200 shadow-sm p-6">
+        <h3 class="text-lg font-semibold text-neutral-800 mb-4">Upcoming Deadlines (Next 30 Days)</h3>
+        {% if upcoming_deadlines %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-neutral-200 text-sm">
+                <thead class="bg-neutral-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left font-medium text-neutral-700">Title</th>
+                        <th class="px-4 py-3 text-left font-medium text-neutral-700">Target Date</th>
+                        <th class="px-4 py-3 text-left font-medium text-neutral-700">Progress</th>
+                        <th class="px-4 py-3 text-left font-medium text-neutral-700">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-100">
+                    {% for deadline in upcoming_deadlines %}
+                    <tr>
+                        <td class="px-4 py-3 font-medium text-neutral-800">{{ deadline.title }}</td>
+                        <td class="px-4 py-3 text-neutral-600">{{ deadline.target_end_date|date:"M j, Y" }}</td>
+                        <td class="px-4 py-3">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-16 bg-neutral-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: {{ deadline.progress }}%"></div>
+                                </div>
+                                <span class="text-xs text-neutral-600">{{ deadline.progress }}%</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {% if deadline.status == 'completed' %}bg-green-100 text-green-800{% elif deadline.status == 'ongoing' %}bg-blue-100 text-blue-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ deadline.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-neutral-500">No upcoming deadlines in the next 30 days.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style media="print">
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        font-size: 12px;
+    }
+
+    .shadow-sm,
+    .shadow,
+    .shadow-lg {
+        box-shadow: none !important;
+    }
+
+    .border {
+        border: 1px solid #ccc !important;
+    }
+}
+</style>
+{% endblock %}
