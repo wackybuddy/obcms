@@ -17,10 +17,12 @@ from common.services.geodata import serialize_layers_for_map
 from mana.forms import (
     DeskReviewQuickEntryForm,
     KIIQuickEntryForm,
+    RegionalWorkshopSetupForm,
     SurveyQuickEntryForm,
     WorkshopActivityProgressForm,
 )
 from mana.models import Assessment, MANAReport, Need, WorkshopActivity
+from mana.views import create_workshop_activities
 
 LEGAL_BASIS = [
     {
@@ -661,6 +663,41 @@ def mana_regional_overview(request):
         for region in regions
     }
 
+    setup_form = RegionalWorkshopSetupForm(regions=regions)
+    form_action = request.POST.get("form_name") if request.method == "POST" else None
+    if form_action == "regional_setup":
+        setup_form = RegionalWorkshopSetupForm(request.POST, regions=regions)
+        if setup_form.is_valid():
+            assessment = setup_form.save(user=request.user)
+
+            start_date = setup_form.cleaned_data["planned_start_date"].strftime(
+                "%Y-%m-%d"
+            )
+            target_participants = setup_form.cleaned_data.get("target_participants")
+
+            create_workshop_activities(
+                assessment,
+                {
+                    "planned_start_date": start_date,
+                    "target_participants": str(target_participants or 30),
+                },
+            )
+
+            messages.success(
+                request,
+                f'Regional workshop "{assessment.title}" initialized successfully.',
+            )
+
+            query = {"assessment": str(assessment.id), "active_tab": "workshop_1"}
+            return redirect(
+                f"{reverse('common:mana_regional_overview')}?{urlencode(query)}"
+            )
+
+        messages.error(
+            request,
+            "Please correct the errors below to initialize the regional workshop cycle.",
+        )
+
     workshop_order = [
         "workshop_1",
         "workshop_2",
@@ -810,7 +847,7 @@ def mana_regional_overview(request):
         for activity in workshop_queryset:
             workshop_activity_map[activity.workshop_type] = activity
 
-    if request.method == "POST" and selected_assessment:
+    if request.method == "POST" and form_action != "regional_setup" and selected_assessment:
         target_id = request.POST.get("workshop_id")
         if target_id:
             try:
@@ -1110,6 +1147,7 @@ def mana_regional_overview(request):
         "selected_assessment": selected_assessment,
         "workshop_forms": workshop_forms,
         "active_workshop_tab": active_workshop_tab,
+        "regional_setup_form": setup_form,
     }
     return render(request, "mana/mana_regional_overview.html", context)
 

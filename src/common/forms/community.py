@@ -5,7 +5,7 @@ from django.db import models as django_models
 
 from communities.models import CommunityProfileBase, MunicipalityCoverage, OBCCommunity
 
-from ..models import Barangay, Municipality, Province, Region
+from .mixins import LocationSelectionMixin
 
 
 COMMUNITY_PROFILE_FIELDS = [
@@ -276,22 +276,21 @@ COMMUNITY_PROFILE_LABELS = {
 }
 
 
-class MunicipalityCoverageForm(forms.ModelForm):
+class MunicipalityCoverageForm(LocationSelectionMixin, forms.ModelForm):
     """Form for recording municipalities or cities with Bangsamoro presence."""
 
-    region = forms.ModelChoiceField(
-        queryset=Region.objects.none(),
-        required=True,
-        label="Region",
-    )
-    province = forms.ModelChoiceField(
-        queryset=Province.objects.none(),
-        required=True,
-        label="Province",
-    )
+    # Configure location fields - barangay not required for municipality coverage
+    location_fields_config = {
+        'region': {'required': True, 'level': 'region'},
+        'province': {'required': True, 'level': 'province'},
+        'municipality': {'required': True, 'level': 'municipality'},
+    }
+
     class Meta:
         model = MunicipalityCoverage
         fields = (
+            "region",
+            "province",
             "municipality",
             "total_obc_communities",
             "existing_support_programs",
@@ -299,11 +298,6 @@ class MunicipalityCoverageForm(forms.ModelForm):
             *COMMUNITY_PROFILE_FIELDS,
         )
         widgets = {
-            "municipality": forms.Select(
-                attrs={
-                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                }
-            ),
             "total_obc_communities": forms.NumberInput(
                 attrs={
                     "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
@@ -324,6 +318,8 @@ class MunicipalityCoverageForm(forms.ModelForm):
             **COMMUNITY_PROFILE_WIDGETS,
         }
         labels = {
+            "region": "Region",
+            "province": "Province",
             "municipality": "Municipality / City",
             "total_obc_communities": "Identified Bangsamoro Communities",
             "existing_support_programs": "Existing Support Programs",
@@ -333,327 +329,54 @@ class MunicipalityCoverageForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        select_attrs = {
-            "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
-        }
 
-        def resolve_instance(model, value):
-            if not value:
-                return None
-            if isinstance(value, model):
-                return value
-            try:
-                return model.objects.get(pk=value)
-            except model.DoesNotExist:
-                return None
-
-        region_field = self.fields.get("region")
-        province_field = self.fields.get("province")
+        # Additional logic specific to municipality coverage
         municipality_field = self.fields.get("municipality")
-
-        if region_field:
-            region_field.queryset = Region.objects.filter(is_active=True).order_by(
-                "code", "name"
-            )
-            region_field.empty_label = "Select region..."
-            region_field.widget.attrs.update(select_attrs)
-
-        if province_field:
-            province_field.empty_label = "Select province..."
-            province_field.widget.attrs.update(select_attrs)
-
         if municipality_field:
-            municipality_field.widget.attrs.update(select_attrs)
-
-        selected_region = None
-        selected_province = None
-        selected_municipality = None
-
-        if self.instance and getattr(self.instance, "municipality", None):
-            selected_municipality = self.instance.municipality
-            selected_province = selected_municipality.province
-            selected_region = selected_province.region
-
-        if self.initial.get("region"):
-            selected_region = resolve_instance(Region, self.initial.get("region"))
-        if self.initial.get("province"):
-            selected_province = resolve_instance(
-                Province, self.initial.get("province")
-            )
-        if self.initial.get("municipality"):
-            selected_municipality = resolve_instance(
-                Municipality, self.initial.get("municipality")
-            )
-
-        if self.is_bound:
-            selected_region = resolve_instance(Region, self.data.get("region")) or selected_region
-            selected_province = resolve_instance(
-                Province, self.data.get("province")
-            ) or selected_province
-            selected_municipality = resolve_instance(
-                Municipality, self.data.get("municipality")
-            ) or selected_municipality
-
-        if province_field:
-            if selected_region:
-                province_field.queryset = Province.objects.filter(
-                    region=selected_region, is_active=True
-                ).order_by("name")
-            else:
-                province_field.queryset = Province.objects.none()
-
-        if municipality_field:
-            municipality_queryset = (
-                Municipality.objects.filter(is_active=True)
-                .select_related("province__region")
-                .order_by("province__region__name", "province__name", "name")
-            )
-            if selected_province:
-                municipality_queryset = municipality_queryset.filter(
-                    province=selected_province
-                )
-            else:
-                selected_municipality = None
-
-            if selected_region and not selected_province:
-                municipality_queryset = municipality_queryset.filter(
-                    province__region=selected_region
-                )
-
+            # Exclude municipalities that already have coverage
             existing_coverage_ids = set(
                 MunicipalityCoverage.objects.values_list("municipality_id", flat=True)
             )
-            if selected_municipality:
-                existing_coverage_ids.discard(selected_municipality.id)
+            if self.instance and self.instance.pk:
+                existing_coverage_ids.discard(self.instance.municipality_id)
 
             if existing_coverage_ids:
-                municipality_queryset = municipality_queryset.exclude(
+                current_queryset = municipality_field.queryset
+                municipality_field.queryset = current_queryset.exclude(
                     pk__in=existing_coverage_ids
                 )
 
-            municipality_field.queryset = municipality_queryset
 
-        if not self.is_bound:
-            if region_field and selected_region:
-                region_field.initial = selected_region
-            if province_field and selected_province:
-                province_field.initial = selected_province
-            if municipality_field and selected_municipality:
-                municipality_field.initial = selected_municipality
-
-    def clean(self):
-        cleaned_data = super().clean()
-        region = cleaned_data.get("region")
-        province = cleaned_data.get("province")
-        municipality = cleaned_data.get("municipality")
-
-        if province and region and province.region_id != region.id:
-            self.add_error(
-                "province", "Selected province does not belong to the chosen region."
-            )
-
-        if municipality and province and municipality.province_id != province.id:
-            self.add_error(
-                "municipality",
-                "Selected municipality/city does not belong to the chosen province.",
-            )
-
-        return cleaned_data
-
-
-class OBCCommunityForm(forms.ModelForm):
+class OBCCommunityForm(LocationSelectionMixin, forms.ModelForm):
     """Comprehensive form for creating or editing OBC communities."""
 
-    region = forms.ModelChoiceField(
-        queryset=Region.objects.none(),
-        required=True,
-        label="Region",
-    )
-    province = forms.ModelChoiceField(
-        queryset=Province.objects.none(),
-        required=True,
-        label="Province",
-    )
-    municipality = forms.ModelChoiceField(
-        queryset=Municipality.objects.none(),
-        required=True,
-        label="Municipality / City",
-    )
+    # Configure location fields - all levels including barangay
+    location_fields_config = {
+        'region': {'required': True, 'level': 'region'},
+        'province': {'required': True, 'level': 'province'},
+        'municipality': {'required': True, 'level': 'municipality'},
+        'barangay': {'required': True, 'level': 'barangay'},
+    }
 
     class Meta:
         model = OBCCommunity
-        fields = ["barangay", *COMMUNITY_PROFILE_FIELDS]
+        fields = [
+            "region",
+            "province",
+            "municipality",
+            "barangay",
+            *COMMUNITY_PROFILE_FIELDS
+        ]
         widgets = {
-            "barangay": forms.Select(attrs={"class": "form-control"}),
             **COMMUNITY_PROFILE_WIDGETS,
         }
         labels = {
+            "region": "Region",
+            "province": "Province",
+            "municipality": "Municipality / City",
             "barangay": "Barangay",
             **COMMUNITY_PROFILE_LABELS,
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        select_attrs = {
-            "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
-        }
-
-        def resolve_instance(model, value):
-            if not value:
-                return None
-            if isinstance(value, model):
-                return value
-            try:
-                return model.objects.get(pk=value)
-            except model.DoesNotExist:
-                return None
-
-        region_field = self.fields.get("region")
-        province_field = self.fields.get("province")
-        municipality_field = self.fields.get("municipality")
-        barangay_field = self.fields.get("barangay")
-
-        if region_field:
-            region_field.queryset = Region.objects.filter(is_active=True).order_by(
-                "code", "name"
-            )
-            region_field.empty_label = "Select region..."
-            region_field.widget.attrs.update(select_attrs)
-
-        if province_field:
-            province_field.empty_label = "Select province..."
-            province_field.widget.attrs.update(select_attrs)
-
-        if municipality_field:
-            municipality_field.empty_label = "Select municipality/city..."
-            municipality_field.widget.attrs.update(select_attrs)
-
-        if barangay_field:
-            barangay_field.empty_label = "Select barangay..."
-            barangay_field.widget.attrs.update(select_attrs)
-
-        selected_region = None
-        selected_province = None
-        selected_municipality = None
-        selected_barangay = None
-
-        if self.instance and getattr(self.instance, "barangay", None):
-            selected_barangay = self.instance.barangay
-            selected_municipality = selected_barangay.municipality
-            selected_province = selected_municipality.province
-            selected_region = selected_province.region
-
-        if self.initial.get("region"):
-            selected_region = resolve_instance(Region, self.initial.get("region"))
-        if self.initial.get("province"):
-            selected_province = resolve_instance(
-                Province, self.initial.get("province")
-            )
-        if self.initial.get("municipality"):
-            selected_municipality = resolve_instance(
-                Municipality, self.initial.get("municipality")
-            )
-        if self.initial.get("barangay"):
-            selected_barangay = resolve_instance(
-                Barangay, self.initial.get("barangay")
-            )
-
-        if self.is_bound:
-            selected_region = resolve_instance(Region, self.data.get("region")) or selected_region
-            selected_province = resolve_instance(
-                Province, self.data.get("province")
-            ) or selected_province
-            selected_municipality = resolve_instance(
-                Municipality, self.data.get("municipality")
-            ) or selected_municipality
-            selected_barangay = resolve_instance(
-                Barangay, self.data.get("barangay")
-            ) or selected_barangay
-
-        if province_field:
-            if selected_region:
-                province_field.queryset = Province.objects.filter(
-                    region=selected_region, is_active=True
-                ).order_by("name")
-            else:
-                province_field.queryset = Province.objects.none()
-
-        if municipality_field:
-            municipality_queryset = (
-                Municipality.objects.filter(is_active=True)
-                .select_related("province__region")
-                .order_by("province__region__name", "province__name", "name")
-            )
-            if selected_province:
-                municipality_queryset = municipality_queryset.filter(
-                    province=selected_province
-                )
-            else:
-                selected_municipality = None
-
-            if selected_region and not selected_province:
-                municipality_queryset = municipality_queryset.filter(
-                    province__region=selected_region
-                )
-
-            municipality_field.queryset = municipality_queryset
-
-        if barangay_field:
-            barangay_queryset = (
-                Barangay.objects.filter(is_active=True)
-                .select_related("municipality__province__region")
-                .order_by("municipality__province__region__name", "municipality__name", "name")
-            )
-            if selected_municipality:
-                barangay_queryset = barangay_queryset.filter(
-                    municipality=selected_municipality
-                )
-            elif selected_province:
-                barangay_queryset = barangay_queryset.filter(
-                    municipality__province=selected_province
-                )
-            elif selected_region:
-                barangay_queryset = barangay_queryset.filter(
-                    municipality__province__region=selected_region
-                )
-
-            barangay_field.queryset = barangay_queryset
-
-        if not self.is_bound:
-            if region_field and selected_region:
-                region_field.initial = selected_region
-            if province_field and selected_province:
-                province_field.initial = selected_province
-            if municipality_field and selected_municipality:
-                municipality_field.initial = selected_municipality
-            if barangay_field and selected_barangay:
-                barangay_field.initial = selected_barangay
-
-    def clean(self):
-        cleaned_data = super().clean()
-        region = cleaned_data.get("region")
-        province = cleaned_data.get("province")
-        municipality = cleaned_data.get("municipality")
-        barangay = cleaned_data.get("barangay")
-
-        if province and region and province.region_id != region.id:
-            self.add_error(
-                "province", "Selected province does not belong to the chosen region."
-            )
-
-        if municipality and province and municipality.province_id != province.id:
-            self.add_error(
-                "municipality",
-                "Selected municipality/city does not belong to the chosen province.",
-            )
-
-        if barangay and municipality and barangay.municipality_id != municipality.id:
-            self.add_error(
-                "barangay",
-                "Selected barangay does not belong to the chosen municipality/city.",
-            )
-
-        return cleaned_data
 
 
 __all__ = [

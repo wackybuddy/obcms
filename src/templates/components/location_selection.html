@@ -1,0 +1,169 @@
+{% load static %}
+{#
+Reusable location selection component for OBC forms.
+
+Usage:
+    {% include 'components/location_selection.html' with form=form show_barangay=True show_coordinates=True %}
+
+Parameters:
+    - form: The form instance containing location fields
+    - show_region: Whether to show region field (default: True)
+    - show_province: Whether to show province field (default: True)
+    - show_municipality: Whether to show municipality field (default: True)
+    - show_barangay: Whether to show barangay field (default: True)
+    - show_coordinates: Whether to show latitude/longitude fields (default: True)
+    - show_map: Whether to show interactive map (default: True)
+    - field_wrapper_class: CSS class for field wrapper divs (default: "mb-6")
+    - label_class: CSS class for field labels (default: "block text-sm font-semibold text-gray-700 mb-2")
+    - map_container_class: CSS class for map container (default: "obc-map-container")
+#}
+
+{% with show_region=show_region|default:True %}
+{% with show_province=show_province|default:True %}
+{% with show_municipality=show_municipality|default:True %}
+{% with show_barangay=show_barangay|default:True %}
+{% with show_coordinates=show_coordinates|default:True %}
+{% with show_map=show_map|default:True %}
+{% with field_wrapper_class=field_wrapper_class|default:"mb-6" %}
+{% with label_class=label_class|default:"block text-sm font-semibold text-gray-700 mb-2" %}
+{% with map_container_class=map_container_class|default:"obc-map-container" %}
+
+<div class="location-selection-component">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {% if show_region and form.region %}
+        <div class="{{ field_wrapper_class }}">
+            <label for="{{ form.region.id_for_label }}" class="{{ label_class }}">
+                {{ form.region.label }}
+            </label>
+            {{ form.region }}
+            {% if form.region.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.region.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if show_province and form.province %}
+        <div class="{{ field_wrapper_class }}">
+            <label for="{{ form.province.id_for_label }}" class="{{ label_class }}">
+                {{ form.province.label }}
+            </label>
+            {{ form.province }}
+            {% if form.province.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.province.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if show_municipality and form.municipality %}
+        <div class="{{ field_wrapper_class }}">
+            <label for="{{ form.municipality.id_for_label }}" class="{{ label_class }}">
+                {{ form.municipality.label }}
+            </label>
+            {{ form.municipality }}
+            {% if form.municipality.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.municipality.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if show_barangay and form.barangay %}
+        <div class="{{ field_wrapper_class }}">
+            <label for="{{ form.barangay.id_for_label }}" class="{{ label_class }}">
+                {{ form.barangay.label }}
+            </label>
+            {{ form.barangay }}
+            {% if form.barangay.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.barangay.errors.0 }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if show_coordinates and form.latitude and form.longitude %}
+    <div class="coordinate-section mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="{{ field_wrapper_class }}">
+                <label for="{{ form.latitude.id_for_label }}" class="{{ label_class }}">
+                    {{ form.latitude.label }}
+                </label>
+                {{ form.latitude }}
+                {% if form.latitude.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.latitude.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">Decimal degrees format (e.g., 7.0858)</p>
+            </div>
+
+            <div class="{{ field_wrapper_class }}">
+                <label for="{{ form.longitude.id_for_label }}" class="{{ label_class }}">
+                    {{ form.longitude.label }}
+                </label>
+                {{ form.longitude }}
+                {% if form.longitude.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.longitude.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">Decimal degrees format (e.g., 125.6161)</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if show_map and show_coordinates and form.latitude and form.longitude %}
+    <div class="map-section mb-6">
+        <div
+            class="{{ map_container_class }}"
+            data-obc-map
+            data-mode="form"
+            data-lat-field="{{ form.latitude.id_for_label }}"
+            data-lng-field="{{ form.longitude.id_for_label }}"
+            {% if show_region and form.region %}data-region-field="{{ form.region.id_for_label }}"{% endif %}
+            {% if show_province and form.province %}data-province-field="{{ form.province.id_for_label }}"{% endif %}
+            {% if show_municipality and form.municipality %}data-municipality-field="{{ form.municipality.id_for_label }}"{% endif %}
+            {% if show_barangay and form.barangay %}data-barangay-field="{{ form.barangay.id_for_label }}"{% endif %}
+            data-location-script="location-data"
+            data-centroid-url="{% url 'common:location_centroid' %}">
+
+            <div class="obc-map-header">
+                <h3 class="flex items-center gap-2 text-neutral-800">
+                    <i class="fas fa-map-marker-alt text-blue-500"></i>
+                    Location Map
+                </h3>
+                <span class="obc-map-status">
+                    <i class="fas fa-hand-pointer"></i>
+                    Click the map to update coordinates
+                </span>
+            </div>
+
+            <div class="obc-map-canvas" data-obc-map-target></div>
+
+            <div class="obc-map-footer">
+                <div class="flex items-center justify-between text-sm text-gray-600">
+                    <span>
+                        <i class="fas fa-info-circle"></i>
+                        Coordinates auto-update when location is selected
+                    </span>
+                    <span class="map-accuracy-indicator">
+                        <i class="fas fa-crosshairs"></i>
+                        <span data-accuracy-level>Ready</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{# Include required assets if they haven't been loaded yet #}
+{% if show_map %}
+    <link rel="stylesheet" href="{% static 'common/css/obc_location_map.css' %}">
+    <script src="{% static 'common/js/obc_location_map.js' %}" defer></script>
+{% endif %}
+
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}

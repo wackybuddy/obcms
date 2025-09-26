@@ -15,7 +15,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 from ..forms import MunicipalityCoverageForm, OBCCommunityForm
 from ..models import Barangay, Municipality, Province, Region
-from ..services.geocoding import ensure_location_coordinates
+from ..services.enhanced_geocoding import enhanced_ensure_location_coordinates
 from ..services.locations import build_location_data, get_object_centroid
 
 
@@ -56,7 +56,7 @@ def _resolve_map_payload(
             return
         lat_val, lng_val = get_object_centroid(source)
         if lat_val is None or lng_val is None:
-            lat_val, lng_val, _ = ensure_location_coordinates(source)
+            lat_val, lng_val, _, _ = enhanced_ensure_location_coordinates(source)
         if lat_val is None or lng_val is None:
             return
         candidates.append((lat_val, lng_val, zoom_level))
@@ -742,18 +742,35 @@ def location_centroid(request):
     source = "cached"
 
     if lat is None or lng is None:
-        lat, lng, updated = ensure_location_coordinates(obj)
-        source = "geocoded" if updated else "unavailable"
+        lat, lng, updated, geocode_source = enhanced_ensure_location_coordinates(obj)
+        if lat is not None and lng is not None:
+            source = geocode_source or "geocoded"
+        else:
+            source = geocode_source or ("geocoded" if updated else "unavailable")
 
     if lat is None or lng is None:
-        return JsonResponse({"has_location": False, "source": source})
+        return JsonResponse({
+            "has_location": False,
+            "source": source,
+            "message": f"No coordinates available for {level} {obj.name if hasattr(obj, 'name') else obj}"
+        })
+
+    # Validate coordinates are within reasonable bounds
+    if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+        return JsonResponse({
+            "has_location": False,
+            "source": source,
+            "message": f"Invalid coordinates for {level}: lat={lat}, lng={lng}"
+        })
 
     return JsonResponse(
         {
             "has_location": True,
-            "lat": lat,
-            "lng": lng,
+            "lat": float(lat),
+            "lng": float(lng),
             "source": source,
+            "accuracy": "high" if source == "cached" else "medium",
+            "message": f"Coordinates found for {level} {obj.name if hasattr(obj, 'name') else obj}"
         }
     )
 

@@ -1,7 +1,10 @@
 """Forms for the MANA module."""
 
+from datetime import timedelta
+
 from django import forms
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from communities.models import OBCCommunity
 
@@ -288,6 +291,135 @@ class WorkshopActivityProgressForm(forms.ModelForm):
         self.fields["recommendations"].required = False
         self.fields["challenges_encountered"].required = False
 
+
+class RegionalWorkshopSetupForm(forms.ModelForm):
+    """Minimal form to launch a regional-level workshop assessment and activities."""
+
+    planned_start_date = forms.DateField(
+        widget=forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
+    )
+    planned_end_date = forms.DateField(
+        widget=forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
+    )
+    target_participants = forms.IntegerField(
+        required=False,
+        min_value=1,
+        widget=forms.NumberInput(
+            attrs={
+                "class": INPUT_CLASS,
+                "placeholder": "Participants per workshop (default: 30)",
+            }
+        ),
+    )
+
+    class Meta:
+        model = Assessment
+        fields = [
+            "title",
+            "community",
+            "planned_start_date",
+            "planned_end_date",
+            "objectives",
+            "description",
+        ]
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "placeholder": "e.g., Regional Workshop Cycle - FY2024",
+                }
+            ),
+            "community": forms.Select(attrs={"class": SELECT_CLASS}),
+            "objectives": forms.Textarea(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "rows": 3,
+                    "placeholder": "Key objectives for the regional workshop cycle",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": INPUT_CLASS,
+                    "rows": 3,
+                    "placeholder": "Brief description of the deployment and coverage",
+                }
+            ),
+        }
+
+    def __init__(self, *args, regions=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        community_qs = OBCCommunity.objects.filter(is_active=True)
+        if regions is not None:
+            community_qs = community_qs.filter(
+                barangay__municipality__province__region__in=regions
+            )
+
+        self.fields["community"].queryset = (
+            community_qs.select_related(
+                "barangay__municipality__province__region",
+            ).order_by(
+                "barangay__municipality__province__region__name",
+                "barangay__municipality__name",
+                "barangay__name",
+            )
+        )
+
+        today = timezone.now().date()
+        self.fields["planned_start_date"].initial = today
+        self.fields["planned_end_date"].initial = today + timedelta(days=4)
+        self.fields["target_participants"].initial = 30
+        self.fields["title"].initial = (
+            self.fields["title"].initial
+            or f"Regional Workshop Cycle - {today.year}"
+        )
+        self.fields["objectives"].initial = self.fields["objectives"].initial or (
+            "Coordinate the regional workshop cycle and document core outputs across the mandated sessions."
+        )
+        self.fields["description"].initial = self.fields[
+            "description"
+        ].initial or (
+            "Regional-level facilitation of the five-day MANA workshop structure, covering context, aspirations, collaboration, feedback, and action planning."
+        )
+
+    def clean(self):
+        data = super().clean()
+        start = data.get("planned_start_date")
+        end = data.get("planned_end_date")
+        if start and end and end < start:
+            raise forms.ValidationError(
+                "Planned end date must be on or after the start date."
+            )
+        return data
+
+    def save(self, user=None, commit=True):
+        assessment = super().save(commit=False)
+
+        category, _ = AssessmentCategory.objects.get_or_create(
+            name="OBC-MANA Workshop",
+            defaults={
+                "category_type": "needs_assessment",
+                "description": "Other Bangsamoro Communities Mapping and Needs Assessment",
+                "icon": "fas fa-users",
+                "color": "#3B82F6",
+            },
+        )
+
+        assessment.category = category
+        assessment.assessment_level = "regional"
+        assessment.primary_methodology = "workshop"
+        assessment.priority = assessment.priority or "medium"
+
+        if user is not None:
+            assessment.created_by = user
+            if not assessment.lead_assessor_id:
+                assessment.lead_assessor = user
+
+        if commit:
+            assessment.save()
+            self.save_m2m()
+
+        return assessment
 
 
 class KIIQuickEntryForm(forms.ModelForm):

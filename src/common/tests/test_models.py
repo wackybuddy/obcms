@@ -481,23 +481,30 @@ class MunicipalityCoverageFormTest(TestCase):
     """Tests for the MunicipalityCoverageForm helper logic."""
 
     def setUp(self):
-        self.region = Region.objects.create(code="XI", name="Davao Region")
+        self.region = Region.objects.create(
+            code="XI",
+            name="Davao Region",
+            center_coordinates=[125.6131, 7.0707],
+        )
         self.province = Province.objects.create(
             region=self.region,
             code="PROV-100",
             name="Davao del Sur",
+            center_coordinates=[125.353, 6.8724],
         )
         self.municipality_a = Municipality.objects.create(
             province=self.province,
             code="MUN-A",
             name="Digos City",
             municipality_type="component_city",
+            center_coordinates=[125.3575, 6.7504],
         )
         self.municipality_b = Municipality.objects.create(
             province=self.province,
             code="MUN-B",
             name="Sta. Cruz",
             municipality_type="municipality",
+            center_coordinates=[125.4112, 6.8348],
         )
         MunicipalityCoverage.objects.create(municipality=self.municipality_a)
 
@@ -531,6 +538,30 @@ class MunicipalityCoverageFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         coverage = form.save()
         self.assertEqual(coverage.municipality, self.municipality_b)
+
+    def test_coordinates_auto_populate_from_municipality(self):
+        form = MunicipalityCoverageForm(
+            data={
+                "region": str(self.region.id),
+                "province": str(self.province.id),
+                "municipality": str(self.municipality_b.id),
+                "total_obc_communities": 1,
+                "settlement_type": "village",
+                "unemployment_rate": "moderate",
+                "religious_leaders_count": 0,
+                "mosques_count": 0,
+                "madrasah_count": 0,
+                "asatidz_count": 0,
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertAlmostEqual(form.cleaned_data["latitude"], 6.8348)
+        self.assertAlmostEqual(form.cleaned_data["longitude"], 125.4112)
+
+        coverage = form.save()
+        self.assertAlmostEqual(coverage.latitude, 6.8348)
+        self.assertAlmostEqual(coverage.longitude, 125.4112)
 
     def test_region_province_mismatch_is_invalid(self):
         other_region = Region.objects.create(code="XIII", name="Caraga")
@@ -579,18 +610,28 @@ class OBCCommunityFormTest(TestCase):
     """Tests for the OBCCommunityForm location hierarchy."""
 
     def setUp(self):
-        self.region = Region.objects.create(code="XII", name="SOCCSKSARGEN")
-        self.other_region = Region.objects.create(code="IX", name="Zamboanga Peninsula")
+        self.region = Region.objects.create(
+            code="XII",
+            name="SOCCSKSARGEN",
+            center_coordinates=[124.8467, 6.2094],
+        )
+        self.other_region = Region.objects.create(
+            code="IX",
+            name="Zamboanga Peninsula",
+            center_coordinates=[123.4202, 7.8257],
+        )
 
         self.province = Province.objects.create(
             region=self.region,
             code="PROV-300",
             name="South Cotabato",
+            center_coordinates=[124.9956, 6.3354],
         )
         self.other_province = Province.objects.create(
             region=self.other_region,
             code="PROV-400",
             name="Zamboanga del Norte",
+            center_coordinates=[123.2859, 8.5112],
         )
 
         self.municipality = Municipality.objects.create(
@@ -598,23 +639,27 @@ class OBCCommunityFormTest(TestCase):
             code="MUN-100",
             name="Koronadal City",
             municipality_type="component_city",
+            center_coordinates=[124.8535, 6.4979],
         )
         self.other_municipality = Municipality.objects.create(
             province=self.other_province,
             code="MUN-200",
             name="Dipolog City",
             municipality_type="component_city",
+            center_coordinates=[123.362, 8.5819],
         )
 
         self.barangay = Barangay.objects.create(
             municipality=self.municipality,
             code="BRGY-100",
             name="Barangay Zone I",
+            center_coordinates=[124.8631, 6.5034],
         )
         self.other_barangay = Barangay.objects.create(
             municipality=self.other_municipality,
             code="BRGY-200",
             name="Barangay Central",
+            center_coordinates=[123.3437, 8.5873],
         )
 
     def test_valid_submission(self):
@@ -636,6 +681,63 @@ class OBCCommunityFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         community = form.save()
         self.assertEqual(community.barangay, self.barangay)
+
+    def test_coordinates_auto_populate_from_barangay(self):
+        form = OBCCommunityForm(
+            data={
+                "region": str(self.region.id),
+                "province": str(self.province.id),
+                "municipality": str(self.municipality.id),
+                "barangay": str(self.barangay.id),
+                "community_names": "Barangay Coordinates",
+                "settlement_type": "village",
+                "unemployment_rate": "moderate",
+                "mosques_count": 0,
+                "madrasah_count": 0,
+                "asatidz_count": 0,
+                "religious_leaders_count": 0,
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertAlmostEqual(form.cleaned_data["latitude"], 6.5034)
+        self.assertAlmostEqual(form.cleaned_data["longitude"], 124.8631)
+
+        community = form.save()
+        self.assertAlmostEqual(community.latitude, 6.5034)
+        self.assertAlmostEqual(community.longitude, 124.8631)
+
+    def test_coordinates_fallback_to_municipality_when_barangay_missing(self):
+        Barangay.objects.filter(pk=self.barangay.id).update(center_coordinates=None)
+        self.barangay.refresh_from_db(fields=["center_coordinates"])
+
+        with mock.patch(
+            "common.forms.community.enhanced_ensure_location_coordinates",
+            return_value=(None, None, False, "unavailable"),
+        ):
+            form = OBCCommunityForm(
+                data={
+                    "region": str(self.region.id),
+                    "province": str(self.province.id),
+                    "municipality": str(self.municipality.id),
+                    "barangay": str(self.barangay.id),
+                    "community_names": "Municipality Fallback",
+                    "settlement_type": "village",
+                    "unemployment_rate": "moderate",
+                    "mosques_count": 0,
+                    "madrasah_count": 0,
+                    "asatidz_count": 0,
+                    "religious_leaders_count": 0,
+                }
+            )
+
+            self.assertTrue(form.is_valid(), form.errors)
+            self.assertAlmostEqual(form.cleaned_data["latitude"], 6.4979)
+            self.assertAlmostEqual(form.cleaned_data["longitude"], 124.8535)
+
+            community = form.save()
+            self.assertAlmostEqual(community.latitude, 6.4979)
+            self.assertAlmostEqual(community.longitude, 124.8535)
 
     def test_hierarchy_mismatch_rejected(self):
         form = OBCCommunityForm(

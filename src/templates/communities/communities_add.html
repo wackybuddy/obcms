@@ -1469,27 +1469,63 @@ function setupLocationSelectors() {
     const barangaySelect = document.getElementById('id_barangay');
     const municipalityPopulationPreview = document.getElementById('municipality-population-preview');
     const municipalityPopulationValue = document.getElementById('municipality-population-value');
+    const latitudeField = document.getElementById('id_latitude');
+    const longitudeField = document.getElementById('id_longitude');
+    let manualCoordinateOverride = false;
+
+    if (latitudeField && longitudeField && latitudeField.value && longitudeField.value) {
+        manualCoordinateOverride = true;
+    }
+
+    const markManualOverride = () => {
+        manualCoordinateOverride = true;
+    };
+
+    if (latitudeField) {
+        latitudeField.addEventListener('input', markManualOverride);
+        latitudeField.addEventListener('change', markManualOverride);
+    }
+
+    if (longitudeField) {
+        longitudeField.addEventListener('input', markManualOverride);
+        longitudeField.addEventListener('change', markManualOverride);
+    }
 
     if (!regionSelect && !provinceSelect && !municipalitySelect) {
         return;
     }
 
+    const regionLookup = new Map();
+    (locationData.regions || []).forEach(region => {
+        if (region && region.id !== undefined && region.id !== null) {
+            regionLookup.set(String(region.id), region);
+        }
+    });
+
     const provincesByRegion = new Map();
+    const provinceLookup = new Map();
     (locationData.provinces || []).forEach(province => {
         const key = String(province.region_id);
         if (!provincesByRegion.has(key)) {
             provincesByRegion.set(key, []);
         }
         provincesByRegion.get(key).push(province);
+        if (province && province.id !== undefined && province.id !== null) {
+            provinceLookup.set(String(province.id), province);
+        }
     });
 
     const municipalitiesByProvince = new Map();
+    const municipalityLookup = new Map();
     (locationData.municipalities || []).forEach(municipality => {
         const key = String(municipality.province_id);
         if (!municipalitiesByProvince.has(key)) {
             municipalitiesByProvince.set(key, []);
         }
         municipalitiesByProvince.get(key).push(municipality);
+        if (municipality && municipality.id !== undefined && municipality.id !== null) {
+            municipalityLookup.set(String(municipality.id), municipality);
+        }
     });
 
     const autoMunicipalityByProvince = new Map();
@@ -1521,13 +1557,167 @@ function setupLocationSelectors() {
     });
 
     const barangaysByMunicipality = new Map();
+    const barangayLookup = new Map();
     (locationData.barangays || []).forEach(barangay => {
         const key = String(barangay.municipality_id);
         if (!barangaysByMunicipality.has(key)) {
             barangaysByMunicipality.set(key, []);
         }
         barangaysByMunicipality.get(key).push(barangay);
+        if (barangay && barangay.id !== undefined && barangay.id !== null) {
+            barangayLookup.set(String(barangay.id), barangay);
+        }
     });
+
+    const centroidSourceElement = document.querySelector('[data-obc-map][data-location-script="location-data"]');
+    const centroidUrl = centroidSourceElement ? centroidSourceElement.dataset.centroidUrl || '' : '';
+    const centroidCache = new Map();
+    let centroidRequestId = 0;
+    let lastLocationSignature = null;
+
+    const parseCoordinate = value => {
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric : null;
+    };
+
+    const formatCoordinate = value =>
+        Number.isFinite(value) ? Number(value).toFixed(6) : '';
+
+    const selectionSignature = () => [
+        regionSelect ? regionSelect.value || '' : '',
+        provinceSelect ? provinceSelect.value || '' : '',
+        municipalitySelect ? municipalitySelect.value || '' : '',
+        barangaySelect ? barangaySelect.value || '' : '',
+    ].join('|');
+
+    const buildSelectionHierarchy = () => [
+        { field: barangaySelect, level: 'barangay', lookup: barangayLookup, zoom: 15 },
+        { field: municipalitySelect, level: 'municipality', lookup: municipalityLookup, zoom: 12 },
+        { field: provinceSelect, level: 'province', lookup: provinceLookup, zoom: 9 },
+        { field: regionSelect, level: 'region', lookup: regionLookup, zoom: 7 },
+    ];
+
+    const findBestCoordinates = entries => {
+        for (let index = 0; index < entries.length; index += 1) {
+            const entry = entries[index];
+            if (!entry.field || !entry.field.value) {
+                continue;
+            }
+            const record = entry.lookup.get(String(entry.field.value));
+            if (!record) {
+                continue;
+            }
+            const lat = parseCoordinate(record.center_lat);
+            const lng = parseCoordinate(record.center_lng);
+            if (lat !== null && lng !== null) {
+                return { lat, lng, zoom: entry.zoom };
+            }
+        }
+        return null;
+    };
+
+    const determineFetchTarget = entries => {
+        for (let index = 0; index < entries.length; index += 1) {
+            const entry = entries[index];
+            if (entry.field && entry.field.value) {
+                return { level: entry.level, id: entry.field.value, zoom: entry.zoom };
+            }
+        }
+        return null;
+    };
+
+    const applyCoordinateValues = (lat, lng) => {
+        if (!latitudeField || !longitudeField) {
+            return;
+        }
+        if (manualCoordinateOverride) {
+            return;
+        }
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return;
+        }
+
+        const formattedLat = formatCoordinate(lat);
+        const formattedLng = formatCoordinate(lng);
+
+        if (latitudeField.value === formattedLat && longitudeField.value === formattedLng) {
+            return;
+        }
+
+        latitudeField.value = formattedLat;
+        longitudeField.value = formattedLng;
+
+        const changeEvent = new Event('change', { bubbles: true });
+        latitudeField.dispatchEvent(changeEvent);
+        longitudeField.dispatchEvent(changeEvent);
+    };
+
+    const applyCentroidPayload = payload => {
+        if (!payload || payload.has_location === false) {
+            return;
+        }
+        const lat = parseCoordinate(payload.lat);
+        const lng = parseCoordinate(payload.lng);
+        applyCoordinateValues(lat, lng);
+    };
+
+    const fetchCentroid = (level, id) => {
+        if (!centroidUrl || !level || !id) {
+            return Promise.resolve(null);
+        }
+        const cacheKey = `${level}:${id}`;
+        if (centroidCache.has(cacheKey)) {
+            return Promise.resolve(centroidCache.get(cacheKey));
+        }
+        const url = `${centroidUrl}?level=${encodeURIComponent(level)}&id=${encodeURIComponent(id)}`;
+        return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => (response.ok ? response.json() : null))
+            .then(data => {
+                if (data) {
+                    centroidCache.set(cacheKey, data);
+                }
+                return data;
+            })
+            .catch(() => null);
+    };
+
+    const updateCoordinateFields = ({ allowFetch = true } = {}) => {
+        if (!latitudeField || !longitudeField) {
+            return;
+        }
+
+        const signature = selectionSignature();
+        if (signature !== lastLocationSignature) {
+            lastLocationSignature = signature;
+            manualCoordinateOverride = false;
+        }
+
+        const hierarchy = buildSelectionHierarchy();
+        const best = findBestCoordinates(hierarchy);
+        const hasLocalCoordinates = Boolean(best);
+
+        if (best) {
+            applyCoordinateValues(best.lat, best.lng);
+        }
+
+        if (!allowFetch || hasLocalCoordinates) {
+            return;
+        }
+
+        const target = determineFetchTarget(hierarchy);
+        if (!target) {
+            return;
+        }
+
+        centroidRequestId += 1;
+        const requestToken = centroidRequestId;
+        fetchCentroid(target.level, target.id).then(payload => {
+            if (requestToken !== centroidRequestId || !payload) {
+                return;
+            }
+            applyCentroidPayload(payload);
+        });
+    };
 
     const geodataNotice = document.getElementById('geodata-notice');
     const geodataNoticeText = document.getElementById('geodata-notice-text');
@@ -1869,6 +2059,7 @@ function setupLocationSelectors() {
                 updateMunicipalityPreview('');
             }
             updateGeodataNotice();
+            updateCoordinateFields();
         });
     }
 
@@ -1886,6 +2077,7 @@ function setupLocationSelectors() {
                     updateMunicipalityPreview('');
                 }
                 updateGeodataNotice();
+                updateCoordinateFields();
             }
         });
     }
@@ -1909,6 +2101,7 @@ function setupLocationSelectors() {
             }
 
             updateGeodataNotice();
+            updateCoordinateFields();
         });
     }
 
@@ -1918,6 +2111,7 @@ function setupLocationSelectors() {
                 clearOnEmpty: false,
             });
             updateGeodataNotice();
+            updateCoordinateFields();
         });
     }
 
@@ -1952,6 +2146,7 @@ function setupLocationSelectors() {
         applyPopulationValue(barangaySelect, totalPopulationInput);
     }
 
+    updateCoordinateFields({ allowFetch: true });
     updateGeodataNotice();
 }
 

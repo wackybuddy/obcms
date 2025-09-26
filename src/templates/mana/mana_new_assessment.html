@@ -55,18 +55,18 @@
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="md:col-span-2">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assessment Title *</label>
-                                    <input type="text" name="title" required 
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assessment Title</label>
+                                    <input type="text" name="title"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                            placeholder="e.g., OBC-MANA Activity in [Region/Province] - [Year]">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Target Community *</label>
-                                    <select name="community" required 
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Target Community</label>
+                                    <select name="community" 
                                             class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
                                         <option value="">Select Community</option>
                                         {% for community in communities %}
-                                        <option value="{{ community.id }}">{{ community.barangay.name }}, {{ community.barangay.municipality.name }}</option>
+                                        <option value="{{ community.id }}" {% if request.GET.community == community.id|stringformat:'s' %}selected{% endif %}>{{ community.barangay.name }}, {{ community.barangay.municipality.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -90,33 +90,34 @@
                                 <i class="fas fa-tasks text-blue-500 mr-2"></i>
                                 MANA Methodology
                             </h3>
+                            {% with methodology=request.GET.primary_methodology|default:'workshop' %}
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="md:col-span-2">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-3">Primary MANA Activity *</label>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-3">Primary MANA Activity</label>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <label class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-blue-50 cursor-pointer">
-                                            <input type="radio" name="primary_methodology" value="desk_review" class="mr-3" required>
+                                            <input type="radio" name="primary_methodology" value="desk_review" class="mr-3" {% if methodology == 'desk_review' %}checked{% endif %}>
                                             <div>
                                                 <div class="font-semibold text-gray-900">Desk Review / Research</div>
                                                 <div class="text-sm text-gray-600">Literature review and secondary data analysis</div>
                                             </div>
                                         </label>
                                         <label class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-blue-50 cursor-pointer">
-                                            <input type="radio" name="primary_methodology" value="survey" class="mr-3">
+                                            <input type="radio" name="primary_methodology" value="survey" class="mr-3" {% if methodology == 'survey' %}checked{% endif %}>
                                             <div>
                                                 <div class="font-semibold text-gray-900">Surveys</div>
                                                 <div class="text-sm text-gray-600">Structured questionnaires and data collection</div>
                                             </div>
                                         </label>
                                         <label class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-blue-50 cursor-pointer">
-                                            <input type="radio" name="primary_methodology" value="kii" class="mr-3">
+                                            <input type="radio" name="primary_methodology" value="kii" class="mr-3" {% if methodology == 'kii' %}checked{% endif %}>
                                             <div>
                                                 <div class="font-semibold text-gray-900">Key Informant Interviews (KIIs)</div>
                                                 <div class="text-sm text-gray-600">In-depth interviews with key stakeholders</div>
                                             </div>
                                         </label>
                                         <label class="flex items-center p-4 border border-blue-500 bg-blue-50 rounded-lg cursor-pointer">
-                                            <input type="radio" name="primary_methodology" value="workshop" class="mr-3" checked>
+                                            <input type="radio" name="primary_methodology" value="workshop" class="mr-3" {% if methodology == 'workshop' %}checked{% endif %}>
                                             <div>
                                                 <div class="font-semibold text-blue-900">FGD / Workshops</div>
                                                 <div class="text-sm text-blue-700">5-day workshop structure (Currently implemented)</div>
@@ -138,14 +139,17 @@
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Assessment Level</label>
                                     <select name="assessment_level" 
                                             class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="regional">Regional Level</option>
-                                        <option value="provincial">Provincial Level</option>
-                                        <option value="city_municipal">City/Municipal Level</option>
-                                        <option value="barangay">Barangay Level</option>
-                                        <option value="community" selected>Community Level</option>
+                                        {% with level=request.GET.assessment_level|default:'community' %}
+                                        <option value="regional" {% if level == 'regional' %}selected{% endif %}>Regional Level</option>
+                                        <option value="provincial" {% if level == 'provincial' %}selected{% endif %}>Provincial Level</option>
+                                        <option value="city_municipal" {% if level == 'city_municipal' %}selected{% endif %}>City/Municipal Level</option>
+                                        <option value="barangay" {% if level == 'barangay' %}selected{% endif %}>Barangay Level</option>
+                                        <option value="community" {% if level == 'community' %}selected{% endif %}>Community Level</option>
+                                        {% endwith %}
                                     </select>
                                 </div>
                             </div>
+                            {% endwith %}
                         </div>
 
                         <!-- Workshop Configuration (shown when workshop methodology is selected) -->
@@ -204,7 +208,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-semibold text-gray-700 mb-3">Primary Assessment Domain</label>
-                                    <select name="primary_focus" required
+                                    <select name="primary_focus"
                                             class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
                                         <option value="">Select Primary Focus</option>
                                         <option value="social_development">Social Development (Education, Health, Social Protection)</option>
@@ -254,8 +258,8 @@
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Team Leader / Executive Director *</label>
-                                    <select name="team_leader" required
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Team Leader / Executive Director</label>
+                                    <select name="team_leader"
                                             class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
                                         <option value="">Select Team Leader</option>
                                         <!-- This would be populated from User model -->
@@ -317,13 +321,13 @@
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Planned Start Date *</label>
-                                    <input type="date" name="planned_start_date" required
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Planned Start Date</label>
+                                    <input type="date" name="planned_start_date"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Planned End Date *</label>
-                                    <input type="date" name="planned_end_date" required
+                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Planned End Date</label>
+                                    <input type="date" name="planned_end_date"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
                                 </div>
                                 <div>
@@ -340,13 +344,13 @@
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Assessment Objectives</label>
-                                    <textarea name="objectives" rows="3" required
+                                    <textarea name="objectives" rows="3"
                                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                               placeholder="Describe the key objectives of this OBC-MANA assessment (SMART objectives recommended)"></textarea>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                                    <textarea name="description" rows="3" required
+                                    <textarea name="description" rows="3"
                                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                                               placeholder="Detailed description of the MANA assessment purpose and scope"></textarea>
                                 </div>
