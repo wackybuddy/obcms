@@ -9,6 +9,13 @@ from common.models import Barangay, Municipality, Province, Region
 User = get_user_model()
 
 
+class ActiveCommunityManager(models.Manager):
+    """Default manager that hides soft-deleted records."""
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+
 class CommunityProfileBase(models.Model):
     """Shared socio-demographic profile fields for communities and municipalities."""
 
@@ -607,6 +614,24 @@ class CommunityProfileBase(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    is_deleted = models.BooleanField(
+        default=False,
+        help_text="Indicates whether this record has been archived instead of fully removed.",
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when this record was archived for removal.",
+    )
+    deleted_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="deleted_%(class)ss",
+        help_text="User who archived this record for deletion review.",
+    )
+
     class Meta:
         abstract = True
 
@@ -650,6 +675,24 @@ class CommunityProfileBase(models.Model):
             return [self.longitude, self.latitude]
         return None
 
+    def soft_delete(self, *, user=None):
+        """Mark the record as deleted without removing it from the database."""
+        if self.is_deleted:
+            return
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        if user is not None:
+            self.deleted_by = user
+        self.save(update_fields=["is_deleted", "deleted_at", "deleted_by", "updated_at"])
+
+    def restore(self):
+        """Reinstate a soft-deleted record."""
+        if not self.is_deleted:
+            return
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save(update_fields=["is_deleted", "deleted_at", "updated_at"])
+
 
 class OBCCommunity(CommunityProfileBase):
     """
@@ -657,6 +700,9 @@ class OBCCommunity(CommunityProfileBase):
     Represents OBC settlements outside BARMM with comprehensive data fields
     based on the OBC Database specifications for Regions 9 and 12.
     """
+
+    objects = ActiveCommunityManager()
+    all_objects = models.Manager()
 
     # Legacy compatibility fields retained for existing workflows/tests
     name = models.CharField(
@@ -1357,6 +1403,9 @@ class StakeholderEngagement(models.Model):
 class MunicipalityCoverage(CommunityProfileBase):
     """Tracks municipalities or cities with notable Bangsamoro presence."""
 
+    objects = ActiveCommunityManager()
+    all_objects = models.Manager()
+
     municipality = models.OneToOneField(
         Municipality,
         on_delete=models.CASCADE,
@@ -1493,6 +1542,11 @@ class MunicipalityCoverage(CommunityProfileBase):
     @classmethod
     def sync_for_municipality(cls, municipality):
         """Create or update coverage using barangay data."""
+        existing = cls.all_objects.filter(municipality=municipality).first()
+        if existing and existing.is_deleted:
+            # Leave archived coverages untouched until explicitly restored.
+            return existing
+
         coverage, _ = cls.objects.get_or_create(municipality=municipality)
         coverage.refresh_from_communities()
         return coverage
@@ -1754,6 +1808,29 @@ class GeographicDataLayer(models.Model):
         elif self.community:
             return [self.community]
         return []
+
+    def to_map_payload(self):
+        """Serialize the layer for client-side map rendering."""
+
+        return {
+            "id": self.pk,
+            "name": self.name,
+            "layer_type": self.layer_type,
+            "layer_type_display": self.get_layer_type_display(),
+            "data_source": self.data_source,
+            "administrative_path": self.full_administrative_path,
+            "geojson": self.geojson_data,
+            "style": self.style_properties or {},
+            "opacity": self.opacity,
+            "is_visible": self.is_visible,
+            "center": self.center_point,
+            "bounds": self.bounding_box,
+            "zoom_min": self.zoom_level_min,
+            "zoom_max": self.zoom_level_max,
+            "attribution": self.attribution,
+            "license": self.license_info,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
 
     def __str__(self):
         return f"{self.name} ({self.get_layer_type_display()})"

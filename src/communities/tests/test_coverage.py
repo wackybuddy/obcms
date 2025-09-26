@@ -54,6 +54,30 @@ class MunicipalityCoverageModelTest(TestCase):
             "Isulan, Sultan Kudarat",
         )
 
+    def test_soft_delete_and_restore_cycle(self):
+        self.coverage.soft_delete()
+        self.coverage.refresh_from_db()
+
+        self.assertTrue(self.coverage.is_deleted)
+        self.assertIsNotNone(self.coverage.deleted_at)
+        self.assertFalse(
+            MunicipalityCoverage.objects.filter(pk=self.coverage.pk).exists()
+        )
+        self.assertTrue(
+            MunicipalityCoverage.all_objects.filter(
+                pk=self.coverage.pk, is_deleted=True
+            ).exists()
+        )
+
+        self.coverage.restore()
+        self.coverage.refresh_from_db()
+
+        self.assertFalse(self.coverage.is_deleted)
+        self.assertIsNone(self.coverage.deleted_at)
+        self.assertTrue(
+            MunicipalityCoverage.objects.filter(pk=self.coverage.pk).exists()
+        )
+
 
 class MunicipalityCoverageSerializerTest(TestCase):
     """Ensure the serializer exposes derived attributes."""

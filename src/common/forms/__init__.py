@@ -8,6 +8,7 @@ from .community import (
     MunicipalityCoverageForm,
     OBCCommunityForm,
 )
+from .province import ProvinceForm
 
 __all__ = [
     "CustomLoginForm",
@@ -18,4 +19,5 @@ __all__ = [
     "COMMUNITY_PROFILE_WIDGETS",
     "MunicipalityCoverageForm",
     "OBCCommunityForm",
+    "ProvinceForm",
 ]

@@ -1,16 +1,24 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/obc_location_map.css' %}">
+{% endblock %}
 
 {% block title %}{{ page_title|default:"Add Barangay OBC" }} - OBC Management System{% endblock %}
 
 {% block breadcrumb %}
-<li class="flex items-center space-x-2">
-    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <a href="{% url 'common:communities_home' %}" class="text-gray-600 hover:text-gray-900">OBC Data</a>
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
 </li>
-<li class="flex items-center space-x-2">
-    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <span class="text-gray-900 font-medium">{{ breadcrumb_label|default:page_title|default:"Add Barangay OBC" }}</span>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">OBC Data</a>
 </li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ breadcrumb_label|default:page_title|default:"Add Barangay OBC" }}</li>
 {% endblock %}
 
 {% block content %}
@@ -345,12 +353,37 @@
                                        step="any"
                                        placeholder="e.g., 124.5000"
                                        class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                        </div>
+                        <div class="mt-6">
+                            <div
+                                class="obc-map-container"
+                                data-obc-map
+                                data-mode="form"
+                                data-lat-field="{{ form.latitude.id_for_label }}"
+                                data-lng-field="{{ form.longitude.id_for_label }}"
+                                data-location-script="location-data"
+                                data-centroid-url="{% url 'common:location_centroid' %}"
+                                data-focus-zoom="15"
+                                {% if form.region %}data-region-field="{{ form.region.id_for_label }}"{% endif %}
+                                {% if form.province %}data-province-field="{{ form.province.id_for_label }}"{% endif %}
+                                {% if form.municipality %}data-municipality-field="{{ form.municipality.id_for_label }}"{% endif %}
+                                {% if form.barangay %}data-barangay-field="{{ form.barangay.id_for_label }}"{% endif %}
+                            >
+                                <div class="obc-map-header">
+                                    <h3 class="flex items-center gap-2 text-neutral-800"><i class="fas fa-location-dot text-blue-500"></i>Community Location Map</h3>
+                                    <span class="obc-map-status"><i class="fas fa-hand-pointer"></i>Click the map to update coordinates</span>
+                                </div>
+                                <div class="obc-map-canvas" data-obc-map-target></div>
+                                <div class="obc-map-footer">
+                                    Use the map to pinpoint the exact settlement. Selecting a barangay auto-centres the map when coordinates are empty.
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                    
-                    <!-- Demographics Tab -->
+            </div>
+
+            <!-- Demographics Tab -->
                     <div id="demographics-content" class="tab-pane hidden">
                         <div class="bg-gray-50 rounded-lg p-6 space-y-6">
                             <h3 class="text-lg font-medium text-gray-900 mb-4">Demographic Profile</h3>
@@ -1386,6 +1419,8 @@
 </div>
 
 {{ location_data|json_script:"location-data" }}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'common/js/obc_location_map.js' %}"></script>
 
 <!-- JavaScript for Tab Functionality and Quick Actions -->
 <script>
@@ -1455,6 +1490,34 @@ function setupLocationSelectors() {
             municipalitiesByProvince.set(key, []);
         }
         municipalitiesByProvince.get(key).push(municipality);
+    });
+
+    const autoMunicipalityByProvince = new Map();
+    (locationData.provinces || []).forEach(province => {
+        const provinceKey = String(province.id);
+        if (!provinceKey) {
+            return;
+        }
+        const autoMunicipalityId = province.auto_municipality_id;
+        const isPseudo = Boolean(province.is_pseudo_province) || Boolean(autoMunicipalityId);
+        if (!isPseudo) {
+            return;
+        }
+        if (autoMunicipalityId !== null && autoMunicipalityId !== undefined) {
+            autoMunicipalityByProvince.set(provinceKey, String(autoMunicipalityId));
+            return;
+        }
+        const options = municipalitiesByProvince.get(provinceKey) || [];
+        if (!options.length) {
+            return;
+        }
+        const independentCity = options.find(
+            municipality => municipality.municipality_type === 'independent_city'
+        );
+        const target = independentCity || options[0];
+        if (target && target.id !== undefined && target.id !== null) {
+            autoMunicipalityByProvince.set(provinceKey, String(target.id));
+        }
     });
 
     const barangaysByMunicipality = new Map();
@@ -1540,6 +1603,22 @@ function setupLocationSelectors() {
             const baseLabel = getLabel ? getLabel(option) : option.name;
             optionElement.textContent = `${baseLabel}${datasetSuffix(option.geodata_count)}`;
             optionElement.dataset.displayLabel = baseLabel;
+
+            if (Object.prototype.hasOwnProperty.call(option, 'code') && option.code) {
+                optionElement.dataset.code = option.code;
+            }
+            if (
+                Object.prototype.hasOwnProperty.call(option, 'is_pseudo_province') &&
+                option.is_pseudo_province
+            ) {
+                optionElement.dataset.isPseudoProvince = 'true';
+            }
+            if (
+                Object.prototype.hasOwnProperty.call(option, 'municipality_type') &&
+                option.municipality_type
+            ) {
+                optionElement.dataset.municipalityType = option.municipality_type;
+            }
 
             if (optionId === desiredValue || (!desiredValue && optionId === previousValue)) {
                 optionElement.selected = true;
@@ -1637,6 +1716,33 @@ function setupLocationSelectors() {
             selectedValue,
             municipalityLabel,
         );
+    };
+
+    const autoSelectMunicipalityForProvince = (shouldDispatch = true) => {
+        if (!provinceSelect || !municipalitySelect) {
+            return false;
+        }
+        const provinceId = toStringId(provinceSelect.value);
+        if (!provinceId) {
+            return false;
+        }
+        const targetMunicipalityId = autoMunicipalityByProvince.get(provinceId);
+        if (!targetMunicipalityId) {
+            return false;
+        }
+        const hasOption = Array.from(municipalitySelect.options || []).some(
+            option => option.value === targetMunicipalityId
+        );
+        if (!hasOption) {
+            return false;
+        }
+        if (municipalitySelect.value !== targetMunicipalityId) {
+            municipalitySelect.value = targetMunicipalityId;
+        }
+        if (shouldDispatch) {
+            municipalitySelect.dispatchEvent(new Event('change'));
+        }
+        return true;
     };
 
     const updateBarangayOptions = (municipalityId, selectedValue) => {
@@ -1768,15 +1874,19 @@ function setupLocationSelectors() {
 
     if (provinceSelect) {
         provinceSelect.addEventListener('change', () => {
-            updateMunicipalityOptions(provinceSelect.value, '');
-            updateBarangayOptions('', '');
-            applyPopulationValue(municipalitySelect, totalPopulationInput, {
-                clearOnEmpty: hasBarangayField,
-            });
-            if (!hasBarangayField) {
-                updateMunicipalityPreview('');
+            const provinceId = toStringId(provinceSelect.value);
+            updateMunicipalityOptions(provinceId, '');
+            const autoHandled = autoSelectMunicipalityForProvince();
+            if (!autoHandled) {
+                updateBarangayOptions('', '');
+                applyPopulationValue(municipalitySelect, totalPopulationInput, {
+                    clearOnEmpty: hasBarangayField,
+                });
+                if (!hasBarangayField) {
+                    updateMunicipalityPreview('');
+                }
+                updateGeodataNotice();
             }
-            updateGeodataNotice();
         });
     }
 
@@ -1815,19 +1925,25 @@ function setupLocationSelectors() {
         regionSelect.dispatchEvent(new Event('change'));
     }
 
-    if (provinceSelect && initialProvince) {
+    if (provinceSelect) {
         updateProvinceOptions(initialRegion, initialProvince);
     }
 
-    if (municipalitySelect && initialMunicipality) {
+    if (municipalitySelect) {
         updateMunicipalityOptions(initialProvince, initialMunicipality);
-        applyPopulationValue(
-            hasBarangayField ? barangaySelect : municipalitySelect,
-            totalPopulationInput,
-            { clearOnEmpty: hasBarangayField }
-        );
-        if (!hasBarangayField) {
-            updateMunicipalityPreview(getSelectedPopulation(municipalitySelect));
+        if (initialMunicipality) {
+            applyPopulationValue(
+                hasBarangayField ? barangaySelect : municipalitySelect,
+                totalPopulationInput,
+                { clearOnEmpty: hasBarangayField }
+            );
+            if (!hasBarangayField) {
+                updateMunicipalityPreview(getSelectedPopulation(municipalitySelect));
+            }
+        } else if (autoSelectMunicipalityForProvince()) {
+            if (!hasBarangayField) {
+                updateMunicipalityPreview(getSelectedPopulation(municipalitySelect));
+            }
         }
     }
 

@@ -5,10 +5,18 @@ from django.contrib.auth import get_user_model
 from django.forms import BaseInlineFormSet, inlineformset_factory
 
 from communities.models import OBCCommunity
+from mana.models import Assessment
 
-from .models import (Organization, OrganizationContact, Partnership,
-                     PartnershipDocument, PartnershipMilestone,
-                     PartnershipSignatory)
+from .models import (
+    Event,
+    Organization,
+    OrganizationContact,
+    Partnership,
+    PartnershipDocument,
+    PartnershipMilestone,
+    PartnershipSignatory,
+    StakeholderEngagement,
+)
 
 INPUT_CLASS = (
     "block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm "
@@ -21,6 +29,10 @@ TEXTAREA_CLASS = (
 CHECKBOX_CLASS = "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
 
 DATE_WIDGET = forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS})
+TIME_WIDGET = forms.TimeInput(attrs={"type": "time", "class": INPUT_CLASS})
+DATETIME_WIDGET = forms.DateTimeInput(
+    attrs={"type": "datetime-local", "class": INPUT_CLASS}
+)
 
 MULTISELECT_CLASS = (
     "block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm "
@@ -233,3 +245,182 @@ PartnershipDocumentFormSet = inlineformset_factory(
     extra=1,
     can_delete=True,
 )
+
+
+class EventForm(forms.ModelForm):
+    """Frontend form for scheduling coordination events."""
+
+    class Meta:
+        model = Event
+        fields = [
+            "title",
+            "event_type",
+            "status",
+            "priority",
+            "description",
+            "objectives",
+            "community",
+            "organizations",
+            "related_engagement",
+            "related_assessment",
+            "start_date",
+            "start_time",
+            "end_date",
+            "end_time",
+            "duration_hours",
+            "venue",
+            "address",
+            "is_virtual",
+            "virtual_platform",
+            "virtual_link",
+            "virtual_meeting_id",
+            "virtual_passcode",
+            "organizer",
+            "co_organizers",
+            "facilitators",
+            "expected_participants",
+            "actual_participants",
+            "target_audience",
+            "agenda",
+            "materials_needed",
+            "minutes",
+            "outcomes",
+            "decisions_made",
+            "key_discussions",
+            "budget_allocated",
+            "actual_cost",
+            "feedback_summary",
+            "satisfaction_rating",
+            "lessons_learned",
+            "follow_up_required",
+            "follow_up_date",
+            "follow_up_notes",
+            "is_recurring",
+            "recurrence_pattern",
+            "recurrence_end_date",
+            "parent_event",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 4}),
+            "objectives": forms.Textarea(attrs={"rows": 3}),
+            "agenda": forms.Textarea(attrs={"rows": 3}),
+            "materials_needed": forms.Textarea(attrs={"rows": 3}),
+            "minutes": forms.Textarea(attrs={"rows": 3}),
+            "outcomes": forms.Textarea(attrs={"rows": 3}),
+            "decisions_made": forms.Textarea(attrs={"rows": 3}),
+            "key_discussions": forms.Textarea(attrs={"rows": 3}),
+            "feedback_summary": forms.Textarea(attrs={"rows": 3}),
+            "lessons_learned": forms.Textarea(attrs={"rows": 3}),
+            "follow_up_notes": forms.Textarea(attrs={"rows": 3}),
+            "address": forms.Textarea(attrs={"rows": 3}),
+            "target_audience": forms.Textarea(attrs={"rows": 2}),
+            "start_date": DATE_WIDGET,
+            "end_date": DATE_WIDGET,
+            "follow_up_date": DATE_WIDGET,
+            "recurrence_end_date": DATE_WIDGET,
+            "start_time": TIME_WIDGET,
+            "end_time": TIME_WIDGET,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_field_styles(self.fields)
+        self.fields["community"].queryset = OBCCommunity.objects.order_by("name")
+        self.fields["organizations"].queryset = Organization.objects.order_by("name")
+        self.fields["co_organizers"].queryset = User.objects.order_by(
+            "first_name",
+            "last_name",
+        )
+        self.fields["facilitators"].queryset = User.objects.order_by(
+            "first_name",
+            "last_name",
+        )
+        self.fields["organizer"].queryset = User.objects.order_by(
+            "first_name",
+            "last_name",
+        )
+        self.fields["related_engagement"].queryset = StakeholderEngagement.objects.order_by(
+            "-planned_date"
+        )
+        self.fields["related_assessment"].queryset = Assessment.objects.order_by(
+            "-created_at"
+        )
+        self.fields["parent_event"].queryset = Event.objects.order_by(
+            "-start_date",
+            "-start_time",
+        )
+        numeric_fields = [
+            "duration_hours",
+            "expected_participants",
+            "actual_participants",
+            "budget_allocated",
+            "actual_cost",
+        ]
+        for field_name in numeric_fields:
+            field = self.fields.get(field_name)
+            if field and isinstance(field.widget, forms.NumberInput):
+                field.widget.attrs.setdefault("min", "0")
+                if field_name == "duration_hours":
+                    field.widget.attrs.setdefault("step", "0.25")
+
+
+class StakeholderEngagementForm(forms.ModelForm):
+    """Frontend form for logging coordination activities."""
+
+    class Meta:
+        model = StakeholderEngagement
+        fields = [
+            "title",
+            "engagement_type",
+            "description",
+            "objectives",
+            "community",
+            "related_assessment",
+            "status",
+            "priority",
+            "participation_level",
+            "planned_date",
+            "duration_minutes",
+            "venue",
+            "address",
+            "target_participants",
+            "actual_participants",
+            "stakeholder_groups",
+            "methodology",
+            "materials_needed",
+            "budget_allocated",
+            "actual_cost",
+            "key_outcomes",
+            "feedback_summary",
+            "action_items",
+            "satisfaction_rating",
+            "meeting_minutes",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 4}),
+            "objectives": forms.Textarea(attrs={"rows": 3}),
+            "stakeholder_groups": forms.Textarea(attrs={"rows": 3}),
+            "methodology": forms.Textarea(attrs={"rows": 3}),
+            "materials_needed": forms.Textarea(attrs={"rows": 3}),
+            "key_outcomes": forms.Textarea(attrs={"rows": 3}),
+            "feedback_summary": forms.Textarea(attrs={"rows": 3}),
+            "action_items": forms.Textarea(attrs={"rows": 3}),
+            "meeting_minutes": forms.Textarea(attrs={"rows": 4}),
+            "address": forms.Textarea(attrs={"rows": 3}),
+            "planned_date": DATETIME_WIDGET,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_field_styles(self.fields)
+        self.fields["community"].queryset = OBCCommunity.objects.order_by("name")
+        self.fields["related_assessment"].queryset = Assessment.objects.order_by(
+            "-created_at"
+        )
+        numeric_fields = ["target_participants", "actual_participants", "duration_minutes"]
+        for field_name in numeric_fields:
+            field = self.fields.get(field_name)
+            if field and isinstance(field.widget, forms.NumberInput):
+                field.widget.attrs.setdefault("min", "0")
+        if "duration_minutes" in self.fields:
+            self.fields["duration_minutes"].widget.attrs.setdefault("step", "15")

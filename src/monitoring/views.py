@@ -14,16 +14,28 @@ from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
-from common.services.locations import build_location_data
-
+from common.services.locations import build_location_data, get_object_centroid
+from communities.models import OBCCommunity
+from common.models import Municipality
 from .forms import (
     MonitoringMOAEntryForm,
     MonitoringOOBCEntryForm,
     MonitoringRequestEntryForm,
     MonitoringUpdateForm,
+    MonitoringOBCQuickCreateForm,
 )
 from .models import MonitoringEntry, MonitoringUpdate
+
+
+def _normalise_float(value):
+    if value in {None, ""}:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _prefetch_entries():
@@ -334,14 +346,140 @@ def create_moa_entry(request):
         messages.success(request, "MOA PPA logged successfully.")
         return redirect("monitoring:detail", pk=entry.pk)
 
+    community_locations = []
+    community_queryset = (
+        OBCCommunity.objects.filter(is_active=True)
+        .select_related("barangay__municipality__province__region")
+        .order_by(
+            "barangay__municipality__province__region__code",
+            "barangay__municipality__name",
+            "barangay__name",
+        )
+    )
+
+    for community in community_queryset:
+        barangay = community.barangay
+        municipality = barangay.municipality if barangay else None
+        province = municipality.province if municipality else None
+        region = province.region if province else None
+
+        latitude = _normalise_float(community.latitude)
+        longitude = _normalise_float(community.longitude)
+
+        if latitude is None or longitude is None:
+            latitude, longitude = get_object_centroid(barangay)
+
+        if (latitude is None or longitude is None) and municipality is not None:
+            latitude, longitude = get_object_centroid(municipality)
+
+        if (latitude is None or longitude is None) and province is not None:
+            latitude, longitude = get_object_centroid(province)
+
+        if (latitude is None or longitude is None) and region is not None:
+            latitude, longitude = get_object_centroid(region)
+
+        has_location = latitude is not None and longitude is not None
+
+        community_locations.append(
+            {
+                "id": str(community.pk),
+                "type": "community",
+                "name": community.display_name or (barangay.name if barangay else "OBC"),
+                "latitude": latitude,
+                "longitude": longitude,
+                "barangay_id": str(barangay.pk) if barangay else None,
+                "barangay_name": barangay.name if barangay else "",
+                "municipality_id": str(municipality.pk) if municipality else None,
+                "municipality_name": municipality.name if municipality else "",
+                "province_id": str(province.pk) if province else None,
+                "province_name": province.name if province else "",
+                "region_id": str(region.pk) if region else None,
+                "region_name": region.name if region else "",
+                "full_path": getattr(barangay, "full_path", ""),
+                "has_location": has_location,
+            }
+        )
+
+    municipalties = (
+        Municipality.objects.filter(is_active=True)
+        .select_related("province__region")
+        .order_by("province__region__name", "province__name", "name")
+    )
+
+    for municipality in municipalties:
+        province = municipality.province
+        region = province.region if province else None
+
+        latitude, longitude = get_object_centroid(municipality)
+        has_location = latitude is not None and longitude is not None
+
+        full_path_parts = [municipality.name]
+        if province:
+            full_path_parts.append(province.name)
+        community_locations.append(
+            {
+                "id": f"municipality-{municipality.pk}",
+                "type": "municipality",
+                "name": municipality.name,
+                "latitude": latitude,
+                "longitude": longitude,
+                "barangay_id": None,
+                "barangay_name": "",
+                "municipality_id": str(municipality.pk),
+                "municipality_name": municipality.name,
+                "province_id": str(province.pk) if province else None,
+                "province_name": province.name if province else "",
+                "region_id": str(region.pk) if region else None,
+                "region_name": region.name if region else "",
+                "full_path": ", ".join(full_path_parts),
+                "has_location": has_location,
+            }
+        )
+
     return render(
         request,
         "monitoring/create_moa.html",
         {
             "form": form,
             "location_data": build_location_data(include_barangays=True),
+            "community_locations": community_locations,
         },
     )
+
+
+@login_required
+@require_POST
+def ajax_create_obc(request):
+    """Handle inline creation of OBC communities from the MOA form."""
+
+    obc_form = MonitoringOBCQuickCreateForm(request.POST)
+    if obc_form.is_valid():
+        community = obc_form.save()
+
+        barangay = community.barangay
+        municipality = barangay.municipality
+        province = municipality.province
+        region = province.region
+
+        return JsonResponse(
+            {
+                "success": True,
+                "community": {
+                    "id": str(community.id),
+                    "name": community.display_name,
+                    "barangay": barangay.name,
+                    "municipality": municipality.name,
+                    "province": province.name,
+                    "region": region.name,
+                },
+            }
+        )
+
+    error_payload = {
+        field: [str(message) for message in messages]
+        for field, messages in obc_form.errors.items()
+    }
+    return JsonResponse({"success": False, "errors": error_payload}, status=400)
 
 
 @login_required

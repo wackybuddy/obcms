@@ -1,0 +1,14 @@
+<div class="{{ wrapper_class|default:'bg-white rounded-2xl shadow-lg border border-gray-200' }}">
+    <div id="{{ widget_id }}" class="{{ calendar_class|default:'p-4' }}"></div>
+</div>
+<script>
+    window.addEventListener('DOMContentLoaded', function () {
+        if (typeof window.renderCalendar !== 'function') {
+            console.warn('renderCalendar helper is not available yet.');
+            return;
+        }
+        var events = {{ events_json|default:'[]'|safe }};
+        var options = {{ options_json|default:'{}'|safe }};
+        window.renderCalendar("{{ widget_id }}", events, options);
+    });
+</script>

@@ -19,11 +19,14 @@ def dashboard(request):
     from mana.models import Assessment, Need
     from monitoring.models import MonitoringEntry
     from recommendations.policy_tracking.models import PolicyRecommendation
+    from common.models import User
 
     communities_qs = OBCCommunity.objects.all()
     barangay_total = communities_qs.count()
     municipal_total = MunicipalityCoverage.objects.count()
     combined_total = barangay_total + municipal_total
+
+    oobc_staff_qs = User.objects.filter(user_type__in=["oobc_staff", "admin"])
 
     stats = {
         "communities": {
@@ -119,6 +122,11 @@ def dashboard(request):
                     "human_rights",
                 ]
             ).count(),
+        },
+        "oobc_management": {
+            "total_staff": oobc_staff_qs.count(),
+            "active_staff": oobc_staff_qs.filter(is_active=True).count(),
+            "pending_approvals": User.objects.filter(is_approved=False).count(),
         },
     }
 

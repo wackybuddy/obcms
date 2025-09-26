@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}MANA Activity Log{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Activity Log</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <header class="space-y-2">
+        <h1 class="text-3xl font-bold text-gray-900">Log MANA Field Activities</h1>
+        <p class="text-lg text-gray-600 max-w-3xl">Capture daily outputs, attendance, and operational notes throughout the five-day MANA deployment.</p>
+    </header>
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Daily Trackers</h2>
+            <p class="mt-1 text-sm text-gray-600">Rundown of expected inputs per day based on the OBC-MANA activity matrix.</p>
+        </div>
+        <ul class="divide-y divide-gray-200">
+            {% for tracker in field_trackers %}
+            <li class="p-6 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-900">{{ tracker.title }}</h3>
+                </div>
+                <ul class="space-y-1 text-sm text-gray-600 list-disc list-inside">
+                    {% for input in tracker.inputs %}
+                    <li>{{ input }}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <article class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Documentation Prompts</h2>
+                <p class="mt-1 text-sm text-gray-600">Reference points for encoding participation, issues, and evidence collected.</p>
+            </div>
+            <ul class="divide-y divide-gray-200">
+                {% for item in documentation_prompts %}
+                <li class="p-6">
+                    <p class="text-sm font-semibold text-gray-900">{{ item.label }}</p>
+                    <p class="mt-1 text-sm text-gray-600">{{ item.details }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </article>
+        <article class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Team Debrief Guide</h2>
+                <p class="mt-1 text-sm text-gray-600">Use these questions for nightly reflections and planning.</p>
+            </div>
+            <ul class="p-6 space-y-3">
+                {% for question in debrief_questions %}
+                <li class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">{{ question }}</li>
+                {% endfor %}
+            </ul>
+        </article>
+    </section>
+
+    <section class="bg-emerald-50 border border-emerald-100 rounded-lg shadow-lg p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-emerald-900">Need to capture assessment-level information?</h2>
+                <p class="text-sm text-emerald-800">Update the assessment record with new findings and needs as you log activities.</p>
+            </div>
+            <a href="{% url 'common:mana_manage_assessments' %}" class="inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-colors">
+                <i class="fas fa-tasks mr-2"></i> Manage Assessments
+            </a>
+        </div>
+    </section>
+</div>
+{% endblock %}

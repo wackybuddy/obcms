@@ -178,6 +178,10 @@ class MonitoringViewTests(MonitoringBaseTestCase):
         url = reverse("monitoring:create_moa")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+        self.assertIn("community_locations", response.context)
+        self.assertGreater(len(response.context["community_locations"]), 0)
+        first_location = response.context["community_locations"][0]
+        self.assertIn("has_location", first_location)
 
         post_response = self.client.post(
             url,

@@ -3,10 +3,11 @@
 {% block title %}OBC Communities - OBC Management System{% endblock %}
 
 {% block breadcrumb %}
-<li class="flex items-center space-x-2">
-    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <span class="text-gray-900 font-medium">OBC Communities</span>
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
 </li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">OBC Data</li>
 {% endblock %}
 
 {% block content %}
@@ -134,7 +135,7 @@
                 </div>
             </a>
 
-            <a href="/admin/mana/geographicdatalayer/add/" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <a href="{% url 'communities:add_data_layer' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-layer-group text-white text-xl"></i>

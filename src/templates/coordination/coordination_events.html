@@ -1,31 +1,26 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Events - Coordination{% endblock %}
+{% block title %}Coordination Management - Coordination{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Coordination Management</li>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Breadcrumb -->
-    <nav class="flex mb-6" aria-label="Breadcrumb">
-        <ol class="flex items-center space-x-4">
-            <li>
-                <div class="flex items-center">
-                    <a href="{% url 'common:coordination_home' %}" class="text-gray-400 hover:text-gray-500">Coordination</a>
-                </div>
-            </li>
-            <li>
-                <div class="flex items-center">
-                    <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
-                    <span class="text-gray-600 font-medium">Events</span>
-                </div>
-            </li>
-        </ol>
-    </nav>
-
     <!-- Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Events Management</h1>
-        <p class="mt-2 text-lg text-gray-600">Manage multi-stakeholder events and meetings</p>
+        <h1 class="text-3xl font-bold text-gray-900">Coordination Management</h1>
+        <p class="mt-2 text-lg text-gray-600">Manage multi-stakeholder coordination activities and meetings</p>
     </div>
 
     <!-- Statistics Cards -->
@@ -34,8 +29,8 @@
             <div class="flex items-center">
                 <i class="fas fa-calendar-alt text-2xl mr-4"></i>
                 <div>
-                    <p class="text-blue-100">Total Events</p>
-                    <p class="text-3xl font-bold">{{ events.count }}</p>
+                    <p class="text-blue-100">Total Coordination Activities</p>
+                    <p class="text-3xl font-bold">{{ total_coordination_count }}</p>
                 </div>
             </div>
         </div>
@@ -45,7 +40,7 @@
                 <i class="fas fa-check-circle text-2xl mr-4"></i>
                 <div>
                     <p class="text-green-100">Completed</p>
-                    <p class="text-3xl font-bold">{{ completed_events }}</p>
+                    <p class="text-3xl font-bold">{{ completed_coordination_count }}</p>
                 </div>
             </div>
         </div>
@@ -55,7 +50,7 @@
                 <i class="fas fa-clock text-2xl mr-4"></i>
                 <div>
                     <p class="text-yellow-100">Upcoming</p>
-                    <p class="text-3xl font-bold">{{ upcoming_events }}</p>
+                    <p class="text-3xl font-bold">{{ upcoming_coordination_count }}</p>
                 </div>
             </div>
         </div>
@@ -65,7 +60,7 @@
                 <i class="fas fa-users text-2xl mr-4"></i>
                 <div>
                     <p class="text-purple-100">Total Participants</p>
-                    <p class="text-3xl font-bold">{{ total_participants }}</p>
+                    <p class="text-3xl font-bold">{{ total_participants_count }}</p>
                 </div>
             </div>
         </div>
@@ -74,30 +69,34 @@
     <!-- Quick Actions -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
         <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 font-medium">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{% url 'common:coordination_event_add' %}" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 font-medium flex items-center justify-center">
                 <i class="fas fa-plus mr-2"></i>
-                New Event
-            </button>
+                New Coordination Event
+            </a>
+            <a href="{% url 'common:coordination_activity_add' %}" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-4 py-3 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 transform hover:scale-105 font-medium flex items-center justify-center">
+                <i class="fas fa-handshake mr-2"></i>
+                Log Activity
+            </a>
             <button class="bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200 transform hover:scale-105 font-medium">
                 <i class="fas fa-file-export mr-2"></i>
-                Export Events
+                Export Coordination Data
             </button>
-            <button class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 font-medium">
+            <a href="{% url 'common:coordination_calendar' %}" class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-4 py-3 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 font-medium flex items-center justify-center">
                 <i class="fas fa-calendar-week mr-2"></i>
-                Event Calendar
-            </button>
+                Calendar Management
+            </a>
         </div>
     </div>
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Filter Events</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Filter Coordination Activities</h2>
         <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
                 <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                 <input type="text" id="search" name="search" value="{{ request.GET.search }}" 
-                       placeholder="Search events..." 
+                       placeholder="Search coordination records..." 
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div>
@@ -111,7 +110,7 @@
                 </select>
             </div>
             <div>
-                <label for="event_type" class="block text-sm font-medium text-gray-700 mb-2">Event Type</label>
+                <label for="event_type" class="block text-sm font-medium text-gray-700 mb-2">Activity Type</label>
                 <select id="event_type" name="event_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Types</option>
                     <option value="meeting" {% if request.GET.event_type == 'meeting' %}selected{% endif %}>Meeting</option>
@@ -129,10 +128,10 @@
         </form>
     </div>
 
-    <!-- Events Table -->
+    <!-- Coordination Table -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-900">Events List</h2>
+            <h2 class="text-xl font-semibold text-gray-900">Coordination Activities</h2>
         </div>
         
         {% if events %}
@@ -140,7 +139,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coordination Event</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -199,12 +198,12 @@
         {% else %}
         <div class="px-6 py-12 text-center">
             <i class="fas fa-calendar-alt text-4xl text-gray-400 mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No events found</h3>
-            <p class="text-gray-500 mb-4">Get started by creating your first event.</p>
-            <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No coordination records found</h3>
+            <p class="text-gray-500 mb-4">Get started by creating your first coordination event.</p>
+            <a href="{% url 'common:coordination_event_add' %}" class="inline-flex items-center justify-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
                 <i class="fas fa-plus mr-2"></i>
-                Create Event
-            </button>
+                Create Coordination Event
+            </a>
         </div>
         {% endif %}
     </div>

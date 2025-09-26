@@ -1,41 +1,107 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/obc_location_map.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'common/js/obc_location_map.js' %}"></script>
+{% endblock %}
 
 {% block title %}View Barangay OBC - OBC Management System{% endblock %}
 
 {% block breadcrumb %}
-<li class="flex items-center space-x-2">
-    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <a href="{% url 'common:communities_manage' %}" class="text-gray-600 hover:text-gray-900">Manage Barangay OBC</a>
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
 </li>
-<li class="flex items-center space-x-2">
-    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <span class="text-gray-500 font-medium">{{ community.display_name|default:community.barangay.name }}</span>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">OBC Data</a>
 </li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:communities_manage' %}" class="text-neutral-500 hover:text-neutral-700">Manage Barangay OBC</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ community.display_name|default:community.barangay.name }}</li>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="mb-8 flex items-start justify-between gap-4">
+    <div class="mb-8 flex items-start justify-between gap-4 flex-wrap">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-                <i class="fas fa-map-marker-alt text-blue-600 mr-3"></i>
-                {{ community.display_name|default:community.barangay.name }}
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-map-marker-alt text-blue-600"></i>
+                <span>{{ community.display_name|default:community.barangay.name }}</span>
+                {% if is_archived %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded-full bg-amber-100 text-amber-800">Archived</span>
+                {% endif %}
             </h1>
             <p class="mt-2 text-lg text-gray-600">
                 Barangay OBC profile within {{ community.barangay.municipality.name }}, {{ community.barangay.municipality.province.name }}.
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
+            {% if is_archived %}
+            <form method="post" action="{% url 'common:communities_restore' community.id %}" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        class="inline-flex items-center bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-undo mr-2"></i>Restore
+                </button>
+            </form>
+            {% else %}
             <a href="{% url 'common:communities_edit' community.id %}"
                class="inline-flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
                 <i class="fas fa-edit mr-2"></i>Edit
             </a>
-            <a href="{% url 'common:communities_manage' %}"
+            {% endif %}
+            <a href="{{ redirect_after_action }}"
                class="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
                 <i class="fas fa-arrow-left mr-2"></i>Back to List
             </a>
         </div>
     </div>
+
+    {% if delete_review_mode %}
+    <div class="mb-6 border-l-4 border-red-500 bg-red-50 rounded-lg p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-red-700 flex items-center gap-2">
+            <i class="fas fa-exclamation-triangle"></i>
+            Review before deletion
+        </h2>
+        <p class="mt-2 text-sm text-red-700">
+            Please validate that the information below matches the record you intend to delete. Archiving will remove it from active reports but you can still restore it later.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-3">
+            <form method="post" action="{% url 'common:communities_delete' community.id %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-trash mr-2"></i>
+                    Confirm archive &amp; delete
+                </button>
+            </form>
+            <a href="{{ redirect_after_action }}"
+               class="inline-flex items-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+        </div>
+    </div>
+    {% elif is_archived %}
+    <div class="mb-6 border-l-4 border-amber-500 bg-amber-50 rounded-lg p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-amber-800 flex items-center gap-2">
+            <i class="fas fa-archive"></i>
+            Archived record
+        </h2>
+        <p class="mt-2 text-sm text-amber-800">
+            This OBC profile is archived and read-only. Restore it to make updates or include it in active reports.
+        </p>
+    </div>
+    {% endif %}
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div class="bg-white border border-blue-100 rounded-xl p-5 shadow-sm">
@@ -113,6 +179,34 @@
                 {% if community.languages_spoken %}
                 <p><span class="font-medium text-gray-600">Languages:</span> {{ community.languages_spoken }}</p>
                 {% endif %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-0 lg:col-span-2">
+            <div
+                class="obc-map-container"
+                data-obc-map
+                data-mode="detail"
+                data-initial-lat="{{ map_payload.initial_lat|default_if_none:'' }}"
+                data-initial-lng="{{ map_payload.initial_lng|default_if_none:'' }}"
+                data-initial-zoom="{{ map_payload.initial_zoom|default_if_none:'' }}"
+                data-fallback-lat="{{ map_payload.fallback_lat|default_if_none:'' }}"
+                data-fallback-lng="{{ map_payload.fallback_lng|default_if_none:'' }}"
+                data-fallback-zoom="{{ map_payload.fallback_zoom|default_if_none:'' }}"
+                data-has-location="{{ map_payload.has_location|yesno:'true,false' }}"
+                data-popup-content="{{ community.display_name|default:community.barangay.name }}"
+            >
+                <div class="obc-map-header">
+                    <h3 class="flex items-center gap-2 text-neutral-800">
+                        <i class="fas fa-map-marker-alt text-blue-500"></i>
+                        Community Map
+                    </h3>
+                    <span class="obc-map-status"><i class="fas fa-map"></i>Interactive reference</span>
+                </div>
+                <div class="obc-map-canvas" data-obc-map-target></div>
+                <div class="obc-map-footer">
+                    The map highlights the recorded location of this OBC. Coordinates update as new spatial data becomes available.
+                </div>
             </div>
         </section>
 

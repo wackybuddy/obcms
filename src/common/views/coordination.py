@@ -4,8 +4,17 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from coordination.views import (
+    calendar_overview as _calendar_overview,
+    event_create as _event_create,
+    engagement_create as _engagement_create,
     organization_create as _organization_create,
+    organization_delete as _organization_delete,
+    organization_detail as _organization_detail,
+    organization_edit as _organization_edit,
     partnership_create as _partnership_create,
+    partnership_delete as _partnership_delete,
+    partnership_detail as _partnership_detail,
+    partnership_update as _partnership_update,
 )
 
 
@@ -158,16 +167,26 @@ def coordination_home(request):
 @login_required
 def coordination_organizations(request):
     """Manage coordination organizations page."""
-    from django.db.models import Count
+    from django.db.models import Count, F, Q
 
     from coordination.models import Organization, OrganizationContact
 
-    organizations = Organization.objects.annotate(
-        contacts_count=Count("contacts"), partnerships_count=Count("led_partnerships")
-    ).order_by("name")
+    organizations = (
+        Organization.objects.annotate(
+            contacts_count=Count("contacts", distinct=True),
+            led_partnerships_count=Count("led_partnerships", distinct=True),
+            member_partnerships_count=Count("partnerships", distinct=True),
+        )
+        .annotate(
+            partnerships_count=F("led_partnerships_count")
+            + F("member_partnerships_count")
+        )
+        .order_by("name")
+    )
 
     type_filter = request.GET.get("type")
     status_filter = request.GET.get("status")
+    search_query = request.GET.get("search")
 
     if type_filter:
         organizations = organizations.filter(organization_type=type_filter)
@@ -176,6 +195,15 @@ def coordination_organizations(request):
         organizations = organizations.filter(is_active=True)
     elif status_filter == "inactive":
         organizations = organizations.filter(is_active=False)
+
+    if search_query:
+        organizations = organizations.filter(
+            Q(name__icontains=search_query)
+            | Q(acronym__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(head_of_organization__icontains=search_query)
+            | Q(focal_person__icontains=search_query)
+        )
 
     org_types = (
         Organization.ORGANIZATION_TYPE_CHOICES
@@ -197,6 +225,7 @@ def coordination_organizations(request):
         "org_types": org_types,
         "current_type": type_filter,
         "current_status": status_filter,
+        "search_query": search_query,
         "stats": stats,
     }
     return render(request, "coordination/coordination_organizations.html", context)
@@ -210,26 +239,71 @@ def organization_create(request):
 
 
 @login_required
+def organization_edit(request, organization_id):
+    """Proxy to coordination frontend organization edit view."""
+
+    return _organization_edit(request, organization_id=organization_id)
+
+
+@login_required
+def organization_detail(request, organization_id):
+    """Expose the organization detail frontend view."""
+
+    return _organization_detail(request, organization_id=organization_id)
+
+
+@login_required
+def organization_delete(request, organization_id):
+    """Proxy to the organization delete confirmation flow."""
+
+    return _organization_delete(request, organization_id=organization_id)
+
+
+@login_required
 def coordination_partnerships(request):
     """Manage coordination partnerships page."""
-    from django.db.models import Count
+    from django.db.models import Count, Q
 
     from coordination.models import Organization, Partnership
 
     partnerships = (
         Partnership.objects.select_related("lead_organization")
+        .prefetch_related("organizations")
         .annotate(signatories_count=Count("signatories"))
         .order_by("-created_at")
     )
 
     status_filter = request.GET.get("status")
     type_filter = request.GET.get("type")
+    search_query = request.GET.get("search")
+    organization_filter = request.GET.get("organization")
+    organization_instance = None
 
     if status_filter:
         partnerships = partnerships.filter(status=status_filter)
 
     if type_filter:
         partnerships = partnerships.filter(partnership_type=type_filter)
+
+    if search_query:
+        partnerships = partnerships.filter(
+            Q(title__icontains=search_query)
+            | Q(lead_organization__name__icontains=search_query)
+            | Q(organizations__name__icontains=search_query)
+            | Q(description__icontains=search_query)
+        ).distinct()
+
+    if organization_filter:
+        try:
+            organization_instance = Organization.objects.get(pk=organization_filter)
+        except (Organization.DoesNotExist, ValueError, TypeError):
+            organization_instance = None
+
+        if organization_instance:
+            partnerships = partnerships.filter(
+                Q(lead_organization=organization_instance)
+                | Q(organizations=organization_instance)
+            ).distinct()
 
     status_choices = (
         Partnership.STATUS_CHOICES if hasattr(Partnership, "STATUS_CHOICES") else []
@@ -243,7 +317,9 @@ def coordination_partnerships(request):
     stats = {
         "total_partnerships": partnerships.count(),
         "active_partnerships": partnerships.filter(status="active").count(),
-        "pending_partnerships": partnerships.filter(status="pending").count(),
+        "pending_partnerships": partnerships.filter(
+            status__in=["pending_approval", "pending_signature"]
+        ).count(),
         "by_type": partnerships.values("partnership_type").annotate(count=Count("id")),
     }
 
@@ -253,6 +329,8 @@ def coordination_partnerships(request):
         "type_choices": type_choices,
         "current_status": status_filter,
         "current_type": type_filter,
+        "search_query": search_query,
+        "current_organization": organization_instance,
         "stats": stats,
     }
     return render(request, "coordination/coordination_partnerships.html", context)
@@ -266,8 +344,43 @@ def partnership_create(request):
 
 
 @login_required
+def partnership_detail(request, partnership_id):
+    """Proxy to frontend partnership detail view."""
+
+    return _partnership_detail(request, partnership_id)
+
+
+@login_required
+def partnership_update(request, partnership_id):
+    """Proxy to frontend partnership update view."""
+
+    return _partnership_update(request, partnership_id)
+
+
+@login_required
+def partnership_delete(request, partnership_id):
+    """Proxy to frontend partnership delete view."""
+
+    return _partnership_delete(request, partnership_id)
+
+
+@login_required
+def event_create(request):
+    """Proxy to coordination event creation view."""
+
+    return _event_create(request)
+
+
+@login_required
+def coordination_activity_create(request):
+    """Proxy to coordination activity creation view."""
+
+    return _engagement_create(request)
+
+
+@login_required
 def coordination_events(request):
-    """Manage coordination events page."""
+    """Coordination management dashboard."""
     from django.db.models import Count
     from django.utils import timezone
 
@@ -296,11 +409,12 @@ def coordination_events(request):
     now = timezone.now().date()
     upcoming_events = events.filter(start_date__gte=now)
     past_events = events.filter(start_date__lt=now)
+    completed_events_count = events.filter(status="completed").count()
 
     stats = {
-        "total_events": events.count(),
-        "upcoming_events": upcoming_events.count(),
-        "past_events": past_events.count(),
+        "total_coordination": events.count(),
+        "upcoming_coordination": upcoming_events.count(),
+        "completed_coordination": completed_events_count,
         "total_participants": EventParticipant.objects.count(),
     }
 
@@ -313,8 +427,19 @@ def coordination_events(request):
         "current_status": status_filter,
         "current_type": type_filter,
         "stats": stats,
+        "upcoming_coordination_count": stats["upcoming_coordination"],
+        "completed_coordination_count": stats["completed_coordination"],
+        "total_coordination_count": stats["total_coordination"],
+        "total_participants_count": stats["total_participants"],
     }
     return render(request, "coordination/coordination_events.html", context)
+
+
+@login_required
+def coordination_calendar(request):
+    """Proxy to coordination calendar view."""
+
+    return _calendar_overview(request)
 
 
 @login_required
@@ -371,6 +496,10 @@ __all__ = [
     "coordination_home",
     "coordination_organizations",
     "coordination_partnerships",
+    "partnership_create",
+    "partnership_detail",
+    "partnership_update",
+    "partnership_delete",
     "coordination_events",
     "coordination_view_all",
 ]

@@ -1,35 +1,21 @@
 {% extends 'base.html' %}
 
-{% block title %}Create Partnership - Coordination System{% endblock %}
+{% block title %}{{ page_title|default:"Create Partnership" }} - Coordination System{% endblock %}
 
-{% block breadcrumbs %}
-<nav class="flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-        <li class="inline-flex items-center">
-            <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-green-600">
-                Dashboard
-            </a>
-        </li>
-        <li>
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <a href="{% url 'common:coordination_home' %}" class="text-sm font-medium text-gray-700 hover:text-green-600">Coordination</a>
-            </div>
-        </li>
-        <li>
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <a href="{% url 'common:coordination_partnerships' %}" class="text-sm font-medium text-gray-700 hover:text-green-600">Partnerships</a>
-            </div>
-        </li>
-        <li aria-current="page">
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Create Partnership</span>
-            </div>
-        </li>
-    </ol>
-</nav>
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_partnerships' %}" class="text-neutral-500 hover:text-neutral-700">Partnerships</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ breadcrumb_label|default:page_title|default:"Create Partnership" }}</li>
 {% endblock %}
 
 {% block content %}
@@ -38,13 +24,13 @@
         <div>
             <h1 class="text-3xl font-bold text-gray-900 flex items-center">
                 <i class="fas fa-handshake text-green-600 mr-4"></i>
-                New Partnership Agreement
+                {{ page_heading|default:page_title|default:"New Partnership Agreement" }}
             </h1>
             <p class="mt-2 text-gray-600">Document partnership details, participating organizations, and supporting records.</p>
         </div>
         <a href="{{ return_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50">
             <i class="fas fa-arrow-left mr-2"></i>
-            Back to directory
+            Back to agreement list
         </a>
     </div>
 
@@ -459,7 +445,7 @@
             </a>
             <button type="submit" class="inline-flex items-center px-6 py-3 text-sm font-semibold text-white rounded-lg bg-gradient-to-r from-green-600 to-emerald-500 shadow-lg hover:shadow-xl transition">
                 <i class="fas fa-save mr-2"></i>
-                Save partnership
+                {{ submit_label|default:"Save partnership" }}
             </button>
         </div>
     </form>

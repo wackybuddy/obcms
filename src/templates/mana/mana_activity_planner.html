@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}MANA Activity Planner{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Activity Planner</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <header class="space-y-2">
+        <h1 class="text-3xl font-bold text-gray-900">Plan a MANA Activity</h1>
+        <p class="text-lg text-gray-600 max-w-3xl">Use this workspace to prepare consultations and Mapping and Needs Assessment (MANA) deployments in line with OOBC guidelines.</p>
+    </header>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <article class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Planning Milestones</h2>
+                <p class="mt-1 text-sm text-gray-600">Walkthrough of the minimum steps before field mobilisation.</p>
+            </div>
+            <ul class="divide-y divide-gray-200">
+                {% for milestone in planning_milestones %}
+                <li class="p-6 space-y-1">
+                    <h3 class="text-sm font-semibold text-gray-900">{{ milestone.title }}</h3>
+                    <p class="text-sm text-gray-600">{{ milestone.description }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+        </article>
+        <article class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Preparation Checklist</h2>
+                <p class="mt-1 text-sm text-gray-600">Make sure all coordination and logistics requirements are covered.</p>
+            </div>
+            <div class="p-6 space-y-5">
+                {% for block in prep_checklist %}
+                <div>
+                    <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">{{ block.category }}</h3>
+                    <ul class="mt-2 space-y-1 text-sm text-gray-600 list-disc list-inside">
+                        {% for item in block.items %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Risk Assessment</h2>
+            <p class="mt-1 text-sm text-gray-600">Identify threats to successful deployment and prescribe mitigations.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Risk</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Mitigation Strategy</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for entry in risk_matrix %}
+                    <tr>
+                        <td class="px-6 py-3 text-gray-900 font-medium">{{ entry.risk }}</td>
+                        <td class="px-6 py-3 text-gray-600">{{ entry.mitigation }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="px-6 py-6 text-center text-sm text-gray-500">Add risks as you prepare the deployment.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Submission Timeline</h2>
+            <p class="mt-1 text-sm text-gray-600">Track report deliverables immediately after the activity.</p>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for item in reporting_timeline %}
+            <div class="p-4 rounded-lg border border-gray-200 bg-gray-50">
+                <p class="text-xs font-semibold text-blue-600 uppercase tracking-wide">{{ item.deadline }}</p>
+                <h3 class="mt-1 text-sm font-semibold text-gray-900">{{ item.label }}</h3>
+                <p class="mt-2 text-sm text-gray-600">{{ item.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="bg-blue-50 border border-blue-100 rounded-lg shadow-lg p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-blue-900">Need to register a new MANA assessment?</h2>
+                <p class="text-sm text-blue-800">After completing your plan, initiate the formal assessment record.</p>
+            </div>
+            <a href="{% url 'common:mana_new_assessment' %}" class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i> Create Assessment
+            </a>
+        </div>
+    </section>
+</div>
+{% endblock %}

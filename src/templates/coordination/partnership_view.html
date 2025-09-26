@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+
+{% block title %}View Partnership - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_partnerships' %}" class="text-neutral-500 hover:text-neutral-700">Partnerships</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ partnership.title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-3xl font-bold text-gray-900">{{ partnership.title }}</h1>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                    <i class="fas fa-handshake mr-2"></i>{{ partnership.get_partnership_type_display|default:"Partnership" }}
+                </span>
+            </div>
+            <p class="mt-2 text-gray-600 max-w-2xl">{{ partnership.description }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'common:coordination_partnership_edit' partnership.id %}"
+               class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg transition">
+                <i class="fas fa-edit mr-2"></i>Edit Partnership
+            </a>
+            <a href="{{ return_url }}"
+               class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-semibold rounded-lg transition">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Agreement List
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white border border-emerald-100 rounded-xl p-5 shadow-sm">
+            <p class="text-sm text-emerald-500 font-medium uppercase">Partner Organizations</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ partnership.organizations.all|length }}</p>
+        </div>
+        <div class="bg-white border border-blue-100 rounded-xl p-5 shadow-sm">
+            <p class="text-sm text-blue-500 font-medium uppercase">Signatories</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ signatories|length }}</p>
+        </div>
+        <div class="bg-white border border-purple-100 rounded-xl p-5 shadow-sm">
+            <p class="text-sm text-purple-500 font-medium uppercase">Linked Communities</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ partnership.communities.all|length }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Partnership Snapshot</h2>
+            </div>
+            <dl class="space-y-3 text-sm text-gray-700">
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Lead Organization</dt>
+                    <dd class="text-right">{{ partnership.lead_organization.name }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Status</dt>
+                    <dd class="text-right">{{ partnership.get_status_display }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Priority</dt>
+                    <dd class="text-right">{{ partnership.get_priority_display|default:"Not set" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Progress</dt>
+                    <dd class="text-right">{{ partnership.progress_percentage }}%</dd>
+                </div>
+                {% if partnership.focal_person %}
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Focal Person</dt>
+                    <dd class="text-right">{{ partnership.focal_person.get_full_name|default:partnership.focal_person.username }}</dd>
+                </div>
+                {% endif %}
+                {% if partnership.backup_focal_person %}
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Backup Focal</dt>
+                    <dd class="text-right">{{ partnership.backup_focal_person.get_full_name|default:partnership.backup_focal_person.username }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Timeline</h2>
+            </div>
+            <dl class="space-y-3 text-sm text-gray-700">
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Concept Date</dt>
+                    <dd class="text-right">{{ partnership.concept_date|date:'M d, Y'|default:"Not set" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Negotiation Start</dt>
+                    <dd class="text-right">{{ partnership.negotiation_start_date|date:'M d, Y'|default:"Not set" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Signing Date</dt>
+                    <dd class="text-right">{{ partnership.signing_date|date:'M d, Y'|default:"Not set" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Start Date</dt>
+                    <dd class="text-right">{{ partnership.start_date|date:'M d, Y'|default:"Not set" }}</dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">End Date</dt>
+                    <dd class="text-right">{{ partnership.end_date|date:'M d, Y'|default:"Not set" }}</dd>
+                </div>
+                {% if partnership.renewal_date %}
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Renewal Date</dt>
+                    <dd class="text-right">{{ partnership.renewal_date|date:'M d, Y' }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Objectives & Scope</h2>
+            </div>
+            <div class="space-y-4 text-sm text-gray-700">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Objectives</h3>
+                    <p class="mt-1 whitespace-pre-line">{{ partnership.objectives|default:"Not specified" }}</p>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Scope</h3>
+                    <p class="mt-1 whitespace-pre-line">{{ partnership.scope|default:"Not specified" }}</p>
+                </div>
+                {% if partnership.key_performance_indicators %}
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Key Performance Indicators</h3>
+                    <p class="mt-1 whitespace-pre-line">{{ partnership.key_performance_indicators }}</p>
+                </div>
+                {% endif %}
+                {% if partnership.expected_outcomes or partnership.actual_outcomes %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% if partnership.expected_outcomes %}
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Expected Outcomes</h3>
+                        <p class="mt-1 whitespace-pre-line">{{ partnership.expected_outcomes }}</p>
+                    </div>
+                    {% endif %}
+                    {% if partnership.actual_outcomes %}
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Actual Outcomes</h3>
+                        <p class="mt-1 whitespace-pre-line">{{ partnership.actual_outcomes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Financial & Legal</h2>
+            </div>
+            <dl class="space-y-3 text-sm text-gray-700">
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Total Budget</dt>
+                    <dd class="text-right">
+                        {% if partnership.total_budget is not None %}
+                            ₱{{ partnership.total_budget|floatformat:2 }}
+                        {% else %}
+                            Not set
+                        {% endif %}
+                    </dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">OOBC Contribution</dt>
+                    <dd class="text-right">
+                        {% if partnership.oobc_contribution is not None %}
+                            ₱{{ partnership.oobc_contribution|floatformat:2 }}
+                        {% else %}
+                            Not set
+                        {% endif %}
+                    </dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Partner Contribution</dt>
+                    <dd class="text-right">
+                        {% if partnership.partner_contribution is not None %}
+                            ₱{{ partnership.partner_contribution|floatformat:2 }}
+                        {% else %}
+                            Not set
+                        {% endif %}
+                    </dd>
+                </div>
+                {% if partnership.document_number %}
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Document Number</dt>
+                    <dd class="text-right">{{ partnership.document_number }}</dd>
+                </div>
+                {% endif %}
+                {% if partnership.legal_reference %}
+                <div class="flex justify-between">
+                    <dt class="font-medium text-gray-600">Legal Reference</dt>
+                    <dd class="text-right">{{ partnership.legal_reference }}</dd>
+                </div>
+                {% endif %}
+                {% if partnership.termination_clause %}
+                <div>
+                    <dt class="font-medium text-gray-600">Termination Clause</dt>
+                    <dd class="mt-1 text-sm text-gray-700 whitespace-pre-line">{{ partnership.termination_clause }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </section>
+    </div>
+
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-building"></i>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900">Partner Organizations & Communities</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Partner Organizations</h3>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    {% for organization in partnership.organizations.all %}
+                        <span class="px-3 py-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-medium">
+                            {{ organization.name }}
+                        </span>
+                    {% empty %}
+                        <p class="text-gray-500">No organizations recorded.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Linked Communities</h3>
+                <ul class="mt-3 space-y-2">
+                    {% for community in partnership.communities.all %}
+                        <li class="flex items-center text-gray-700">
+                            <i class="fas fa-map-marker-alt text-emerald-500 mr-2"></i>
+                            {{ community.display_name|default:community.name }}
+                        </li>
+                    {% empty %}
+                        <p class="text-gray-500">No communities linked to this partnership.</p>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Partnership Signatories</h2>
+            </div>
+            <span class="text-sm text-gray-500">{{ signatories|length }} total</span>
+        </div>
+        {% if signatories %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Name</th>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Organization</th>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Role</th>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Signed</th>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Signature Date</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for signatory in signatories %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 text-gray-900 font-medium">{{ signatory.name }}</td>
+                        <td class="px-4 py-2 text-gray-700">{{ signatory.organization.name }}</td>
+                        <td class="px-4 py-2 text-gray-600">{{ signatory.get_role_display|default:"Signatory" }}</td>
+                        <td class="px-4 py-2">
+                            {% if signatory.signed %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                    <i class="fas fa-check mr-1"></i>Signed
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                                    <i class="fas fa-clock mr-1"></i>Pending
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 text-gray-600">{{ signatory.signature_date|date:'M d, Y'|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No signatories have been added yet.</p>
+        {% endif %}
+    </section>
+
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-flag-checkered"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Milestones</h2>
+            </div>
+            <span class="text-sm text-gray-500">{{ milestones|length }} tracked</span>
+        </div>
+        {% if milestones %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Title</th>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Due Date</th>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Status</th>
+                        <th class="px-4 py-2 text-left font-semibold text-gray-600">Progress</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for milestone in milestones %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 text-gray-900 font-medium">{{ milestone.title }}</td>
+                        <td class="px-4 py-2 text-gray-600">{{ milestone.due_date|date:'M d, Y'|default:"—" }}</td>
+                        <td class="px-4 py-2 text-gray-600">{{ milestone.get_status_display|default:"N/A" }}</td>
+                        <td class="px-4 py-2 text-gray-600">{{ milestone.progress_percentage }}%</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No milestones recorded for this partnership.</p>
+        {% endif %}
+    </section>
+
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">Documents</h2>
+            </div>
+            <span class="text-sm text-gray-500">{{ documents|length }} uploaded</span>
+        </div>
+        {% if documents %}
+        <ul class="space-y-3 text-sm text-gray-700">
+            {% for document in documents %}
+            <li class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                <div>
+                    <p class="font-semibold text-gray-900">{{ document.title }}</p>
+                    <p class="text-xs text-gray-500">{{ document.get_document_type_display|default:"Document" }}{% if document.document_date %} · {{ document.document_date|date:'M d, Y' }}{% endif %}</p>
+                    {% if document.description %}
+                    <p class="mt-1 text-xs text-gray-600">{{ document.description|truncatechars:120 }}</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-3">
+                    {% if document.file %}
+                    <a href="{{ document.file.url }}" class="inline-flex items-center px-3 py-1 bg-white border border-sky-200 text-sky-600 rounded text-xs font-medium hover:bg-sky-50" target="_blank" rel="noopener">
+                        <i class="fas fa-download mr-1"></i>Download
+                    </a>
+                    {% endif %}
+                    {% if document.is_confidential %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-medium">
+                        <i class="fas fa-lock mr-1"></i>Confidential
+                    </span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-sm text-gray-500">No supporting documents uploaded yet.</p>
+        {% endif %}
+    </section>
+
+    {% if partnership.notes or partnership.mitigation_strategies or partnership.risks_identified %}
+    <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
+        <div class="flex items-center mb-4">
+            <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mr-3">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900">Risks & Notes</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-gray-700">
+            {% if partnership.risks_identified %}
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Risks Identified</h3>
+                <p class="mt-1 whitespace-pre-line">{{ partnership.risks_identified }}</p>
+            </div>
+            {% endif %}
+            {% if partnership.mitigation_strategies %}
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Mitigation Strategies</h3>
+                <p class="mt-1 whitespace-pre-line">{{ partnership.mitigation_strategies }}</p>
+            </div>
+            {% endif %}
+            {% if partnership.notes %}
+            <div>
+                <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Additional Notes</h3>
+                <p class="mt-1 whitespace-pre-line">{{ partnership.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

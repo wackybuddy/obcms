@@ -8,6 +8,8 @@ from common.views.communities import (
     communities_delete_municipal,
     communities_edit,
     communities_edit_municipal,
+    communities_restore,
+    communities_restore_municipal,
 )
 
 
@@ -33,3 +35,13 @@ class CommunityUrlTests(SimpleTestCase):
         url = reverse("common:communities_delete_municipal", args=[2])
         self.assertEqual(url, "/communities/municipal/2/delete/")
         self.assertIs(resolve(url).func, communities_delete_municipal)
+
+    def test_barangay_restore_url(self) -> None:
+        url = reverse("common:communities_restore", args=[1])
+        self.assertEqual(url, "/communities/1/restore/")
+        self.assertIs(resolve(url).func, communities_restore)
+
+    def test_municipal_restore_url(self) -> None:
+        url = reverse("common:communities_restore_municipal", args=[2])
+        self.assertEqual(url, "/communities/municipal/2/restore/")
+        self.assertIs(resolve(url).func, communities_restore_municipal)

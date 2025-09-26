@@ -601,12 +601,19 @@ def _render_manage_obc(request, scope='barangay'):
     from django.db.models import Count, Sum
     from django.db.models import Q
 
+    show_archived = request.GET.get('archived') == '1'
+
+    base_manager = OBCCommunity.all_objects if show_archived else OBCCommunity.objects
+
     # Base queryset for communities with related data
-    communities = OBCCommunity.objects.select_related(
+    communities = base_manager.select_related(
         'barangay__municipality__province__region'
     ).annotate(
         stakeholder_count=Count('stakeholders')
     ).order_by('barangay__name')
+
+    if show_archived:
+        communities = communities.filter(is_deleted=True)
 
     # Filters
     region_filter = request.GET.get('region')
@@ -651,20 +658,24 @@ def _render_manage_obc(request, scope='barangay'):
     auto_synced_municipalities = max(total_municipalities - manual_municipalities, 0)
 
     if scope == 'municipal':
-        page_title = 'Manage Municipal OBCs'
-        page_description = (
-            'Monitor municipal-level OBC records and synchronization status.'
-        )
+        if show_archived:
+            page_title = 'Archived Municipal OBCs'
+            page_description = 'Review archived municipality-level records and restore when needed.'
+        else:
+            page_title = 'Manage Municipal OBCs'
+            page_description = (
+                'Monitor municipal-level OBC records and synchronization status.'
+            )
         stat_cards = [
             {
-                'title': 'Total Municipal OBCs in the Database',
+                'title': 'Total Municipal OBCs in the Database' if not show_archived else 'Total Archived Municipal OBCs',
                 'value': total_municipalities,
                 'icon': 'fas fa-city',
                 'gradient': 'from-blue-500 via-blue-600 to-blue-700',
                 'text_color': 'text-blue-100',
             },
             {
-                'title': 'Total OBC Population from the Municipalities',
+                'title': 'Total OBC Population from the Municipalities' if not show_archived else 'Archived OBC Population Total',
                 'value': total_obc_population,
                 'icon': 'fas fa-users',
                 'gradient': 'from-emerald-500 via-emerald-600 to-emerald-700',
@@ -686,20 +697,24 @@ def _render_manage_obc(request, scope='barangay'):
             },
         ]
     else:
-        page_title = 'Manage Barangay OBCs'
-        page_description = (
-            'View, edit, and manage all registered barangay-level OBC communities.'
-        )
+        if show_archived:
+            page_title = 'Archived Barangay OBCs'
+            page_description = 'Review archived barangay-level records and restore when appropriate.'
+        else:
+            page_title = 'Manage Barangay OBCs'
+            page_description = (
+                'View, edit, and manage all registered barangay-level OBC communities.'
+            )
         stat_cards = [
             {
-                'title': 'Total Barangay OBCs in the Database',
+                'title': 'Total Barangay OBCs in the Database' if not show_archived else 'Total Archived Barangay OBCs',
                 'value': total_communities,
                 'icon': 'fas fa-users',
                 'gradient': 'from-blue-500 via-blue-600 to-blue-700',
                 'text_color': 'text-blue-100',
             },
             {
-                'title': 'Total OBC Population from Barangays',
+                'title': 'Total OBC Population from Barangays' if not show_archived else 'Archived OBC Population Total',
                 'value': total_obc_population,
                 'icon': 'fas fa-user-friends',
                 'gradient': 'from-emerald-500 via-emerald-600 to-emerald-700',
@@ -735,6 +750,7 @@ def _render_manage_obc(request, scope='barangay'):
         'page_title': page_title,
         'page_description': page_description,
         'view_scope': scope,
+        'show_archived': show_archived,
     }
     return render(request, 'common/communities_manage.html', context)
 
@@ -976,7 +992,7 @@ def coordination_partnerships(request):
 
 @login_required
 def coordination_events(request):
-    """Manage coordination events page."""
+    """Coordination management dashboard."""
     from coordination.models import Event, EventParticipant
     from django.db.models import Count
     from django.utils import timezone
@@ -1009,12 +1025,13 @@ def coordination_events(request):
     
     # Statistics
     stats = {
-        'total_events': events.count(),
-        'upcoming_events': upcoming_events.count(),
-        'past_events': past_events.count(),
+        'total_coordination': events.count(),
+        'upcoming_coordination': upcoming_events.count(),
+        'completed_coordination': events.filter(status='completed').count(),
+        'past_coordination': past_events.count(),
         'total_participants': EventParticipant.objects.count(),
     }
-    
+
     context = {
         'events': events,
         'upcoming_events': upcoming_events[:10],
@@ -1024,6 +1041,10 @@ def coordination_events(request):
         'current_status': status_filter,
         'current_type': type_filter,
         'stats': stats,
+        'total_coordination_count': stats['total_coordination'],
+        'upcoming_coordination_count': stats['upcoming_coordination'],
+        'completed_coordination_count': stats['completed_coordination'],
+        'total_participants_count': stats['total_participants'],
     }
     return render(request, 'common/coordination_events.html', context)
 

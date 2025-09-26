@@ -1,0 +1,20 @@
+{% load static %}
+<div class="geographic-map-container" data-geographic-map
+     data-map-target="{{ map_dom_id }}"
+     data-layers-id="{{ layers_script_id }}"
+     data-config-id="{{ config_script_id }}">
+    <div id="{{ map_dom_id }}" class="geographic-map-canvas"></div>
+    <div class="geographic-map-controls">
+        <button type="button" data-action="prefetch">
+            <i class="fas fa-download"></i>
+            Cache map tiles
+        </button>
+        <button type="button" data-action="clear">
+            <i class="fas fa-trash"></i>
+            Clear cached tiles
+        </button>
+        <span class="geographic-map-status" data-map-status>Offline ready</span>
+    </div>
+</div>
+{{ map_layers|json_script:layers_script_id }}
+{{ map_config|json_script:config_script_id }}

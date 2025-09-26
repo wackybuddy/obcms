@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Calendar Management{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Calendar</li>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'common/vendor/fullcalendar/main.min.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-calendar-week text-blue-600 mr-4"></i>
+                Calendar Management
+            </h1>
+            <p class="mt-2 text-gray-600 max-w-2xl">
+                View upcoming events and coordination activities in a single calendar. Use the quick actions to schedule new items or log stakeholder engagements as they happen.
+            </p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <a href="{% url 'common:coordination_event_add' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow btn-primary">
+                <i class="fas fa-plus mr-2"></i>
+                New Event
+            </a>
+            <a href="{% url 'common:coordination_activity_add' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700">
+                <i class="fas fa-handshake mr-2"></i>
+                Log Activity
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-3 space-y-6">
+            {% include "components/calendar_widget.html" with widget_id="coordination-calendar" events_json=calendar_events_json options_json=calendar_options_json wrapper_class="bg-white rounded-2xl shadow-lg border border-gray-200" calendar_class="p-4" %}
+        </div>
+        <div class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-chart-pie text-indigo-500 mr-2"></i>
+                    Snapshot
+                </h2>
+                <dl class="space-y-3 text-sm text-gray-600">
+                    <div class="flex items-center justify-between">
+                        <dt>Total events</dt>
+                        <dd class="font-semibold text-gray-900">{{ stats.events.total }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <dt>Upcoming events</dt>
+                        <dd class="font-semibold text-blue-600">{{ stats.events.upcoming }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <dt>Completed events</dt>
+                        <dd class="font-semibold text-green-600">{{ stats.events.completed }}</dd>
+                    </div>
+                    <div class="border-t border-gray-200 pt-3"></div>
+                    <div class="flex items-center justify-between">
+                        <dt>Total activities</dt>
+                        <dd class="font-semibold text-gray-900">{{ stats.activities.total }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <dt>Upcoming activities</dt>
+                        <dd class="font-semibold text-emerald-600">{{ stats.activities.upcoming }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <dt>Completed activities</dt>
+                        <dd class="font-semibold text-teal-600">{{ stats.activities.completed }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                    <i class="fas fa-calendar-check text-blue-500 mr-2"></i>
+                    Upcoming Events
+                </h2>
+                <div class="space-y-4">
+                    {% for event in upcoming_events %}
+                    <div class="border border-blue-100 rounded-xl p-4 bg-blue-50">
+                        <p class="text-sm font-semibold text-gray-900">{{ event.title }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ event.start_date|date:"M d, Y" }}{% if event.start_time %} • {{ event.start_time|time:"g:i A" }}{% endif %}</p>
+                        <p class="text-xs text-blue-600 mt-2 uppercase tracking-wide">{{ event.get_status_display|default:event.status|capfirst }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No upcoming events scheduled.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                    <i class="fas fa-people-line text-emerald-500 mr-2"></i>
+                    Upcoming Activities
+                </h2>
+                <div class="space-y-4">
+                    {% for engagement in upcoming_engagements %}
+                    <div class="border border-emerald-100 rounded-xl p-4 bg-emerald-50">
+                        <p class="text-sm font-semibold text-gray-900">{{ engagement.title }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ engagement.planned_date|date:"M d, Y" }} • {{ engagement.planned_date|time:"g:i A" }}</p>
+                        <p class="text-xs text-emerald-600 mt-2 uppercase tracking-wide">{{ engagement.get_status_display|default:engagement.status|capfirst }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No upcoming coordination activities logged.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+<script src="{% static 'common/js/calendar.js' %}"></script>
+{% endblock %}

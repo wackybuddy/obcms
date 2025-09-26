@@ -2,14 +2,8 @@
 
 {% block title %}Dashboard - OBC Management System{% endblock %}
 
-{% block breadcrumbs %}
-<nav class="flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-        <li class="inline-flex items-center">
-            <span class="text-sm font-medium text-gray-500">Dashboard</span>
-        </li>
-    </ol>
-</nav>
+{% block breadcrumb %}
+<li class="text-neutral-800 font-semibold">Dashboard</li>
 {% endblock %}
 
 {% block content %}
@@ -249,25 +243,6 @@
                 </div>
             </a>
 
-            <!-- Monitoring & Evaluation Module -->
-            <a href="{% url 'monitoring:home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
-                <div class="p-6">
-                    <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-chart-pie text-white text-xl"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
-                        Monitoring &amp; Evaluation
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Track PPAs, OOBC initiatives, and OBC proposals.
-                    </p>
-                    <div class="mt-4 flex items-center text-teal-600 text-sm font-medium">
-                        <span>{{ stats.monitoring.total|default:0 }} records</span>
-                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
-                    </div>
-                </div>
-            </a>
-
             <!-- Recommendations Module -->
             <a href="{% url 'common:recommendations_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
                 <div class="p-6">
@@ -283,6 +258,47 @@
                     <div class="mt-4 flex items-center text-orange-600 text-sm font-medium">
                         <span>{{ stats.policy_tracking.total_recommendations|default:0 }} recommendations</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Monitoring & Evaluation Module -->
+            <a href="{% url 'monitoring:home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-pie text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors">
+                        M&amp;E
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Monitor PPAs, OOBC initiatives, and OBC proposals.
+                    </p>
+                    <div class="mt-4 flex items-center text-teal-600 text-sm font-medium">
+                        <span>{{ stats.monitoring.total|default:0 }} records</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- OOBC Management Module -->
+            <a href="{% url 'common:oobc_management_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-toolbox text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
+                        OOBC Management
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Coordinate staff, approvals, and internal operations.
+                    </p>
+                    <div class="mt-4 flex items-center justify-between text-emerald-600 text-sm font-medium">
+                        <span>{{ stats.oobc_management.total_staff|default:0 }} staff</span>
+                        <span class="flex items-center">
+                            {{ stats.oobc_management.pending_approvals|default:0 }} pending
+                            <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                        </span>
                     </div>
                 </div>
             </a>

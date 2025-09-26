@@ -1,18 +1,106 @@
 """Views for OBC communities management screens."""
 
 import json
+from typing import Optional, Tuple
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.urls import reverse
+from django.views.decorators.http import require_GET, require_POST
 
 from django.core.serializers.json import DjangoJSONEncoder
 
 from ..forms import MunicipalityCoverageForm, OBCCommunityForm
-from ..models import Barangay, Region
-from ..services.locations import build_location_data
+from ..models import Barangay, Municipality, Province, Region
+from ..services.geocoding import ensure_location_coordinates
+from ..services.locations import build_location_data, get_object_centroid
+
+
+DEFAULT_MAP_CENTER = (7.1907, 125.4553, 6)
+
+
+def _to_float(value) -> Optional[float]:
+    if value in {"", None}:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _resolve_map_payload(
+    *,
+    primary_lat: Optional[float] = None,
+    primary_lng: Optional[float] = None,
+    primary_zoom: Optional[int] = None,
+    barangay=None,
+    municipality=None,
+    province=None,
+    region=None,
+):
+    """Select the best available coordinates for map rendering."""
+
+    candidates: list[tuple[float, float, int]] = []
+
+    lat = _to_float(primary_lat)
+    lng = _to_float(primary_lng)
+    zoom = primary_zoom if isinstance(primary_zoom, int) else _to_float(primary_zoom)
+    if lat is not None and lng is not None:
+        candidates.append((lat, lng, int(zoom) if zoom else 12))
+
+    def add_candidate(source, zoom_level):
+        if source is None:
+            return
+        lat_val, lng_val = get_object_centroid(source)
+        if lat_val is None or lng_val is None:
+            lat_val, lng_val, _ = ensure_location_coordinates(source)
+        if lat_val is None or lng_val is None:
+            return
+        candidates.append((lat_val, lng_val, zoom_level))
+
+    if barangay is not None:
+        add_candidate(barangay, 15)
+        if municipality is None:
+            municipality = getattr(barangay, "municipality", None)
+
+    if municipality is not None:
+        add_candidate(municipality, 12)
+        if province is None:
+            province = getattr(municipality, "province", None)
+
+    if province is not None:
+        add_candidate(province, 9)
+        if region is None:
+            region = getattr(province, "region", None)
+
+    if region is not None:
+        add_candidate(region, 7)
+
+    if not candidates:
+        return {
+            "initial_lat": None,
+            "initial_lng": None,
+            "initial_zoom": None,
+            "fallback_lat": DEFAULT_MAP_CENTER[0],
+            "fallback_lng": DEFAULT_MAP_CENTER[1],
+            "fallback_zoom": DEFAULT_MAP_CENTER[2],
+            "has_location": False,
+        }
+
+    initial_lat, initial_lng, initial_zoom = candidates[0]
+
+    return {
+        "initial_lat": initial_lat,
+        "initial_lng": initial_lng,
+        "initial_zoom": initial_zoom,
+        "fallback_lat": initial_lat,
+        "fallback_lng": initial_lng,
+        "fallback_zoom": initial_zoom,
+        "has_location": True,
+    }
 
 
 @login_required
@@ -380,7 +468,13 @@ def communities_manage_municipal(request):
 
     from communities.models import MunicipalityCoverage
 
-    coverages = MunicipalityCoverage.objects.select_related(
+    show_archived = request.GET.get("archived") == "1"
+
+    base_manager = (
+        MunicipalityCoverage.all_objects if show_archived else MunicipalityCoverage.objects
+    )
+
+    coverages = base_manager.select_related(
         "municipality__province__region",
         "created_by",
         "updated_by",
@@ -389,6 +483,9 @@ def communities_manage_municipal(request):
         "municipality__province__name",
         "municipality__name",
     )
+
+    if show_archived:
+        coverages = coverages.filter(is_deleted=True)
 
     region_filter = request.GET.get("region")
     province_filter = request.GET.get("province")
@@ -456,14 +553,18 @@ def communities_manage_municipal(request):
 
     stat_cards = [
         {
-            "title": "Total Municipal OBCs in the Database",
+            "title": "Total Municipal OBCs in the Database"
+            if not show_archived
+            else "Total Archived Municipal OBCs",
             "value": total_coverages,
             "icon": "fas fa-city",
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "text_color": "text-blue-100",
         },
         {
-            "title": "Total OBC Population from the Municipalities",
+            "title": "Total OBC Population from the Municipalities"
+            if not show_archived
+            else "Archived OBC Population Total",
             "value": total_population,
             "icon": "fas fa-users",
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
@@ -487,6 +588,17 @@ def communities_manage_municipal(request):
 
     stat_cards_grid_class = "mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
 
+    page_title = (
+        "Archived Municipal OBCs"
+        if show_archived
+        else "Manage Municipal OBC"
+    )
+    page_description = (
+        "Review archived municipality-level Bangsamoro coverage data"
+        if show_archived
+        else "View, edit, and manage municipality-level Bangsamoro coverage data"
+    )
+
     context = {
         "coverages": coverages,
         "regions": regions,
@@ -498,6 +610,9 @@ def communities_manage_municipal(request):
         "stats": stats,
         "stat_cards": stat_cards,
         "stat_cards_grid_class": stat_cards_grid_class,
+        "show_archived": show_archived,
+        "page_title": page_title,
+        "page_description": page_description,
     }
     return render(request, "communities/municipal_manage.html", context)
 
@@ -508,11 +623,22 @@ def communities_view(request, community_id):
     from communities.models import MunicipalityCoverage, OBCCommunity
 
     community = get_object_or_404(
-        OBCCommunity.objects.select_related(
+        OBCCommunity.all_objects.select_related(
             "barangay__municipality__province__region"
         ),
         pk=community_id,
     )
+
+    delete_review_mode = (
+        request.GET.get("review_delete") == "1" and not community.is_deleted
+    )
+    default_next = reverse("common:communities_manage")
+    if request.GET.get("archived") == "1":
+        default_next = f"{default_next}?archived=1"
+    redirect_after_action = request.GET.get("next") or default_next
+
+    if community.is_deleted:
+        delete_review_mode = False
 
     municipality_coverage = None
     try:
@@ -525,6 +651,15 @@ def communities_view(request, community_id):
     context = {
         "community": community,
         "municipality_coverage": municipality_coverage,
+        "delete_review_mode": delete_review_mode,
+        "is_archived": community.is_deleted,
+        "redirect_after_action": redirect_after_action,
+        "map_payload": _resolve_map_payload(
+            primary_lat=community.latitude,
+            primary_lng=community.longitude,
+            primary_zoom=15,
+            barangay=getattr(community, "barangay", None),
+        ),
     }
     return render(request, "communities/communities_view.html", context)
 
@@ -535,11 +670,22 @@ def communities_view_municipal(request, coverage_id):
     from communities.models import MunicipalityCoverage, OBCCommunity
 
     coverage = get_object_or_404(
-        MunicipalityCoverage.objects.select_related(
+        MunicipalityCoverage.all_objects.select_related(
             "municipality__province__region"
         ),
         pk=coverage_id,
     )
+
+    delete_review_mode = (
+        request.GET.get("review_delete") == "1" and not coverage.is_deleted
+    )
+    default_next = reverse("common:communities_manage_municipal")
+    if request.GET.get("archived") == "1":
+        default_next = f"{default_next}?archived=1"
+    redirect_after_action = request.GET.get("next") or default_next
+
+    if coverage.is_deleted:
+        delete_review_mode = False
 
     related_communities = (
         OBCCommunity.objects.select_related(
@@ -552,8 +698,64 @@ def communities_view_municipal(request, coverage_id):
     context = {
         "coverage": coverage,
         "related_communities": related_communities,
+        "delete_review_mode": delete_review_mode,
+        "is_archived": coverage.is_deleted,
+        "redirect_after_action": redirect_after_action,
+        "map_payload": _resolve_map_payload(
+            primary_lat=coverage.latitude,
+            primary_lng=coverage.longitude,
+            primary_zoom=12,
+            municipality=coverage.municipality,
+        ),
     }
     return render(request, "communities/municipal_view.html", context)
+
+
+@login_required
+@require_GET
+def location_centroid(request):
+    """Return centroid coordinates for the requested administrative unit."""
+
+    level = request.GET.get("level")
+    object_id = request.GET.get("id")
+
+    if not level or not object_id:
+        return JsonResponse(
+            {"error": "Both 'level' and 'id' query parameters are required."},
+            status=400,
+        )
+
+    lookup_map = {
+        "region": Region,
+        "province": Province,
+        "municipality": Municipality,
+        "barangay": Barangay,
+    }
+
+    model = lookup_map.get(level)
+    if model is None:
+        return JsonResponse({"error": "Unsupported level."}, status=400)
+
+    obj = get_object_or_404(model, pk=object_id)
+
+    lat, lng = get_object_centroid(obj)
+    source = "cached"
+
+    if lat is None or lng is None:
+        lat, lng, updated = ensure_location_coordinates(obj)
+        source = "geocoded" if updated else "unavailable"
+
+    if lat is None or lng is None:
+        return JsonResponse({"has_location": False, "source": source})
+
+    return JsonResponse(
+        {
+            "has_location": True,
+            "lat": lat,
+            "lng": lng,
+            "source": source,
+        }
+    )
 
 
 @login_required
@@ -615,16 +817,45 @@ def communities_delete(request, community_id):
     )
     municipality = community.barangay.municipality if community.barangay else None
     community_name = community.display_name
-    community.delete()
+    community.soft_delete(user=request.user)
 
     if municipality:
         MunicipalityCoverage.sync_for_municipality(municipality)
 
     messages.success(
         request,
-        f'Barangay OBC "{community_name}" has been removed from the registry.',
+        (
+            f'Barangay OBC "{community_name}" has been archived. '
+            "You can restore it from the Archived Barangay OBCs view."
+        ),
     )
-    return redirect("common:communities_manage")
+    return redirect(f"{reverse('common:communities_manage')}?archived=1")
+
+
+@login_required
+@require_POST
+def communities_restore(request, community_id):
+    """Restore a previously archived barangay-level community."""
+    from communities.models import MunicipalityCoverage, OBCCommunity
+
+    community = get_object_or_404(
+        OBCCommunity.all_objects.select_related(
+            "barangay__municipality__province__region"
+        ),
+        pk=community_id,
+        is_deleted=True,
+    )
+    municipality = community.barangay.municipality if community.barangay else None
+    community.restore()
+
+    if municipality:
+        MunicipalityCoverage.sync_for_municipality(municipality)
+
+    messages.success(
+        request,
+        f'Barangay OBC "{community.display_name}" has been restored to the active registry.',
+    )
+    return redirect(f"{reverse('common:communities_manage')}?archived=1")
 
 
 @login_required
@@ -730,13 +961,39 @@ def communities_delete_municipal(request, coverage_id):
         pk=coverage_id,
     )
     municipality_name = coverage.municipality.name
-    coverage.delete()
+    coverage.soft_delete(user=request.user)
 
     messages.success(
         request,
-        f"Municipal OBC coverage for {municipality_name} has been removed.",
+        (
+            f"Municipal OBC coverage for {municipality_name} has been archived. "
+            "You can restore it from the Archived Municipal OBCs view."
+        ),
     )
-    return redirect("common:communities_manage_municipal")
+    return redirect(f"{reverse('common:communities_manage_municipal')}?archived=1")
+
+
+@login_required
+@require_POST
+def communities_restore_municipal(request, coverage_id):
+    """Restore a previously archived municipality coverage record."""
+    from communities.models import MunicipalityCoverage
+
+    coverage = get_object_or_404(
+        MunicipalityCoverage.all_objects.select_related(
+            "municipality__province__region"
+        ),
+        pk=coverage_id,
+        is_deleted=True,
+    )
+    coverage.restore()
+    coverage.refresh_from_communities()
+
+    messages.success(
+        request,
+        f"Municipal OBC coverage for {coverage.municipality.name} has been restored.",
+    )
+    return redirect(f"{reverse('common:communities_manage_municipal')}?archived=1")
 
 
 __all__ = [
@@ -747,7 +1004,9 @@ __all__ = [
     "communities_manage_municipal",
     "communities_edit",
     "communities_delete",
+    "communities_restore",
     "communities_edit_municipal",
     "communities_delete_municipal",
+    "communities_restore_municipal",
     "communities_stakeholders"
 ]

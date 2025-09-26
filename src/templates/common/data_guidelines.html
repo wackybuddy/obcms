@@ -3,10 +3,11 @@
 {% block title %}Data Collection Guidelines - OBC Management System{% endblock %}
 
 {% block breadcrumb %}
-<li class="flex items-center space-x-2">
-    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <span class="text-gray-900 font-medium">Data Guidelines</span>
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
 </li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Data Guidelines</li>
 {% endblock %}
 
 {% block content %}

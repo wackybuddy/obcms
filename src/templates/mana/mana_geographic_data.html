@@ -1,29 +1,26 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/geographic_map.css' %}">
+{% endblock %}
+
+{# extra_js block defined later to include both map assets and existing location filter script #}
 
 {% block title %}Geographic Data - MANA System{% endblock %}
 
-{% block breadcrumbs %}
-<nav class="flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-        <li class="inline-flex items-center">
-            <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                Dashboard
-            </a>
-        </li>
-        <li>
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <a href="{% url 'common:mana_home' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">MANA</a>
-            </div>
-        </li>
-        <li aria-current="page">
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Geographic Data</span>
-            </div>
-        </li>
-    </ol>
-</nav>
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Geographic Data</li>
 {% endblock %}
 
 {% block content %}
@@ -117,7 +114,7 @@
                     <select id="geodata-region"
                             name="region"
                             data-initial="{{ current_region }}"
-                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] transition-all duration-200">
+                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
                         <option value="">All Regions</option>
                     </select>
                 </div>
@@ -126,7 +123,7 @@
                     <select id="geodata-province"
                             name="province"
                             data-initial="{{ current_province }}"
-                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] transition-all duration-200">
+                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
                         <option value="">All Provinces</option>
                     </select>
                 </div>
@@ -135,7 +132,7 @@
                     <select id="geodata-municipality"
                             name="municipality"
                             data-initial="{{ current_municipality }}"
-                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] transition-all duration-200">
+                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
                         <option value="">All Municipalities / Cities</option>
                     </select>
                 </div>
@@ -144,7 +141,7 @@
                     <select id="geodata-barangay"
                             name="barangay"
                             data-initial="{{ current_barangay }}"
-                            class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-purple-500 focus:border-purple-500 min-h-[48px] transition-all duration-200">
+                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
                         <option value="">All Barangays</option>
                     </select>
                 </div>
@@ -167,6 +164,25 @@
             <div class="mt-4 inline-flex items-center px-4 py-2 rounded-lg bg-purple-50 border border-purple-100 text-sm text-purple-700">
                 <i class="fas fa-info-circle mr-2"></i>
                 <span>Location filters applied. Adjust selections to refine results.</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Map Explorer -->
+    <div class="mb-10 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-map-location-dot mr-3 text-2xl"></i>
+                Spatial Coverage & Offline Map
+            </h2>
+        </div>
+        <div class="p-6 space-y-6">
+            {% include 'components/geographic_map.html' with map_dom_id='mana-geographic-map' layers_script_id='mana-map-layers' config_script_id='mana-map-config' map_layers=map_layers map_config=map_config %}
+            {% if not map_layers %}
+            <div class="text-center py-6 text-gray-500">
+                <i class="fas fa-info-circle text-3xl mb-3 text-gray-400"></i>
+                <p class="text-sm">No layers match the current filters. Adjust the location filters or upload new layers.</p>
             </div>
             {% endif %}
         </div>
@@ -400,6 +416,11 @@
 {% endblock %}
 
 {% block extra_js %}
+    {{ block.super }}
+    <script src="{% static 'vendor/idb/idb.min.js' %}"></script>
+    <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+    <script src="{% static 'vendor/leaflet/leaflet.offline.js' %}"></script>
+    <script src="{% static 'common/js/geographic_map.js' %}"></script>
     {% if location_data %}
         {{ location_data|json_script:"geodata-location-data" }}
         <script>
@@ -446,6 +467,34 @@
                 municipalitiesByProvince.get(key).push(municipality);
             });
 
+            const autoMunicipalityByProvince = new Map();
+            (locationData.provinces || []).forEach((province) => {
+                const provinceKey = toStringId(province.id);
+                if (!provinceKey) {
+                    return;
+                }
+                const autoMunicipalityId = province.auto_municipality_id;
+                const isPseudo = Boolean(province.is_pseudo_province) || Boolean(autoMunicipalityId);
+                if (!isPseudo) {
+                    return;
+                }
+                if (autoMunicipalityId !== null && autoMunicipalityId !== undefined) {
+                    autoMunicipalityByProvince.set(provinceKey, toStringId(autoMunicipalityId));
+                    return;
+                }
+                const options = municipalitiesByProvince.get(provinceKey) || [];
+                if (!options.length) {
+                    return;
+                }
+                const independentCity = options.find(
+                    (municipality) => municipality.municipality_type === 'independent_city'
+                );
+                const target = independentCity || options[0];
+                if (target && target.id !== undefined && target.id !== null) {
+                    autoMunicipalityByProvince.set(provinceKey, toStringId(target.id));
+                }
+            });
+
             const barangaysByMunicipality = new Map();
             (locationData.barangays || []).forEach((barangay) => {
                 const key = toStringId(barangay.municipality_id);
@@ -484,6 +533,15 @@
                     const optionElement = document.createElement('option');
                     optionElement.value = toStringId(option.id);
                     optionElement.textContent = labelBuilder ? labelBuilder(option) : option.name;
+                    if (option.code) {
+                        optionElement.dataset.code = option.code;
+                    }
+                    if (option.is_pseudo_province) {
+                        optionElement.dataset.isPseudoProvince = 'true';
+                    }
+                    if (option.municipality_type) {
+                        optionElement.dataset.municipalityType = option.municipality_type;
+                    }
 
                     if (option.geodata_count !== undefined) {
                         optionElement.dataset.geodataCount = option.geodata_count;
@@ -534,6 +592,33 @@
                 );
             };
 
+            const autoSelectMunicipalityForProvince = (shouldDispatch = true) => {
+                if (!municipalitySelect) {
+                    return false;
+                }
+                const provinceId = toStringId(provinceSelect.value);
+                if (!provinceId) {
+                    return false;
+                }
+                const targetMunicipalityId = autoMunicipalityByProvince.get(provinceId);
+                if (!targetMunicipalityId) {
+                    return false;
+                }
+                const hasOption = Array.from(municipalitySelect.options || []).some(
+                    (option) => option.value === targetMunicipalityId
+                );
+                if (!hasOption) {
+                    return false;
+                }
+                if (municipalitySelect.value !== targetMunicipalityId) {
+                    municipalitySelect.value = targetMunicipalityId;
+                }
+                if (shouldDispatch) {
+                    municipalitySelect.dispatchEvent(new Event('change'));
+                }
+                return true;
+            };
+
             const updateBarangayOptions = (municipalityId, selectedValue) => {
                 const key = toStringId(municipalityId);
                 const options = key ? barangaysByMunicipality.get(key) || [] : (locationData.barangays || []);
@@ -564,12 +649,19 @@
 
             provinceSelect.addEventListener('change', () => {
                 updateMunicipalityOptions(provinceSelect.value, '');
-                updateBarangayOptions('', '');
+                const autoHandled = autoSelectMunicipalityForProvince();
+                if (!autoHandled) {
+                    updateBarangayOptions('', '');
+                }
             });
 
             municipalitySelect.addEventListener('change', () => {
                 updateBarangayOptions(municipalitySelect.value, '');
             });
+
+            if (!initialMunicipality) {
+                autoSelectMunicipalityForProvince();
+            }
         });
         </script>
     {% endif %}

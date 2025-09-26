@@ -1,6 +1,5 @@
 import csv
 import io
-import json
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -25,6 +24,8 @@ from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer, Table,
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from common.services.geodata import serialize_layers_for_map
 
 from .models import (CommunityInfrastructure, CommunityLivelihood,
                      GeographicDataLayer, MapVisualization, MunicipalityCoverage,
@@ -402,6 +403,8 @@ def geographic_data_list(request):
     data_layers = GeographicDataLayer.objects.all().order_by('-created_at')
     visualizations = MapVisualization.objects.all().order_by('-created_at')
 
+    map_layers, map_config = serialize_layers_for_map(data_layers)
+
     # Basic statistics
     stats = {
         'total_layers': data_layers.count(),
@@ -417,5 +420,7 @@ def geographic_data_list(request):
         'visualizations': visualizations[:10],  # Show first 10
         'stats': stats,
         'title': 'Geographic Data & Mapping',
+        'map_layers': map_layers,
+        'map_config': map_config,
     }
     return render(request, 'communities/geographic_data_list.html', context)

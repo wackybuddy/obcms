@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% block title %}Survey Module - MANA{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Survey</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <header class="space-y-2">
+        <h1 class="text-3xl font-bold text-gray-900">Survey Operations Guide</h1>
+        <p class="text-lg text-gray-600 max-w-3xl">
+            Coordinate year-round sampling runs led by regional and provincial focal persons. Use this playbook to manage rolling surveys, safeguard evidence, and keep outputs aligned with other MANA methodologies.
+        </p>
+    </header>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <article class="relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 text-sm font-medium">Total Survey Assessments</p>
+                        <p class="text-3xl font-bold">{{ survey_stats.total|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-poll text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </article>
+        <article class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium">Completed</p>
+                        <p class="text-3xl font-bold">{{ survey_stats.completed|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-check-circle text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </article>
+        <article class="relative overflow-hidden bg-gradient-to-br from-yellow-500 via-yellow-600 to-yellow-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-yellow-100 text-sm font-medium">In Progress</p>
+                        <p class="text-3xl font-bold">{{ survey_stats.in_progress|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-spinner text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </article>
+        <article class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium">Planning Stage</p>
+                        <p class="text-3xl font-bold">{{ survey_stats.planning|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-calendar-plus text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    {% if quick_actions %}
+    <section>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for action in quick_actions %}
+            <a href="{{ action.url }}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+                <div class="p-6 h-full flex flex-col">
+                    <div class="w-12 h-12 bg-gradient-to-br {{ action.icon_bg }} rounded-lg flex items-center justify-center mb-4">
+                        <i class="{{ action.icon }} text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{{ action.title }}</h3>
+                    <p class="mt-2 text-sm text-gray-600 flex-1">{{ action.description }}</p>
+                    <div class="mt-4 flex items-center text-sm font-medium {{ action.cta_class }}">
+                        <span>{{ action.cta }}</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100 flex items-start justify-between">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-900">Log a Rolling Survey Cycle</h2>
+                <p class="mt-1 text-sm text-gray-600">Capture new survey activities without leaving the operations guide.</p>
+            </div>
+            <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">Survey</span>
+        </div>
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+            {% if survey_quick_form.non_field_errors %}
+            <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {% for error in survey_quick_form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% with field=survey_quick_form.title %}
+                <div class="md:col-span-2">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+                {% with field=survey_quick_form.category %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+                {% with field=survey_quick_form.community %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% with field=survey_quick_form.planned_start_date %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+                {% with field=survey_quick_form.planned_end_date %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+                {% with field=survey_quick_form.assessment_level %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% with field=survey_quick_form.status %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+                {% with field=survey_quick_form.priority %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% with field=survey_quick_form.description %}
+                <div class="md:col-span-2">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+                {% with field=survey_quick_form.objectives %}
+                <div class="md:col-span-2">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+                {% with field=survey_quick_form.location_details %}
+                <div class="md:col-span-2">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}<p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>{% endif %}
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% with field=survey_quick_form.lead_assessor %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ field }}
+                    <p class="mt-1 text-xs text-gray-500">Leave blank to assign yourself.</p>
+                    {% for error in field.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+                {% endwith %}
+            </div>
+            <div class="flex items-center justify-between">
+                <p class="text-xs text-gray-500">Fields marked with <span class="text-red-500">*</span> are required.</p>
+                <button type="submit" class="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold shadow hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                    <i class="fas fa-save mr-2"></i>
+                    Save Survey Cycle
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Rolling Survey Cadence</h2>
+            <p class="mt-1 text-sm text-gray-600">Guide continuous sampling across regions, coordinated by focal persons.</p>
+        </div>
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-4 gap-4">
+            {% for segment in survey_cadence %}
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-2">
+                <div class="text-xs font-semibold text-blue-600 uppercase tracking-wide">{{ segment.phase }}</div>
+                <p class="text-sm font-semibold text-gray-900">{{ segment.focus }}</p>
+                <ul class="text-xs text-gray-600 space-y-1 list-disc list-inside">
+                    {% for activity in segment.activities %}
+                    <li>{{ activity }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <article class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Data Safeguards</h2>
+                <p class="mt-1 text-sm text-gray-600">Protect participant rights and collected evidence.</p>
+            </div>
+            <ul class="p-6 space-y-3">
+                {% for item in data_safeguards %}
+                <li class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </article>
+        <article class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Resource Checklist</h2>
+                <p class="mt-1 text-sm text-gray-600">Ensure teams are equipped before deployment.</p>
+            </div>
+            <ul class="p-6 space-y-3">
+                {% for item in resource_needs %}
+                <li class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </article>
+    </section>
+
+    {% if coordination_notes %}
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Regional Coordination Rhythm</h2>
+            <p class="mt-1 text-sm text-gray-600">Keep focal persons aligned on sampling, logistics, and reporting routines.</p>
+        </div>
+        <ul class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for note in coordination_notes %}
+            <li class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">{{ note }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Integration Notes</h2>
+            <p class="mt-1 text-sm text-gray-600">Synchronize rolling survey outputs with parallel MANA activities.</p>
+        </div>
+        <ul class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for note in integration_notes %}
+            <li class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">{{ note }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Recent Survey Assessments</h2>
+            <p class="mt-1 text-sm text-gray-600">Monitor latest survey activities and status.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Title</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Community</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
+                        <th class="px-6 py-3 text-left font-semibold text-gray-700">Created</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for assessment in survey_assessments %}
+                    <tr>
+                        <td class="px-6 py-3 font-medium text-gray-900">{{ assessment.title }}</td>
+                        <td class="px-6 py-3 text-gray-600">{{ assessment.community }}</td>
+                        <td class="px-6 py-3">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">{{ assessment.get_status_display }}</span>
+                        </td>
+                        <td class="px-6 py-3 text-gray-500">{{ assessment.created_at|date:"M d, Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-6 text-center text-sm text-gray-500">No survey assessments recorded.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

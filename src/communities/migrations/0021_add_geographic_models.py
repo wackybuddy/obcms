@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
             "communities",
             "0020_alter_municipalitycoverage_other_cultural_facilities_and_more",
         ),
+        ("mana", "0009_remove_geographic_tables"),
     ]
 
     operations = [

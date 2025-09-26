@@ -1,35 +1,21 @@
 {% extends 'base.html' %}
 
-{% block title %}Add Organization - Coordination System{% endblock %}
+{% block title %}{% if is_edit %}Edit Organization{% else %}Add Organization{% endif %} - Coordination System{% endblock %}
 
-{% block breadcrumbs %}
-<nav class="flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-        <li class="inline-flex items-center">
-            <a href="{% url 'dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-                Dashboard
-            </a>
-        </li>
-        <li>
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <a href="{% url 'common:coordination_home' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">Coordination</a>
-            </div>
-        </li>
-        <li>
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <a href="{% url 'common:coordination_organizations' %}" class="text-sm font-medium text-gray-700 hover:text-blue-600">Organizations</a>
-            </div>
-        </li>
-        <li aria-current="page">
-            <div class="flex items-center">
-                <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Add Organization</span>
-            </div>
-        </li>
-    </ol>
-</nav>
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_organizations' %}" class="text-neutral-500 hover:text-neutral-700">Organizations</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{% if is_edit %}Edit Organization{% else %}Add Organization{% endif %}</li>
 {% endblock %}
 
 {% block content %}
@@ -38,9 +24,9 @@
         <div>
             <h1 class="text-3xl font-bold text-gray-900 flex items-center">
                 <i class="fas fa-building text-blue-600 mr-4"></i>
-                Register Partner Organization
+                {% if is_edit %}Update Partner Organization{% else %}Register Partner Organization{% endif %}
             </h1>
-            <p class="mt-2 text-gray-600">Capture organization details and primary contacts for coordination tracking.</p>
+            <p class="mt-2 text-gray-600">{% if is_edit %}Review and update organization details and contacts.{% else %}Capture organization details and primary contacts for coordination tracking.{% endif %}</p>
         </div>
         <a href="{{ return_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50">
             <i class="fas fa-arrow-left mr-2"></i>
@@ -50,6 +36,9 @@
 
     <form method="post" class="space-y-8" novalidate>
         {% csrf_token %}
+        {% if is_edit and organization %}
+        <input type="hidden" name="organization_id" value="{{ organization.id }}">
+        {% endif %}
 
         {% if form.non_field_errors %}
         <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
@@ -355,7 +344,7 @@
             </a>
             <button type="submit" class="inline-flex items-center px-6 py-3 text-sm font-semibold text-white rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 shadow-lg hover:shadow-xl transition">
                 <i class="fas fa-save mr-2"></i>
-                Save organization
+                {% if is_edit %}Update organization{% else %}Save organization{% endif %}
             </button>
         </div>
     </form>

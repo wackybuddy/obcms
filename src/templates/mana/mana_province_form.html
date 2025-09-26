@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Edit Province • {{ province.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_provincial_overview' %}" class="text-neutral-500 hover:text-neutral-700">Provincial Overview</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Edit {{ province.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white shadow-xl border border-gray-200 rounded-xl overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+            <h1 class="text-2xl font-bold text-white flex items-center">
+                <i class="fas fa-edit mr-3 text-2xl"></i>
+                Update Province
+            </h1>
+        </div>
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">Province Code</label>
+                    {{ form.code }}
+                    {% if form.code.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.code.errors|join:', ' }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">Province Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.name.errors|join:', ' }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">Capital</label>
+                    {{ form.capital }}
+                    {% if form.capital.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.capital.errors|join:', ' }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700">Population (latest)</label>
+                    {{ form.population_total }}
+                    {% if form.population_total.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.population_total.errors|join:', ' }}</p>
+                    {% endif %}
+                </div>
+                <div class="flex items-center space-x-3">
+                    {{ form.is_active }}
+                    <label class="text-sm font-semibold text-gray-700">Province is active</label>
+                </div>
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+                {{ form.non_field_errors|join:' ' }}
+            </div>
+            {% endif %}
+
+            <div class="flex flex-col sm:flex-row sm:justify-between gap-3">
+                <a href="{{ next_url }}" class="inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Cancel
+                </a>
+                <div class="flex gap-3">
+                    <button type="submit" class="inline-flex items-center justify-center px-5 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+            <input type="hidden" name="next" value="{{ next_url }}">
+        </form>
+    </div>
+</div>
+{% endblock %}

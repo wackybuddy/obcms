@@ -28,6 +28,7 @@ urlpatterns = [
     path("obc-requests/export/", views.export_obc_data, name="export_obc_data"),
     path("entry/<uuid:pk>/", views.monitoring_entry_detail, name="detail"),
     path("create/moa/", views.create_moa_entry, name="create_moa"),
+    path("create/moa/obc/", views.ajax_create_obc, name="ajax_create_obc"),
     path("create/oobc/", views.create_oobc_entry, name="create_oobc"),
     path("create/request/", views.create_request_entry, name="create_request"),
 ]

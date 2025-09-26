@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}MANA Activity Processing{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Activity Processing</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <header class="space-y-2">
+        <h1 class="text-3xl font-bold text-gray-900">Process MANA Outputs</h1>
+        <p class="text-lg text-gray-600 max-w-3xl">Consolidate documents, craft analytical products, and prepare dissemination and MEL actions following MANA standards.</p>
+    </header>
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Post-Activity Workflow</h2>
+            <p class="mt-1 text-sm text-gray-600">Sequence from data encoding to MEL handover.</p>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for stage in post_activity_process %}
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <h3 class="text-sm font-semibold text-gray-900">{{ stage.stage }}</h3>
+                <ul class="mt-2 text-sm text-gray-600 space-y-1 list-disc list-inside">
+                    {% for task in stage.tasks %}
+                    <li>{{ task }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <article class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Data & Analytical Products</h2>
+                <p class="mt-1 text-sm text-gray-600">Keep track of deliverables generated from the deployment.</p>
+            </div>
+            <div class="p-6 space-y-4">
+                {% for product in data_products %}
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-700">{{ product.title }}</h3>
+                    <ul class="mt-2 text-sm text-gray-600 space-y-1 list-disc list-inside">
+                        {% for item in product.items %}
+                        <li>{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+        <article class="bg-white rounded-lg shadow-lg border border-gray-200">
+            <div class="p-6 border-b border-gray-100">
+                <h2 class="text-xl font-semibold text-gray-900">Follow-through Actions</h2>
+                <p class="mt-1 text-sm text-gray-600">Ensure findings are converted into concrete next steps.</p>
+            </div>
+            <ul class="p-6 space-y-3">
+                {% for action in follow_through_actions %}
+                <li class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">{{ action }}</li>
+                {% endfor %}
+            </ul>
+        </article>
+    </section>
+
+    <section class="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div class="p-6 border-b border-gray-100">
+            <h2 class="text-xl font-semibold text-gray-900">Monitoring, Evaluation, & Learning</h2>
+            <p class="mt-1 text-sm text-gray-600">Embed continuous improvement informed by stakeholders.</p>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for practice in mel_practices %}
+            <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <h3 class="text-sm font-semibold text-gray-900">{{ practice.title }}</h3>
+                <p class="mt-1 text-sm text-gray-600">{{ practice.details }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="bg-purple-50 border border-purple-100 rounded-lg shadow-lg p-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-semibold text-purple-900">Need to submit the consolidated report?</h2>
+                <p class="text-sm text-purple-800">Finalise the assessment documents and archive supporting evidence.</p>
+            </div>
+            <a href="{% url 'common:mana_manage_assessments' %}" class="inline-flex items-center px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-colors">
+                <i class="fas fa-file-upload mr-2"></i> Manage Assessments
+            </a>
+        </div>
+    </section>
+</div>
+{% endblock %}

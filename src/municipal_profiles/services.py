@@ -184,6 +184,16 @@ def aggregate_and_store(
         aggregated_flat=result.aggregated_flat,
         profile=profile,
     )
+    unassigned_totals = calculate_unassigned_barangay_totals(
+        aggregated_flat=result.aggregated_flat,
+        profile=profile,
+    )
+    metadata = result.aggregated_metrics.setdefault("metadata", {})
+    if unassigned_totals["total"]:
+        metadata["number_with_no_identified_barangay"] = unassigned_totals
+    else:
+        metadata.pop("number_with_no_identified_barangay", None)
+
     result.aggregated_metrics["discrepancies"] = discrepancies
     with transaction.atomic():
         profile.apply_aggregation(
@@ -241,3 +251,38 @@ def calculate_discrepancies(
         }
 
     return discrepancies
+
+
+def calculate_unassigned_barangay_totals(
+    *, aggregated_flat: Dict[str, int], profile: MunicipalOBCProfile
+) -> Dict[str, object]:
+    """Compute municipal totals not accounted for by barangay submissions."""
+
+    reported_payload = profile.reported_metrics or {}
+    reported_sections = normalise_reported_metrics(reported_payload.get("sections"))
+    reported_flat = flatten_metrics(reported_sections)
+    provided_fields_raw = reported_payload.get("provided_fields", [])
+    provided_fields = {
+        field for field in provided_fields_raw if isinstance(field, str)
+    }
+
+    gaps: Dict[str, object] = {}
+    for metric_key, reported_value in reported_flat.items():
+        if provided_fields and metric_key not in provided_fields:
+            continue
+
+        aggregated_value = aggregated_flat.get(metric_key, 0)
+        gap = float(reported_value) - float(aggregated_value)
+        if gap <= 0:
+            continue
+
+        gaps[metric_key] = int(gap) if gap.is_integer() else round(gap, 2)
+
+    total_gap = sum(gaps.values()) if gaps else 0
+    if isinstance(total_gap, float) and total_gap.is_integer():
+        total_gap = int(total_gap)
+
+    return {
+        "metrics": gaps,
+        "total": total_gap,
+    }

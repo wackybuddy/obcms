@@ -1,0 +1,66 @@
+{% comment %}
+Google Maps Integration Component
+
+Usage example:
+{% include 'components/google_map.html' with mode='form' lat_field_id='id_latitude' lng_field_id='id_longitude' %}
+
+Attributes:
+- mode: 'form', 'detail', or 'multi'
+- lat_field_id: ID of latitude input field (for form mode)
+- lng_field_id: ID of longitude input field (for form mode)
+- initial_lat: Initial latitude coordinate
+- initial_lng: Initial longitude coordinate
+- initial_zoom: Initial zoom level
+- has_location: Whether location data exists (for detail mode)
+- popup_content: Content for marker popup (for detail mode)
+
+Note: Requires GOOGLE_MAPS_API_KEY setting and Google Maps JavaScript API loaded
+{% endcomment %}
+
+<div class="google-map-container"
+     data-google-map
+     data-mode="{{ mode|default:'detail' }}"
+     {% if lat_field_id %}data-lat-field="{{ lat_field_id }}"{% endif %}
+     {% if lng_field_id %}data-lng-field="{{ lng_field_id }}"{% endif %}
+     {% if initial_lat %}data-initial-lat="{{ initial_lat }}"{% endif %}
+     {% if initial_lng %}data-initial-lng="{{ initial_lng }}"{% endif %}
+     {% if initial_zoom %}data-initial-zoom="{{ initial_zoom }}"{% endif %}
+     {% if has_location %}data-has-location="{{ has_location|yesno:'true,false' }}"{% endif %}
+     {% if popup_content %}data-popup-content="{{ popup_content }}"{% endif %}
+     {% if location_data %}data-location-script="location-data"{% endif %}
+     {% if centroid_url %}data-centroid-url="{{ centroid_url }}"{% endif %}
+     {% if region_field_id %}data-region-field="{{ region_field_id }}"{% endif %}
+     {% if province_field_id %}data-province-field="{{ province_field_id }}"{% endif %}
+     {% if municipality_field_id %}data-municipality-field="{{ municipality_field_id }}"{% endif %}
+     {% if barangay_field_id %}data-barangay-field="{{ barangay_field_id }}"{% endif %}>
+
+    <div class="google-map-header">
+        <h3 class="flex items-center gap-2 text-neutral-800">
+            <i class="fas fa-map-marker-alt text-blue-500"></i>
+            {% if mode == 'form' %}
+                Location Map
+            {% elif mode == 'multi' %}
+                Coverage Map
+            {% else %}
+                Reference Map
+            {% endif %}
+        </h3>
+        <span class="google-map-status">
+            {% if mode == 'form' %}
+                <i class="fas fa-hand-pointer"></i>Click the map to update coordinates
+            {% else %}
+                <i class="fas fa-map"></i>Interactive reference
+            {% endif %}
+        </span>
+    </div>
+
+    <div class="google-map-canvas" data-google-map-target
+         style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid #e5e7eb;"></div>
+
+    {% if mode == 'form' %}
+    <div class="google-map-footer text-sm text-gray-600 mt-2">
+        Use the map to pinpoint the exact location. You can drag the marker or click anywhere to update coordinates.
+        Selecting a barangay or municipality will automatically center the map when coordinates are empty.
+    </div>
+    {% endif %}
+</div>

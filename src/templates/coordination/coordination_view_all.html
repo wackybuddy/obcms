@@ -3,25 +3,20 @@
 
 {% block title %}View All - Coordination{% endblock %}
 
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">View All</li>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Breadcrumb -->
-    <nav class="flex mb-6" aria-label="Breadcrumb">
-        <ol class="flex items-center space-x-4">
-            <li>
-                <div class="flex items-center">
-                    <a href="{% url 'common:coordination_home' %}" class="text-gray-400 hover:text-gray-500">Coordination</a>
-                </div>
-            </li>
-            <li>
-                <div class="flex items-center">
-                    <i class="fas fa-chevron-right text-gray-400 mr-4"></i>
-                    <span class="text-gray-600 font-medium">View All</span>
-                </div>
-            </li>
-        </ol>
-    </nav>
-
     <!-- Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Coordination Overview</h1>
@@ -54,7 +49,7 @@
             <div class="flex items-center">
                 <i class="fas fa-calendar-alt text-2xl mr-4"></i>
                 <div>
-                    <p class="text-purple-100">Events</p>
+                    <p class="text-purple-100">Coordination Activities</p>
                     <p class="text-3xl font-bold">{{ events.count }}</p>
                 </div>
             </div>
@@ -87,8 +82,8 @@
             </a>
             <a href="{% url 'common:coordination_events' %}" class="block bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 text-center">
                 <i class="fas fa-calendar-alt text-2xl mb-2"></i>
-                <div class="font-semibold">Events</div>
-                <div class="text-sm opacity-90">Schedule & manage events</div>
+                <div class="font-semibold">Coordination Management</div>
+                <div class="text-sm opacity-90">Coordinate events and follow-ups</div>
             </a>
             <a href="#" class="block bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 transform hover:scale-105 text-center">
                 <i class="fas fa-tasks text-2xl mb-2"></i>
@@ -131,10 +126,10 @@
             </div>
         </div>
 
-        <!-- Recent Events -->
+        <!-- Recent Coordination Activities -->
         <div class="bg-white rounded-lg shadow-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Upcoming Events</h3>
+                <h3 class="text-lg font-semibold text-gray-900">Upcoming Coordination Activities</h3>
             </div>
             <div class="p-6">
                 {% if upcoming_events %}
@@ -157,7 +152,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-gray-500">No upcoming events scheduled.</p>
+                    <p class="text-gray-500">No upcoming coordination activities scheduled.</p>
                 {% endif %}
             </div>
         </div>
@@ -262,13 +257,13 @@
                         <i class="fas fa-calendar-alt text-white text-xl"></i>
                     </div>
                     <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                        Manage Events
+                        Coordination Management
                     </h3>
                     <p class="mt-2 text-sm text-gray-600">
-                        Schedule and manage coordination events.
+                        Oversee coordination events and engagement logistics.
                     </p>
                     <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
-                        <span>Manage Events</span>
+                        <span>Open Coordination Management</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>

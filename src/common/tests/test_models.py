@@ -3,8 +3,10 @@ from django.core.management import call_command
 from django.test import Client, SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
+from types import SimpleNamespace
+from unittest import mock
 
-from communities.models import MunicipalityCoverage
+from communities.models import MunicipalityCoverage, OBCCommunity
 from common.management.commands.populate_administrative_hierarchy import (
     Command as HierarchyCommand,
 )
@@ -13,6 +15,7 @@ from ..forms import (COMMUNITY_PROFILE_FIELDS, CustomLoginForm,
                     MunicipalityCoverageForm, OBCCommunityForm,
                     UserRegistrationForm)
 from ..models import Barangay, Municipality, Province, Region, User
+from ..services.locations import build_location_data
 
 User = get_user_model()
 
@@ -663,6 +666,199 @@ class OBCCommunityFormTest(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn("province", form.errors)
+
+    def test_province_queryset_filtered_by_region(self):
+        """Province choices should narrow to the selected region."""
+        form = OBCCommunityForm(initial={"region": self.region.id})
+        province_queryset = list(form.fields["province"].queryset)
+
+        self.assertIn(self.province, province_queryset)
+        self.assertNotIn(self.other_province, province_queryset)
+
+    def test_municipality_queryset_filtered_by_province(self):
+        """Municipality choices should narrow to the selected province."""
+        form = OBCCommunityForm(
+            initial={
+                "region": self.region.id,
+                "province": self.province.id,
+            }
+        )
+        municipality_queryset = list(form.fields["municipality"].queryset)
+
+        self.assertIn(self.municipality, municipality_queryset)
+        self.assertNotIn(self.other_municipality, municipality_queryset)
+
+    def test_barangay_queryset_filtered_by_municipality(self):
+        """Barangay choices should narrow to the selected municipality."""
+        form = OBCCommunityForm(
+            initial={
+                "region": self.region.id,
+                "province": self.province.id,
+                "municipality": self.municipality.id,
+            }
+        )
+        barangay_queryset = list(form.fields["barangay"].queryset)
+
+        self.assertIn(self.barangay, barangay_queryset)
+        self.assertNotIn(self.other_barangay, barangay_queryset)
+
+    def test_existing_instance_populates_initial_location_fields(self):
+        """Editing an existing community should pre-select its hierarchy."""
+        community = OBCCommunity.objects.create(
+            barangay=self.barangay,
+            community_names="Existing OBC",
+            estimated_obc_population=75,
+        )
+
+        form = OBCCommunityForm(instance=community)
+
+        self.assertEqual(form.fields["region"].initial, self.region)
+        self.assertEqual(form.fields["province"].initial, self.province)
+        self.assertEqual(form.fields["municipality"].initial, self.municipality)
+        self.assertEqual(form.fields["barangay"].initial, self.barangay)
+
+
+class LocationDataServiceTest(SimpleTestCase):
+    """Ensure build_location_data counts direct geographic layers without DB."""
+
+    def test_direct_layers_present_in_counts(self):
+        region = SimpleNamespace(id=1, name="Zamboanga Peninsula", code="IX")
+        province = SimpleNamespace(
+            id=10,
+            name="Zamboanga del Norte",
+            region_id=region.id,
+            population_total=0,
+        )
+        municipality = SimpleNamespace(
+            id=100,
+            name="Dipolog City",
+            province_id=province.id,
+            population_total=0,
+            code="DIPOLOG",
+        )
+        barangay = SimpleNamespace(
+            id=1000,
+            name="Barangay Central",
+            municipality_id=municipality.id,
+            population_total=0,
+            code="BGY-001",
+        )
+
+        class FakeQuerySet:
+            def __init__(self, data):
+                self._data = data
+
+            def filter(self, *args, **kwargs):
+                return self
+
+            def select_related(self, *args, **kwargs):
+                return self
+
+            def order_by(self, *args, **kwargs):
+                return self
+
+            def annotate(self, *args, **kwargs):
+                return self
+
+            def values(self, *fields):
+                results = []
+                for item in self._data:
+                    if isinstance(item, dict):
+                        results.append({field: item.get(field) for field in fields})
+                    else:
+                        results.append({field: getattr(item, field) for field in fields})
+                return results
+
+            def __iter__(self):
+                return iter(self._data)
+
+        direct_layers = [
+            {
+                "id": 1,
+                "region_id": region.id,
+                "province_id": None,
+                "province__region_id": region.id,
+                "municipality_id": None,
+                "municipality__province_id": None,
+                "municipality__province__region_id": None,
+                "barangay_id": None,
+                "barangay__municipality_id": None,
+                "barangay__municipality__province_id": None,
+                "barangay__municipality__province__region_id": None,
+            },
+            {
+                "id": 2,
+                "region_id": None,
+                "province_id": None,
+                "province__region_id": region.id,
+                "municipality_id": municipality.id,
+                "municipality__province_id": province.id,
+                "municipality__province__region_id": region.id,
+                "barangay_id": None,
+                "barangay__municipality_id": None,
+                "barangay__municipality__province_id": None,
+                "barangay__municipality__province__region_id": None,
+            },
+            {
+                "id": 3,
+                "region_id": None,
+                "province_id": None,
+                "province__region_id": None,
+                "municipality_id": None,
+                "municipality__province_id": None,
+                "municipality__province__region_id": None,
+                "barangay_id": barangay.id,
+                "barangay__municipality_id": municipality.id,
+                "barangay__municipality__province_id": province.id,
+                "barangay__municipality__province__region_id": region.id,
+            },
+        ]
+
+        regions_qs = FakeQuerySet([region])
+        provinces_qs = FakeQuerySet([province])
+        municipalities_qs = FakeQuerySet([municipality])
+        barangays_qs = FakeQuerySet([barangay])
+        layers_qs = FakeQuerySet(direct_layers)
+        empty_qs = FakeQuerySet([])
+
+        with (
+            mock.patch.object(Region.objects, "filter", return_value=regions_qs),
+            mock.patch.object(Province.objects, "filter", return_value=provinces_qs),
+            mock.patch.object(
+                Municipality.objects, "filter", return_value=municipalities_qs
+            ),
+            mock.patch.object(Barangay.objects, "filter", return_value=barangays_qs),
+            mock.patch(
+                "communities.models.OBCCommunity.objects.filter", return_value=empty_qs
+            ),
+            mock.patch(
+                "communities.models.GeographicDataLayer.objects.filter",
+                return_value=layers_qs,
+            ),
+        ):
+            data = build_location_data(include_barangays=True)
+
+        region_entry = next(item for item in data["regions"] if item["id"] == region.id)
+        province_entry = next(item for item in data["provinces"] if item["id"] == province.id)
+        municipality_entry = next(
+            item for item in data["municipalities"] if item["id"] == municipality.id
+        )
+        barangay_entry = next(item for item in data["barangays"] if item["id"] == barangay.id)
+
+        self.assertEqual(region_entry["geodata_count"], 3)
+        self.assertEqual(region_entry["geodata_communities"], 0)
+
+        self.assertEqual(province_entry["geodata_count"], 2)
+        self.assertEqual(province_entry["geodata_communities"], 0)
+
+        self.assertEqual(municipality_entry["geodata_count"], 2)
+        self.assertEqual(municipality_entry["geodata_communities"], 0)
+
+        self.assertEqual(barangay_entry["geodata_count"], 1)
+        self.assertEqual(barangay_entry["geodata_layers"], 1)
+        self.assertEqual(barangay_entry["geodata_visualizations"], 0)
+        self.assertEqual(barangay_entry["geodata_points"], 0)
+        self.assertTrue(barangay_entry["has_geodata"])
 
 
 class PopulationDatasetParseTest(SimpleTestCase):

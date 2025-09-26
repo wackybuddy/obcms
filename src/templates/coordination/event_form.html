@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title|default:"Schedule Coordination Event" }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_home' %}" class="text-neutral-500 hover:text-neutral-700">Coordination</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:coordination_events' %}" class="text-neutral-500 hover:text-neutral-700">Coordination Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ breadcrumb_label|default:page_heading|default:page_title|default:"Schedule" }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-calendar-plus text-blue-600 mr-4"></i>
+                {{ page_heading|default:"Schedule New Coordination Event" }}
+            </h1>
+            <p class="mt-2 text-gray-600 max-w-2xl">
+                Capture event details, logistics, and follow-up plans so the wider coordination team stays aligned.
+            </p>
+        </div>
+        <a href="{{ return_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to coordination management
+        </a>
+    </div>
+
+    <form method="post" class="space-y-8" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {{ form.non_field_errors|join:' ' }}
+        </div>
+        {% endif %}
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-info-circle mr-3"></i>
+                    Basic Information
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% include "components/form_field.html" with field=form.title %}
+                    {% include "components/form_field.html" with field=form.event_type %}
+                    {% include "components/form_field.html" with field=form.status %}
+                    {% include "components/form_field.html" with field=form.priority %}
+                    {% include "components/form_field.html" with field=form.description wrapper_class="md:col-span-2" %}
+                    {% include "components/form_field.html" with field=form.objectives wrapper_class="md:col-span-2" %}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% include "components/form_field.html" with field=form.community %}
+                    {% include "components/form_field.html" with field=form.organizations wrapper_class="md:col-span-1" %}
+                    {% include "components/form_field.html" with field=form.related_engagement %}
+                    {% include "components/form_field.html" with field=form.related_assessment %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-clock mr-3"></i>
+                    Schedule &amp; Venue
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {% include "components/form_field.html" with field=form.start_date wrapper_class="md:col-span-2" %}
+                    {% include "components/form_field.html" with field=form.start_time %}
+                    {% include "components/form_field.html" with field=form.duration_hours %}
+                    {% include "components/form_field.html" with field=form.end_date wrapper_class="md:col-span-2" %}
+                    {% include "components/form_field.html" with field=form.end_time %}
+                    {% include "components/form_field.html" with field=form.venue wrapper_class="md:col-span-2" %}
+                    {% include "components/form_field.html" with field=form.address wrapper_class="md:col-span-4" %}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% include "components/form_field.html" with field=form.is_virtual %}
+                    {% include "components/form_field.html" with field=form.virtual_platform %}
+                    {% include "components/form_field.html" with field=form.virtual_link %}
+                    {% include "components/form_field.html" with field=form.virtual_meeting_id %}
+                    {% include "components/form_field.html" with field=form.virtual_passcode %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-users mr-3"></i>
+                    Team &amp; Participants
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% include "components/form_field.html" with field=form.organizer %}
+                    {% include "components/form_field.html" with field=form.co_organizers %}
+                    {% include "components/form_field.html" with field=form.facilitators %}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% include "components/form_field.html" with field=form.expected_participants %}
+                    {% include "components/form_field.html" with field=form.actual_participants %}
+                    {% include "components/form_field.html" with field=form.target_audience wrapper_class="md:col-span-3" %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-clipboard-list mr-3"></i>
+                    Content &amp; Documentation
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% include "components/form_field.html" with field=form.agenda %}
+                    {% include "components/form_field.html" with field=form.materials_needed %}
+                    {% include "components/form_field.html" with field=form.minutes %}
+                    {% include "components/form_field.html" with field=form.outcomes %}
+                    {% include "components/form_field.html" with field=form.decisions_made %}
+                    {% include "components/form_field.html" with field=form.key_discussions %}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% include "components/form_field.html" with field=form.budget_allocated %}
+                    {% include "components/form_field.html" with field=form.actual_cost %}
+                    {% include "components/form_field.html" with field=form.feedback_summary wrapper_class="md:col-span-3" %}
+                    {% include "components/form_field.html" with field=form.satisfaction_rating %}
+                    {% include "components/form_field.html" with field=form.lessons_learned wrapper_class="md:col-span-3" %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-teal-500 to-cyan-500 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-sync-alt mr-3"></i>
+                    Follow-up &amp; Recurrence
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% include "components/form_field.html" with field=form.follow_up_required %}
+                    {% include "components/form_field.html" with field=form.follow_up_date %}
+                    {% include "components/form_field.html" with field=form.follow_up_notes wrapper_class="md:col-span-3" %}
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% include "components/form_field.html" with field=form.is_recurring %}
+                    {% include "components/form_field.html" with field=form.recurrence_pattern %}
+                    {% include "components/form_field.html" with field=form.recurrence_end_date %}
+                    {% include "components/form_field.html" with field=form.parent_event %}
+                </div>
+            </div>
+        </section>
+
+        <div class="flex items-center justify-end space-x-3">
+            <a href="{{ return_url }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" class="px-4 py-2 text-sm font-semibold text-white rounded-lg shadow btn-primary">
+                <i class="fas fa-save mr-2"></i>
+                {{ submit_label|default:"Create Event" }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

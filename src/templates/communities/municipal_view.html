@@ -1,41 +1,107 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+<link rel="stylesheet" href="{% static 'common/css/obc_location_map.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+<script src="{% static 'common/js/obc_location_map.js' %}"></script>
+{% endblock %}
 
 {% block title %}View Municipal OBC - OBC Management System{% endblock %}
 
 {% block breadcrumb %}
-<li class="flex items-center space-x-2">
-    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <a href="{% url 'common:communities_manage_municipal' %}" class="text-gray-600 hover:text-gray-900">Manage Municipal OBC</a>
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
 </li>
-<li class="flex items-center space-x-2">
-    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-    <span class="text-gray-500 font-medium">{{ coverage.municipality.name }}</span>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:communities_home' %}" class="text-neutral-500 hover:text-neutral-700">OBC Data</a>
 </li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:communities_manage_municipal' %}" class="text-neutral-500 hover:text-neutral-700">Manage Municipal OBC</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ coverage.municipality.name }}</li>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <div class="mb-8 flex items-start justify-between gap-4">
+    <div class="mb-8 flex items-start justify-between gap-4 flex-wrap">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-                <i class="fas fa-city text-indigo-600 mr-3"></i>
-                {{ coverage.municipality.name }} Municipal OBC
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-city text-indigo-600"></i>
+                <span>{{ coverage.municipality.name }} Municipal OBC</span>
+                {% if is_archived %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded-full bg-amber-100 text-amber-800">Archived</span>
+                {% endif %}
             </h1>
             <p class="mt-2 text-lg text-gray-600">
                 Region {{ coverage.municipality.province.region.code }} · {{ coverage.municipality.province.region.name }}
             </p>
         </div>
         <div class="flex flex-wrap gap-2">
+            {% if is_archived %}
+            <form method="post" action="{% url 'common:communities_restore_municipal' coverage.id %}" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        class="inline-flex items-center bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-undo mr-2"></i>Restore
+                </button>
+            </form>
+            {% else %}
             <a href="{% url 'common:communities_edit_municipal' coverage.id %}"
                class="inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
                 <i class="fas fa-edit mr-2"></i>Edit
             </a>
-            <a href="{% url 'common:communities_manage_municipal' %}"
+            {% endif %}
+            <a href="{{ redirect_after_action }}"
                class="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
                 <i class="fas fa-arrow-left mr-2"></i>Back to List
             </a>
         </div>
     </div>
+
+    {% if delete_review_mode %}
+    <div class="mb-6 border-l-4 border-red-500 bg-red-50 rounded-lg p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-red-700 flex items-center gap-2">
+            <i class="fas fa-exclamation-triangle"></i>
+            Review municipal coverage before deletion
+        </h2>
+        <p class="mt-2 text-sm text-red-700">
+            Confirm that this municipal profile is the one you intend to delete. The record will move to the archive and can be restored at any time.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-3">
+            <form method="post" action="{% url 'common:communities_delete_municipal' coverage.id %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-trash mr-2"></i>
+                    Confirm archive &amp; delete
+                </button>
+            </form>
+            <a href="{{ redirect_after_action }}"
+               class="inline-flex items-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                <i class="fas fa-times mr-2"></i>
+                Cancel
+            </a>
+        </div>
+    </div>
+    {% elif is_archived %}
+    <div class="mb-6 border-l-4 border-amber-500 bg-amber-50 rounded-lg p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-amber-800 flex items-center gap-2">
+            <i class="fas fa-archive"></i>
+            Archived municipal record
+        </h2>
+        <p class="mt-2 text-sm text-amber-800">
+            This municipal coverage is archived and excluded from summaries. Restore it to resume editing and include it in reports.
+        </p>
+    </div>
+    {% endif %}
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-white border border-blue-100 rounded-xl p-5 shadow-sm">
@@ -93,6 +159,34 @@
                     </dd>
                 </div>
             </dl>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-0 lg:col-span-2">
+            <div
+                class="obc-map-container"
+                data-obc-map
+                data-mode="detail"
+                data-initial-lat="{{ map_payload.initial_lat|default_if_none:'' }}"
+                data-initial-lng="{{ map_payload.initial_lng|default_if_none:'' }}"
+                data-initial-zoom="{{ map_payload.initial_zoom|default_if_none:'' }}"
+                data-fallback-lat="{{ map_payload.fallback_lat|default_if_none:'' }}"
+                data-fallback-lng="{{ map_payload.fallback_lng|default_if_none:'' }}"
+                data-fallback-zoom="{{ map_payload.fallback_zoom|default_if_none:'' }}"
+                data-has-location="{{ map_payload.has_location|yesno:'true,false' }}"
+                data-popup-content="{{ coverage.municipality.name }} Municipal OBC"
+            >
+                <div class="obc-map-header">
+                    <h3 class="flex items-center gap-2 text-neutral-800">
+                        <i class="fas fa-map-marked-alt text-blue-500"></i>
+                        Municipal Coverage Map
+                    </h3>
+                    <span class="obc-map-status"><i class="fas fa-map"></i>Mapped service area</span>
+                </div>
+                <div class="obc-map-canvas" data-obc-map-target></div>
+                <div class="obc-map-footer">
+                    Displays the recorded coordinates for this municipal OBC coverage, with automatic fallbacks to administrative centres.
+                </div>
+            </div>
         </section>
 
         <section class="bg-white border border-gray-200 rounded-xl shadow-sm p-6">
