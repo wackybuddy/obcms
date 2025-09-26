@@ -37,7 +37,14 @@ from .coordination import (
     partnership_delete,
 )
 from .dashboard import dashboard
-from .management import oobc_management_home, planning_budgeting, staff_management
+from .management import (
+    oobc_management_home,
+    planning_budgeting,
+    staff_management,
+    staff_task_create,
+    staff_team_assign,
+    staff_team_manage,
+)
 from .mana import (
     mana_desk_review,
     mana_geographic_data,
@@ -71,6 +78,9 @@ __all__ = [
     "dashboard",
     "oobc_management_home",
     "staff_management",
+    "staff_task_create",
+    "staff_team_assign",
+    "staff_team_manage",
     "planning_budgeting",
     "communities_home",
     "communities_add",

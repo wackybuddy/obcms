@@ -2,6 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import Barangay, Municipality, Province, Region, User
 from .serializers import (BarangayListSerializer, BarangaySerializer,
@@ -9,6 +10,7 @@ from .serializers import (BarangayListSerializer, BarangaySerializer,
                           ProvinceListSerializer, ProvinceSerializer,
                           RegionListSerializer, RegionSerializer,
                           UserCreateSerializer, UserSerializer)
+from .services.locations import build_location_data
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -179,3 +181,15 @@ class BarangayViewSet(viewsets.ReadOnlyModelViewSet):
         if self.action == "list":
             return BarangayListSerializer
         return BarangaySerializer
+
+
+class LocationDataView(APIView):
+    """Return the reusable hierarchical location payload for client-side widgets."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        raw_include = request.query_params.get("include_barangays", "1").lower()
+        include_barangays = raw_include not in {"0", "false", "no"}
+        payload = build_location_data(include_barangays=include_barangays)
+        return Response(payload)

@@ -168,6 +168,60 @@
         return null;
     }
 
+    function readZoomPreference(field, fallback) {
+        if (!field) {
+            return fallback;
+        }
+        var zoomAttr = null;
+        if (field.dataset) {
+            zoomAttr = field.dataset.locationZoom || field.dataset.zoomLevel || field.dataset.zoom;
+        }
+        var zoomValue = parseNumber(zoomAttr);
+        return zoomValue !== null ? zoomValue : fallback;
+    }
+
+    function resolveLocationField(container, datasetKey, level, explicit) {
+        var candidate = resolveElement(explicit);
+        if (candidate) {
+            return candidate;
+        }
+
+        var identifier = container && container.dataset ? container.dataset[datasetKey] : null;
+        candidate = resolveElement(identifier);
+        if (candidate) {
+            return candidate;
+        }
+
+        var scopes = [];
+        if (container) {
+            if (typeof container.closest === "function") {
+                scopes.push(container.closest(".location-selection-component"));
+                scopes.push(container.closest("form"));
+            }
+            if (container.parentElement) {
+                scopes.push(container.parentElement);
+            }
+            scopes.push(container);
+        }
+
+        var selector = level ? '[data-location-level="' + level + '"]' : null;
+        for (var i = 0; i < scopes.length; i += 1) {
+            var scope = scopes[i];
+            if (!scope || !selector) {
+                continue;
+            }
+            candidate = scope.querySelector(selector);
+            if (candidate) {
+                return candidate;
+            }
+        }
+
+        if (selector) {
+            return document.querySelector(selector);
+        }
+        return null;
+    }
+
     function createCentroidFetcher(centroidUrl) {
         return function fetchCentroid(level, id) {
             if (!centroidUrl || !level || !id) {
@@ -322,36 +376,37 @@
         };
 
         function recenterFromSelections(respectExistingMarker) {
-            var selectionHierarchy = [];
-            var barangayField = document.getElementById(container.dataset.barangayField || "");
-            var municipalityField = document.getElementById(container.dataset.municipalityField || "");
-            var provinceField = document.getElementById(container.dataset.provinceField || "");
-            var regionField = document.getElementById(container.dataset.regionField || "");
+            var barangayField = resolveLocationField(container, "barangayField", "barangay");
+            var municipalityField = resolveLocationField(container, "municipalityField", "municipality");
+            var provinceField = resolveLocationField(container, "provinceField", "province");
+            var regionField = resolveLocationField(container, "regionField", "region");
 
-            selectionHierarchy.push({
-                field: barangayField,
-                level: "barangay",
-                lookup: lookups.barangays,
-                zoom: 15,
-            });
-            selectionHierarchy.push({
-                field: municipalityField,
-                level: "municipality",
-                lookup: lookups.municipalities,
-                zoom: 12,
-            });
-            selectionHierarchy.push({
-                field: provinceField,
-                level: "province",
-                lookup: lookups.provinces,
-                zoom: 9,
-            });
-            selectionHierarchy.push({
-                field: regionField,
-                level: "region",
-                lookup: lookups.regions,
-                zoom: 7,
-            });
+            var selectionHierarchy = [
+                {
+                    field: barangayField,
+                    level: "barangay",
+                    lookup: lookups.barangays,
+                    zoom: readZoomPreference(barangayField, 15),
+                },
+                {
+                    field: municipalityField,
+                    level: "municipality",
+                    lookup: lookups.municipalities,
+                    zoom: readZoomPreference(municipalityField, 12),
+                },
+                {
+                    field: provinceField,
+                    level: "province",
+                    lookup: lookups.provinces,
+                    zoom: readZoomPreference(provinceField, 9),
+                },
+                {
+                    field: regionField,
+                    level: "region",
+                    lookup: lookups.regions,
+                    zoom: readZoomPreference(regionField, 7),
+                },
+            ];
 
             var localBest = null;
             var fetchTarget = null;
@@ -415,15 +470,15 @@
             }
         }
 
-        ["regionField", "provinceField", "municipalityField", "barangayField"].forEach(function (key) {
-            var fieldId = container.dataset[key];
-            if (!fieldId) {
+        var watchedLevels = ["region", "province", "municipality", "barangay"];
+        var registeredFields = [];
+        watchedLevels.forEach(function (level) {
+            var datasetKey = level + "Field";
+            var field = resolveLocationField(container, datasetKey, level);
+            if (!field || registeredFields.indexOf(field) !== -1) {
                 return;
             }
-            var field = document.getElementById(fieldId);
-            if (!field) {
-                return;
-            }
+            registeredFields.push(field);
             field.addEventListener("change", function () {
                 markerHolder.manual = false;
                 recenterFromSelections(false);
@@ -503,10 +558,10 @@
         var markerLayer = window.L.layerGroup().addTo(map);
 
         var selectionField = document.getElementById(dataset.selectionField || "");
-        var barangayField = document.getElementById(dataset.barangayField || "");
-        var municipalityField = document.getElementById(dataset.municipalityField || "");
-        var provinceField = document.getElementById(dataset.provinceField || "");
-        var regionField = document.getElementById(dataset.regionField || "");
+        var barangayField = resolveLocationField(container, "barangayField", "barangay");
+        var municipalityField = resolveLocationField(container, "municipalityField", "municipality");
+        var provinceField = resolveLocationField(container, "provinceField", "province");
+        var regionField = resolveLocationField(container, "regionField", "region");
 
         var communityData = parseJsonScript(dataset.source) || [];
         var communityLookup = buildLookup(communityData);
@@ -581,16 +636,32 @@
         function recenterFromCoverage() {
             var ids = [];
             if (barangayField && barangayField.value) {
-                ids.push({ id: barangayField.value, lookup: lookups.barangays, zoom: 15 });
+                ids.push({
+                    id: barangayField.value,
+                    lookup: lookups.barangays,
+                    zoom: readZoomPreference(barangayField, 15),
+                });
             }
             if (municipalityField && municipalityField.value) {
-                ids.push({ id: municipalityField.value, lookup: lookups.municipalities, zoom: 12 });
+                ids.push({
+                    id: municipalityField.value,
+                    lookup: lookups.municipalities,
+                    zoom: readZoomPreference(municipalityField, 12),
+                });
             }
             if (provinceField && provinceField.value) {
-                ids.push({ id: provinceField.value, lookup: lookups.provinces, zoom: 9 });
+                ids.push({
+                    id: provinceField.value,
+                    lookup: lookups.provinces,
+                    zoom: readZoomPreference(provinceField, 9),
+                });
             }
             if (regionField && regionField.value) {
-                ids.push({ id: regionField.value, lookup: lookups.regions, zoom: 7 });
+                ids.push({
+                    id: regionField.value,
+                    lookup: lookups.regions,
+                    zoom: readZoomPreference(regionField, 7),
+                });
             }
             var best = findBestCoordinates(lookups, ids);
             if (best) {
@@ -603,7 +674,9 @@
         }
 
         [regionField, provinceField, municipalityField, barangayField]
-            .filter(Boolean)
+            .filter(function (field, index, array) {
+                return !!field && array.indexOf(field) === index;
+            })
             .forEach(function (field) {
                 field.addEventListener("change", function () {
                     if (markerLayer.getLayers().length === 0) {
@@ -635,10 +708,15 @@
         };
 
         var selectors = externalConfig || {};
-        var regionField = resolveElement(selectors.regionSelect) || resolveElement(dataset.regionField);
-        var provinceField = resolveElement(selectors.provinceSelect) || resolveElement(dataset.provinceField);
-        var municipalityField = resolveElement(selectors.municipalitySelect) || resolveElement(dataset.municipalityField);
-        var barangayField = resolveElement(selectors.barangaySelect) || resolveElement(dataset.barangayField);
+        var regionField = resolveLocationField(container, "regionField", "region", selectors.regionSelect);
+        var provinceField = resolveLocationField(container, "provinceField", "province", selectors.provinceSelect);
+        var municipalityField = resolveLocationField(
+            container,
+            "municipalityField",
+            "municipality",
+            selectors.municipalitySelect,
+        );
+        var barangayField = resolveLocationField(container, "barangayField", "barangay", selectors.barangaySelect);
 
         var centroidUrl = selectors.centroidUrl || dataset.centroidUrl || "";
         var fetchCentroid = createCentroidFetcher(centroidUrl);
@@ -650,25 +728,25 @@
                     field: barangayField,
                     level: "barangay",
                     lookup: lookups.barangays,
-                    zoom: 15,
+                    zoom: readZoomPreference(barangayField, 15),
                 },
                 {
                     field: municipalityField,
                     level: "municipality",
                     lookup: lookups.municipalities,
-                    zoom: 12,
+                    zoom: readZoomPreference(municipalityField, 12),
                 },
                 {
                     field: provinceField,
                     level: "province",
                     lookup: lookups.provinces,
-                    zoom: 9,
+                    zoom: readZoomPreference(provinceField, 9),
                 },
                 {
                     field: regionField,
                     level: "region",
                     lookup: lookups.regions,
-                    zoom: 7,
+                    zoom: readZoomPreference(regionField, 7),
                 },
             ];
         }
@@ -740,8 +818,8 @@
         }
 
         [regionField, provinceField, municipalityField, barangayField]
-            .filter(function (field) {
-                return !!field;
+            .filter(function (field, index, array) {
+                return !!field && array.indexOf(field) === index;
             })
             .forEach(function (field) {
                 field.addEventListener("change", recenter);

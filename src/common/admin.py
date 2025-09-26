@@ -2,7 +2,16 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
 
-from .models import Barangay, Municipality, Province, Region, User
+from .models import (
+    Barangay,
+    Municipality,
+    Province,
+    Region,
+    StaffTask,
+    StaffTeam,
+    StaffTeamMembership,
+    User,
+)
 
 
 @admin.register(User)
@@ -198,6 +207,82 @@ class BarangayAdmin(admin.ModelAdmin):
         "name",
     )
     readonly_fields = ("created_at", "updated_at", "full_path", "region", "province")
+
+
+@admin.register(StaffTeam)
+class StaffTeamAdmin(admin.ModelAdmin):
+    """Admin configuration for staff teams."""
+
+    list_display = ("name", "slug", "is_active", "created_at")
+    list_filter = ("is_active", "created_at")
+    search_fields = ("name", "description", "mission")
+    prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(StaffTeamMembership)
+class StaffTeamMembershipAdmin(admin.ModelAdmin):
+    """Admin configuration for staff team memberships."""
+
+    list_display = (
+        "user",
+        "team",
+        "role",
+        "is_active",
+        "joined_at",
+    )
+    list_filter = ("role", "is_active", "team")
+    search_fields = (
+        "user__first_name",
+        "user__last_name",
+        "user__email",
+        "team__name",
+    )
+    autocomplete_fields = ("team", "user", "assigned_by")
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(StaffTask)
+class StaffTaskAdmin(admin.ModelAdmin):
+    """Admin configuration for staff tasks."""
+
+    list_display = (
+        "title",
+        "team",
+        "assignee",
+        "status",
+        "priority",
+        "due_date",
+        "progress",
+    )
+    list_filter = ("status", "priority", "team", "assignee")
+    search_fields = ("title", "description", "impact")
+    autocomplete_fields = ("team", "assignee", "created_by", "linked_event")
+    readonly_fields = ("created_at", "updated_at", "completed_at")
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "title",
+                    "team",
+                    "assignee",
+                    "created_by",
+                    "linked_event",
+                    "impact",
+                )
+            },
+        ),
+        (
+            "Schedule",
+            {"fields": ("start_date", "due_date", "status", "priority", "progress")},
+        ),
+        ("Details", {"fields": ("description",)}),
+        (
+            "Timestamps",
+            {"fields": ("created_at", "updated_at", "completed_at"), "classes": ("collapse",)},
+        ),
+    )
 
     fieldsets = (
         (None, {"fields": ("municipality", "code", "name", "is_urban", "is_active")}),

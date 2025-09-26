@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date, datetime, time
+from decimal import Decimal
 from typing import Dict, Iterable, List, Optional, Tuple
 
 from django.db import transaction
@@ -59,6 +61,25 @@ def ensure_profile(municipality: Municipality) -> MunicipalOBCProfile:
     return profile
 
 
+def _normalise_json_value(value: object) -> object:
+    """Return a JSON-serialisable representation for snapshots."""
+
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, time):
+        # Time objects use ISO without date
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    if isinstance(value, list):
+        return [_normalise_json_value(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _normalise_json_value(val) for key, val in value.items()}
+    return value
+
+
 def _serialise_community(instance: OBCCommunity) -> Dict[str, object]:
     """Return a JSON-friendly representation of the community."""
 
@@ -73,9 +94,14 @@ def _serialise_community(instance: OBCCommunity) -> Dict[str, object]:
     payload["municipality"] = instance.barangay.municipality_id
     payload["province"] = instance.barangay.municipality.province_id
     payload["region"] = instance.barangay.municipality.province.region_id
-    payload["updated_at"] = instance.updated_at.isoformat() if instance.updated_at else None
-    payload["created_at"] = instance.created_at.isoformat() if instance.created_at else None
-    return payload
+    payload["updated_at"] = (
+        instance.updated_at.isoformat() if instance.updated_at else None
+    )
+    payload["created_at"] = (
+        instance.created_at.isoformat() if instance.created_at else None
+    )
+
+    return {key: _normalise_json_value(value) for key, value in payload.items()}
 
 
 def record_community_history(

@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple
 from django.db.models import Avg, Count
 
 from ..models import Barangay, Municipality, Province, Region
+from .enhanced_geocoding import enhanced_ensure_location_coordinates
 
 
 def _normalise_float(value: object) -> Optional[float]:
@@ -107,6 +108,8 @@ def get_object_centroid(obj) -> Tuple[Optional[float], Optional[float]]:
 
 def _centroid_metadata(obj) -> Dict[str, Optional[float]]:
     lat, lng = get_object_centroid(obj)
+    if lat is None or lng is None:
+        lat, lng, _updated, _source = enhanced_ensure_location_coordinates(obj)
     return {"center_lat": lat, "center_lng": lng}
 
 

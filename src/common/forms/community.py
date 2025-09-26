@@ -4,8 +4,12 @@ from django import forms
 from django.db import models as django_models
 
 from communities.models import CommunityProfileBase, MunicipalityCoverage, OBCCommunity
+from common.models import Region, Province, Municipality
 
-from .mixins import LocationSelectionMixin
+from . import mixins as _location_mixins
+
+LocationSelectionMixin = _location_mixins.LocationSelectionMixin
+enhanced_ensure_location_coordinates = _location_mixins.enhanced_ensure_location_coordinates
 
 
 COMMUNITY_PROFILE_FIELDS = [
@@ -281,16 +285,25 @@ class MunicipalityCoverageForm(LocationSelectionMixin, forms.ModelForm):
 
     # Configure location fields - barangay not required for municipality coverage
     location_fields_config = {
-        'region': {'required': True, 'level': 'region'},
-        'province': {'required': True, 'level': 'province'},
-        'municipality': {'required': True, 'level': 'municipality'},
+        'region': {'required': True, 'level': 'region', 'zoom': 7},
+        'province': {'required': True, 'level': 'province', 'zoom': 9},
+        'municipality': {'required': True, 'level': 'municipality', 'zoom': 12},
     }
+
+    region = forms.ModelChoiceField(
+        queryset=Region.objects.filter(is_active=True).order_by("code", "name"),
+        required=True,
+        label="Region",
+    )
+    province = forms.ModelChoiceField(
+        queryset=Province.objects.none(),
+        required=True,
+        label="Province",
+    )
 
     class Meta:
         model = MunicipalityCoverage
         fields = (
-            "region",
-            "province",
             "municipality",
             "total_obc_communities",
             "existing_support_programs",
@@ -352,18 +365,31 @@ class OBCCommunityForm(LocationSelectionMixin, forms.ModelForm):
 
     # Configure location fields - all levels including barangay
     location_fields_config = {
-        'region': {'required': True, 'level': 'region'},
-        'province': {'required': True, 'level': 'province'},
-        'municipality': {'required': True, 'level': 'municipality'},
-        'barangay': {'required': True, 'level': 'barangay'},
+        'region': {'required': True, 'level': 'region', 'zoom': 7},
+        'province': {'required': True, 'level': 'province', 'zoom': 9},
+        'municipality': {'required': True, 'level': 'municipality', 'zoom': 12},
+        'barangay': {'required': True, 'level': 'barangay', 'zoom': 15},
     }
+
+    region = forms.ModelChoiceField(
+        queryset=Region.objects.filter(is_active=True).order_by("code", "name"),
+        required=True,
+        label="Region",
+    )
+    province = forms.ModelChoiceField(
+        queryset=Province.objects.none(),
+        required=True,
+        label="Province",
+    )
+    municipality = forms.ModelChoiceField(
+        queryset=Municipality.objects.none(),
+        required=True,
+        label="Municipality / City",
+    )
 
     class Meta:
         model = OBCCommunity
         fields = [
-            "region",
-            "province",
-            "municipality",
             "barangay",
             *COMMUNITY_PROFILE_FIELDS
         ]

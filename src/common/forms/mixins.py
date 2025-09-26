@@ -16,12 +16,17 @@ from ..services.locations import get_object_centroid
 
 def _resolve_coordinates(*objects):
     """Return the first available (lat, lng) pair from the provided objects."""
+    fallback_targets = []
     for obj in objects:
         if not obj:
             continue
         lat, lng = get_object_centroid(obj)
-        if lat is None or lng is None:
-            lat, lng, _, _ = enhanced_ensure_location_coordinates(obj)
+        if lat is not None and lng is not None:
+            return float(lat), float(lng)
+        fallback_targets.append(obj)
+
+    for obj in fallback_targets:
+        lat, lng, _, _ = enhanced_ensure_location_coordinates(obj)
         if lat is not None and lng is not None:
             return float(lat), float(lng)
     return None, None
@@ -63,14 +68,40 @@ class LocationSelectionMixin:
 
     # Configuration for location fields - override in subclasses
     location_fields_config = {
-        'region': {'required': True, 'level': 'region'},
-        'province': {'required': True, 'level': 'province'},
-        'municipality': {'required': True, 'level': 'municipality'},
-        'barangay': {'required': False, 'level': 'barangay'},
+        'region': {'required': True, 'level': 'region', 'zoom': 7},
+        'province': {'required': True, 'level': 'province', 'zoom': 9},
+        'municipality': {'required': True, 'level': 'municipality', 'zoom': 12},
+        'barangay': {'required': False, 'level': 'barangay', 'zoom': 15},
     }
 
     # Default CSS classes for location fields
     location_field_css_classes = "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+
+    # Default zoom levels by administrative hierarchy used by map widgets
+    default_location_zoom_by_level = {
+        'barangay': 15,
+        'municipality': 12,
+        'province': 9,
+        'region': 7,
+    }
+
+    def _apply_location_widget_metadata(self, field_name: str) -> None:
+        """Annotate location widgets with metadata for JS auto-pin handlers."""
+
+        field = self.fields.get(field_name)
+        if not field:
+            return
+
+        config = self.location_fields_config.get(field_name, {})
+        level_value = config.get('level', field_name)
+        level_key = str(level_value).lower() if level_value else str(field_name).lower()
+        zoom = config.get('zoom', self.default_location_zoom_by_level.get(level_key))
+
+        if level_value:
+            field.widget.attrs.setdefault('data-location-level', level_key)
+        if zoom is not None:
+            field.widget.attrs.setdefault('data-location-zoom', str(zoom))
+        field.widget.attrs.setdefault('data-location-auto-pin', 'true')
 
     def _resolve_model_instance(self, model, value):
         """Helper to resolve a model instance from various input types."""
@@ -146,13 +177,14 @@ class LocationSelectionMixin:
             region_field.queryset = Region.objects.filter(is_active=True).order_by('code', 'name')
             region_field.empty_label = "Select region..."
             region_field.widget.attrs.update({'class': self.location_field_css_classes})
+            self._apply_location_widget_metadata('region')
 
         # Setup province field
         if 'province' in self.fields and 'province' in self.location_fields_config:
             province_field = self.fields['province']
             province_field.empty_label = "Select province..."
             province_field.widget.attrs.update({'class': self.location_field_css_classes})
-
+            
             if selected_region:
                 province_field.queryset = Province.objects.filter(
                     region=selected_region, is_active=True
@@ -160,24 +192,27 @@ class LocationSelectionMixin:
             else:
                 province_field.queryset = Province.objects.none()
 
+            self._apply_location_widget_metadata('province')
+
         # Setup municipality field
         if 'municipality' in self.fields and 'municipality' in self.location_fields_config:
             municipality_field = self.fields['municipality']
             municipality_field.empty_label = "Select municipality/city..."
             municipality_field.widget.attrs.update({'class': self.location_field_css_classes})
 
-            municipality_queryset = Municipality.objects.filter(is_active=True).select_related(
+            base_municipality_queryset = Municipality.objects.filter(is_active=True).select_related(
                 'province__region'
             ).order_by('province__region__name', 'province__name', 'name')
 
             if selected_province:
-                municipality_queryset = municipality_queryset.filter(province=selected_province)
+                municipality_queryset = base_municipality_queryset.filter(province=selected_province)
             elif selected_region:
-                municipality_queryset = municipality_queryset.filter(province__region=selected_region)
+                municipality_queryset = base_municipality_queryset.filter(province__region=selected_region)
             else:
-                municipality_queryset = Municipality.objects.none()
+                municipality_queryset = base_municipality_queryset
 
             municipality_field.queryset = municipality_queryset
+            self._apply_location_widget_metadata('municipality')
 
         # Setup barangay field
         if 'barangay' in self.fields and 'barangay' in self.location_fields_config:
@@ -199,6 +234,7 @@ class LocationSelectionMixin:
                 barangay_queryset = Barangay.objects.none()
 
             barangay_field.queryset = barangay_queryset
+            self._apply_location_widget_metadata('barangay')
 
         # Set initial values if not bound
         if not getattr(self, 'is_bound', False):

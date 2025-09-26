@@ -11,7 +11,7 @@ from common.models import Barangay, Municipality, Province, Region
 from communities.models import OBCCommunity
 from coordination.models import Organization
 
-from ..forms import MonitoringRequestEntryForm
+from ..forms import MonitoringOBCQuickCreateForm, MonitoringRequestEntryForm
 from ..models import MonitoringEntry, MonitoringUpdate
 
 User = get_user_model()
@@ -31,19 +31,28 @@ class MonitoringBaseTestCase(TestCase):
         self.client = Client()
         self.client.force_login(self.user)
 
-        self.region = Region.objects.create(code="R12", name="SOCCSKSARGEN")
+        self.region = Region.objects.create(
+            code="R12",
+            name="SOCCSKSARGEN",
+            center_coordinates=[124.5001, 6.5001],
+        )
         self.province = Province.objects.create(
-            region=self.region, code="PRV-1", name="North Province"
+            region=self.region,
+            code="PRV-1",
+            name="North Province",
+            center_coordinates=[124.6002, 6.5502],
         )
         self.municipality = Municipality.objects.create(
             province=self.province,
             code="MUN-1",
             name="Harmony Town",
+            center_coordinates=[124.6503, 6.5803],
         )
         self.barangay = Barangay.objects.create(
             municipality=self.municipality,
             code="BRGY-1",
             name="Unity Village",
+            center_coordinates=[124.6604, 6.6004],
         )
         self.community = OBCCommunity.objects.create(
             barangay=self.barangay,
@@ -142,6 +151,30 @@ class MonitoringFormTests(MonitoringBaseTestCase):
         self.assertTrue(entry.is_request)
         self.assertEqual(entry.request_status, "submitted")
         self.assertIn(self.community, entry.communities.all())
+
+    def test_obc_quick_create_autofills_coordinates(self):
+        new_barangay = Barangay.objects.create(
+            municipality=self.municipality,
+            code="BRGY-2",
+            name="Unity Annex",
+            center_coordinates=[124.6705, 6.6105],
+        )
+
+        form = MonitoringOBCQuickCreateForm(
+            data={
+                "region": str(self.region.pk),
+                "province": str(self.province.pk),
+                "municipality": str(self.municipality.pk),
+                "barangay": str(new_barangay.pk),
+                "name": "Unity Extension",
+            }
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        community = form.save()
+
+        self.assertAlmostEqual(community.latitude, 6.6105)
+        self.assertAlmostEqual(community.longitude, 124.6705)
 
 
 class MonitoringViewTests(MonitoringBaseTestCase):

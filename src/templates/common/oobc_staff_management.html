@@ -15,17 +15,62 @@
 {% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
     <!-- Header -->
     <div class="space-y-3">
         <h1 class="text-3xl font-bold text-gray-900">Staff Management</h1>
         <p class="text-lg text-gray-600 max-w-4xl">
-            Track OOBC administrators and staff assignments, monitor onboarding progress, and manage inactive accounts
-            to keep operational coverage aligned with organisational needs.
+            Connect OOBC staff profiles, task assignments, team structures, and performance signals
+            so that workloads, MANA priorities, and coordination calendars stay synchronised.
         </p>
     </div>
 
-    <!-- Metric Overview -->
+    <!-- Quick Actions -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <a href="{% url 'common:staff_task_create' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-emerald-400 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-tasks mr-3 text-emerald-500"></i>
+                        Create staff task
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Log assignments, set priorities, and sync with the coordination calendar.</p>
+                </div>
+                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <i class="fas fa-arrow-right"></i>
+                </span>
+            </div>
+        </a>
+        <a href="{% url 'common:staff_team_assign' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-blue-400 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-user-plus mr-3 text-blue-500"></i>
+                        Assign staff to team
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Align personnel with the right MANA, coordination, or support unit.</p>
+                </div>
+                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                    <i class="fas fa-arrow-right"></i>
+                </span>
+            </div>
+        </a>
+        <a href="{% url 'common:staff_team_manage' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-purple-400 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-users-cog mr-3 text-purple-500"></i>
+                        Manage teams
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Review mandates, focus areas, and membership footprints for OOBC teams.</p>
+                </div>
+                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                    <i class="fas fa-arrow-right"></i>
+                </span>
+            </div>
+        </a>
+    </section>
+
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             <div class="bg-gradient-to-r from-emerald-500 to-green-500 px-4 py-5 text-white">
@@ -64,144 +109,511 @@
         </div>
     </div>
 
-    <!-- Role Breakdown -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white">
-                <h2 class="text-xl font-semibold flex items-center">
-                    <i class="fas fa-layer-group mr-3"></i>
-                    Role Distribution
-                </h2>
-            </div>
-            <div class="p-6 space-y-4">
-                {% if role_breakdown %}
-                    {% for role in role_breakdown %}
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-base font-semibold text-gray-900">{{ role.label }}</p>
-                                <p class="text-sm text-gray-500">System accounts tagged under this role.</p>
-                            </div>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium">{{ role.total }}</span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-sm text-gray-600">No role data available.</p>
-                {% endif %}
-            </div>
+    <!-- Task & Performance Snapshot -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <p class="text-sm font-semibold text-gray-500 uppercase">Total Tasks</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ performance_snapshot.total_tasks|default:0 }}</p>
+            <p class="mt-1 text-sm text-gray-500">Assignments tracked across all teams.</p>
         </div>
-
-        <!-- Pending approvals -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white">
-                <h2 class="text-xl font-semibold flex items-center">
-                    <i class="fas fa-user-clock mr-3"></i>
-                    Pending Approvals
-                </h2>
-            </div>
-            <div class="p-6">
-                {% if pending_staff %}
-                <ul class="divide-y divide-gray-200">
-                    {% for staff in pending_staff %}
-                    <li class="py-4 flex items-start justify-between">
-                        <div>
-                            <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
-                            <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
-                            <p class="text-xs text-gray-400 mt-1">Requested {{ staff.date_joined|date:"M d, Y" }}</p>
-                        </div>
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">Awaiting</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="text-center py-8">
-                    <i class="fas fa-check-circle text-3xl text-emerald-500"></i>
-                    <p class="mt-3 text-sm text-gray-600">All OOBC staff accounts are currently approved.</p>
-                </div>
-                {% endif %}
-                <div class="mt-6 flex justify-end">
-                    <a href="/admin/common/user/" class="inline-flex items-center text-sm font-medium text-amber-600 hover:text-amber-700">
-                        Manage approvals in Admin
-                        <i class="fas fa-arrow-right ml-2"></i>
-                    </a>
-                </div>
-            </div>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <p class="text-sm font-semibold text-gray-500 uppercase">Completion Rate</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-600">{{ performance_snapshot.completion_rate|default:0 }}%</p>
+            <p class="mt-1 text-sm text-gray-500">Completed deliverables over total assignments.</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <p class="text-sm font-semibold text-gray-500 uppercase">Upcoming (7 days)</p>
+            <p class="mt-2 text-3xl font-bold text-blue-600">{{ performance_snapshot.upcoming|default:0 }}</p>
+            <p class="mt-1 text-sm text-gray-500">Tasks reaching their deadlines this week.</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <p class="text-sm font-semibold text-gray-500 uppercase">At Risk</p>
+            <p class="mt-2 text-3xl font-bold text-rose-600">{{ performance_snapshot.at_risk|default:0 }}</p>
+            <p class="mt-1 text-sm text-gray-500">Assignments flagged for immediate follow-up.</p>
         </div>
     </div>
 
-    <!-- Recent activity & inactive -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
-                <h2 class="text-xl font-semibold flex items-center">
-                    <i class="fas fa-user-check mr-3"></i>
-                    Recently Active
-                </h2>
-            </div>
-            <div class="p-6">
-                {% if recent_staff %}
-                <ul class="divide-y divide-gray-200">
-                    {% for staff in recent_staff %}
-                    <li class="py-4 flex items-start justify-between">
+    <!-- Staff Profiles -->
+    <section class="bg-white border border-gray-200 shadow-xl rounded-2xl overflow-hidden">
+        <div class="px-6 py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+            <h2 class="text-xl font-semibold flex items-center">
+                <i class="fas fa-id-card-alt mr-3"></i>
+                Staff profiles &amp; workloads
+            </h2>
+            <p class="mt-2 text-sm text-emerald-100 max-w-3xl">
+                Review role details, contact information, and active tasks for each staff member to
+                coordinate coverage and support.
+            </p>
+        </div>
+        <div class="p-6">
+            {% if staff_profiles %}
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {% for profile in staff_profiles %}
+                <div class="border border-gray-200 rounded-xl p-5 shadow-sm bg-white flex flex-col h-full">
+                    <div class="flex items-start justify-between">
                         <div>
-                            <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
-                            <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
-                            <p class="text-xs text-gray-400 mt-1">
-                                {% if staff.last_login %}
-                                    Last login {{ staff.last_login|date:"M d, Y H:i" }}
-                                {% else %}
-                                    No login recorded yet
-                                {% endif %}
+                            <p class="text-lg font-semibold text-gray-900">{{ profile.staff.get_full_name|default:profile.staff.username }}</p>
+                            <p class="text-sm text-gray-500">
+                                {{ profile.staff.position|default:"Role not set" }}
+                                {% if profile.staff.organization %}• {{ profile.staff.organization }}{% endif %}
                             </p>
                         </div>
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">Active</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="text-center py-8">
-                    <i class="fas fa-user-friends text-3xl text-blue-500"></i>
-                    <p class="mt-3 text-sm text-gray-600">No recent activity recorded.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 bg-gradient-to-r from-slate-500 to-gray-600 text-white">
-                <h2 class="text-xl font-semibold flex items-center">
-                    <i class="fas fa-user-slash mr-3"></i>
-                    Inactive Staff
-                </h2>
-            </div>
-            <div class="p-6">
-                {% if inactive_staff %}
-                <ul class="divide-y divide-gray-200">
-                    {% for staff in inactive_staff %}
-                    <li class="py-4 flex items-start justify-between">
+                        {% if profile.status == 'Active' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">Active</span>
+                        {% elif profile.status == 'Pending' %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">Pending</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 text-xs font-medium">Inactive</span>
+                        {% endif %}
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        {% if profile.teams %}
+                            {% for team in profile.teams %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">{{ team }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-xs text-gray-500">No team assigned yet.</span>
+                        {% endif %}
+                    </div>
+                    <dl class="mt-4 grid grid-cols-2 gap-4 text-sm">
                         <div>
-                            <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
-                            <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
-                            <p class="text-xs text-gray-400 mt-1">Deactivated account</p>
+                            <dt class="text-gray-500">Contact</dt>
+                            <dd class="text-gray-900">{{ profile.contact|default:"—" }}</dd>
                         </div>
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 text-xs font-medium">Inactive</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="text-center py-8">
-                    <i class="fas fa-user-shield text-3xl text-gray-400"></i>
-                    <p class="mt-3 text-sm text-gray-600">No inactive staff records.</p>
+                        <div>
+                            <dt class="text-gray-500">Availability</dt>
+                            <dd class="text-gray-900">{{ profile.availability }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Tasks</dt>
+                            <dd class="text-gray-900">{{ profile.task_summary.total }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500">Completed</dt>
+                            <dd class="text-gray-900">{{ profile.task_summary.completed }}</dd>
+                        </div>
+                    </dl>
+                    <div class="mt-4">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Profile completion</p>
+                        <div class="mt-2 h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 rounded-full bg-emerald-500" style="width: {{ profile.profile_completion }}%;"></div>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">{{ profile.profile_completion }}% of key details supplied.</p>
+                    </div>
+                    {% if profile.tasks %}
+                    <div class="mt-5 space-y-3">
+                        {% for task in profile.tasks %}
+                        <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                            <div class="flex items-start justify-between">
+                                <p class="text-sm font-semibold text-gray-900">{{ task.title }}</p>
+                                {% if task.status == 'completed' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-semibold">Completed</span>
+                                {% elif task.status == 'at_risk' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[11px] font-semibold">At Risk</span>
+                                {% elif task.status == 'in_progress' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[11px] font-semibold">In Progress</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 text-[11px] font-semibold">Not Started</span>
+                                {% endif %}
+                            </div>
+                            <p class="mt-2 text-xs text-gray-600">{{ task.impact }}</p>
+                            <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+                                <span><i class="far fa-calendar-alt mr-1"></i>{% if task.due_date %}{{ task.due_date|date:"M d, Y" }}{% else %}No due{% endif %}</span>
+                                <span><i class="fas fa-layer-group mr-1"></i>{{ task.team.name }}</span>
+                            </div>
+                            <div class="mt-3 h-1.5 bg-white rounded-full overflow-hidden">
+                                <div class="h-1.5 rounded-full {% if task.status == 'completed' %}bg-emerald-500{% elif task.status == 'at_risk' %}bg-rose-500{% elif task.status == 'in_progress' %}bg-blue-500{% else %}bg-gray-300{% endif %}" style="width: {{ task.progress|default:0 }}%;"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if profile.task_summary.next_due %}
+                        <p class="mt-4 text-xs text-gray-500"><i class="far fa-clock mr-1"></i>Next due {{ profile.task_summary.next_due|date:"M d, Y" }}</p>
+                    {% endif %}
                 </div>
-                {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-600">No staff profiles available yet.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Task Management & Calendar -->
+    <section class="space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-900">Task management &amp; calendar</h2>
+                <p class="mt-1 text-sm text-gray-600">Track assignments by status and monitor upcoming milestones.</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center text-sm text-gray-500 space-x-3">
+                <span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-gray-400 mr-2"></span>Not Started</span>
+                <span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>In Progress</span>
+                <span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-rose-500 mr-2"></span>At Risk</span>
+                <span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>Completed</span>
             </div>
         </div>
-    </div>
+        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
+            {% for column in task_pipeline %}
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 space-y-4 xl:col-span-1">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ column.status_label }}</h3>
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold {% if column.status_key == 'completed' %}bg-emerald-100 text-emerald-700{% elif column.status_key == 'at_risk' %}bg-rose-100 text-rose-700{% elif column.status_key == 'in_progress' %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {{ column.total|default:0 }}
+                    </span>
+                </div>
+                <div class="space-y-4">
+                    {% if column.tasks %}
+                        {% for task in column.tasks|slice:":4" %}
+                        <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 space-y-3">
+                            <div class="flex items-start justify-between">
+                                <p class="text-sm font-semibold text-gray-900">{{ task.title }}</p>
+                                <span class="text-xs font-medium text-gray-500 uppercase">{{ task.get_priority_display }}</span>
+                            </div>
+                            {% if task.impact %}
+                                <p class="text-xs text-gray-600">{{ task.impact }}</p>
+                            {% endif %}
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span><i class="far fa-user mr-1"></i>{% if task.assignee %}{{ task.assignee.get_full_name|default:task.assignee.username }}{% else %}Unassigned{% endif %}</span>
+                                <span><i class="far fa-calendar mr-1"></i>{% if task.due_date %}{{ task.due_date|date:"M d" }}{% else %}No due{% endif %}</span>
+                            </div>
+                            <div class="h-1.5 bg-white rounded-full overflow-hidden">
+                                <div class="h-1.5 rounded-full {% if task.status == 'completed' %}bg-emerald-500{% elif task.status == 'at_risk' %}bg-rose-500{% elif task.status == 'in_progress' %}bg-blue-500{% else %}bg-gray-300{% endif %}" style="width: {{ task.progress|default:0 }}%;"></div>
+                            </div>
+                            <form method="post" class="space-y-2">
+                                {% csrf_token %}
+                                <input type="hidden" name="form_name" value="task_status">
+                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                <div class="flex items-center space-x-2">
+                                    <select name="status" class="w-full text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                        {% for status_key, status_label in status_labels.items %}
+                                            <option value="{{ status_key }}" {% if status_key == task.status %}selected{% endif %}>{{ status_label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="number" name="progress" value="{{ task.progress|default:0 }}" min="0" max="100" class="w-16 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+                                </div>
+                                <button type="submit" class="w-full inline-flex justify-center items-center px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                                    Update
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-sm text-gray-500">No tasks in this status.</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 xl:col-span-1">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="far fa-calendar-alt mr-2 text-blue-500"></i>
+                    Calendar highlights
+                </h3>
+                <p class="mt-1 text-sm text-gray-600">Key deadlines linked to staff assignments.</p>
+                <div class="mt-4 space-y-4">
+                    {% if calendar_events %}
+                        {% for event in calendar_events %}
+                        <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 space-y-2">
+                            <div class="flex items-center justify-between text-sm font-semibold text-gray-900">
+                                <span>{{ event.title }}</span>
+                                <span class="text-xs text-gray-500 uppercase">{{ event.priority }}</span>
+                            </div>
+                            <p class="text-xs text-gray-600">
+                                {{ event.team.name }}
+                                {% if event.assignee %}
+                                    • {{ event.assignee.get_full_name|default:event.assignee.username }}
+                                {% endif %}
+                            </p>
+                            {% if event.linked_event %}
+                                <p class="text-[11px] text-blue-600 flex items-center"><i class="fas fa-link mr-2"></i>Linked to coordination event: {{ event.linked_event.title }}</p>
+                            {% endif %}
+                            <div class="flex items-center justify-between text-xs text-gray-500">
+                                <span><i class="far fa-play-circle mr-1"></i>{% if event.start %}{{ event.start|date:"M d" }}{% else %}—{% endif %}</span>
+                                <span><i class="far fa-flag mr-1"></i>{% if event.end %}{{ event.end|date:"M d, Y" }}{% else %}—{% endif %}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-sm text-gray-500">No scheduled tasks in the calendar window.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Management -->
+    <section class="space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-900">Team management</h2>
+                <p class="mt-1 text-sm text-gray-600">
+                    Map staff coverage across OOBC teams, including the Mapping and Needs Assessment (MANA) group,
+                    and track their active workloads.
+                </p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {% for team in team_overview %}
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 flex flex-col h-full">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ team.name }}</h3>
+                        <p class="mt-1 text-sm text-gray-600">{{ team.description }}</p>
+                    </div>
+                    <div class="text-right text-sm text-gray-500">
+                        <p><span class="font-semibold text-gray-900">{{ team.member_count }}</span> members</p>
+                        <p><span class="font-semibold text-gray-900">{{ team.active_tasks }}</span> active tasks</p>
+                    </div>
+                </div>
+                <p class="mt-3 text-xs uppercase tracking-wide text-gray-500 font-semibold">Mission</p>
+                <p class="text-sm text-gray-700">{{ team.mission }}</p>
+                <p class="mt-4 text-xs uppercase tracking-wide text-gray-500 font-semibold">Focus areas</p>
+                <ul class="mt-2 space-y-1 text-sm text-gray-700">
+                    {% for focus in team.focus %}
+                        <li class="flex items-start"><span class="text-emerald-500 mr-2 mt-1">•</span><span>{{ focus }}</span></li>
+                    {% endfor %}
+                </ul>
+                <div class="mt-4 text-xs uppercase tracking-wide text-gray-500 font-semibold">Members</div>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    {% with team.members|slice:":3" as preview_members %}
+                        {% for member in preview_members %}
+                            <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">{{ member.get_full_name|default:member.username }}</span>
+                        {% endfor %}
+                        {% if team.extra_members > 0 %}
+                            <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">+{{ team.extra_members }} more</span>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                {% if team.tasks %}
+                <div class="mt-4 space-y-3">
+                    {% for task in team.tasks %}
+                    <div class="border border-gray-200 rounded-xl p-3 bg-gray-50">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-semibold text-gray-900">{{ task.title }}</span>
+                            <span class="text-xs text-gray-500 uppercase">{{ task.get_status_display }}</span>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-600">
+                            {% if task.due_date %}Due {{ task.due_date|date:"M d" }}{% else %}No due date{% endif %}
+                            {% if task.assignee %}
+                                • {{ task.assignee.get_full_name|default:task.assignee.username }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="mt-4 flex items-center justify-between text-sm text-gray-500">
+                    <span>Completion rate</span>
+                    <span class="font-semibold text-gray-900">{{ team.completion_rate }}%</span>
+                </div>
+                <div class="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-1.5 rounded-full bg-emerald-500" style="width: {{ team.avg_progress }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Performance Management -->
+    <section class="space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-2xl font-semibold text-gray-900">Performance management</h2>
+                <p class="mt-1 text-sm text-gray-600">Track productivity scores for individuals and teams based on task completion.</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <i class="fas fa-user-check mr-3"></i>
+                        Individual performance
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Staff</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Tasks</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Completed</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">At Risk</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% if individual_performance %}
+                                {% for record in individual_performance|slice:":8" %}
+                                <tr class="hover:bg-emerald-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {{ record.staff.get_full_name|default:record.staff.username }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">{{ record.total }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 text-right">{{ record.completed }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-rose-600 text-right">{{ record.at_risk }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ record.score }}%</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="px-6 py-6 text-center text-sm text-gray-500">No performance data available.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white">
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <i class="fas fa-users mr-3"></i>
+                        Team performance
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Team</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Tasks</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Completed</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">At Risk</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Completion</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% if team_performance %}
+                                {% for team in team_performance %}
+                                <tr class="hover:bg-emerald-50 transition-colors">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ team.team }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">{{ team.total }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 text-right">{{ team.completed }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-rose-600 text-right">{{ team.at_risk }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ team.completion_rate }}%</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="px-6 py-6 text-center text-sm text-gray-500">No team performance data available.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Operational Watchlists -->
+    <section class="space-y-6">
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-900">Operational watchlists</h2>
+            <p class="mt-1 text-sm text-gray-600">Stay ahead of pending approvals, recent logins, and inactive accounts.</p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-amber-400 to-orange-500 text-white">
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <i class="fas fa-user-clock mr-3"></i>
+                        Pending approvals
+                    </h3>
+                </div>
+                <div class="p-6">
+                    {% if pending_staff %}
+                    <ul class="divide-y divide-gray-200">
+                        {% for staff in pending_staff %}
+                        <li class="py-4 flex items-start justify-between">
+                            <div>
+                                <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
+                                <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
+                                <p class="text-xs text-gray-400 mt-1">Requested {{ staff.date_joined|date:"M d, Y" }}</p>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">Awaiting</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-check-circle text-3xl text-emerald-500"></i>
+                        <p class="mt-3 text-sm text-gray-600">All OOBC staff accounts are currently approved.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <i class="fas fa-user-check mr-3"></i>
+                        Recently active
+                    </h3>
+                </div>
+                <div class="p-6">
+                    {% if recent_staff %}
+                    <ul class="divide-y divide-gray-200">
+                        {% for staff in recent_staff %}
+                        <li class="py-4 flex items-start justify-between">
+                            <div>
+                                <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
+                                <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
+                                <p class="text-xs text-gray-400 mt-1">
+                                    {% if staff.last_login %}
+                                        Last login {{ staff.last_login|date:"M d, Y H:i" }}
+                                    {% else %}
+                                        No login recorded yet
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium">Active</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-user-friends text-3xl text-blue-500"></i>
+                        <p class="mt-3 text-sm text-gray-600">No recent activity recorded.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-slate-500 to-gray-600 text-white">
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <i class="fas fa-user-slash mr-3"></i>
+                        Inactive staff
+                    </h3>
+                </div>
+                <div class="p-6">
+                    {% if inactive_staff %}
+                    <ul class="divide-y divide-gray-200">
+                        {% for staff in inactive_staff %}
+                        <li class="py-4 flex items-start justify-between">
+                            <div>
+                                <p class="text-base font-semibold text-gray-900">{{ staff.get_full_name|default:staff.username }}</p>
+                                <p class="text-sm text-gray-500">{{ staff.get_user_type_display }}{% if staff.organization %} • {{ staff.organization }}{% endif %}</p>
+                                <p class="text-xs text-gray-400 mt-1">Deactivated account</p>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-gray-200 text-gray-600 text-xs font-medium">Inactive</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fas fa-user-shield text-3xl text-gray-400"></i>
+                        <p class="mt-3 text-sm text-gray-600">No inactive staff records.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Staff Directory -->
-    <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+    <section class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-500 text-white flex items-center justify-between">
             <h2 class="text-xl font-semibold flex items-center">
                 <i class="fas fa-list mr-3"></i>
-                Staff Directory
+                Staff directory
             </h2>
             <span class="text-sm text-emerald-100">Showing latest 20 records</span>
         </div>
@@ -241,6 +653,6 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}

@@ -1,5 +1,9 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
+from django.utils.text import slugify
 
 
 class User(AbstractUser):
@@ -439,3 +443,189 @@ class Barangay(models.Model):
             models.Q(barangay=self) |
             models.Q(community__barangay=self)
         )
+
+
+class StaffTeam(models.Model):
+    """Operational teams coordinating OOBC staff and task workflows."""
+
+    ROLE_FOCUS_DEFAULT = [
+        "strategy",
+        "implementation",
+        "monitoring",
+        "coordination",
+    ]
+
+    name = models.CharField(max_length=150, unique=True)
+    slug = models.SlugField(max_length=160, unique=True, blank=True)
+    description = models.TextField(blank=True)
+    mission = models.TextField(blank=True)
+    focus_areas = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name) or "team"
+            slug = base_slug
+            index = 1
+            while StaffTeam.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{index}"
+                index += 1
+            self.slug = slug
+        if not self.focus_areas:
+            self.focus_areas = self.ROLE_FOCUS_DEFAULT
+        super().save(*args, **kwargs)
+
+    @property
+    def active_memberships(self):
+        """Return active memberships for this team."""
+        return self.memberships.filter(is_active=True)
+
+
+class StaffTeamMembership(models.Model):
+    """Link OOBC staff to operational teams with roles."""
+
+    ROLE_MEMBER = "member"
+    ROLE_LEAD = "lead"
+    ROLE_COORDINATOR = "coordinator"
+    ROLE_CHOICES = [
+        (ROLE_LEAD, "Team Lead"),
+        (ROLE_COORDINATOR, "Coordinator"),
+        (ROLE_MEMBER, "Member"),
+    ]
+
+    team = models.ForeignKey(
+        StaffTeam, related_name="memberships", on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="team_memberships",
+        on_delete=models.CASCADE,
+    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_MEMBER)
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="assigned_team_memberships",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    joined_at = models.DateTimeField(default=timezone.now)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("team", "user")
+        ordering = ["team__name", "user__last_name", "user__first_name"]
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.team.name}"
+
+    def deactivate(self, save=True):
+        """Mark the membership as inactive."""
+        self.is_active = False
+        if save:
+            self.save(update_fields=["is_active", "updated_at"])
+
+
+class StaffTask(models.Model):
+    """Task records connected to staff profiles, teams, and calendar events."""
+
+    STATUS_NOT_STARTED = "not_started"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_AT_RISK = "at_risk"
+    STATUS_COMPLETED = "completed"
+    STATUS_CHOICES = [
+        (STATUS_NOT_STARTED, "Not Started"),
+        (STATUS_IN_PROGRESS, "In Progress"),
+        (STATUS_AT_RISK, "At Risk"),
+        (STATUS_COMPLETED, "Completed"),
+    ]
+
+    PRIORITY_LOW = "low"
+    PRIORITY_MEDIUM = "medium"
+    PRIORITY_HIGH = "high"
+    PRIORITY_CRITICAL = "critical"
+    PRIORITY_CHOICES = [
+        (PRIORITY_LOW, "Low"),
+        (PRIORITY_MEDIUM, "Medium"),
+        (PRIORITY_HIGH, "High"),
+        (PRIORITY_CRITICAL, "Critical"),
+    ]
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    impact = models.CharField(max_length=255, blank=True)
+    team = models.ForeignKey(
+        StaffTeam,
+        related_name="tasks",
+        on_delete=models.PROTECT,
+    )
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="assigned_staff_tasks",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="created_staff_tasks",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    linked_event = models.ForeignKey(
+        "coordination.Event",
+        related_name="staff_tasks",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_NOT_STARTED
+    )
+    priority = models.CharField(
+        max_length=12, choices=PRIORITY_CHOICES, default=PRIORITY_MEDIUM
+    )
+    progress = models.PositiveSmallIntegerField(
+        default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    start_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at", "due_date"]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_overdue(self):
+        """Return True if the task is overdue."""
+        if self.status == self.STATUS_COMPLETED or not self.due_date:
+            return False
+        return self.due_date < timezone.now().date()
+
+    def mark_completed(self, user=None):
+        """Mark task as completed and update progress."""
+        self.status = self.STATUS_COMPLETED
+        self.progress = 100
+        self.completed_at = timezone.now()
+        update_fields = ["status", "progress", "completed_at", "updated_at"]
+        if user and not self.created_by:
+            self.created_by = user
+            update_fields.append("created_by")
+        self.save(update_fields=update_fields)

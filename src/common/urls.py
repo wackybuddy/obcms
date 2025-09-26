@@ -65,6 +65,9 @@ urlpatterns = [
     path('recommendations/area/<str:area_slug>/', views.recommendations_by_area, name='recommendations_by_area'),
     path('oobc-management/', views.oobc_management_home, name='oobc_management_home'),
     path('oobc-management/staff/', views.staff_management, name='staff_management'),
+    path('oobc-management/staff/tasks/new/', views.staff_task_create, name='staff_task_create'),
+    path('oobc-management/staff/teams/assign/', views.staff_team_assign, name='staff_team_assign'),
+    path('oobc-management/staff/teams/manage/', views.staff_team_manage, name='staff_team_manage'),
     path('oobc-management/planning-budgeting/', views.planning_budgeting, name='planning_budgeting'),
 
     # Data Import/Export/Report URLs

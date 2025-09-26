@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Staff Teams - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:staff_management' %}" class="text-neutral-500 hover:text-neutral-700">Staff Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Manage Teams</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <header class="space-y-3">
+        <h1 class="text-3xl font-bold text-gray-900">Manage teams</h1>
+        <p class="text-gray-600 max-w-4xl">
+            Define and maintain OOBC operational teams, document their focus areas, and keep membership counts
+            aligned with actual deployments.
+        </p>
+    </header>
+
+    <section class="bg-white border border-gray-200 shadow-xl rounded-2xl overflow-hidden">
+        <div class="px-6 py-5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-users-cog mr-3"></i>
+                    {% if selected_team %}Update team{% else %}Create new team{% endif %}
+                </h2>
+                <p class="text-sm text-indigo-100 mt-1">Capture the mandate, mission, and strategic focus areas for each unit.</p>
+            </div>
+            {% if selected_team %}
+            <a href="{% url 'common:staff_team_manage' %}" class="text-sm text-white text-opacity-80 hover:text-opacity-100">Switch to create mode</a>
+            {% endif %}
+        </div>
+        <div class="p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg px-4 py-3">
+                        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                    </div>
+                {% endif %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for field in form %}
+                        <div class="space-y-1 {% if field.name in wide_fields %}md:col-span-2{% endif %}">
+                            <label class="text-sm font-semibold text-gray-700" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <p class="text-xs text-gray-400">{{ field.help_text }}</p>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <p class="text-xs text-rose-600">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="flex items-center justify-end space-x-3">
+                    <a href="{% url 'common:staff_management' %}" class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Back to dashboard</a>
+                    <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+        Save team
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="bg-white border border-gray-200 shadow-sm rounded-2xl">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-layer-group mr-3 text-purple-500"></i>
+                Team overview
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Team</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Members</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Active tasks</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Completion</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Focus areas</th>
+                        <th class="px-6 py-3"></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% if teams %}
+                        {% for item in teams %}
+                        <tr class="hover:bg-purple-50 transition-colors">
+                            <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ item.team.name }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ item.member_count }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ item.active_tasks }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-600">{{ item.completion_rate }}%</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                {% if item.team.focus_areas %}
+                                    {{ item.team.focus_areas|join:', ' }}
+                                {% else %}
+                                    <span class="text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-right">
+                                <a href="{% url 'common:staff_team_manage' %}?team_id={{ item.team.id }}" class="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-purple-600 hover:text-purple-700">
+                                    <i class="fas fa-edit mr-2"></i>Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-6 text-center text-sm text-gray-500">No teams configured yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+{% endblock %}

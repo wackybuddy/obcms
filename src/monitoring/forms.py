@@ -264,25 +264,40 @@ class MonitoringOBCQuickCreateForm(LocationSelectionMixin, forms.ModelForm):
 
     # Configure location fields - all levels including barangay
     location_fields_config = {
-        'region': {'required': True, 'level': 'region'},
-        'province': {'required': True, 'level': 'province'},
-        'municipality': {'required': True, 'level': 'municipality'},
-        'barangay': {'required': True, 'level': 'barangay'},
+        'region': {'required': True, 'level': 'region', 'zoom': 7},
+        'province': {'required': True, 'level': 'province', 'zoom': 9},
+        'municipality': {'required': True, 'level': 'municipality', 'zoom': 12},
+        'barangay': {'required': True, 'level': 'barangay', 'zoom': 15},
     }
 
     # Override default CSS classes for this form
     location_field_css_classes = "block w-full px-4 py-3 rounded-xl border border-neutral-200 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition"
 
+    region = forms.ModelChoiceField(
+        queryset=Region.objects.filter(is_active=True).order_by("code", "name"),
+        required=True,
+        label="Region",
+    )
+    province = forms.ModelChoiceField(
+        queryset=Province.objects.none(),
+        required=True,
+        label="Province",
+    )
+    municipality = forms.ModelChoiceField(
+        queryset=Municipality.objects.none(),
+        required=True,
+        label="Municipality / City",
+    )
+
     class Meta:
         model = OBCCommunity
         fields = [
-            "region",
-            "province",
-            "municipality",
             "barangay",
             "name",
             "community_names",
-            "obc_id"
+            "obc_id",
+            "latitude",
+            "longitude",
         ]
         labels = {
             "region": "Region",
@@ -292,6 +307,8 @@ class MonitoringOBCQuickCreateForm(LocationSelectionMixin, forms.ModelForm):
             "name": "OBC Name",
             "community_names": "Alternate Names (optional)",
             "obc_id": "OBC ID (optional)",
+            "latitude": "Latitude",
+            "longitude": "Longitude",
         }
         widgets = {
             "name": forms.TextInput(
@@ -312,6 +329,22 @@ class MonitoringOBCQuickCreateForm(LocationSelectionMixin, forms.ModelForm):
                     "placeholder": "Registry identifier (optional)",
                 }
             ),
+            "latitude": forms.NumberInput(
+                attrs={
+                    "class": "block w-full px-4 py-3 rounded-xl border border-neutral-200 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition",
+                    "step": "any",
+                    "placeholder": "Auto-filled latitude",
+                    "data-placeholder": "Auto-filled latitude",
+                }
+            ),
+            "longitude": forms.NumberInput(
+                attrs={
+                    "class": "block w-full px-4 py-3 rounded-xl border border-neutral-200 bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition",
+                    "step": "any",
+                    "placeholder": "Auto-filled longitude",
+                    "data-placeholder": "Auto-filled longitude",
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -325,6 +358,12 @@ class MonitoringOBCQuickCreateForm(LocationSelectionMixin, forms.ModelForm):
             self.fields["community_names"].required = False
         if self.fields.get("obc_id"):
             self.fields["obc_id"].required = False
+
+        for coordinate_field in ("latitude", "longitude"):
+            field = self.fields.get(coordinate_field)
+            if field:
+                field.required = False
+                field.widget.attrs.setdefault("data-auto-filled", "true")
 
         # Add data-placeholder attributes to location fields
         location_placeholders = {
