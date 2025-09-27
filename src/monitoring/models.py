@@ -16,6 +16,45 @@ class MonitoringEntry(models.Model):
         ("obc_request", "OBC Request or Proposal"),
     ]
 
+    APPROPRIATION_CLASS_PS = "ps"
+    APPROPRIATION_CLASS_MOOE = "mooe"
+    APPROPRIATION_CLASS_CO = "co"
+    APPROPRIATION_CLASS_CHOICES = [
+        (APPROPRIATION_CLASS_PS, "Personnel Services"),
+        (APPROPRIATION_CLASS_MOOE, "Maintenance and Other Operating Expenses"),
+        (APPROPRIATION_CLASS_CO, "Capital Outlay"),
+    ]
+
+    FUNDING_SOURCE_GAA = "gaa"
+    FUNDING_SOURCE_BLOCK_GRANT = "block_grant"
+    FUNDING_SOURCE_LGU = "lgu_counterpart"
+    FUNDING_SOURCE_DONOR = "donor"
+    FUNDING_SOURCE_INTERNAL = "internal"
+    FUNDING_SOURCE_OTHERS = "others"
+    FUNDING_SOURCE_CHOICES = [
+        (FUNDING_SOURCE_GAA, "General Appropriations Act"),
+        (FUNDING_SOURCE_BLOCK_GRANT, "BARMM Block Grant"),
+        (FUNDING_SOURCE_LGU, "LGU Counterpart"),
+        (FUNDING_SOURCE_DONOR, "Donor / Development Partner"),
+        (FUNDING_SOURCE_INTERNAL, "OOBC / BARMM Internal"),
+        (FUNDING_SOURCE_OTHERS, "Others"),
+    ]
+
+    SECTOR_ECONOMIC = "economic"
+    SECTOR_SOCIAL = "social"
+    SECTOR_INFRASTRUCTURE = "infrastructure"
+    SECTOR_ENVIRONMENT = "environment"
+    SECTOR_GOVERNANCE = "governance"
+    SECTOR_PEACE = "peace_security"
+    SECTOR_CHOICES = [
+        (SECTOR_ECONOMIC, "Economic Development"),
+        (SECTOR_SOCIAL, "Social Development"),
+        (SECTOR_INFRASTRUCTURE, "Infrastructure"),
+        (SECTOR_ENVIRONMENT, "Environment & DRRM"),
+        (SECTOR_GOVERNANCE, "Governance & Institution Building"),
+        (SECTOR_PEACE, "Peace, Security & Reconciliation"),
+    ]
+
     STATUS_CHOICES = [
         ("planning", "Planning"),
         ("ongoing", "Ongoing"),
@@ -144,6 +183,88 @@ class MonitoringEntry(models.Model):
         related_name="monitoring_entries",
         help_text="Policy recommendation informing this entry",
     )
+    plan_year = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(2000), MaxValueValidator(2100)],
+        help_text="Planning reference year (e.g., AIP year)",
+    )
+    fiscal_year = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(2000), MaxValueValidator(2100)],
+        help_text="Fiscal year the budget is intended for",
+    )
+    sector = models.CharField(
+        max_length=32,
+        choices=SECTOR_CHOICES,
+        blank=True,
+        help_text="Primary sector alignment for the PPA",
+    )
+    appropriation_class = models.CharField(
+        max_length=8,
+        choices=APPROPRIATION_CLASS_CHOICES,
+        blank=True,
+        help_text="Appropriation class (PS/MOOE/CO)",
+    )
+    funding_source = models.CharField(
+        max_length=32,
+        choices=FUNDING_SOURCE_CHOICES,
+        blank=True,
+        help_text="Primary funding source",
+    )
+    funding_source_other = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Specify funding source when tagged as Others",
+    )
+    program_code = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="DBM/BARMM program or objective code",
+    )
+    plan_reference = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Reference to PDP/PIP/AIP or local investment plan",
+    )
+    goal_alignment = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of strategic alignment tags (e.g., PDP, SDG, Moral Governance)",
+    )
+    moral_governance_pillar = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Key Moral Governance pillar supported",
+    )
+    compliance_gad = models.BooleanField(
+        default=False,
+        help_text="Flag if expenditure is tagged under GAD",
+    )
+    compliance_ccet = models.BooleanField(
+        default=False,
+        help_text="Flag if expenditure is tagged under Climate Change Expenditure",
+    )
+    benefits_indigenous_peoples = models.BooleanField(
+        default=False,
+        help_text="Flag if initiative primarily benefits Indigenous Peoples communities",
+    )
+    supports_peace_agenda = models.BooleanField(
+        default=False,
+        help_text="Flag if initiative supports peacebuilding or security agenda",
+    )
+    supports_sdg = models.BooleanField(
+        default=False,
+        help_text="Flag if initiative contributes to SDG tracking",
+    )
+    budget_ceiling = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Ceiling allocated for budgeting scenarios",
+    )
     start_date = models.DateField(null=True, blank=True)
     target_end_date = models.DateField(null=True, blank=True)
     actual_end_date = models.DateField(null=True, blank=True)
@@ -258,12 +379,164 @@ class MonitoringEntry(models.Model):
     def __str__(self):
         return self.title
 
+    def funding_total(self, tranche_type: str) -> float:
+        """Return total amount recorded for a funding tranche type."""
+
+        return (
+            self.funding_flows.filter(tranche_type=tranche_type)
+            .aggregate(total=models.Sum("amount"))
+            .get("total")
+            or 0
+        )
+
     @property
-    def is_request(self):
-        """Convenience flag for request-specific handling."""
+    def is_request(self) -> bool:
+        """Convenience flag identifying OBC requests."""
 
         return self.category == "obc_request"
 
+
+class MonitoringEntryFunding(models.Model):
+    """Track detailed allocations, obligations, and disbursements per entry."""
+
+    TRANCHE_ALLOCATION = "allocation"
+    TRANCHE_OBLIGATION = "obligation"
+    TRANCHE_DISBURSEMENT = "disbursement"
+    TRANCHE_ADJUSTMENT = "adjustment"
+    TRANCHE_CHOICES = [
+        (TRANCHE_ALLOCATION, "Allocation"),
+        (TRANCHE_OBLIGATION, "Obligation"),
+        (TRANCHE_DISBURSEMENT, "Disbursement"),
+        (TRANCHE_ADJUSTMENT, "Adjustment"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    entry = models.ForeignKey(
+        MonitoringEntry,
+        related_name="funding_flows",
+        on_delete=models.CASCADE,
+    )
+    tranche_type = models.CharField(max_length=20, choices=TRANCHE_CHOICES)
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    funding_source = models.CharField(
+        max_length=32,
+        choices=MonitoringEntry.FUNDING_SOURCE_CHOICES,
+        blank=True,
+        help_text="Override funding source for this tranche",
+    )
+    funding_source_other = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Specify the funding source when using Others",
+    )
+    scheduled_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="When the tranche is scheduled or recorded",
+    )
+    remarks = models.TextField(blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_funding_flows",
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="updated_funding_flows",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-scheduled_date", "-created_at"]
+        verbose_name = "Funding Flow"
+        verbose_name_plural = "Funding Flows"
+
+    def __str__(self):
+        return f"{self.get_tranche_type_display()} - {self.amount}"
+
+
+class MonitoringEntryWorkflowStage(models.Model):
+    """Represent budget workflow milestones per monitoring entry."""
+
+    STAGE_BUDGET_CALL = "budget_call"
+    STAGE_FORMULATION = "formulation"
+    STAGE_TECHNICAL = "technical_hearing"
+    STAGE_LEGISLATION = "legislation"
+    STAGE_EXECUTION = "execution"
+    STAGE_ACCOUNTABILITY = "accountability"
+    STAGE_CHOICES = [
+        (STAGE_BUDGET_CALL, "Budget Call"),
+        (STAGE_FORMULATION, "Formulation"),
+        (STAGE_TECHNICAL, "Technical Budget Hearing"),
+        (STAGE_LEGISLATION, "Budget Legislation"),
+        (STAGE_EXECUTION, "Program Execution"),
+        (STAGE_ACCOUNTABILITY, "Accountability"),
+    ]
+
+    STATUS_NOT_STARTED = "not_started"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_COMPLETED = "completed"
+    STATUS_BLOCKED = "blocked"
+    STATUS_CHOICES = [
+        (STATUS_NOT_STARTED, "Not Started"),
+        (STATUS_IN_PROGRESS, "In Progress"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_BLOCKED, "Blocked"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    entry = models.ForeignKey(
+        MonitoringEntry,
+        related_name="workflow_stages",
+        on_delete=models.CASCADE,
+    )
+    stage = models.CharField(max_length=40, choices=STAGE_CHOICES)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_NOT_STARTED,
+    )
+    owner_team = models.ForeignKey(
+        "common.StaffTeam",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="budget_workflow_stages",
+    )
+    owner_organization = models.ForeignKey(
+        "coordination.Organization",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="budget_workflow_stages",
+    )
+    due_date = models.DateField(null=True, blank=True)
+    completed_at = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    last_updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="updated_budget_workflow_stages",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("entry", "stage")
+        ordering = ["entry", "stage"]
+        verbose_name = "Budget Workflow Stage"
+        verbose_name_plural = "Budget Workflow Stages"
+
+    def __str__(self):
+        return f"{self.entry.title} - {self.get_stage_display()}"
 
 class MonitoringUpdate(models.Model):
     """Log granular progress updates for a monitoring entry."""

@@ -4,6 +4,7 @@ import datetime
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -11,8 +12,17 @@ from common.models import Barangay, Municipality, Province, Region
 from communities.models import OBCCommunity
 from coordination.models import Organization
 
-from ..forms import MonitoringOBCQuickCreateForm, MonitoringRequestEntryForm
-from ..models import MonitoringEntry, MonitoringUpdate
+from ..forms import (
+    MonitoringOOBCEntryForm,
+    MonitoringOBCQuickCreateForm,
+    MonitoringRequestEntryForm,
+)
+from ..models import (
+    MonitoringEntry,
+    MonitoringEntryFunding,
+    MonitoringEntryWorkflowStage,
+    MonitoringUpdate,
+)
 
 User = get_user_model()
 
@@ -121,6 +131,37 @@ class MonitoringModelTests(MonitoringBaseTestCase):
         self.assertEqual(update.get_update_type_display(), "Status Update")
         self.assertEqual(entry.updates.count(), 1)
 
+    def test_backfill_command_populates_defaults(self):
+        entry = MonitoringEntry.objects.create(
+            title="Water System Upgrade",
+            category="moa_ppa",
+            status="planning",
+            start_date=datetime.date(2024, 5, 1),
+            budget_allocation=Decimal("250000.00"),
+            lead_organization=self.primary_org,
+            created_by=self.user,
+            updated_by=self.user,
+        )
+
+        call_command("backfill_planning_budgeting")
+        entry.refresh_from_db()
+
+        self.assertEqual(entry.plan_year, 2024)
+        self.assertEqual(entry.fiscal_year, 2024)
+        self.assertEqual(entry.budget_ceiling, Decimal("250000.00"))
+        self.assertEqual(
+            entry.funding_source, MonitoringEntry.FUNDING_SOURCE_INTERNAL
+        )
+        self.assertEqual(
+            entry.workflow_stages.count(),
+            len(MonitoringEntryWorkflowStage.STAGE_CHOICES),
+        )
+        self.assertTrue(
+            entry.funding_flows.filter(
+                tranche_type=MonitoringEntryFunding.TRANCHE_ALLOCATION
+            ).exists()
+        )
+
 
 class MonitoringFormTests(MonitoringBaseTestCase):
     """Ensure the entry form enforces category-specific validation."""
@@ -175,6 +216,40 @@ class MonitoringFormTests(MonitoringBaseTestCase):
 
         self.assertAlmostEqual(community.latitude, 6.6105)
         self.assertAlmostEqual(community.longitude, 124.6705)
+
+    def test_oobc_form_parses_goal_alignment(self):
+        form_data = {
+            "title": "Health Caravan",
+            "summary": "Provision of primary healthcare services.",
+            "oobc_unit": "Programs",
+            "plan_year": "2025",
+            "fiscal_year": "2025",
+            "sector": MonitoringEntry.SECTOR_SOCIAL,
+            "appropriation_class": MonitoringEntry.APPROPRIATION_CLASS_MOOE,
+            "funding_source": MonitoringEntry.FUNDING_SOURCE_GAA,
+            "program_code": "SOC-HEALTH-01",
+            "plan_reference": "AIP 2025",
+            "goal_alignment": "PDP 2023 Health, SDG 3",
+            "moral_governance_pillar": "Social Justice",
+            "status": "planning",
+            "progress": "25",
+            "budget_allocation": "500000",
+            "budget_currency": "PHP",
+            "communities": [str(self.community.pk)],
+        }
+
+        form = MonitoringOOBCEntryForm(data=form_data)
+        self.assertTrue(form.is_valid(), form.errors)
+
+        entry = form.save(commit=False)
+        entry.created_by = self.user
+        entry.updated_by = self.user
+        entry.save()
+        form.save_m2m()
+
+        self.assertEqual(entry.goal_alignment, ["PDP 2023 Health", "SDG 3"])
+        self.assertEqual(entry.funding_source, MonitoringEntry.FUNDING_SOURCE_GAA)
+        self.assertEqual(entry.appropriation_class, MonitoringEntry.APPROPRIATION_CLASS_MOOE)
 
 
 class MonitoringViewTests(MonitoringBaseTestCase):

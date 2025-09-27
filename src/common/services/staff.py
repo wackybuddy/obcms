@@ -5,11 +5,18 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Iterable, Sequence
 
-from django.db import transaction
+from django.db import OperationalError, transaction
+from django.db.models import Max
 from django.utils import timezone
 
 from common.constants import STAFF_TEAM_DEFINITIONS
-from common.models import StaffTask, StaffTeam, StaffTeamMembership, User
+from common.models import (
+    StaffProfile,
+    StaffTask,
+    StaffTeam,
+    StaffTeamMembership,
+    User,
+)
 
 
 def ensure_default_staff_teams() -> Sequence[StaffTeam]:
@@ -43,6 +50,27 @@ def ensure_default_staff_teams() -> Sequence[StaffTeam]:
     return updated_teams
 
 
+def assign_board_position(task: StaffTask) -> StaffTask:
+    """Ensure the task has a trailing board position within its status column."""
+
+    if task.board_position:
+        return task
+    try:
+        max_position = (
+            StaffTask.objects.filter(status=task.status)
+            .exclude(pk=task.pk)
+            .aggregate(Max("board_position"))
+            .get("board_position__max")
+            or 0
+        )
+        task.board_position = max_position + 1
+        task.save(update_fields=["board_position", "updated_at"])
+    except OperationalError:
+        # Database may not yet have the board_position column (pre-migration).
+        return task
+    return task
+
+
 def ensure_membership(team: StaffTeam, user: User, assigned_by: User | None = None) -> StaffTeamMembership:
     """Ensure a staff user is linked to a team."""
 
@@ -59,6 +87,16 @@ def ensure_membership(team: StaffTeam, user: User, assigned_by: User | None = No
         membership.assigned_by = membership.assigned_by or assigned_by
         membership.save(update_fields=["is_active", "assigned_by", "updated_at"])
     return membership
+
+
+def ensure_staff_profiles_for_users(users: Iterable[User]) -> list[StaffProfile]:
+    """Back-fill StaffProfile records for the given staff users."""
+
+    profiles: list[StaffProfile] = []
+    for user in users:
+        profile, _ = StaffProfile.objects.get_or_create(user=user)
+        profiles.append(profile)
+    return profiles
 
 
 def seed_tasks(
@@ -107,6 +145,7 @@ def seed_tasks(
             task.completed_at = timezone.now()
             task.progress = 100
             task.save(update_fields=["completed_at", "progress", "updated_at"])
+        assign_board_position(task)
         ensure_membership(team, assignee, created_by)
         tasks.append(task)
     return tasks

@@ -141,3 +141,12 @@ EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 - Static files in `src/static/` served during development
 - Uses Tailwind CSS for responsive, government-appropriate styling
 - Support for dark mode and accessibility (WCAG 2.1 AA)
+
+### Form Component Library
+- Reusable form partials are under `src/templates/components/` (`form_field.html`, `form_field_input.html`, `form_field_select.html`).
+- Include them in templates instead of duplicating markup, e.g. `{% include "components/form_field_select.html" with field=form.municipality placeholder="Select municipality..." %}` to match the Barangay OBC dropdown styling.
+- Widget classes are centralised via `_apply_form_field_styles` (see `src/common/forms/staff.py`); extend there when new input patterns are needed.
+
+### Data Table Cards
+- Directory/list pages should extend `components/data_table_card.html` so Barangay and Municipal OBC lists stay visually aligned.
+- Pass a `headers` array and `rows` data with `view_url`, `edit_url`, and `delete_preview_url`. The component already handles the action buttons and the two-step delete confirmation (confirm dialog → redirect to detail for “Review before deletion”).

@@ -1,0 +1,24 @@
+{# Text input wrapper #}
+<div class="space-y-1 {{ extra_classes }}">
+    {% if label %}
+    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+        {{ label }}{% if required or field.field.required %}<span class="text-red-500">*</span>{% endif %}
+    </label>
+    {% endif %}
+    <div class="relative">
+        <input id="{{ field.id_for_label }}"
+               name="{{ field.html_name }}"
+               value="{{ field.value|default_if_none:'' }}"
+               type="{{ field.field.widget.input_type|default:'text' }}"
+               class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200 {{ field.field.widget.attrs.class }}"
+               {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+               {% for attr, value in field.field.widget.attrs.items %}{% if attr not in 'class type placeholder value' %} {{ attr }}="{{ value }}"{% endif %}{% endfor %}>
+        {% if prefix_icon %}
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <i class="{{ prefix_icon }} text-gray-400"></i>
+        </span>
+        {% endif %}
+    </div>
+    {% if help_text %}<p class="text-xs text-gray-500">{{ help_text }}</p>{% elif field.help_text %}<p class="text-xs text-gray-500">{{ field.help_text }}</p>{% endif %}
+    {% if field.errors %}<p class="text-xs text-rose-600">{{ field.errors|join:', ' }}</p>{% endif %}
+</div>

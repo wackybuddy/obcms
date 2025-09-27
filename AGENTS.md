@@ -1,25 +1,30 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-The Django project lives in `src`; `obc_management` owns settings/URLs while feature apps (`communities`, `coordination`, `mana`, `policies`, `documents`, `policy_tracking`, `ai_assistant`) deliver domain logic. Shared utilities stay in `src/common`, import flows in `src/data_imports`, and templates in `src/templates`. Reference docs sit in `docs/`, deployment manifests in `deployment/`, and product briefs in `tasks/`. Keep new code inside the relevant app, park serializers beside their views, and add tests to `src/<app>/tests.py` (break out a `tests/` package when the file grows).
+The Django project lives in `src/`; `obc_management` supplies settings/URLs while feature apps (`communities`, `coordination`, `mana`, `policies`, `documents`, `policy_tracking`, `ai_assistant`) handle domain logic. Shared utilities belong in `src/common`, imports in `src/data_imports`, and templates in `src/templates`. Author tests in `src/<app>/tests.py` (split into `tests/` when needed); docs sit in `docs/`, deployment manifests in `deployment/`, and briefs in `tasks/`.
 
 ## Build, Test, and Development Commands
-- `./scripts/bootstrap_venv.sh && source venv/bin/activate` — create/refresh the Python 3.12 virtualenv.
-- `pip install -r requirements/development.txt` — install Django, DRF, pytest, and tooling.
-- `cd src && ./manage.py migrate` — apply database schema updates.
-- `cd src && ./manage.py runserver` — start the local server on `http://localhost:8000`.
-- `black src && isort src && flake8 src` — format code, sort imports, then lint.
-- `pytest [-k name]` — run the pytest-django suite with optional filtering.
-- `coverage run -m pytest && coverage report` — confirm coverage before merging.
+Run `./scripts/bootstrap_venv.sh && source venv/bin/activate` to create and enter the Python 3.12 virtualenv. `pip install -r requirements/development.txt` brings in Django, DRF, pytest, and tooling. Inside `src/`, use `./manage.py migrate` then `./manage.py runserver` for local development. `black src && isort src && flake8 src` keeps style checks clean; run `pytest --ds=obc_management.settings` (optionally `-k <pattern>`) and `coverage run -m pytest && coverage report` before merging.
 
 ## Coding Style & Naming Conventions
-Adopt Black defaults (88-char lines, double quotes) and four-space indentation. Files and modules use `snake_case`; Django models, services, and forms use `PascalCase`. Keep management commands under `<app>/management/commands/`, choose descriptive template blocks such as `{% block community_summary %}`, and centralise shared enums or constants inside `common`. Enable local `pre-commit` hooks when available.
+Black's defaults (88-character width, four spaces) govern formatting. Modules stay snake_case; models, services, and forms use PascalCase. Keep serializers beside their DRF views, management commands under `<app>/management/commands/`, and shared enums in `src/common`. Use descriptive template blocks such as `{% block community_summary %}` to clarify intent. Trigger `pre-commit run --all-files` when hooks are enabled.
+
+### Reusable Form Components
+- Shared Tailwind-ready form partials live in `src/templates/components/` (`form_field.html`, `form_field_input.html`, `form_field_select.html`).
+- Prefer `{% include "components/form_field_select.html" with field=form.region placeholder="Select region..." %}` instead of hand-coding select markup so dropdowns match the Barangay OBC UI.
+- The helpers already wire help text, errors, and the chevron icon; only pass `label`, `placeholder`, and `extra_classes` when you need overrides.
+- Keep widget classes in forms via `_apply_form_field_styles` (e.g., `src/common/forms/staff.py`) so future refactors stay centralized.
+
+### List/Table Card Template
+- Use `components/data_table_card.html` for directory/list pages (Barangay & Municipal OBC tables) to keep the gradient header, column layout, and View/Edit/Delete actions consistent.
+- Each row expects `view_url`, `edit_url`, and `delete_preview_url`; the built-in script shows a confirm dialog, then redirects to the detail page with `?review_delete=1` so the red “Review before deletion” banner can render.
+- Supply `headers` and `rows` collections from the view context; cell content can be HTML snippets to keep layouts rich (icons, stacked metadata, etc.).
 
 ## Testing Guidelines
-Leverage pytest and pytest-django fixtures; mirror production scenarios with factory helpers per app. Name tests `test_<behavior>` and prefer `tests/test_<module>.py` when splitting the default `tests.py`. Cover serializers, services, admin actions, and migrations; run `pytest --ds=obc_management.settings` if settings resolution is required. Maintain coverage ≥85% and add regression tests before altering policy logic or data ingestion.
+Pytest with pytest-django drives the suite, supported by factory fixtures. Name tests `test_<behavior>` and mirror production scenarios, especially for policy logic and data imports. Keep coverage at or above 85% and add regression cases before altering critical flows. Execute `pytest --ds=obc_management.settings` for full suites; organize larger suites under `src/<app>/tests/`.
 
 ## Commit & Pull Request Guidelines
-Follow the existing history: imperative, capitalised subject, no trailing period (e.g., `Enhance MANA module workflow`). Keep commits focused, separating schema, fixture, and UI work. Pull requests must summarize intent, enumerate migrations or scripts, link Jira/issue IDs, and attach screenshots for template changes. State results for `pytest`, `flake8`, and coverage, and request reviews from the relevant module owners.
+Commits use imperative, capitalized subjects without trailing periods (e.g., `Enhance MANA module workflow`) and should isolate schema, fixture, and UI edits. Pull requests must summarize intent, flag migrations or scripts, link Jira or issue IDs, and add screenshots for template changes. Always report the most recent `pytest`, `flake8`, and coverage results and request reviews from the owning module team.
 
-## Environment & Configuration Tips
-Copy `.env.example` to `.env`, populate `SECRET_KEY`, database URLs, Redis endpoints, and third-party tokens, and never commit the filled file. SQLite is acceptable for quick local work, but configure Postgres/Redis for staging and reflect updates in `deployment/`. Document integration specifics alongside the existing admin and UI guides in `docs/`.
+## Security & Configuration Tips
+Copy `.env.example` to `.env`, fill `SECRET_KEY`, database, Redis, and third-party credentials, and keep secrets out of git. SQLite suffices for quick checks, but align staging with Postgres and Redis. Document integration details and follow-up notes in `docs/` so future contributors can trace decisions.

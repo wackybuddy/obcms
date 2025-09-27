@@ -1,0 +1,154 @@
+<div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+    <div class="flex items-start justify-between px-6 py-5 border-b border-gray-200">
+        <div class="space-y-1">
+            <p class="text-xs uppercase font-semibold tracking-wide text-gray-400">{{ task.get_status_display }}</p>
+            <h2 class="text-2xl font-bold text-gray-900">{{ task.title }}</h2>
+            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                    <i class="fas fa-users"></i>
+                    {% if task.team %}{{ task.team.name }}{% else %}No team{% endif %}
+                </span>
+                <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                    <i class="fas fa-user"></i>
+                    {{ task.assignee_display_name }}
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                    {% if task.status == 'completed' %}bg-emerald-100 text-emerald-700
+                    {% elif task.status == 'at_risk' %}bg-rose-100 text-rose-700
+                    {% elif task.status == 'not_started' %}bg-amber-100 text-amber-700
+                    {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-700
+                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                    <i class="fas fa-signal"></i>
+                    {{ task.get_status_display }}
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+                    {% if task.priority == 'critical' %}bg-rose-100 text-rose-700
+                    {% elif task.priority == 'high' %}bg-amber-100 text-amber-700
+                    {% elif task.priority == 'low' %}bg-gray-100 text-gray-600
+                    {% else %}bg-blue-100 text-blue-700{% endif %}">
+                    <i class="fas fa-bolt"></i>
+                    {{ task.get_priority_display }}
+                </span>
+            </div>
+        </div>
+        <button type="button" class="text-gray-400 hover:text-gray-600" data-close-modal>
+            <span class="sr-only">Close</span>
+            <i class="fas fa-times text-lg"></i>
+        </button>
+    </div>
+
+    <div class="px-6 py-5 space-y-6" id="taskModalBody">
+        {% if task.impact %}
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+            {{ task.impact }}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+            <div>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Progress</p>
+                <div class="flex items-center gap-2 mt-1">
+                    <div class="h-1.5 flex-1 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full {% if task.status == 'completed' %}bg-emerald-500{% elif task.status == 'at_risk' %}bg-rose-500{% elif task.status == 'not_started' %}bg-amber-400{% else %}bg-blue-500{% endif %}" style="width: {{ task.progress }}%;"></div>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-700">{{ task.progress }}%</span>
+                </div>
+            </div>
+            <div>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Due</p>
+                <p class="mt-1 text-sm text-gray-700">
+                    {% if task.due_date %}
+                        {{ task.due_date|date:"M d, Y" }}
+                    {% else %}
+                        No due date
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <form hx-post="{% url 'common:staff_task_modal' task.id %}" hx-target="#taskModalContent" hx-swap="innerHTML" class="space-y-4">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg px-4 py-2">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-blue-700 uppercase tracking-wide mb-1" for="id_title">Title</label>
+                    {{ form.title }}
+                    {{ form.title.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_priority">Priority</label>
+                    {{ form.priority }}
+                    {{ form.priority.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_status">Status</label>
+                    {{ form.status }}
+                    {{ form.status.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_progress">Progress</label>
+                    {{ form.progress }}
+                    {{ form.progress.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_team">Team</label>
+                    {{ form.team }}
+                    {{ form.team.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_assignee">Assignee</label>
+                    {{ form.assignee }}
+                    {{ form.assignee.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_start_date">Start date</label>
+                    {{ form.start_date }}
+                    {{ form.start_date.errors }}
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_due_date">Due date</label>
+                    {{ form.due_date }}
+                    {{ form.due_date.errors }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_impact">Impact</label>
+                    {{ form.impact }}
+                    {{ form.impact.errors }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_description">Description</label>
+                    {{ form.description }}
+                    {{ form.description.errors }}
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="id_linked_event">Linked event</label>
+                    {{ form.linked_event }}
+                    {{ form.linked_event.errors }}
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button type="button" class="text-sm font-semibold text-rose-600 hover:text-rose-700" data-delete-trigger>Delete</button>
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                    <i class="fas fa-save"></i>
+                    Save changes
+                </button>
+            </div>
+        </form>
+        <div class="border border-rose-200 bg-rose-50 text-rose-700 text-sm rounded-xl px-4 py-3 hidden" data-delete-confirm>
+            <p class="font-semibold">Delete this task?</p>
+            <p class="mt-1 text-rose-600">This action cannot be undone.</p>
+            <div class="flex justify-end gap-3 mt-3">
+                <button type="button" class="px-3 py-1.5 text-sm font-semibold text-gray-600 hover:text-gray-800" data-delete-cancel>Cancel</button>
+                <form hx-post="{% url 'common:staff_task_delete' task.id %}" hx-target="#taskModalContent" hx-swap="none">
+                    {% csrf_token %}
+                    <input type="hidden" name="confirm" value="yes">
+                    <button type="submit" class="px-3 py-1.5 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg">Delete task</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

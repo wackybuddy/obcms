@@ -32,6 +32,13 @@ class BaseMonitoringEntryForm(forms.ModelForm):
             "coverage_barangay",
         }
 
+        goal_alignment_field = self.fields.get("goal_alignment")
+        if goal_alignment_field:
+            self.fields["goal_alignment"] = forms.CharField(
+                required=False,
+                help_text=goal_alignment_field.help_text,
+            )
+
         for field_name in queryset_fields.intersection(self.fields.keys()):
             field = self.fields[field_name]
             field.queryset = field.queryset.order_by("name")
@@ -73,6 +80,21 @@ class BaseMonitoringEntryForm(forms.ModelForm):
                 if initial_value:
                     field.widget.attrs.setdefault("data-initial", str(initial_value))
 
+        goal_field = self.fields.get("goal_alignment")
+        if goal_field:
+            goal_field.widget.attrs.setdefault(
+                "placeholder",
+                "Comma-separated strategic tags (e.g., PDP 2023, SDG 1)",
+            )
+            goal_field.widget.attrs["class"] = goal_field.widget.attrs.get(
+                "class",
+                "",
+            ).replace("block w-full", "block w-full")
+            if getattr(self.instance, "pk", None) and not self.initial.get("goal_alignment"):
+                existing = getattr(self.instance, "goal_alignment", []) or []
+                if isinstance(existing, list):
+                    self.initial["goal_alignment"] = ", ".join(existing)
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance = self._apply_category_defaults(instance)
@@ -82,6 +104,30 @@ class BaseMonitoringEntryForm(forms.ModelForm):
                 self.save_m2m()
             self._post_save(instance)
         return instance
+
+    def clean(self):
+        cleaned_data = super().clean()
+        funding_source = cleaned_data.get("funding_source")
+        funding_source_other = cleaned_data.get("funding_source_other")
+        if (
+            funding_source == MonitoringEntry.FUNDING_SOURCE_OTHERS
+            and not funding_source_other
+        ):
+            self.add_error(
+                "funding_source_other",
+                "Specify the funding source when selecting Others.",
+            )
+        return cleaned_data
+
+    def clean_goal_alignment(self):  # pragma: no cover - exercised via form processing
+        field = self.cleaned_data.get("goal_alignment")
+        if field in (None, ""):
+            return []
+        if isinstance(field, list):
+            return [item for item in field if item]
+        if isinstance(field, str):
+            return [item.strip() for item in field.split(",") if item.strip()]
+        return field
 
     def _apply_category_defaults(self, instance: MonitoringEntry) -> MonitoringEntry:
         """Allow subclasses to enforce category-specific defaults."""
@@ -102,6 +148,22 @@ class MonitoringMOAEntryForm(BaseMonitoringEntryForm):
             "implementing_moa",
             "title",
             "summary",
+            "plan_year",
+            "fiscal_year",
+            "sector",
+            "appropriation_class",
+            "funding_source",
+            "funding_source_other",
+            "program_code",
+            "plan_reference",
+            "goal_alignment",
+            "moral_governance_pillar",
+            "compliance_gad",
+            "compliance_ccet",
+            "benefits_indigenous_peoples",
+            "supports_peace_agenda",
+            "supports_sdg",
+            "budget_ceiling",
             "budget_allocation",
             "budget_obc_allocation",
             "total_slots",
@@ -120,6 +182,7 @@ class MonitoringMOAEntryForm(BaseMonitoringEntryForm):
         widgets = {
             "summary": forms.Textarea(attrs={"rows": 3}),
             "obcs_benefited": forms.Textarea(attrs={"rows": 3}),
+            "goal_alignment": forms.TextInput(),
         }
 
     def clean(self):
@@ -176,6 +239,22 @@ class MonitoringOOBCEntryForm(BaseMonitoringEntryForm):
             "title",
             "summary",
             "oobc_unit",
+            "plan_year",
+            "fiscal_year",
+            "sector",
+            "appropriation_class",
+            "funding_source",
+            "funding_source_other",
+            "program_code",
+            "plan_reference",
+            "goal_alignment",
+            "moral_governance_pillar",
+            "compliance_gad",
+            "compliance_ccet",
+            "benefits_indigenous_peoples",
+            "supports_peace_agenda",
+            "supports_sdg",
+            "budget_ceiling",
             "communities",
             "supporting_organizations",
             "status",
@@ -187,6 +266,7 @@ class MonitoringOOBCEntryForm(BaseMonitoringEntryForm):
         ]
         widgets = {
             "summary": forms.Textarea(attrs={"rows": 3}),
+            "goal_alignment": forms.TextInput(),
         }
 
     def clean(self):
@@ -222,10 +302,19 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
             "supporting_organizations",
             "priority",
             "support_required",
+            "plan_year",
+            "fiscal_year",
+            "sector",
+            "funding_source",
+            "funding_source_other",
+            "plan_reference",
+            "goal_alignment",
+            "moral_governance_pillar",
         ]
         widgets = {
             "summary": forms.Textarea(attrs={"rows": 3}),
             "support_required": forms.Textarea(attrs={"rows": 3}),
+            "goal_alignment": forms.TextInput(),
         }
 
     def clean(self):

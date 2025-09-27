@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}OOBC Calendar Management{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Calendar</li>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'common/vendor/fullcalendar/main.min.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-calendar text-green-600 mr-4"></i>
+                OOBC Calendar Management
+            </h1>
+            <p class="mt-2 text-gray-600 max-w-3xl">
+                One workspace for coordination events, MANA field work, policy follow-through, and staff operations. Use the filters to focus on specific modules and review upcoming commitments or potential scheduling conflicts.
+            </p>
+        </div>
+        <div class="flex flex-col lg:flex-row flex-wrap gap-3">
+            <a href="{% url 'common:coordination_event_add' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-blue-600 hover:bg-blue-700">
+                <i class="fas fa-handshake-simple mr-2"></i>
+                New Coordination Event
+            </a>
+            <a href="{% url 'common:coordination_activity_add' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-emerald-600 hover:bg-emerald-700">
+                <i class="fas fa-people-arrows mr-2"></i>
+                Log Engagement
+            </a>
+            <a href="{% url 'common:staff_task_create' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-violet-600 hover:bg-violet-700">
+                <i class="fas fa-list-check mr-2"></i>
+                Assign Staff Task
+            </a>
+            <a href="{% url 'common:oobc_calendar_feed_json' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-slate-600 hover:bg-slate-700">
+                <i class="fas fa-file-code mr-2"></i>
+                Export JSON
+            </a>
+            <a href="{% url 'common:oobc_calendar_feed_ics' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-teal-600 hover:bg-teal-700">
+                <i class="fas fa-calendar-plus mr-2"></i>
+                Download ICS
+            </a>
+            <a href="{% url 'common:oobc_calendar_brief' %}" target="_blank" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-rose-600 hover:bg-rose-700">
+                <i class="fas fa-print mr-2"></i>
+                Printable Brief
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div class="lg:col-span-3 space-y-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Module Filters</h2>
+                        <p class="text-sm text-gray-500">Toggle modules to show or hide their schedule entries.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        {% for module in module_filters %}
+                        <label class="inline-flex items-center space-x-2 cursor-pointer select-none">
+                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500" value="{{ module.key }}" data-module-filter {% if module.key in active_modules %}checked{% endif %}>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold text-white {{ module.color }}">
+                                {{ module.label }}
+                                {% if module.count %}
+                                <span class="ml-2 bg-white bg-opacity-20 rounded-full px-1.5 py-0.5 text-[0.65rem] font-medium">{{ module.count }}</span>
+                                {% endif %}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% include "components/calendar_widget.html" with widget_id="oobc-calendar" events_json=calendar_events_json options_json=calendar_options_json wrapper_class="bg-slate-50 rounded-xl border border-slate-200" calendar_class="p-4" %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for card in module_cards %}
+                <div class="bg-white rounded-2xl shadow border border-gray-200 p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide">{{ card.label }}</p>
+                            <h3 class="text-2xl font-bold text-gray-900">{{ card.stats.total }}</h3>
+                        </div>
+                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-full text-white {{ card.color }}">
+                            <i class="fas fa-bullseye"></i>
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600">{{ card.description }}</p>
+                    <dl class="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                        <div>
+                            <dt class="font-semibold text-gray-700">Upcoming</dt>
+                            <dd>{{ card.stats.upcoming }}</dd>
+                        </div>
+                        <div>
+                            <dt class="font-semibold text-gray-700">Completed</dt>
+                            <dd>{{ card.stats.completed }}</dd>
+                        </div>
+                    </dl>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                    <i class="fas fa-calendar-check text-blue-600 mr-2"></i>
+                    Upcoming Highlights
+                </h2>
+                <div class="space-y-4">
+                    {% for item in upcoming_highlights %}
+                    <div class="border border-blue-100 rounded-xl p-4 bg-blue-50">
+                        <p class="text-sm font-semibold text-gray-900">{{ item.title }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ item.start|date:"M d, Y" }} • {{ item.start|time:"g:i A" }}</p>
+                        <p class="text-xs text-blue-600 mt-2 uppercase tracking-wide">{{ item.module_label }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No upcoming items logged.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                    <i class="fas fa-clipboard-check text-emerald-500 mr-2"></i>
+                    Follow-up Tasks
+                </h2>
+                <div class="space-y-4">
+                    {% for item in follow_up_items %}
+                    <div class="border rounded-xl p-4 {% if item.overdue %}border-red-200 bg-red-50{% else %}border-emerald-100 bg-emerald-50{% endif %}">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-semibold text-gray-900">{{ item.title }}</p>
+                            <span class="text-xs font-semibold uppercase tracking-wide {% if item.overdue %}text-red-600{% else %}text-emerald-600{% endif %}">
+                                {{ item.module_label }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">Due {{ item.due|date:"M d, Y" }}</p>
+                        <p class="text-xs text-gray-500 mt-2">{{ item.notes|default:"No notes provided." }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No follow-up items pending.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-4">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-sitemap text-indigo-500 mr-2"></i>
+                    Workflow Alerts
+                </h2>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Approvals</h3>
+                        <div class="mt-2 space-y-3">
+                            {% for action in workflow_approvals %}
+                            <div class="border border-indigo-100 rounded-xl p-3 bg-indigo-50">
+                                <p class="text-sm font-semibold text-gray-900">{{ action.title }}</p>
+                                <p class="text-xs text-gray-600 mt-1">{{ action.module_label }} • {{ action.due|date:"M d, Y" }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ action.status|default:"Pending"|capfirst }}</p>
+                            </div>
+                            {% empty %}
+                            <p class="text-xs text-gray-500">No pending approvals.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Escalations & Workflow</h3>
+                        <div class="mt-2 space-y-3">
+                            {% for action in workflow_escalations %}
+                            <div class="border {% if action.severity == 'critical' %}border-red-200 bg-red-50{% else %}border-amber-100 bg-amber-50{% endif %} rounded-xl p-3">
+                                <p class="text-sm font-semibold text-gray-900">{{ action.title }}</p>
+                                <p class="text-xs text-gray-600 mt-1">{{ action.module_label }} • {{ action.due|date:"M d, Y" }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ action.status|default:"Pending"|capfirst }}</p>
+                            </div>
+                            {% empty %}
+                            <p class="text-xs text-gray-500">No escalations detected.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                    <i class="fas fa-triangle-exclamation text-amber-500 mr-2"></i>
+                    Potential Conflicts
+                </h2>
+                <div class="space-y-4">
+                    {% for conflict in conflicts %}
+                    <div class="border border-amber-100 rounded-xl p-4 bg-amber-50">
+                        <p class="text-sm font-semibold text-gray-900">{{ conflict.title_a }}</p>
+                        <p class="text-xs text-gray-600">overlaps with</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ conflict.title_b }}</p>
+                        <p class="text-xs text-gray-600 mt-1">{{ conflict.start|date:"M d, Y" }} • {{ conflict.start|time:"g:i A" }}</p>
+                        {% if conflict.location %}
+                        <p class="text-xs text-gray-500 mt-1">Location: {{ conflict.location }}</p>
+                        {% endif %}
+                        <p class="text-xs text-amber-600 mt-2 uppercase tracking-wide">{{ conflict.module_label }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500">No conflicts detected for the selected period.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if analytics_heatmap_rows %}
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-fire text-rose-500 mr-2"></i>
+                        Module Activity Heatmap
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-1">Next 7 days of scheduled work.</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-xs text-center">
+                        <thead>
+                            <tr>
+                                <th class="px-3 py-2 text-left font-semibold text-gray-700">Module</th>
+                                {% for date in analytics_heatmap_dates %}
+                                <th class="px-2 py-2 font-semibold text-gray-600">{{ date|date:"M d" }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in analytics_heatmap_rows %}
+                            <tr>
+                                <td class="px-3 py-2 text-left font-semibold text-gray-800">{{ row.module_label }}</td>
+                                {% for date, count in row.counts %}
+                                <td class="px-2 py-2">
+                                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-md text-xs font-semibold
+                                        {% if count == 0 %}bg-gray-100 text-gray-400
+                                        {% elif count <= 2 %}bg-blue-100 text-blue-600
+                                        {% elif count <= 4 %}bg-blue-300 text-blue-900
+                                        {% else %}bg-blue-600 text-white{% endif %}">
+                                        {{ count }}
+                                    </span>
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if analytics_status_rows %}
+                <div class="space-y-3">
+                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Status Breakdown</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        {% for row in analytics_status_rows %}
+                        <div class="border border-gray-200 rounded-xl p-3">
+                            <p class="text-sm font-semibold text-gray-900">{{ row.module_label }}</p>
+                            <dl class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-gray-600">
+                                {% for item in row.counts|slice:":4" %}
+                                <div>
+                                    <dt class="font-semibold text-gray-700 inline">{{ item.status }}:</dt>
+                                    <dd class="inline">{{ item.count }}</dd>
+                                </div>
+                                {% endfor %}
+                            </dl>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if analytics_compliance_rows %}
+                <div class="space-y-3">
+                    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Compliance Snapshot</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        {% for row in analytics_compliance_rows %}
+                        <div class="border border-gray-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">{{ row.module_label }}</p>
+                                <p class="text-xs text-gray-500">Pending approvals: {{ row.pending_approvals }} • Overdue items: {{ row.overdue }}</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full font-semibold bg-amber-100 text-amber-700">Escalations: {{ row.escalations }}</span>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full font-semibold bg-emerald-100 text-emerald-700">Follow-ups: {{ row.follow_up }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if analytics_compliance_totals %}
+                    <p class="text-xs text-gray-500">
+                        Totals • Pending approvals: {{ analytics_compliance_totals.pending_approvals|default:0 }} • Overdue: {{ analytics_compliance_totals.overdue|default:0 }} • Escalations: {{ analytics_compliance_totals.escalations|default:0 }} • Follow-ups: {{ analytics_compliance_totals.follow_up|default:0 }}
+                    </p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if analytics_workflow_summary %}
+                <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+                    {% for key, value in analytics_workflow_summary.items %}
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                        {{ key|replace:"_"," "|title }}: {{ value }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+<script src="{% static 'common/js/calendar.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var events = JSON.parse('{{ calendar_events_json|escapejs }}');
+        var options = JSON.parse('{{ calendar_options_json|escapejs }}');
+        var calendar = renderCalendar('oobc-calendar', events, options);
+
+        if (!calendar) {
+            return;
+        }
+
+        function applyModuleFilters() {
+            var activeModules = Array.from(document.querySelectorAll('[data-module-filter]'))
+                .filter(function (input) { return input.checked; })
+                .map(function (input) { return input.value; });
+
+            calendar.batchRendering(function () {
+                calendar.getEvents().forEach(function (event) {
+                    var moduleKey = event.extendedProps && event.extendedProps.module;
+                    if (!moduleKey || activeModules.indexOf(moduleKey) !== -1) {
+                        event.setProp('display', 'auto');
+                    } else {
+                        event.setProp('display', 'none');
+                    }
+                });
+            });
+        }
+
+        document.querySelectorAll('[data-module-filter]').forEach(function (input) {
+            input.addEventListener('change', applyModuleFilters);
+        });
+
+        applyModuleFilters();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}Performance Dashboard - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-gray-600 hover:text-gray-900">OOBC Management</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:staff_management' %}" class="text-gray-600 hover:text-gray-900">Staff Hub</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">Performance</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-tachometer-alt text-emerald-600"></i>
+                <span>Performance Management</span>
+            </h1>
+            <p class="mt-2 text-lg text-gray-600 max-w-4xl">
+                Track accomplishments versus targets for individuals and teams, align performance standards, and surface areas that need coaching.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'common:staff_task_board' %}" class="inline-flex items-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-tasks mr-2"></i>
+                Task board
+            </a>
+            <a href="{% url 'common:staff_training_development' %}" class="inline-flex items-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-graduation-cap mr-2"></i>
+                Training & development
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-gray-500 uppercase">Total targets</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ metrics.total }}</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-emerald-600 uppercase">On track</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-600">{{ metrics.on_track }}</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-amber-600 uppercase">At risk</p>
+            <p class="mt-2 text-3xl font-bold text-amber-600">{{ metrics.at_risk }}</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-rose-600 uppercase">Off track</p>
+            <p class="mt-2 text-3xl font-bold text-rose-600">{{ metrics.off_track }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-800 to-gray-700 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-white flex items-center">
+                <i class="fas fa-filter mr-3"></i>
+                Filters & focus
+            </h2>
+            {% if filters.scope or filters.status or filters.team or filters.staff %}
+            <a href="{% url 'common:staff_performance_dashboard' %}" class="text-sm text-emerald-200 hover:text-white">Reset filters</a>
+            {% endif %}
+        </div>
+        <div class="p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
+                <div class="xl:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Scope</label>
+                    <select name="scope" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All</option>
+                        {% for value,label in scope_choices %}
+                        <option value="{{ value }}" {% if filters.scope == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select name="status" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All</option>
+                        {% for value,label in status_choices %}
+                        <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Team</label>
+                    <select name="team" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All teams</option>
+                        {% for team in teams %}
+                        <option value="{{ team.slug }}" {% if filters.team == team.slug %}selected{% endif %}>{{ team.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Staff</label>
+                    <select name="staff" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All staff</option>
+                        {% for staff_profile in staff_profiles %}
+                        <option value="{{ staff_profile.id }}" {% if filters.staff == staff_profile.id|stringformat:"s" %}selected{% endif %}>{{ staff_profile.user.get_full_name|default:staff_profile.user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-2 flex items-end">
+                    <button type="submit" class="w-full inline-flex justify-center items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                        Apply
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 space-y-6">
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-user-check text-emerald-600"></i>
+                        Staff performance
+                    </h2>
+                    <span class="text-sm text-gray-500">{{ staff_rows|length }} staff tracked</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Staff</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Targets</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Actual vs target</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Status mix</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% if staff_rows %}
+                                {% for row in staff_rows %}
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <p class="font-semibold text-gray-900">{{ row.profile.user.get_full_name|default:row.profile.user.username }}</p>
+                                        <p class="text-xs text-gray-500">{{ row.profile.user.position|default:"Role not set" }}</p>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs">
+                                        <ul class="space-y-1">
+                                            {% for target in row.targets %}
+                                            <li>
+                                                <span class="font-medium text-gray-900">{{ target.metric_name }}</span>
+                                                <span class="text-gray-500">({{ target.get_status_display }})</span>
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="font-semibold text-gray-900">{{ row.actual_total|floatformat:1 }}</span>
+                                        <span class="text-xs text-gray-500">/{{ row.target_total|floatformat:1 }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-gray-500">
+                                        <div>On track: <span class="font-semibold text-emerald-600">{{ row.on_track }}</span></div>
+                                        <div>At risk: <span class="font-semibold text-amber-600">{{ row.at_risk }}</span></div>
+                                        <div>Off track: <span class="font-semibold text-rose-600">{{ row.off_track }}</span></div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-6 text-center text-sm text-gray-500">No staff performance targets yet.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-people-carry text-emerald-600"></i>
+                        Team performance
+                    </h2>
+                    <span class="text-sm text-gray-500">{{ team_rows|length }} teams tracked</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Team</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Targets</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Actual vs target</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Status mix</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% if team_rows %}
+                                {% for row in team_rows %}
+                                <tr>
+                                    <td class="px-4 py-3 font-semibold text-gray-900">{{ row.team.name }}</td>
+                                    <td class="px-4 py-3 text-xs">
+                                        <ul class="space-y-1">
+                                            {% for target in row.targets %}
+                                            <li>
+                                                <span class="font-medium text-gray-900">{{ target.metric_name }}</span>
+                                                <span class="text-gray-500">({{ target.get_status_display }})</span>
+                                            </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <span class="font-semibold text-gray-900">{{ row.actual_total|floatformat:1 }}</span>
+                                        <span class="text-xs text-gray-500">/{{ row.target_total|floatformat:1 }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs text-gray-500">
+                                        <div>On track: <span class="font-semibold text-emerald-600">{{ row.on_track }}</span></div>
+                                        <div>At risk: <span class="font-semibold text-amber-600">{{ row.at_risk }}</span></div>
+                                        <div>Off track: <span class="font-semibold text-rose-600">{{ row.off_track }}</span></div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-6 text-center text-sm text-gray-500">No team performance targets captured yet.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="xl:col-span-1">
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm sticky top-6">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-plus-circle text-emerald-600"></i>
+                        Add performance target
+                    </h2>
+                    <p class="mt-1 text-sm text-gray-500">Capture targets, standards, and metrics for staff or teams. Use staff profiles to configure availability.</p>
+                </div>
+                <form method="post" class="p-6 space-y-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_name" value="performance_target" />
+                    {% if form.non_field_errors %}
+                    <div class="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-3 text-xs">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    {% for field in form %}
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">{{ field.label }}{% if field.field.required %}<span class="text-rose-500">*</span>{% endif %}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <p class="mt-1 text-xs text-rose-600">{{ field.errors|join:', ' }}</p>
+                        {% elif field.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="w-full inline-flex justify-center items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                        Save target
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

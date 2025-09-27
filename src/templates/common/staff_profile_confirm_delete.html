@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Staff Profile - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-gray-600 hover:text-gray-900">OOBC Management</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:staff_profiles_list' %}" class="text-gray-600 hover:text-gray-900">Staff Profiles</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">Delete Profile</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="bg-white border border-rose-200 rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-rose-600 px-6 py-5 text-white">
+            <h1 class="text-2xl font-semibold flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i>
+                Confirm deletion
+            </h1>
+            <p class="text-sm text-rose-100 mt-1">
+                Removing this profile will delete related performance targets, development plans, and training enrollments. Staff tasks remain unaffected.
+            </p>
+        </div>
+        <form method="post" class="p-6 space-y-4">
+            {% csrf_token %}
+            <p class="text-sm text-gray-600">
+                Are you sure you want to remove the profile for <span class="font-semibold text-gray-900">{{ profile.user.get_full_name|default:profile.user.username }}</span>? This action cannot be undone.
+            </p>
+            <div class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-600">
+                <p class="font-semibold text-gray-700">Profile snapshot</p>
+                <ul class="mt-2 list-disc list-inside space-y-1">
+                    <li>Employment status: {{ profile.get_employment_status_display }}</li>
+                    <li>Team memberships: {{ profile.user.team_memberships.filter(is_active=True)|length }}</li>
+                    <li>Competencies recorded: {{ profile.core_competencies|length|default:0 }} core, {{ profile.leadership_competencies|length|default:0 }} leadership, {{ profile.functional_competencies|length|default:0 }} functional</li>
+                </ul>
+            </div>
+            <div class="flex items-center justify-end gap-3">
+                <a href="{% url 'common:staff_profiles_detail' profile.pk %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors">
+                    <i class="fas fa-trash mr-2"></i>
+                    Delete profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

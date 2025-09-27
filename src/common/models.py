@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -445,6 +446,87 @@ class Barangay(models.Model):
         )
 
 
+class StaffProfile(models.Model):
+    """Extended profile metadata for OOBC staff members."""
+
+    STATUS_ACTIVE = "active"
+    STATUS_INACTIVE = "inactive"
+    STATUS_ON_LEAVE = "on_leave"
+    EMPLOYMENT_STATUS_CHOICES = [
+        (STATUS_ACTIVE, "Active"),
+        (STATUS_ON_LEAVE, "On Leave"),
+        (STATUS_INACTIVE, "Inactive"),
+    ]
+
+    TYPE_REGULAR = "regular"
+    TYPE_CONTRACTUAL = "contractual"
+    TYPE_CONSULTANT = "consultant"
+    TYPE_VOLUNTEER = "volunteer"
+    EMPLOYMENT_TYPE_CHOICES = [
+        (TYPE_REGULAR, "Regular"),
+        (TYPE_CONTRACTUAL, "Contractual"),
+        (TYPE_CONSULTANT, "Consultant"),
+        (TYPE_VOLUNTEER, "Volunteer"),
+    ]
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        related_name="staff_profile",
+        on_delete=models.CASCADE,
+    )
+    employment_status = models.CharField(
+        max_length=20,
+        choices=EMPLOYMENT_STATUS_CHOICES,
+        default=STATUS_ACTIVE,
+    )
+    employment_type = models.CharField(
+        max_length=20,
+        choices=EMPLOYMENT_TYPE_CHOICES,
+        blank=True,
+    )
+    position_classification = models.CharField(max_length=150, blank=True)
+    plantilla_item_number = models.CharField(max_length=100, blank=True)
+    salary_grade = models.CharField(max_length=50, blank=True)
+    salary_step = models.CharField(max_length=20, blank=True)
+    reports_to = models.CharField(max_length=255, blank=True)
+    date_joined_organization = models.DateField(null=True, blank=True)
+    primary_location = models.CharField(max_length=255, blank=True)
+    job_purpose = models.TextField(blank=True)
+    key_result_areas = models.JSONField(default=list, blank=True)
+    major_functions = models.JSONField(default=list, blank=True)
+    deliverables = models.JSONField(default=list, blank=True)
+    supervision_lines = models.JSONField(default=list, blank=True)
+    cross_functional_partners = models.JSONField(default=list, blank=True)
+    core_competencies = models.JSONField(default=list, blank=True)
+    leadership_competencies = models.JSONField(default=list, blank=True)
+    functional_competencies = models.JSONField(default=list, blank=True)
+    qualification_education = models.CharField(max_length=255, blank=True)
+    qualification_training = models.CharField(max_length=255, blank=True)
+    qualification_experience = models.CharField(max_length=255, blank=True)
+    qualification_eligibility = models.CharField(max_length=255, blank=True)
+    qualification_competency = models.TextField(blank=True)
+    job_documents_url = models.URLField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["user__last_name", "user__first_name"]
+
+    def __str__(self):
+        return f"Staff Profile: {self.user.get_full_name()}"
+
+    def get_competencies(self, category: str) -> list[str]:
+        """Return the stored competencies for a given category."""
+
+        mapping = {
+            "core": self.core_competencies,
+            "leadership": self.leadership_competencies,
+            "functional": self.functional_competencies,
+        }
+        return mapping.get(category, [])
+
+
 class StaffTeam(models.Model):
     """Operational teams coordinating OOBC staff and task workflows."""
 
@@ -600,6 +682,10 @@ class StaffTask(models.Model):
     progress = models.PositiveSmallIntegerField(
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
+    board_position = models.PositiveIntegerField(
+        default=0,
+        help_text="Relative ordering for Kanban board presentation.",
+    )
     start_date = models.DateField(null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
@@ -607,7 +693,7 @@ class StaffTask(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-updated_at", "due_date"]
+        ordering = ["board_position", "due_date", "-priority", "title"]
 
     def __str__(self):
         return self.title
@@ -619,13 +705,195 @@ class StaffTask(models.Model):
             return False
         return self.due_date < timezone.now().date()
 
-    def mark_completed(self, user=None):
-        """Mark task as completed and update progress."""
-        self.status = self.STATUS_COMPLETED
-        self.progress = 100
-        self.completed_at = timezone.now()
-        update_fields = ["status", "progress", "completed_at", "updated_at"]
-        if user and not self.created_by:
-            self.created_by = user
-            update_fields.append("created_by")
-        self.save(update_fields=update_fields)
+    @property
+    def assignee_display_name(self):
+        """Return a human-friendly assignee label, handling missing data."""
+
+        if not self.assignee:
+            return "Unassigned"
+        full_name = ""
+        if hasattr(self.assignee, "get_full_name"):
+            full_name = (self.assignee.get_full_name() or "").strip()
+        if full_name:
+            return full_name
+        username = getattr(self.assignee, "username", "")
+        return username or "Unassigned"
+
+
+class TrainingProgram(models.Model):
+    """Catalogue of training opportunities for OOBC staff."""
+
+    MODE_IN_PERSON = "in_person"
+    MODE_VIRTUAL = "virtual"
+    MODE_HYBRID = "hybrid"
+    DELIVERY_MODE_CHOICES = [
+        (MODE_IN_PERSON, "In Person"),
+        (MODE_VIRTUAL, "Virtual"),
+        (MODE_HYBRID, "Hybrid"),
+    ]
+
+    title = models.CharField(max_length=255)
+    category = models.CharField(max_length=150, blank=True)
+    description = models.TextField(blank=True)
+    delivery_mode = models.CharField(
+        max_length=20, choices=DELIVERY_MODE_CHOICES, default=MODE_IN_PERSON
+    )
+    competency_focus = models.JSONField(default=list, blank=True)
+    duration_days = models.PositiveIntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["title"]
+
+    def __str__(self):
+        return self.title
+
+
+class TrainingEnrollment(models.Model):
+    """Link staff to training programmes for development tracking."""
+
+    STATUS_PLANNED = "planned"
+    STATUS_ONGOING = "ongoing"
+    STATUS_COMPLETED = "completed"
+    STATUS_CANCELLED = "cancelled"
+    STATUS_CHOICES = [
+        (STATUS_PLANNED, "Planned"),
+        (STATUS_ONGOING, "Ongoing"),
+        (STATUS_COMPLETED, "Completed"),
+        (STATUS_CANCELLED, "Cancelled"),
+    ]
+
+    staff_profile = models.ForeignKey(
+        "StaffProfile",
+        related_name="training_enrollments",
+        on_delete=models.CASCADE,
+    )
+    program = models.ForeignKey(
+        "TrainingProgram",
+        related_name="enrollments",
+        on_delete=models.CASCADE,
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PLANNED
+    )
+    scheduled_date = models.DateField(null=True, blank=True)
+    completion_date = models.DateField(null=True, blank=True)
+    evidence_url = models.URLField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-scheduled_date", "program__title"]
+
+    def __str__(self):
+        return f"{self.staff_profile.user.get_full_name()} - {self.program.title}"
+
+
+class StaffDevelopmentPlan(models.Model):
+    """Individual development actions per staff member."""
+
+    STATUS_PLANNED = "planned"
+    STATUS_IN_PROGRESS = "in_progress"
+    STATUS_COMPLETED = "completed"
+    STATUS_CHOICES = [
+        (STATUS_PLANNED, "Planned"),
+        (STATUS_IN_PROGRESS, "In Progress"),
+        (STATUS_COMPLETED, "Completed"),
+    ]
+
+    staff_profile = models.ForeignKey(
+        "StaffProfile",
+        related_name="development_plans",
+        on_delete=models.CASCADE,
+    )
+    title = models.CharField(max_length=255)
+    competency_focus = models.CharField(max_length=150, blank=True)
+    target_date = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default=STATUS_PLANNED
+    )
+    support_needed = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["target_date", "title"]
+
+    def __str__(self):
+        return f"Development Plan: {self.title} ({self.staff_profile.user.get_full_name()})"
+
+
+class PerformanceTarget(models.Model):
+    """Targets and actuals for staff or team performance dashboards."""
+
+    SCOPE_STAFF = "staff"
+    SCOPE_TEAM = "team"
+    SCOPE_CHOICES = [
+        (SCOPE_STAFF, "Staff"),
+        (SCOPE_TEAM, "Team"),
+    ]
+
+    STATUS_ON_TRACK = "on_track"
+    STATUS_AT_RISK = "at_risk"
+    STATUS_OFF_TRACK = "off_track"
+    STATUS_CHOICES = [
+        (STATUS_ON_TRACK, "On Track"),
+        (STATUS_AT_RISK, "At Risk"),
+        (STATUS_OFF_TRACK, "Off Track"),
+    ]
+
+    scope = models.CharField(max_length=10, choices=SCOPE_CHOICES)
+    staff_profile = models.ForeignKey(
+        "StaffProfile",
+        related_name="performance_targets",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+    )
+    team = models.ForeignKey(
+        "StaffTeam",
+        related_name="performance_targets",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+    )
+    metric_name = models.CharField(max_length=150)
+    performance_standard = models.CharField(max_length=255, blank=True)
+    target_value = models.DecimalField(max_digits=10, decimal_places=2)
+    actual_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    unit = models.CharField(max_length=50, blank=True)
+    status = models.CharField(
+        max_length=12, choices=STATUS_CHOICES, default=STATUS_ON_TRACK
+    )
+    period_start = models.DateField()
+    period_end = models.DateField()
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-period_end", "metric_name"]
+
+    def __str__(self):
+        scope_label = dict(self.SCOPE_CHOICES).get(self.scope, self.scope)
+        return f"{scope_label} Target: {self.metric_name}"
+
+    def clean(self):
+        """Ensure the appropriate relation is populated based on scope."""
+
+        if self.scope == self.SCOPE_STAFF and not self.staff_profile:
+            raise ValidationError("Staff targets require a staff profile.")
+        if self.scope == self.SCOPE_TEAM and not self.team:
+            raise ValidationError("Team targets require a team.")
+        if self.scope == self.SCOPE_STAFF and self.team:
+            raise ValidationError("Staff targets cannot be linked to a team.")
+        if self.scope == self.SCOPE_TEAM and self.staff_profile:
+            raise ValidationError("Team targets cannot be linked to a staff profile.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

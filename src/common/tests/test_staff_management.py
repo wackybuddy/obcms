@@ -1,6 +1,7 @@
 """Tests for the OOBC staff management dashboard."""
 
-from datetime import timedelta
+import json
+from datetime import date, timedelta
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -8,7 +9,17 @@ from django.urls import reverse
 from django.utils import timezone
 
 from common.constants import STAFF_TEAM_DEFINITIONS
-from common.models import StaffTask, StaffTeam, StaffTeamMembership, User
+from common.models import (
+    PerformanceTarget,
+    StaffDevelopmentPlan,
+    StaffProfile,
+    StaffTask,
+    StaffTeam,
+    StaffTeamMembership,
+    TrainingEnrollment,
+    TrainingProgram,
+    User,
+)
 
 
 class StaffManagementViewTests(TestCase):
@@ -29,10 +40,16 @@ class StaffManagementViewTests(TestCase):
             user_type="oobc_staff",
             is_approved=True,
         )
+        self.staff_member.first_name = "Active"
+        self.staff_member.last_name = "Member"
+        self.staff_member.save(update_fields=["first_name", "last_name"])
         self.url = reverse("common:staff_management")
         self.task_create_url = reverse("common:staff_task_create")
+        self.task_board_url = reverse("common:staff_task_board")
         self.team_assign_url = reverse("common:staff_team_assign")
         self.team_manage_url = reverse("common:staff_team_manage")
+        self.profile_list_url = reverse("common:staff_profiles_list")
+        self.profile_create_url = reverse("common:staff_profile_create")
         self.client.force_login(self.admin)
 
     def test_default_teams_are_seeded(self):
@@ -82,31 +99,14 @@ class StaffManagementViewTests(TestCase):
             ).exists()
         )
 
-    def test_update_task_status(self):
-        """The lightweight status form updates task progress and status."""
+    def test_staff_management_points_to_task_board(self):
+        """The staff hub links to the dedicated task board instead of embedding it."""
 
-        team = StaffTeam.objects.create(name="Research Unit")
-        task = StaffTask.objects.create(
-            title="Compile field notes",
-            team=team,
-            assignee=self.staff_member,
-            created_by=self.admin,
-        )
-
-        post_data = {
-            "form_name": "task_status",
-            "task_id": str(task.id),
-            "status": "completed",
-            "progress": "100",
-        }
-
-        response = self.client.post(self.url, post_data, follow=True)
+        response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        task.refresh_from_db()
-        self.assertEqual(task.status, StaffTask.STATUS_COMPLETED)
-        self.assertEqual(task.progress, 100)
-        self.assertIsNotNone(task.completed_at)
+        self.assertContains(response, self.task_board_url)
+        self.assertNotContains(response, "Task management & calendar")
 
     def test_assign_staff_to_team_view(self):
         """Submission on the team assignment page activates membership."""
@@ -165,3 +165,709 @@ class StaffManagementViewTests(TestCase):
 
         self.assertGreater(StaffTeam.objects.count(), 0)
         self.assertGreater(StaffTask.objects.count(), 0)
+
+    def test_staff_task_board_view(self):
+        """Task board renders grouped tasks and accepts status updates."""
+
+        team = StaffTeam.objects.create(name="Coordination Unit")
+        task = StaffTask.objects.create(
+            title="Prepare coordination brief",
+            team=team,
+            assignee=self.staff_member,
+            created_by=self.admin,
+        )
+
+        board_url = reverse("common:staff_task_board")
+        response = self.client.get(board_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Staff Task Board")
+        self.assertContains(response, task.title)
+
+        response = self.client.post(
+            board_url,
+            {
+                "form_name": "update_task",
+                "task_id": task.id,
+                "status": StaffTask.STATUS_COMPLETED,
+                "progress": 100,
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        task.refresh_from_db()
+        self.assertEqual(task.status, StaffTask.STATUS_COMPLETED)
+
+    def test_staff_task_board_table_view(self):
+        """Table view renders column headers and rows for tasks."""
+
+        team = StaffTeam.objects.create(name="Operations")
+        StaffTask.objects.create(
+            title="Publish weekly bulletin",
+            team=team,
+            assignee=self.staff_member,
+            created_by=self.admin,
+            due_date=date.today(),
+        )
+
+        response = self.client.get(self.task_board_url, {"view": "table"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["view_mode"], "table")
+        self.assertContains(response, "Actions")
+        self.assertContains(response, "Publish weekly bulletin")
+
+    def test_staff_task_board_group_by_team(self):
+        """Board grouping by team shows the team column helper text."""
+
+        team = StaffTeam.objects.create(name="Rapid Response")
+        StaffTask.objects.create(
+            title="Coordinate field deployment",
+            team=team,
+            created_by=self.admin,
+        )
+
+        response = self.client.get(self.task_board_url, {"group": "team"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["group_by"], "team")
+        self.assertContains(response, "Rapid Response")
+        self.assertContains(response, "Tasks without team ownership")
+
+    def test_staff_task_board_sort_order(self):
+        """Table sort direction updates the ordered context list."""
+
+        team = StaffTeam.objects.create(name="Metrics")
+        older = StaffTask.objects.create(
+            title="Compile quarterly report",
+            team=team,
+            created_by=self.admin,
+            due_date=date(2024, 1, 15),
+        )
+        newer = StaffTask.objects.create(
+            title="Publish monthly digest",
+            team=team,
+            created_by=self.admin,
+            due_date=date(2024, 3, 10),
+        )
+
+        response = self.client.get(
+            self.task_board_url,
+            {"view": "table", "sort": "due_date", "order": "desc"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        tasks = list(response.context["tasks"])
+        self.assertTrue(tasks)
+        self.assertEqual(tasks[0], newer)
+        self.assertEqual(tasks[-1], older)
+
+    def test_staff_task_board_update_preserves_view(self):
+        """Posting an update with a next parameter redirects back to the same view."""
+
+        team = StaffTeam.objects.create(name="Comms")
+        task = StaffTask.objects.create(
+            title="Refresh talking points",
+            team=team,
+            created_by=self.admin,
+        )
+
+        next_url = f"{self.task_board_url}?view=table&sort=due_date"
+        response = self.client.post(
+            self.task_board_url,
+            {
+                "form_name": "update_task",
+                "task_id": task.id,
+                "status": StaffTask.STATUS_IN_PROGRESS,
+                "progress": 25,
+                "next": next_url,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], next_url)
+
+    def test_staff_task_update_status_endpoint(self):
+        """Drag API updates status and progress for completed tasks."""
+
+        team = StaffTeam.objects.create(name="Planning")
+        task = StaffTask.objects.create(
+            title="Roll up provincial inputs",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_IN_PROGRESS,
+            progress=40,
+        )
+
+        update_url = reverse("common:staff_task_update")
+        response = self.client.post(
+            update_url,
+            data=json.dumps(
+                {
+                    "task_id": task.id,
+                    "group": "status",
+                    "value": StaffTask.STATUS_COMPLETED,
+                    "order": [task.id],
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        task.refresh_from_db()
+        self.assertEqual(task.status, StaffTask.STATUS_COMPLETED)
+        self.assertEqual(task.progress, 100)
+        self.assertIsNotNone(task.completed_at)
+
+    def test_staff_task_update_team_reassignment(self):
+        """Switching columns grouped by team reassigns the task."""
+
+        source = StaffTeam.objects.create(name="Ops")
+        target = StaffTeam.objects.create(name="Comms")
+        task = StaffTask.objects.create(
+            title="Coordinate provincial rollout",
+            team=source,
+            assignee=self.staff_member,
+            created_by=self.admin,
+        )
+
+        update_url = reverse("common:staff_task_update")
+        response = self.client.post(
+            update_url,
+            data=json.dumps(
+                {
+                    "task_id": task.id,
+                    "group": "team",
+                    "value": target.slug,
+                    "order": [task.id],
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["task"]["team"], target.name)
+        task.refresh_from_db()
+        self.assertEqual(task.team, target)
+        self.assertTrue(
+            StaffTeamMembership.objects.filter(team=target, user=self.staff_member).exists()
+        )
+
+    def test_staff_task_update_rejects_unknown_group(self):
+        """Unknown group values are rejected with a 400 response."""
+
+        team = StaffTeam.objects.create(name="Logistics")
+        task = StaffTask.objects.create(
+            title="Draft logistics plan",
+            team=team,
+            created_by=self.admin,
+        )
+
+        update_url = reverse("common:staff_task_update")
+        response = self.client.post(
+            update_url,
+            {
+                "task_id": task.id,
+                "group": "unknown",
+                "value": "noop",
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+
+    def test_staff_task_modal_get(self):
+        """Modal endpoint renders the task form for editing."""
+
+        team = StaffTeam.objects.create(name="Strategy")
+        task = StaffTask.objects.create(
+            title="Coordinate outreach",
+            team=team,
+            created_by=self.admin,
+        )
+
+        modal_url = reverse("common:staff_task_modal", args=[task.id])
+        response = self.client.get(modal_url, HTTP_HX_REQUEST="true")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Save changes")
+        self.assertContains(response, task.title)
+
+    def test_staff_task_modal_update(self):
+        """Posting to the modal saves updates and triggers refresh events."""
+
+        team = StaffTeam.objects.create(name="Field Ops")
+        new_team = StaffTeam.objects.create(name="Planning")
+        task = StaffTask.objects.create(
+            title="Conduct field visit",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_IN_PROGRESS,
+            progress=40,
+        )
+
+        modal_url = reverse("common:staff_task_modal", args=[task.id])
+        response = self.client.post(
+            modal_url,
+            {
+                "title": "Conduct field visit - Updated",
+                "team": str(new_team.id),
+                "assignee": str(self.staff_member.id),
+                "priority": StaffTask.PRIORITY_HIGH,
+                "status": StaffTask.STATUS_COMPLETED,
+                "impact": "Ensure partner alignment.",
+                "description": "Coordinate with local stakeholders.",
+                "start_date": timezone.now().date().isoformat(),
+                "due_date": (timezone.now().date() + timedelta(days=2)).isoformat(),
+                "progress": "100",
+            },
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 204)
+        trigger = response.headers.get("HX-Trigger")
+        self.assertIsNotNone(trigger)
+        self.assertIn("task-board-refresh", trigger)
+        task.refresh_from_db()
+        self.assertEqual(task.title, "Conduct field visit - Updated")
+        self.assertEqual(task.team, new_team)
+        self.assertEqual(task.progress, 100)
+        self.assertEqual(task.status, StaffTask.STATUS_COMPLETED)
+
+    def test_staff_task_delete_requires_confirm(self):
+        """Deleting without explicit confirmation returns an error."""
+
+        team = StaffTeam.objects.create(name="Ops Center")
+        task = StaffTask.objects.create(
+            title="Prepare daily brief",
+            team=team,
+            created_by=self.admin,
+        )
+
+        delete_url = reverse("common:staff_task_delete", args=[task.id])
+        response = self.client.post(delete_url, {}, HTTP_HX_REQUEST="true")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("error", response.json())
+        self.assertTrue(StaffTask.objects.filter(pk=task.id).exists())
+
+    def test_staff_task_delete_success(self):
+        """Confirmed deletion removes the task and signals a refresh."""
+
+        team = StaffTeam.objects.create(name="Design")
+        task = StaffTask.objects.create(
+            title="Update briefing deck",
+            team=team,
+            created_by=self.admin,
+        )
+
+        delete_url = reverse("common:staff_task_delete", args=[task.id])
+        response = self.client.post(
+            delete_url,
+            {"confirm": "yes"},
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 204)
+        trigger = response.headers.get("HX-Trigger")
+        self.assertIsNotNone(trigger)
+        self.assertIn("task-board-refresh", trigger)
+        self.assertFalse(StaffTask.objects.filter(pk=task.id).exists())
+
+    def test_staff_task_inline_update_changes_title(self):
+        """Inline table editing updates key fields and redirects back."""
+
+        team = StaffTeam.objects.create(name="Original")
+        new_team = StaffTeam.objects.create(name="Updated Team")
+        task = StaffTask.objects.create(
+            title="Initial title",
+            team=team,
+            assignee=self.staff_member,
+            created_by=self.admin,
+            status=StaffTask.STATUS_NOT_STARTED,
+            progress=10,
+        )
+
+        inline_url = reverse("common:staff_task_inline_update", args=[task.id])
+        next_url = f"{self.task_board_url}?view=table"
+        response = self.client.post(
+            inline_url,
+            {
+                "title": "Revised title",
+                "team": str(new_team.id),
+                "assignee": str(self.staff_member.id),
+                "priority": StaffTask.PRIORITY_HIGH,
+                "status": StaffTask.STATUS_IN_PROGRESS,
+                "impact": task.impact,
+                "description": task.description,
+                "start_date": timezone.now().date().isoformat(),
+                "due_date": (timezone.now().date() + timedelta(days=3)).isoformat(),
+                "progress": "55",
+                "linked_event": "",
+                "next": next_url,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], next_url)
+        task.refresh_from_db()
+        self.assertEqual(task.title, "Revised title")
+        self.assertEqual(task.team, new_team)
+        self.assertEqual(task.status, StaffTask.STATUS_IN_PROGRESS)
+        self.assertEqual(task.progress, 55)
+
+    def test_staff_task_reorder_within_column(self):
+        """Reordering tasks updates board positions sequentially."""
+
+        team = StaffTeam.objects.create(name="Strategy")
+        task_a = StaffTask.objects.create(
+            title="Draft roadmap",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_IN_PROGRESS,
+        )
+        task_b = StaffTask.objects.create(
+            title="Collect inputs",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_IN_PROGRESS,
+        )
+        task_c = StaffTask.objects.create(
+            title="Prepare digest",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_IN_PROGRESS,
+        )
+
+        update_url = reverse("common:staff_task_update")
+        response = self.client.post(
+            update_url,
+            data=json.dumps(
+                {
+                    "task_id": task_c.id,
+                    "group": "status",
+                    "value": StaffTask.STATUS_IN_PROGRESS,
+                    "order": [task_c.id, task_b.id, task_a.id],
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        task_a.refresh_from_db()
+        task_b.refresh_from_db()
+        task_c.refresh_from_db()
+        self.assertEqual(task_c.board_position, 1)
+        self.assertEqual(task_b.board_position, 2)
+        self.assertEqual(task_a.board_position, 3)
+
+    def test_staff_task_move_resequences_source_column(self):
+        """Moving between columns resequences both target and source."""
+
+        team = StaffTeam.objects.create(name="Insights")
+        first = StaffTask.objects.create(
+            title="Assemble report",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_NOT_STARTED,
+        )
+        second = StaffTask.objects.create(
+            title="Review data",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_NOT_STARTED,
+        )
+        third = StaffTask.objects.create(
+            title="Brief leadership",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_IN_PROGRESS,
+        )
+        fourth = StaffTask.objects.create(
+            title="Vet talking points",
+            team=team,
+            created_by=self.admin,
+            status=StaffTask.STATUS_IN_PROGRESS,
+        )
+
+        update_url = reverse("common:staff_task_update")
+        response = self.client.post(
+            update_url,
+            data=json.dumps(
+                {
+                    "task_id": third.id,
+                    "group": "status",
+                    "value": StaffTask.STATUS_NOT_STARTED,
+                    "order": [third.id, first.id, second.id],
+                    "source_value": StaffTask.STATUS_IN_PROGRESS,
+                    "source_order": [fourth.id],
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        first.refresh_from_db()
+        second.refresh_from_db()
+        third.refresh_from_db()
+        fourth.refresh_from_db()
+        self.assertEqual([third.board_position, first.board_position, second.board_position], [1, 2, 3])
+        self.assertEqual(third.status, StaffTask.STATUS_NOT_STARTED)
+        self.assertEqual(fourth.board_position, 1)
+
+    def test_staff_profile_create_view(self):
+        """Creating a staff profile stores competencies and metadata."""
+
+        post_data = {
+            "user": str(self.staff_member.id),
+            "employment_status": "active",
+            "employment_type": "regular",
+            "position_classification": "Supervisory",
+            "plantilla_item_number": "OSEC-BTA-PAO6-123",
+            "salary_grade": "SG 24",
+            "salary_step": "2",
+            "reports_to": "PAO VI",
+            "primary_location": "Cotabato City",
+            "job_purpose": "Provide strategic legislative support to MP Uy-Oyod.",
+            "key_result_areas": "Legislative research\nCalendar management",
+            "major_functions": "Draft bills\nMentor legislative staff",
+            "deliverables": "Briefers every session\nLegislative calendars",
+            "supervision_lines": "Reports to COS/PAO VI\nConducts weekly team huddle",
+            "cross_functional_partners": "Public information team\nPolitical affairs officers",
+            "core_competencies": "Critical, Creative, and Strategic Thinking\nEffective Communication",
+            "leadership_competencies": "Planning for Organizational and Systems Change",
+            "functional_competencies": "PAO · Stakeholder Engagement, Community Organizing, and Constituency Building",
+            "qualification_education": "Bachelor's degree relevant to the job",
+            "qualification_training": "8 hours of relevant training",
+            "qualification_experience": "2 years in legislative work",
+            "qualification_eligibility": "Career Service Professional / BARMM Eligibility",
+            "qualification_competency": "Critical Thinking – Proficient\nEffective Communication – Exemplary",
+            "job_documents_url": "https://example.com/job-design",
+            "notes": "Field coordinator for Western Mindanao",
+        }
+
+        response = self.client.post(self.profile_create_url, post_data)
+
+        if response.status_code == 200:
+            errors = response.context["form"].errors.as_json()
+            self.fail(f"Profile form validation errors: {errors}")
+
+        self.assertEqual(response.status_code, 302)
+        profile = StaffProfile.objects.get(user=self.staff_member)
+        self.assertEqual(profile.primary_location, "Cotabato City")
+        self.assertIn("Critical, Creative, and Strategic Thinking", profile.core_competencies)
+        self.assertEqual(profile.position_classification, "Supervisory")
+        self.assertEqual(profile.salary_grade, "SG 24")
+        self.assertIn("Legislative research", profile.key_result_areas)
+        self.assertEqual(profile.qualification_training, "8 hours of relevant training")
+
+    def test_staff_profile_update_view(self):
+        """Updating a staff profile persists changes to JSON fields."""
+
+        profile = StaffProfile.objects.create(
+            user=self.staff_member,
+            primary_location="Cotabato",
+            core_competencies=["Effective Communication"],
+            position_classification="Support",
+            key_result_areas=["Research"],
+        )
+        update_url = reverse("common:staff_profile_update", args=[profile.pk])
+
+        response = self.client.post(
+            update_url,
+            {
+                "employment_status": "on_leave",
+                "employment_type": "consultant",
+                "position_classification": "Supervisory",
+                "plantilla_item_number": "OSEC-BTA-PAO6-321",
+                "salary_grade": "SG 25",
+                "salary_step": "1",
+                "reports_to": "MP Uy-Oyod",
+                "primary_location": "General Santos",
+                "job_purpose": "Leads legislative affairs portfolio.",
+                "key_result_areas": "Research\nStakeholder coordination",
+                "major_functions": "Draft plenary speeches\nSupervise staff",
+                "deliverables": "Weekly progress reports",
+                "supervision_lines": "Coordinates with COS\nHosts daily stand-up",
+                "cross_functional_partners": "Media team",
+                "core_competencies": "Effective Communication\nSynergistic Collaboration",
+                "leadership_competencies": "Leading and Influencing Change",
+                "functional_competencies": "LSO · Policy Making, Analysis, and Evaluation",
+                "qualification_education": "Bachelor's degree",
+                "qualification_training": "16 hours training",
+                "qualification_experience": "3 years relevant experience",
+                "qualification_eligibility": "Professional Eligibility",
+                "qualification_competency": "Critical Thinking – Exemplary",
+                "job_documents_url": "https://example.org/updated-jd",
+                "notes": "Temporarily supporting policy drafting.",
+            },
+        )
+
+        if response.status_code == 200:
+            errors = response.context["form"].errors.as_json()
+            self.fail(f"Profile update errors: {errors}")
+
+        self.assertEqual(response.status_code, 302)
+        profile.refresh_from_db()
+        self.assertEqual(profile.employment_status, StaffProfile.STATUS_ON_LEAVE)
+        self.assertIn("Synergistic Collaboration", profile.core_competencies)
+        self.assertEqual(profile.position_classification, "Supervisory")
+        self.assertEqual(profile.job_purpose, "Leads legislative affairs portfolio.")
+        self.assertIn("Research", profile.key_result_areas)
+        self.assertEqual(profile.qualification_experience, "3 years relevant experience")
+
+    def test_staff_profile_delete_flow(self):
+        """Deleting a profile removes the record."""
+
+        profile = StaffProfile.objects.create(user=self.staff_member)
+        delete_url = reverse("common:staff_profile_delete", args=[profile.pk])
+
+        response = self.client.post(delete_url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(StaffProfile.objects.filter(pk=profile.pk).exists())
+
+    def test_staff_profile_list_filters(self):
+        """List view supports status and team filtering."""
+
+        profile_active = StaffProfile.objects.create(user=self.staff_member)
+        inactive_user = User.objects.create_user(
+            username="inactive.staff",
+            password="pass1234",
+            user_type="oobc_staff",
+            is_approved=True,
+        )
+        inactive_user.first_name = "Inactive"
+        inactive_user.last_name = "Member"
+        inactive_user.save(update_fields=["first_name", "last_name"])
+        profile_inactive = StaffProfile.objects.create(
+            user=inactive_user,
+            employment_status=StaffProfile.STATUS_INACTIVE,
+        )
+        team = StaffTeam.objects.create(name="Planning and Budgeting Team")
+        StaffTeamMembership.objects.create(team=team, user=profile_active.user)
+
+        response = self.client.get(self.profile_list_url, {"status": "inactive"})
+        self.assertContains(response, profile_inactive.user.get_full_name())
+        self.assertNotContains(response, profile_active.user.get_full_name())
+
+        response = self.client.get(self.profile_list_url, {"team": team.slug})
+        self.assertContains(response, profile_active.user.get_full_name())
+
+    def test_staff_profiles_autocreation_from_directory(self):
+        """Visiting the profiles list back-fills missing StaffProfile records."""
+
+        StaffProfile.objects.all().delete()
+
+        response = self.client.get(self.profile_list_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            StaffProfile.objects.filter(user=self.staff_member).exists()
+        )
+        self.assertContains(response, self.staff_member.get_full_name())
+
+    def test_staff_performance_dashboard_target_creation(self):
+        """Creating a performance target via dashboard persists record."""
+
+        profile = StaffProfile.objects.create(user=self.staff_member)
+        url = reverse("common:staff_performance_dashboard")
+
+        response = self.client.post(
+            url,
+            {
+                "form_name": "performance_target",
+                "scope": PerformanceTarget.SCOPE_STAFF,
+                "staff_profile": profile.id,
+                "metric_name": "Policy briefs completed",
+                "performance_standard": "Deliver briefs with 95% quality score",
+                "target_value": "5",
+                "actual_value": "2",
+                "unit": "briefs",
+                "status": PerformanceTarget.STATUS_AT_RISK,
+                "period_start": timezone.now().date().isoformat(),
+                "period_end": (timezone.now().date() + timedelta(days=90)).isoformat(),
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            PerformanceTarget.objects.filter(
+                staff_profile=profile, metric_name="Policy briefs completed"
+            ).exists()
+        )
+
+    def test_staff_training_development_forms(self):
+        """Training dashboard accepts programme, enrollment, and plan submissions."""
+
+        profile = StaffProfile.objects.create(user=self.staff_member)
+        url = reverse("common:staff_training_development")
+
+        # Create programme
+        response = self.client.post(
+            url,
+            {
+                "form_name": "program",
+                "program-title": "Data Storytelling",
+                "program-category": "Monitoring",
+                "program-description": "Transform monitoring results into narratives.",
+                "program-delivery_mode": "hybrid",
+                "program-competency_focus": "Monitoring, Reporting, & Evaluation",
+                "program-duration_days": 3,
+                "program-is_active": "on",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        program = TrainingProgram.objects.get(title="Data Storytelling")
+
+        # Create enrollment
+        response = self.client.post(
+            url,
+            {
+                "form_name": "enrollment",
+                "enroll-staff_profile": profile.id,
+                "enroll-program": program.id,
+                "enroll-status": TrainingEnrollment.STATUS_PLANNED,
+                "enroll-scheduled_date": timezone.now().date().isoformat(),
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            TrainingEnrollment.objects.filter(
+                staff_profile=profile, program=program
+            ).exists()
+        )
+
+        # Create development plan
+        response = self.client.post(
+            url,
+            {
+                "form_name": "plan",
+                "plan-staff_profile": profile.id,
+                "plan-title": "Strengthen community engagement skills",
+                "plan-competency_focus": "PAO · Stakeholder Engagement, Community Organizing, and Constituency Building",
+                "plan-status": StaffDevelopmentPlan.STATUS_IN_PROGRESS,
+                "plan-target_date": (timezone.now().date() + timedelta(days=60)).isoformat(),
+                "plan-support_needed": "Shadow experienced PAOs",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            StaffDevelopmentPlan.objects.filter(
+                staff_profile=profile, title="Strengthen community engagement skills"
+            ).exists()
+        )

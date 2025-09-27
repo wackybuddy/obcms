@@ -1,17 +1,72 @@
-{% comment %}Reusable form field renderer. Intended for inclusion inside grid containers.{% endcomment %}
-{% if wrapper_class %}
-<div class="space-y-1 {{ wrapper_class }}">
-{% else %}
-<div class="space-y-1">
-{% endif %}
-    <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700">
-        {{ field.label }}{% if field.field.required %}<span class="ml-1 text-red-600">*</span>{% endif %}
-    </label>
-    {{ field }}
-    {% if field.help_text %}
+{#
+Reusable form input template.
+Parameters:
+- field: bound field
+- label (optional)
+- help_text (optional)
+- placeholder (optional)
+- required (bool, optional)
+- widget ("text", "textarea", "select") defaults based on field.widget
+- prefix_icon (optional HTML class)
+- extra_classes (optional str for the wrapper)
+#}
+{% load static form_extras %}
+{% resolve_widget field widget|default:'' as widget_type %}
+<div class="space-y-1 {{ extra_classes }}">
+    {% if label %}
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            {{ label }}{% if required or field.field.required %}<span class="text-red-500">*</span>{% endif %}
+        </label>
+    {% endif %}
+
+    {% if widget_type == 'textarea' %}
+        <textarea id="{{ field.id_for_label }}"
+                  name="{{ field.html_name }}"
+                  class="block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 {{ field.field.widget.attrs.class }}"
+                  {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+                  {% for attr, value in field.field.widget.attrs.items %}{% if attr not in 'class rows cols placeholder type' %} {{ attr }}="{{ value }}"{% endif %}{% endfor %}>{% if field.value %}{{ field.value }}{% endif %}</textarea>
+    {% elif widget_type == 'select' or widget_type == 'selectmultiple' %}
+        <div class="relative">
+            <select id="{{ field.id_for_label }}"
+                    name="{{ field.html_name }}"
+                    class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200 {{ field.field.widget.attrs.class }}"
+                    {% if required or field.field.required %}required{% endif %}
+                    {% for attr, value in field.field.widget.attrs.items %}{% if attr not in 'class' %} {{ attr }}="{{ value }}"{% endif %}{% endfor %}>
+                {% if placeholder %}
+                <option value="">{{ placeholder }}</option>
+                {% endif %}
+                {% for option in field.field.choices %}
+                    <option value="{{ option.0 }}" {% if option.0|stringformat:"s" == field.value|stringformat:"s" %}selected{% endif %}>{{ option.1 }}</option>
+                {% endfor %}
+            </select>
+            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+            </span>
+        </div>
+    {% else %}
+        <div class="relative">
+            <input id="{{ field.id_for_label }}"
+                   name="{{ field.html_name }}"
+                   value="{{ field.value|default_if_none:'' }}"
+                   class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200 {{ field.field.widget.attrs.class }}"
+                   {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+                   {% for attr, value in field.field.widget.attrs.items %}{% if attr not in 'class type placeholder value' %} {{ attr }}="{{ value }}"{% endif %}{% endfor %}
+                   type="{{ field.field.widget.input_type|default:'text' }}" />
+            {% if prefix_icon %}
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <i class="{{ prefix_icon }} text-gray-400"></i>
+            </span>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if help_text %}
+    <p class="text-xs text-gray-500">{{ help_text }}</p>
+    {% elif field.help_text %}
     <p class="text-xs text-gray-500">{{ field.help_text }}</p>
     {% endif %}
+
     {% if field.errors %}
-    <p class="text-sm text-red-600">{{ field.errors|join:' ' }}</p>
+    <p class="text-xs text-rose-600">{{ field.errors|join:', ' }}</p>
     {% endif %}
 </div>

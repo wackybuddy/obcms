@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ form_title|default:"Staff Profile" }} - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-gray-600 hover:text-gray-900">OOBC Management</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:staff_profiles_list' %}" class="text-gray-600 hover:text-gray-900">Staff Profiles</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">{{ form_title|default:"Staff Profile" }}</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-user-cog text-emerald-600"></i>
+                <span>{{ form_title|default:"Staff Profile" }}</span>
+            </h1>
+            <p class="mt-2 text-gray-600">
+                Capture plantilla, qualification standards, and competency data so staff records align with Philippine government requirements.
+            </p>
+        </div>
+        <div class="flex items-center gap-2">
+            {% if profile %}
+            <a href="{% url 'common:staff_profiles_detail' profile.pk %}" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to profile
+            </a>
+            {% else %}
+            <a href="{% url 'common:staff_profiles_list' %}" class="inline-flex items-center px-3 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to list
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if available_staff_count is not None and available_staff_count == 0 %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm">
+        All eligible staff already have profiles. Update existing entries instead of creating new ones.
+    </div>
+    {% endif %}
+
+    <div class="bg-white shadow-xl border border-gray-200 rounded-2xl overflow-hidden">
+        <form method="post" class="p-8 space-y-8">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="bg-rose-50 border border-rose-200 text-rose-700 rounded-lg p-4 text-sm">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- Personnel & Plantilla -->
+            <section class="space-y-6">
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-6 space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Personnel & plantilla details</h2>
+                            <p class="text-sm text-gray-600">Mirror DBM-CSC plantilla data or job order terms on file.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% include "components/form_field_select.html" with field=form.user label="Staff member" %}
+                        {% include "components/form_field_select.html" with field=form.employment_status label="Employment status" %}
+                        {% include "components/form_field_select.html" with field=form.employment_type label="Employment type" help_text=form.employment_type.help_text %}
+                        {% include "components/form_field_input.html" with field=form.date_joined_organization label="Date joined organization" %}
+                        {% include "components/form_field_input.html" with field=form.position_classification label="Position classification" help_text=form.position_classification.help_text %}
+                        {% include "components/form_field_input.html" with field=form.plantilla_item_number label="Plantilla / item number" help_text=form.plantilla_item_number.help_text %}
+                        {% include "components/form_field_input.html" with field=form.salary_grade label="Salary grade" help_text=form.salary_grade.help_text %}
+                        {% include "components/form_field_input.html" with field=form.salary_step label="Step" help_text=form.salary_step.help_text %}
+                        {% include "components/form_field_input.html" with field=form.reports_to label="Reports to" help_text=form.reports_to.help_text %}
+                        {% include "components/form_field_input.html" with field=form.primary_location label="Primary location / duty station" %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Job Design -->
+            <section class="space-y-6">
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Job purpose & design</h2>
+                        <p class="text-sm text-gray-600">Translate official job design, tasks, and coordination flows for the role.</p>
+                    </div>
+                    <div class="space-y-4">
+                        {% include "components/form_field.html" with field=form.job_purpose label="Job purpose / mandate" %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {% include "components/form_field.html" with field=form.key_result_areas label="Key result areas" %}
+                            {% include "components/form_field.html" with field=form.supervision_lines label="Supervision & coordination" %}
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {% include "components/form_field.html" with field=form.major_functions label="Major functions / tasks" %}
+                            {% include "components/form_field.html" with field=form.deliverables label="Deliverables / outputs" %}
+                        </div>
+                        {% include "components/form_field.html" with field=form.cross_functional_partners label="Cross-functional partners" %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Qualification Standards -->
+            <section class="space-y-6">
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Qualification standards</h2>
+                        <p class="text-sm text-gray-600">Document the Education, Training, Experience, Eligibility, and Competency requirements.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% include "components/form_field_input.html" with field=form.qualification_education label="Education" %}
+                        {% include "components/form_field_input.html" with field=form.qualification_training label="Training" %}
+                        {% include "components/form_field_input.html" with field=form.qualification_experience label="Experience" %}
+                        {% include "components/form_field_input.html" with field=form.qualification_eligibility label="Eligibility" %}
+                    </div>
+                    {% include "components/form_field.html" with field=form.qualification_competency label="Competency standards / proficiency" %}
+                    {% include "components/form_field_input.html" with field=form.job_documents_url label="Reference documents URL" %}
+                </div>
+            </section>
+
+            <!-- Competency Catalogue -->
+            <section class="space-y-6">
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-6 space-y-6">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Competency catalogue</h2>
+                        <p class="text-sm text-gray-600">Use the Bangsamoro Parliament framework for core, leadership, and functional competencies.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {% include "components/form_field.html" with field=form.core_competencies label="Core competencies" %}
+                        {% include "components/form_field.html" with field=form.leadership_competencies label="Leadership competencies" %}
+                        {% include "components/form_field.html" with field=form.functional_competencies label="Functional competencies" %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Additional Notes -->
+            <section class="space-y-6">
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-6 space-y-4">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Additional notes</h2>
+                    </div>
+                    {% include "components/form_field.html" with field=form.notes label="Notes" %}
+                </div>
+            </section>
+
+            <div class="flex items-center justify-end gap-3">
+                <a href="{% if profile %}{% url 'common:staff_profiles_detail' profile.pk %}{% else %}{% url 'common:staff_profiles_list' %}{% endif %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors">
+                    <i class="fas fa-save mr-2"></i>
+                    Save profile
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

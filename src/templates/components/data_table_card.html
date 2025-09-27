@@ -1,0 +1,81 @@
+{#
+Reusable data table card component for OBC lists.
+Expected context:
+- title: heading text
+- icon_class: optional icon (FontAwesome)
+- accent_class: Tailwind gradient/colour class for header (default emerald)
+- headers: list of dicts {"label": str, "class": optional Tailwind classes}
+- rows: list of dicts {
+    "cells": [ {"content": HTML/text, "class": optional str} ],
+    "view_url": url,
+    "edit_url": url,
+    "delete_preview_url": url,  # detail page with ?review_delete=1
+    "delete_message": optional str
+  }
+- empty_message: optional fallback text
+#}
+{% load static %}
+<div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden" data-table-card>
+    <div class="px-6 py-4 flex items-center gap-3 text-white {{ accent_class|default:'bg-gradient-to-r from-emerald-500 to-emerald-600' }}">
+        {% if icon_class %}<span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-2xl"><i class="{{ icon_class }}"></i></span>{% endif %}
+        <div>
+            <h2 class="text-lg font-semibold">{{ title }}</h2>
+        </div>
+    </div>
+    <div class="divide-y divide-gray-200">
+        <div class="hidden md:grid gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500" style="grid-template-columns: repeat({{ headers|length|add:1 }}, minmax(0, 1fr));">
+            {% for header in headers %}
+            <div class="{{ header.class|default:'flex items-center' }}">{{ header.label }}</div>
+            {% endfor %}
+            <div class="text-right">Actions</div>
+        </div>
+        {% if rows %}
+            {% for row in rows %}
+            <div class="px-6 py-4 grid gap-4 md:items-center" style="grid-template-columns: repeat({{ headers|length|add:1 }}, minmax(0, 1fr));">
+                {% for cell in row.cells %}
+                <div class="{{ cell.class|default:'text-sm text-gray-700' }}">{{ cell.content|safe }}</div>
+                {% endfor %}
+                <div class="flex items-center justify-end gap-2">
+                    <a href="{{ row.view_url }}" class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100">
+                        <i class="fas fa-eye"></i>
+                        <span>View</span>
+                    </a>
+                    <a href="{{ row.edit_url }}" class="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-100">
+                        <i class="fas fa-pen"></i>
+                        <span>Edit</span>
+                    </a>
+                    <button type="button"
+                            class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100"
+                            data-delete-preview="{{ row.delete_preview_url }}"
+                            data-delete-message="{{ row.delete_message|default:'Are you sure you want to delete this record? You will review details before final confirmation.' }}">
+                        <i class="fas fa-trash"></i>
+                        <span>Delete</span>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="px-6 py-8 text-center text-sm text-gray-500">
+                {{ empty_message|default:"No records available." }}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+(function () {
+    if (window.__oobcTableActions) return;
+    window.__oobcTableActions = true;
+    document.addEventListener('click', function (event) {
+        var trigger = event.target.closest('[data-delete-preview]');
+        if (!trigger) return;
+        event.preventDefault();
+        var previewUrl = trigger.getAttribute('data-delete-preview');
+        if (!previewUrl) return;
+        var message = trigger.getAttribute('data-delete-message') || 'Are you sure you want to delete this record?';
+        if (window.confirm(message)) {
+            window.location.href = previewUrl;
+        }
+    });
+})();
+</script>

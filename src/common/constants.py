@@ -2,6 +2,80 @@
 
 STAFF_USER_TYPES = ("oobc_staff", "admin")
 
+# Suggested competency groupings surfaced by OOBC HR leads.
+STAFF_COMPETENCY_CATEGORIES = {
+    "core": [
+        "Critical, Creative, and Strategic Thinking",
+        "Effective Communication",
+        "Synergistic Collaboration",
+        "Complete Staff Work (CSW)",
+        "Public Service and Cultural Competence",
+    ],
+    "leadership": [
+        "Planning for Organizational and Systems Change",
+        "Building High-Trust Organizational Culture",
+        "Supervising Disciplined Execution and Managing for Results",
+        "Developing High-Performance Teams",
+        "Leading and Influencing Change",
+    ],
+    "functional": [
+        "PAO · Stakeholder Engagement, Community Organizing, and Constituency Building",
+        "PAO · Representation Skills",
+        "PAO · Social Marketing, Advocacy, and Lobbying",
+        "PAO · Project, Program, and Events Management",
+        "PAO · Monitoring, Reporting, and Evaluation",
+        "LSO · Investigation and Research Skills",
+        "LSO · Policy Making, Analysis, and Evaluation",
+        "LSO · Legal and Legislative Competence",
+        "LSO · Attention to Details and Quality",
+        "LSO · Oversight Skills",
+        "PIMAO · Strategic Communications",
+        "PIMAO · Documentation and Editing Skills",
+        "PIMAO · Social Media Skills",
+        "PIMAO · Print and Digital Media Skills",
+        "PIMAO · Media Handling Skills",
+    ],
+}
+
+STAFF_COMPETENCY_PROFICIENCY_LEVELS = (
+    "Needs Improvement",
+    "Developing",
+    "Proficient",
+    "Exemplary",
+)
+
+CALENDAR_MODULE_ORDER = [
+    "coordination",
+    "mana",
+    "planning",
+    "policy",
+    "staff",
+]
+
+CALENDAR_MODULE_LABELS = {
+    "coordination": "Coordination",
+    "mana": "MANA Field Operations",
+    "planning": "Planning & Budgeting",
+    "policy": "Policy Tracking",
+    "staff": "Staff Operations",
+}
+
+CALENDAR_MODULE_DESCRIPTIONS = {
+    "coordination": "Events, stakeholder engagements, and inter-agency meetings.",
+    "mana": "MANA baseline data collection activities and field deployments.",
+    "planning": "Planning milestones, budget workflow stages, and community requests.",
+    "policy": "Policy recommendation reviews, implementation starts, and deadlines.",
+    "staff": "Team tasks, development actions, and scheduled trainings.",
+}
+
+CALENDAR_MODULE_COLORS = {
+    "coordination": "bg-blue-500",
+    "mana": "bg-amber-500",
+    "planning": "bg-teal-500",
+    "policy": "bg-pink-500",
+    "staff": "bg-violet-500",
+}
+
 STAFF_TEAM_DEFINITIONS = [
     {
         "name": "MANA Team",

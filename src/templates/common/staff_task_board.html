@@ -1,0 +1,1106 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Task Board - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-gray-600 hover:text-gray-900">OOBC Management</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:staff_management' %}" class="text-gray-600 hover:text-gray-900">Staff Hub</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">Task Board</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-tasks text-emerald-600"></i>
+                <span>Staff Task Board</span>
+            </h1>
+            <p class="mt-2 text-lg text-gray-600 max-w-4xl">
+                Switch between board and table workspaces, slice tasks with saved filters, and keep progress in sync without leaving the page.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'common:staff_task_modal_create' %}" data-modal-link class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                New task
+            </a>
+            <a href="{% url 'common:staff_profiles_list' %}" class="inline-flex items-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-id-card-alt mr-2"></i>
+                Staff profiles
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-gray-500 uppercase">Total tasks</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ metrics.total }}</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-emerald-600 uppercase">Completion rate</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-600">{{ metrics.completion_rate }}%</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-blue-600 uppercase">Upcoming (7 days)</p>
+            <p class="mt-2 text-3xl font-bold text-blue-600">{{ metrics.upcoming }}</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-rose-600 uppercase">At risk</p>
+            <p class="mt-2 text-3xl font-bold text-rose-600">{{ metrics.at_risk }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm px-6 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div class="flex items-center gap-3 flex-wrap">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">View</span>
+            <div class="inline-flex bg-gray-100 rounded-lg p-1 shadow-inner">
+                {% for option in view_options %}
+                <form method="get" class="inline">
+                    {% for key,value in filters.items %}
+                        {% if value and key != 'view' %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                        {% endif %}
+                    {% endfor %}
+                    <input type="hidden" name="view" value="{{ option.value }}">
+                    <button type="submit" class="px-3 py-1.5 text-sm font-semibold rounded-md flex items-center gap-2 transition-colors
+                        {% if view_mode == option.value %}bg-white text-emerald-600 shadow{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                        <i class="fas {{ option.icon }}"></i>
+                        {{ option.label }}
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            {% if view_mode == 'board' %}
+            <form method="get" class="flex items-center gap-2">
+                {% for key,value in filters.items %}
+                    {% if value and key != 'group' %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <label for="group-by" class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Group</label>
+                <select id="group-by" name="group" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" onchange="this.form.submit()">
+                    {% for option in group_options %}
+                    <option value="{{ option.value }}" {% if group_by == option.value %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
+            {% if view_mode == 'table' %}
+            <form method="get" class="flex items-center gap-2">
+                {% for key,value in filters.items %}
+                    {% if value and key != 'sort' and key != 'order' %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <label for="sort-by" class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Sort</label>
+                <select id="sort-by" name="sort" class="rounded-md border-gray-300 text-sm focus:border-emerald-500 focus:ring-emerald-500" onchange="this.form.submit()">
+                    {% for option in sort_options %}
+                    <option value="{{ option.value }}" {% if sort_field == option.value %}selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="order" value="{{ sort_order }}">
+            </form>
+            <form method="get" class="inline">
+                {% for key,value in filters.items %}
+                    {% if value and key != 'order' %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <input type="hidden" name="order" value="{% if sort_order == 'asc' %}desc{% else %}asc{% endif %}">
+                <button type="submit" class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+                    <i class="fas fa-sort-amount-{% if sort_order == 'asc' %}down{% else %}up{% endif %}"></i>
+                    {% if sort_order == 'asc' %}Asc{% else %}Desc{% endif %}
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-800 to-gray-700 px-6 py-4 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-white flex items-center">
+                <i class="fas fa-filter mr-3"></i>
+                Filters & focus
+            </h2>
+            {% if filters.status or filters.team or filters.assignee or filters.priority or filters.q %}
+            <a href="{% url 'common:staff_task_board' %}" class="text-sm text-emerald-200 hover:text-white">Reset filters</a>
+            {% endif %}
+        </div>
+        <div class="p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4">
+                <input type="hidden" name="view" value="{{ view_mode }}">
+                <input type="hidden" name="group" value="{{ group_by }}">
+                <input type="hidden" name="sort" value="{{ sort_field }}">
+                <input type="hidden" name="order" value="{{ sort_order }}">
+                <div class="xl:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select name="status" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All</option>
+                        {% for key,label in status_labels.items %}
+                        <option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Priority</label>
+                    <select name="priority" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All</option>
+                        {% for key,label in priority_labels.items %}
+                        <option value="{{ key }}" {% if filters.priority == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Team</label>
+                    <select name="team" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All teams</option>
+                        {% for team in team_options %}
+                        <option value="{{ team.slug }}" {% if filters.team == team.slug %}selected{% endif %}>{{ team.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assignee</label>
+                    <select name="assignee" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="">All staff</option>
+                        {% for user in assignee_options %}
+                        <option value="{{ user.id }}" {% if filters.assignee == user.id|stringformat:"s" %}selected{% endif %}>{{ user.get_full_name|default:user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="xl:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fas fa-search"></i></span>
+                        <input type="search" name="q" value="{{ filters.q }}" placeholder="Title, notes, or description" class="pl-10 w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" />
+                    </div>
+                </div>
+                <div class="xl:col-span-2 flex items-end">
+                    <button type="submit" class="w-full inline-flex justify-center items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                        Apply
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if view_mode == 'board' %}
+    {% include 'common/partials/staff_task_board_wrapper.html' %}
+    {% elif view_mode == 'table' %}
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden" data-notion-table-container>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 bg-slate-50 border-b border-gray-200">
+            <div class="flex items-center gap-3 text-slate-600">
+                <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><i class="fas fa-table"></i></span>
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Table workspace</p>
+                    <p class="text-base font-semibold text-slate-700">Active staff tasks</p>
+                </div>
+                <span class="hidden sm:inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold text-slate-500 bg-white border border-slate-200 rounded-full">{{ table_rows|length }} tasks</span>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <button type="button" class="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1 text-emerald-600 shadow-sm transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-1" data-table-save>
+                    <i class="fas fa-cloud-arrow-up text-sm"></i>
+                    <span>Save</span>
+                </button>
+                <span class="flex items-center gap-2">
+                    <i class="fas fa-bolt text-amber-500"></i>
+                    <span>Changes auto-save</span>
+                </span>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm" data-notion-table>
+                <thead class="bg-white">
+                    <tr>
+                        {% for column in table_columns %}
+                        <th scope="col" class="px-6 py-3 text-left text-[0.7rem] font-semibold uppercase tracking-[0.2em] text-slate-500">{{ column.label }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-slate-100">
+                    {% for row in table_rows %}
+                        {% include 'common/partials/staff_task_table_row.html' with task=row.task form=row.form assignee_tokens=row.assignees team_tokens=row.teams %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="{{ table_columns|length }}" class="px-6 py-10 text-center text-sm text-slate-400">No tasks match the current filters.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<div id="taskModal" class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" data-modal-backdrop></div>
+    <div class="relative max-h-[90vh] w-full sm:w-auto overflow-y-auto" id="taskModalContent" hx-target="this" hx-swap="innerHTML"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<style>
+[data-notion-table] select,
+[data-notion-table] select option {
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+</style>
+<script>
+if (!window.htmx) {
+    var htmxScript = document.createElement('script');
+    htmxScript.src = 'https://unpkg.com/htmx.org@1.9.10';
+    htmxScript.defer = true;
+    document.head.appendChild(htmxScript);
+}
+</script>
+<script>
+(function () {
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    }
+
+    const modal = document.getElementById('taskModal');
+    const modalContent = document.getElementById('taskModalContent');
+
+    const statusPillStyles = {
+        completed: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+        at_risk: 'bg-rose-50 text-rose-700 border border-rose-200',
+        in_progress: 'bg-blue-50 text-blue-700 border border-blue-200',
+        not_started: 'bg-slate-100 text-slate-600 border border-slate-200',
+        default: 'bg-slate-100 text-slate-600 border border-slate-200',
+    };
+    const priorityPillStyles = {
+        critical: 'bg-rose-50 text-rose-700 border border-rose-200',
+        high: 'bg-amber-50 text-amber-700 border border-amber-200',
+        medium: 'bg-blue-50 text-blue-700 border border-blue-200',
+        low: 'bg-slate-100 text-slate-600 border border-slate-200',
+        default: 'bg-slate-100 text-slate-600 border border-slate-200',
+    };
+    const neutralPillStyle = 'bg-white text-slate-600 border border-slate-200';
+    const statusDotStyles = {
+        completed: 'bg-emerald-500',
+        at_risk: 'bg-rose-500 animate-pulse',
+        in_progress: 'bg-blue-500',
+        not_started: 'bg-slate-300',
+        default: 'bg-slate-300',
+    };
+    const progressFillVariants = {
+        high: 'bg-emerald-500',
+        medium: 'bg-amber-500',
+        low: 'bg-rose-500',
+    };
+    const progressFillClasses = Object.values(progressFillVariants);
+
+    function debounce(fn, wait) {
+        let timeoutId;
+        return function (...args) {
+            window.clearTimeout(timeoutId);
+            timeoutId = window.setTimeout(() => fn.apply(this, args), wait);
+        };
+    }
+
+    function triggerFormSave(form) {
+        if (!form || form.dataset.saving === 'true') {
+            return;
+        }
+        form.dataset.saving = 'true';
+        if (window.htmx) {
+            htmx.trigger(form, 'submit');
+        } else if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
+    }
+
+    function initializeTableView(context) {
+        let tableElement = null;
+        if (!context) {
+            tableElement = document.querySelector('[data-notion-table]');
+        } else if (context.matches && context.matches('[data-notion-table]')) {
+            tableElement = context;
+        } else if (context.matches && context.matches('[data-task-row]')) {
+            tableElement = context.closest('[data-notion-table]');
+        } else if (context.querySelector) {
+            tableElement = context.querySelector('[data-notion-table]');
+        }
+
+        if (!tableElement) {
+            return;
+        }
+
+        const rows = tableElement.querySelectorAll('[data-task-row]');
+
+        rows.forEach(function (row) {
+            const titleInput = row.querySelector('input[name="title"]');
+            const titlePreview = row.querySelector('[data-title-preview]');
+            if (titleInput && !titleInput.value && row.dataset.taskTitle) {
+                titleInput.value = row.dataset.taskTitle;
+            }
+            if (titleInput && titlePreview) {
+                const syncTitlePreview = function () {
+                    titlePreview.textContent = titleInput.value || 'Untitled task';
+                };
+                syncTitlePreview();
+                titleInput.addEventListener('input', syncTitlePreview);
+                titleInput.addEventListener('change', syncTitlePreview);
+                titleInput.addEventListener('focus', function () {
+                    titlePreview.classList.add('opacity-40');
+                });
+                titleInput.addEventListener('blur', function () {
+                    titlePreview.classList.remove('opacity-40');
+                });
+            }
+        });
+
+        function attachAutosave(row) {
+            const form = row.querySelector('[data-autosave-form]');
+            if (!form || form.dataset.autosaveReady === 'true') {
+                return;
+            }
+
+            const scheduleTextSubmit = debounce(function () {
+                triggerFormSave(form);
+            }, 600);
+            const scheduleQuickSubmit = debounce(function () {
+                triggerFormSave(form);
+            }, 200);
+
+            form.querySelectorAll('input, select, textarea').forEach(function (control) {
+                const isTextInput = control.tagName === 'INPUT' && control.type === 'text';
+                const handler = function () {
+                    form.dataset.dirty = 'true';
+                    if (isTextInput) {
+                        scheduleTextSubmit();
+                    } else {
+                        scheduleQuickSubmit();
+                    }
+                };
+                if (isTextInput) {
+                    control.addEventListener('input', handler);
+                    control.addEventListener('change', handler);
+                } else {
+                    control.addEventListener('change', handler);
+                }
+            });
+
+            form.addEventListener('htmx:beforeRequest', function () {
+                form.dataset.saving = 'true';
+            });
+            form.addEventListener('htmx:afterRequest', function () {
+                delete form.dataset.dirty;
+                delete form.dataset.saving;
+            });
+            form.addEventListener('htmx:responseError', function () {
+                delete form.dataset.saving;
+            });
+            form.addEventListener('htmx:sendError', function () {
+                delete form.dataset.saving;
+            });
+            form.dataset.autosaveReady = 'true';
+        }
+
+        const saveAllButton = document.querySelector('[data-table-save]');
+        if (saveAllButton && saveAllButton.dataset.bound !== 'true') {
+            saveAllButton.addEventListener('click', function () {
+                const dirtyForms = tableElement.querySelectorAll('[data-autosave-form][data-dirty="true"]');
+                if (dirtyForms.length === 0) {
+                    return;
+                }
+                dirtyForms.forEach(function (form) {
+                    triggerFormSave(form);
+                });
+            });
+            saveAllButton.dataset.bound = 'true';
+        }
+
+        function applySelectStyling(select) {
+            const control = select.dataset.notionControl;
+            const baseClass = select.dataset.baseClass || select.className;
+            const value = select.value || 'default';
+            let variantClass = neutralPillStyle;
+            if (control === 'status') {
+                variantClass = statusPillStyles[value] || statusPillStyles.default;
+                const row = select.closest('[data-task-row]');
+                if (row) {
+                    row.dataset.taskStatus = value;
+                    const indicator = row.querySelector('[data-status-indicator]');
+                    if (indicator) {
+                        indicator.className = (
+                            'flex h-3.5 w-3.5 rounded-full transition-colors '
+                            + (statusDotStyles[value] || statusDotStyles.default)
+                        ).trim();
+                    }
+                }
+            } else if (control === 'priority') {
+                variantClass = priorityPillStyles[value] || priorityPillStyles.default;
+                const row = select.closest('[data-task-row]');
+                if (row) {
+                    row.dataset.taskPriority = value;
+                }
+            } else {
+                variantClass = neutralPillStyle;
+            }
+            select.className = (baseClass + ' ' + variantClass).trim();
+        }
+
+        tableElement
+            .querySelectorAll('select[data-notion-control]')
+            .forEach(function (select) {
+                applySelectStyling(select);
+                if (select.dataset.notionReady === 'true') {
+                    return;
+                }
+                select.addEventListener('change', function () {
+                    applySelectStyling(select);
+                });
+                select.dataset.notionReady = 'true';
+            });
+
+        function applyProgressVisual(input) {
+            const row = input.closest('[data-task-row]');
+            if (!row) {
+                return;
+            }
+            const taskId = row.dataset.taskId;
+            const bar = row.querySelector('[data-progress-bar="' + taskId + '"]');
+            const label = row.querySelector('[data-progress-label="' + taskId + '"]');
+            let value = Number(input.value);
+            if (Number.isNaN(value)) {
+                value = 0;
+            }
+            value = Math.max(0, Math.min(100, value));
+            input.value = value;
+            if (bar) {
+                progressFillClasses.forEach(function (cls) {
+                    bar.classList.remove(cls);
+                });
+                let variant = progressFillVariants.high;
+                if (value < 40) {
+                    variant = progressFillVariants.low;
+                } else if (value < 80) {
+                    variant = progressFillVariants.medium;
+                }
+                bar.classList.add(variant);
+                bar.style.width = value + '%';
+            }
+            if (label) {
+                label.textContent = value + '%';
+            }
+        }
+
+        tableElement
+            .querySelectorAll('input[data-notion-control="progress"]')
+            .forEach(function (input) {
+                applyProgressVisual(input);
+                if (input.dataset.notionReady === 'true') {
+                    return;
+                }
+                input.addEventListener('input', function () {
+                    applyProgressVisual(input);
+                });
+                input.addEventListener('change', function () {
+                    applyProgressVisual(input);
+                });
+                input.dataset.notionReady = 'true';
+            });
+
+        function applyDueHelper(input) {
+            const cell = input.closest('td');
+            const helper = cell?.querySelector('[data-due-helper]');
+            const row = input.closest('[data-task-row]');
+            if (!helper) {
+                return;
+            }
+            const value = input.value;
+            helper.classList.remove('text-slate-400', 'text-emerald-500', 'text-amber-500', 'text-rose-500');
+            if (!value) {
+                helper.textContent = 'No due date';
+                helper.classList.add('text-slate-400');
+                if (row) {
+                    row.removeAttribute('data-due-state');
+                }
+                return;
+            }
+            const parsedDate = new Date(value + 'T00:00:00');
+            if (Number.isNaN(parsedDate.getTime())) {
+                helper.textContent = value;
+                helper.classList.add('text-slate-400');
+                return;
+            }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diffMs = parsedDate.getTime() - today.getTime();
+            const diffDays = Math.round(diffMs / 86400000);
+            const fmt = new Intl.DateTimeFormat(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+            let description;
+            if (diffDays === 0) {
+                description = 'Due today';
+                helper.classList.add('text-amber-500');
+                if (row) {
+                    row.dataset.dueState = 'today';
+                }
+            } else if (diffDays === 1) {
+                description = 'Due tomorrow';
+                helper.classList.add('text-amber-500');
+                if (row) {
+                    row.dataset.dueState = 'soon';
+                }
+            } else if (diffDays > 1) {
+                description = `Due in ${diffDays} days`;
+                helper.classList.add('text-emerald-500');
+                if (row) {
+                    row.dataset.dueState = 'upcoming';
+                }
+            } else if (diffDays === -1) {
+                description = '1 day overdue';
+                helper.classList.add('text-rose-500');
+                if (row) {
+                    row.dataset.dueState = 'overdue';
+                }
+            } else {
+                description = `${Math.abs(diffDays)} days overdue`;
+                helper.classList.add('text-rose-500');
+                if (row) {
+                    row.dataset.dueState = 'overdue';
+                }
+            }
+            helper.textContent = `${fmt.format(parsedDate)} · ${description}`;
+        }
+
+        tableElement
+            .querySelectorAll('input[data-notion-control="due-date"]')
+            .forEach(function (input) {
+                applyDueHelper(input);
+                if (input.dataset.notionReady === 'true') {
+                    return;
+                }
+                input.addEventListener('change', function () {
+                    applyDueHelper(input);
+                });
+                input.dataset.notionReady = 'true';
+            });
+
+        function applyStartHelper(input) {
+            const cell = input.closest('td');
+            const helper = cell?.querySelector('[data-start-helper]');
+            if (!helper) {
+                return;
+            }
+            const value = input.value;
+            helper.classList.remove('text-slate-400', 'text-emerald-500');
+            if (!value) {
+                helper.textContent = 'No start date';
+                helper.classList.add('text-slate-400');
+                return;
+            }
+            const parsedDate = new Date(value + 'T00:00:00');
+            if (Number.isNaN(parsedDate.getTime())) {
+                helper.textContent = value;
+                helper.classList.add('text-slate-400');
+                return;
+            }
+            const fmt = new Intl.DateTimeFormat(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+            helper.textContent = fmt.format(parsedDate);
+            helper.classList.add('text-emerald-500');
+        }
+
+        tableElement
+            .querySelectorAll('input[data-notion-control="start-date"]')
+            .forEach(function (input) {
+                applyStartHelper(input);
+                if (input.dataset.notionReady === 'true') {
+                    return;
+                }
+                input.addEventListener('change', function () {
+                    applyStartHelper(input);
+                });
+                input.dataset.notionReady = 'true';
+            });
+
+        rows.forEach(function (row) {
+            const statusSelect = row.querySelector('select[data-notion-control="status"]');
+            if (statusSelect) {
+                applySelectStyling(statusSelect);
+            }
+            attachAutosave(row);
+        });
+    }
+
+    function refreshBoardContainer() {
+        const container = document.querySelector('[data-board-container]');
+        if (!container || !window.htmx) {
+            return;
+        }
+        const refreshUrl = container.dataset.refreshUrl || container.getAttribute('hx-get');
+        if (refreshUrl) {
+            htmx.ajax('GET', refreshUrl, { target: container, swap: 'outerHTML' });
+        }
+    }
+
+    function closeTaskModal() {
+        if (!modal) {
+            return;
+        }
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        if (modalContent) {
+            modalContent.innerHTML = '';
+        }
+    }
+
+    function openTaskModal(modalUrl) {
+        if (!modal || !modalContent || !modalUrl) {
+            return;
+        }
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        modalContent.innerHTML = '<div class="bg-white rounded-2xl shadow-2xl max-w-3xl mx-auto p-8 text-center text-sm text-gray-500">Loading task details...</div>';
+
+        const performRequest = function () {
+            if (!window.htmx) {
+                window.setTimeout(performRequest, 50);
+                return;
+            }
+            htmx.ajax('GET', modalUrl, { target: modalContent, swap: 'innerHTML' });
+        };
+
+        performRequest();
+    }
+
+    function initializeTaskBoard() {
+        const board = document.querySelector('[data-board]');
+        if (!board || board.dataset.dndReady === 'true') {
+            return;
+        }
+
+        board.dataset.dndReady = 'true';
+        board.dataset.dragging = 'false';
+
+        const groupBy = board.dataset.groupBy;
+        const updateUrl = board.dataset.updateUrl;
+        const csrftoken = getCookie('csrftoken');
+        const datasetKeyMap = {
+            status: 'taskStatus',
+            priority: 'taskPriority',
+            team: 'taskTeam',
+        };
+        const priorityVariants = [
+            'bg-rose-100',
+            'text-rose-700',
+            'bg-amber-100',
+            'text-amber-700',
+            'bg-blue-100',
+            'text-blue-700',
+            'bg-gray-100',
+            'text-gray-600',
+        ];
+        const statusChipVariants = [
+            'bg-emerald-100',
+            'text-emerald-700',
+            'bg-rose-100',
+            'text-rose-700',
+            'bg-blue-100',
+            'text-blue-700',
+            'bg-gray-100',
+            'text-gray-600',
+        ];
+        const progressVariants = ['bg-emerald-500', 'bg-rose-500', 'bg-blue-500'];
+        const priorityStyles = {
+            critical: 'bg-rose-100 text-rose-700',
+            high: 'bg-amber-100 text-amber-700',
+            medium: 'bg-blue-100 text-blue-700',
+            low: 'bg-gray-100 text-gray-600',
+        };
+        const statusStyles = {
+            completed: { chip: 'bg-emerald-100 text-emerald-700', bar: 'bg-emerald-500' },
+            at_risk: { chip: 'bg-rose-100 text-rose-700', bar: 'bg-rose-500' },
+            in_progress: { chip: 'bg-blue-100 text-blue-700', bar: 'bg-blue-500' },
+            not_started: { chip: 'bg-gray-100 text-gray-600', bar: 'bg-blue-500' },
+        };
+
+        function swapClasses(element, variants, targetClasses) {
+            variants.forEach(function (cls) {
+                element.classList.remove(cls);
+            });
+            targetClasses.split(' ').forEach(function (cls) {
+                if (cls) {
+                    element.classList.add(cls);
+                }
+            });
+        }
+
+        function updateColumnState(column) {
+            if (!column) {
+                return;
+            }
+            const list = column.querySelector('[data-task-list]');
+            const placeholder = column.querySelector('[data-empty-placeholder]');
+            const count = column.querySelector('[data-column-count]');
+            if (!list) {
+                return;
+            }
+            const visibleTasks = list.querySelectorAll('.task-card');
+            if (placeholder) {
+                placeholder.classList.toggle('hidden', !!visibleTasks.length);
+            }
+            if (count) {
+                count.textContent = visibleTasks.length;
+            }
+        }
+
+        function highlightZone(zone, active) {
+            if (!zone) {
+                return;
+            }
+            const highlightClasses = ['ring-2', 'ring-emerald-400', 'ring-offset-2'];
+            highlightClasses.forEach(function (cls) {
+                zone.classList.toggle(cls, active);
+            });
+            zone.classList.toggle('bg-emerald-50', active);
+        }
+
+        function applyStatus(card, payload) {
+            const status = payload.status;
+            const statusLabel = payload.status_label;
+            const progress = payload.progress;
+            const style = statusStyles[status] || statusStyles.not_started;
+            const chip = card.querySelector('.status-chip');
+            if (chip) {
+                swapClasses(chip, statusChipVariants, style.chip);
+                const labelEl = chip.querySelector('.status-label');
+                if (labelEl) {
+                    labelEl.textContent = statusLabel;
+                }
+            }
+            const progressLabel = card.querySelector('.progress-label');
+            if (progressLabel) {
+                progressLabel.textContent = `Progress ${progress}%`;
+            }
+            const progressFill = card.querySelector('.progress-bar-fill');
+            if (progressFill) {
+                swapClasses(progressFill, progressVariants, style.bar);
+                progressFill.style.width = `${progress}%`;
+            }
+            const statusSelect = card.querySelector('.status-select');
+            if (statusSelect) {
+                statusSelect.value = status;
+            }
+            const progressInput = card.querySelector('.progress-input');
+            if (progressInput) {
+                progressInput.value = progress;
+            }
+            card.dataset.taskStatus = status;
+        }
+
+        function applyPriority(card, payload) {
+            const priority = payload.priority;
+            const label = payload.priority_label;
+            const chip = card.querySelector('.priority-chip');
+            const style = priorityStyles[priority] || priorityStyles.medium;
+            if (chip) {
+                swapClasses(chip, priorityVariants, style);
+                const labelEl = chip.querySelector('.priority-label');
+                if (labelEl) {
+                    labelEl.textContent = label;
+                }
+            }
+            card.dataset.taskPriority = priority;
+        }
+
+        function applyTeam(card, payload) {
+            const chip = card.querySelector('.team-chip .team-label');
+            if (chip) {
+                chip.textContent = payload.team || 'No team';
+            }
+            card.dataset.taskTeam = payload.team_slug;
+        }
+
+        function getColumnOrder(column) {
+            const list = column?.querySelector('[data-task-list]');
+            if (!list) {
+                return [];
+            }
+            return Array.from(list.querySelectorAll('.task-card')).map(function (node) {
+                return Number(node.dataset.taskId);
+            });
+        }
+
+        function getDragAfterElement(container, y, excludedId) {
+            if (!container) {
+                return null;
+            }
+            const elements = Array.from(container.querySelectorAll('.task-card')).filter(function (child) {
+                return child.dataset.taskId !== excludedId;
+            });
+            return elements.reduce(function (closest, child) {
+                const box = child.getBoundingClientRect();
+                const offset = y - (box.top + box.height / 2);
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                }
+                return closest;
+            }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+        }
+
+        function attachCardHandlers(card) {
+            card.addEventListener('click', function (event) {
+                if (board.dataset.dragging === 'true' || card.dataset.draggingActive === 'true') {
+                    return;
+                }
+                if (event.target.closest('button, a, form, select, input, textarea')) {
+                    return;
+                }
+                const modalUrl = card.dataset.modalUrl;
+                if (modalUrl) {
+                    event.preventDefault();
+                    openTaskModal(modalUrl);
+                }
+            });
+            card.addEventListener('dragstart', function (event) {
+                if (event.target && event.target.closest('form')) {
+                    event.preventDefault();
+                    return;
+                }
+                const sourceColumn = card.closest('[data-board-column]');
+                board.dataset.draggingTaskId = card.dataset.taskId;
+                board.dataset.dragging = 'true';
+                card.dataset.draggingActive = 'true';
+                board.dataset.sourceColumn = sourceColumn ? sourceColumn.dataset.columnValue || '' : '';
+                event.dataTransfer.setData('text/plain', card.dataset.taskId || '');
+                event.dataTransfer.effectAllowed = 'move';
+                card.classList.add('opacity-60');
+            });
+            card.addEventListener('dragend', function () {
+                card.classList.remove('opacity-60');
+                delete board.dataset.draggingTaskId;
+                delete board.dataset.sourceColumn;
+                board.dataset.dragging = 'false';
+                window.setTimeout(function () {
+                    delete card.dataset.draggingActive;
+                }, 120);
+            });
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const zone = event.currentTarget;
+            highlightZone(zone, false);
+
+            const column = zone.closest('[data-board-column]');
+            const targetValue = column?.dataset.columnValue;
+            const datasetKey = datasetKeyMap[groupBy];
+            if (!column || !targetValue || !datasetKey) {
+                return;
+            }
+
+            const taskId = board.dataset.draggingTaskId || event.dataTransfer.getData('text/plain');
+            if (!taskId) {
+                return;
+            }
+
+            const card = board.querySelector(`.task-card[data-task-id="${taskId}"]`);
+            if (!card) {
+                return;
+            }
+
+            const list = column.querySelector('[data-task-list]');
+            const afterElement = getDragAfterElement(zone, event.clientY, taskId);
+            const sourceColumnValue = board.dataset.sourceColumn || card.dataset[datasetKey] || '';
+            const sourceColumn = sourceColumnValue ? board.querySelector(`[data-board-column][data-column-value="${sourceColumnValue}"]`) : column;
+            const sourceList = card.parentElement;
+            const nextSibling = card.nextElementSibling;
+
+            if (afterElement === null) {
+                list.appendChild(card);
+            } else {
+                list.insertBefore(card, afterElement);
+            }
+
+            updateColumnState(sourceColumn);
+            updateColumnState(column);
+            card.classList.add('opacity-50');
+
+            const targetOrder = getColumnOrder(column);
+            const sourceOrder = sourceColumn && sourceColumn !== column ? getColumnOrder(sourceColumn) : [];
+
+            const payload = {
+                task_id: Number(taskId),
+                group: groupBy,
+                value: targetValue,
+                order: targetOrder,
+            };
+
+            if (sourceColumnValue) {
+                payload.source_value = sourceColumnValue;
+            }
+            if (sourceOrder.length) {
+                payload.source_order = sourceOrder;
+            }
+
+            fetch(updateUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload),
+            })
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok.');
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    if (!data.ok) {
+                        throw new Error(data.error || 'Unable to update task.');
+                    }
+                    if (groupBy === 'status') {
+                        applyStatus(card, data.task);
+                    } else if (groupBy === 'priority') {
+                        applyPriority(card, data.task);
+                    } else if (groupBy === 'team') {
+                        applyTeam(card, data.task);
+                    }
+                    updateColumnState(sourceColumn);
+                    updateColumnState(column);
+                })
+                .catch(function (error) {
+                    if (nextSibling && nextSibling.parentElement === sourceList) {
+                        sourceList.insertBefore(card, nextSibling);
+                    } else if (sourceList) {
+                        sourceList.appendChild(card);
+                    }
+                    updateColumnState(sourceColumn);
+                    updateColumnState(column);
+                    if (window.console) {
+                        window.console.error(error);
+                    }
+                    window.alert('Unable to update the task. Please try again.');
+                })
+                .finally(function () {
+                    card.classList.remove('opacity-50');
+                });
+        }
+
+        board.querySelectorAll('.task-card').forEach(attachCardHandlers);
+
+        board.querySelectorAll('[data-drop-zone]').forEach(function (zone) {
+            zone.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                highlightZone(zone, true);
+            });
+            zone.addEventListener('dragleave', function (event) {
+                if (!zone.contains(event.relatedTarget)) {
+                    highlightZone(zone, false);
+                }
+            });
+            zone.addEventListener('drop', handleDrop);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeTaskBoard);
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeTableView(document);
+    });
+    document.body.addEventListener('htmx:afterSwap', function (event) {
+        if (event.target && event.target.matches('[data-board-container]')) {
+            initializeTaskBoard();
+        }
+        if (
+            event.target
+            && (event.target.matches('[data-task-row]')
+                || event.target.matches('[data-notion-table-container]'))
+        ) {
+            initializeTableView(event.target);
+        }
+    });
+    document.body.addEventListener('htmx:configRequest', function (event) {
+        if (event.target && event.target.matches('[data-board-container]')) {
+            const boardInstance = document.querySelector('[data-board]');
+            if (boardInstance && boardInstance.dataset.dragging === 'true') {
+                event.preventDefault();
+            }
+        }
+    });
+
+    document.body.addEventListener('click', function (event) {
+        if (event.target.closest('[data-close-modal]') || event.target.matches('[data-modal-backdrop]')) {
+            event.preventDefault();
+            closeTaskModal();
+            return;
+        }
+        if (event.target.closest('[data-delete-trigger]')) {
+            event.preventDefault();
+            if (modalContent) {
+                const confirmBox = modalContent.querySelector('[data-delete-confirm]');
+                if (confirmBox) {
+                    confirmBox.classList.remove('hidden');
+                }
+            }
+            return;
+        }
+        if (event.target.closest('[data-delete-cancel]')) {
+            event.preventDefault();
+            if (modalContent) {
+                const confirmBox = modalContent.querySelector('[data-delete-confirm]');
+                if (confirmBox) {
+                    confirmBox.classList.add('hidden');
+                }
+            }
+        }
+        const modalLink = event.target.closest('[data-modal-link]');
+        if (modalLink) {
+            event.preventDefault();
+            const href = modalLink.getAttribute('href');
+            if (href) {
+                openTaskModal(href);
+            }
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeTaskModal();
+        }
+    });
+
+    document.body.addEventListener('task-modal-close', function () {
+        closeTaskModal();
+    });
+
+    document.body.addEventListener('task-board-refresh', function () {
+        refreshBoardContainer();
+    });
+})();
+</script>
+{% endblock %}

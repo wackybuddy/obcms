@@ -26,31 +26,17 @@
     </div>
 
     <!-- Quick Actions -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <a href="{% url 'common:staff_task_create' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-emerald-400 hover:shadow-xl transition-all">
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <a href="{% url 'common:staff_profiles_list' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-teal-400 hover:shadow-xl transition-all">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                        <i class="fas fa-tasks mr-3 text-emerald-500"></i>
-                        Create staff task
+                        <i class="fas fa-id-card-alt mr-3 text-teal-500"></i>
+                        Staff profiles
                     </h2>
-                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Log assignments, set priorities, and sync with the coordination calendar.</p>
+                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Review role details, contact information, and workloads for each staff member.</p>
                 </div>
-                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                    <i class="fas fa-arrow-right"></i>
-                </span>
-            </div>
-        </a>
-        <a href="{% url 'common:staff_team_assign' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-blue-400 hover:shadow-xl transition-all">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                        <i class="fas fa-user-plus mr-3 text-blue-500"></i>
-                        Assign staff to team
-                    </h2>
-                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Align personnel with the right MANA, coordination, or support unit.</p>
-                </div>
-                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-teal-50 text-teal-600 group-hover:bg-teal-500 group-hover:text-white transition-colors">
                     <i class="fas fa-arrow-right"></i>
                 </span>
             </div>
@@ -60,11 +46,53 @@
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900 flex items-center">
                         <i class="fas fa-users-cog mr-3 text-purple-500"></i>
-                        Manage teams
+                        Manage teams &amp; assignments
                     </h2>
-                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Review mandates, focus areas, and membership footprints for OOBC teams.</p>
+                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Bring team planning and staff assignments together in one workspace.</p>
                 </div>
                 <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-purple-50 text-purple-600 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                    <i class="fas fa-arrow-right"></i>
+                </span>
+            </div>
+        </a>
+        <a href="{% url 'common:staff_task_board' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-emerald-400 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-tasks mr-3 text-emerald-500"></i>
+                        Task board
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Track workloads Notion-style, update statuses inline, and surface blocked deliverables.</p>
+                </div>
+                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <i class="fas fa-arrow-right"></i>
+                </span>
+            </div>
+        </a>
+        <a href="{% url 'common:staff_performance_dashboard' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-orange-400 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-tachometer-alt mr-3 text-orange-500"></i>
+                        Performance dashboards
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Compare accomplishments vs. targets for staff and teams with quick-coaching signals.</p>
+                </div>
+                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-orange-50 text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                    <i class="fas fa-arrow-right"></i>
+                </span>
+            </div>
+        </a>
+        <a href="{% url 'common:staff_training_development' %}" class="group block bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:border-sky-400 hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-graduation-cap mr-3 text-sky-500"></i>
+                        Training & development
+                    </h2>
+                    <p class="mt-2 text-sm text-gray-600 max-w-xs">Curate programmes, track enrollments, and guide individual plans based on competency gaps.</p>
+                </div>
+                <span class="hidden lg:flex items-center justify-center w-10 h-10 rounded-full bg-sky-50 text-sky-600 group-hover:bg-sky-500 group-hover:text-white transition-colors">
                     <i class="fas fa-arrow-right"></i>
                 </span>
             </div>
@@ -134,7 +162,7 @@
     </div>
 
     <!-- Staff Profiles -->
-    <section class="bg-white border border-gray-200 shadow-xl rounded-2xl overflow-hidden">
+    <section id="staff-profiles" class="bg-white border border-gray-200 shadow-xl rounded-2xl overflow-hidden">
         <div class="px-6 py-5 bg-gradient-to-r from-emerald-500 to-green-600 text-white">
             <h2 class="text-xl font-semibold flex items-center">
                 <i class="fas fa-id-card-alt mr-3"></i>
@@ -240,108 +268,6 @@
         </div>
     </section>
 
-    <!-- Task Management & Calendar -->
-    <section class="space-y-6">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-                <h2 class="text-2xl font-semibold text-gray-900">Task management &amp; calendar</h2>
-                <p class="mt-1 text-sm text-gray-600">Track assignments by status and monitor upcoming milestones.</p>
-            </div>
-            <div class="mt-4 md:mt-0 flex items-center text-sm text-gray-500 space-x-3">
-                <span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-gray-400 mr-2"></span>Not Started</span>
-                <span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>In Progress</span>
-                <span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-rose-500 mr-2"></span>At Risk</span>
-                <span class="inline-flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 mr-2"></span>Completed</span>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 xl:grid-cols-5 gap-6">
-            {% for column in task_pipeline %}
-            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 space-y-4 xl:col-span-1">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">{{ column.status_label }}</h3>
-                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold {% if column.status_key == 'completed' %}bg-emerald-100 text-emerald-700{% elif column.status_key == 'at_risk' %}bg-rose-100 text-rose-700{% elif column.status_key == 'in_progress' %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-600{% endif %}">
-                        {{ column.total|default:0 }}
-                    </span>
-                </div>
-                <div class="space-y-4">
-                    {% if column.tasks %}
-                        {% for task in column.tasks|slice:":4" %}
-                        <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 space-y-3">
-                            <div class="flex items-start justify-between">
-                                <p class="text-sm font-semibold text-gray-900">{{ task.title }}</p>
-                                <span class="text-xs font-medium text-gray-500 uppercase">{{ task.get_priority_display }}</span>
-                            </div>
-                            {% if task.impact %}
-                                <p class="text-xs text-gray-600">{{ task.impact }}</p>
-                            {% endif %}
-                            <div class="flex items-center justify-between text-xs text-gray-500">
-                                <span><i class="far fa-user mr-1"></i>{% if task.assignee %}{{ task.assignee.get_full_name|default:task.assignee.username }}{% else %}Unassigned{% endif %}</span>
-                                <span><i class="far fa-calendar mr-1"></i>{% if task.due_date %}{{ task.due_date|date:"M d" }}{% else %}No due{% endif %}</span>
-                            </div>
-                            <div class="h-1.5 bg-white rounded-full overflow-hidden">
-                                <div class="h-1.5 rounded-full {% if task.status == 'completed' %}bg-emerald-500{% elif task.status == 'at_risk' %}bg-rose-500{% elif task.status == 'in_progress' %}bg-blue-500{% else %}bg-gray-300{% endif %}" style="width: {{ task.progress|default:0 }}%;"></div>
-                            </div>
-                            <form method="post" class="space-y-2">
-                                {% csrf_token %}
-                                <input type="hidden" name="form_name" value="task_status">
-                                <input type="hidden" name="task_id" value="{{ task.id }}">
-                                <div class="flex items-center space-x-2">
-                                    <select name="status" class="w-full text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                        {% for status_key, status_label in status_labels.items %}
-                                            <option value="{{ status_key }}" {% if status_key == task.status %}selected{% endif %}>{{ status_label }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <input type="number" name="progress" value="{{ task.progress|default:0 }}" min="0" max="100" class="w-16 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-                                </div>
-                                <button type="submit" class="w-full inline-flex justify-center items-center px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
-                                    Update
-                                </button>
-                            </form>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-sm text-gray-500">No tasks in this status.</p>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 xl:col-span-1">
-                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                    <i class="far fa-calendar-alt mr-2 text-blue-500"></i>
-                    Calendar highlights
-                </h3>
-                <p class="mt-1 text-sm text-gray-600">Key deadlines linked to staff assignments.</p>
-                <div class="mt-4 space-y-4">
-                    {% if calendar_events %}
-                        {% for event in calendar_events %}
-                        <div class="border border-gray-200 rounded-xl p-4 bg-gray-50 space-y-2">
-                            <div class="flex items-center justify-between text-sm font-semibold text-gray-900">
-                                <span>{{ event.title }}</span>
-                                <span class="text-xs text-gray-500 uppercase">{{ event.priority }}</span>
-                            </div>
-                            <p class="text-xs text-gray-600">
-                                {{ event.team.name }}
-                                {% if event.assignee %}
-                                    • {{ event.assignee.get_full_name|default:event.assignee.username }}
-                                {% endif %}
-                            </p>
-                            {% if event.linked_event %}
-                                <p class="text-[11px] text-blue-600 flex items-center"><i class="fas fa-link mr-2"></i>Linked to coordination event: {{ event.linked_event.title }}</p>
-                            {% endif %}
-                            <div class="flex items-center justify-between text-xs text-gray-500">
-                                <span><i class="far fa-play-circle mr-1"></i>{% if event.start %}{{ event.start|date:"M d" }}{% else %}—{% endif %}</span>
-                                <span><i class="far fa-flag mr-1"></i>{% if event.end %}{{ event.end|date:"M d, Y" }}{% else %}—{% endif %}</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-sm text-gray-500">No scheduled tasks in the calendar window.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Team Management -->
     <section class="space-y-6">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -396,7 +322,7 @@
                         <p class="mt-1 text-xs text-gray-600">
                             {% if task.due_date %}Due {{ task.due_date|date:"M d" }}{% else %}No due date{% endif %}
                             {% if task.assignee %}
-                                • {{ task.assignee.get_full_name|default:task.assignee.username }}
+                                • {{ task.assignee_display_name }}
                             {% endif %}
                         </p>
                     </div>

@@ -9,7 +9,16 @@ from .community import (
     OBCCommunityForm,
 )
 from .province import ProvinceForm
-from .staff import StaffTaskForm, StaffTeamForm, StaffTeamMembershipForm
+from .staff import (
+    PerformanceTargetForm,
+    StaffDevelopmentPlanForm,
+    StaffProfileForm,
+    StaffTaskForm,
+    StaffTeamForm,
+    StaffTeamMembershipForm,
+    TrainingEnrollmentForm,
+    TrainingProgramForm,
+)
 
 __all__ = [
     "CustomLoginForm",
@@ -21,7 +30,12 @@ __all__ = [
     "MunicipalityCoverageForm",
     "OBCCommunityForm",
     "ProvinceForm",
+    "StaffProfileForm",
     "StaffTeamForm",
     "StaffTeamMembershipForm",
     "StaffTaskForm",
+    "PerformanceTargetForm",
+    "TrainingProgramForm",
+    "TrainingEnrollmentForm",
+    "StaffDevelopmentPlanForm",
 ]

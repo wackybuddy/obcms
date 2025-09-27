@@ -1,0 +1,133 @@
+<tr
+    class="group relative hover:bg-slate-50/70 transition-colors"
+    data-task-row
+    data-task-id="{{ task.id }}"
+    data-task-status="{{ task.status }}"
+    data-task-priority="{{ task.priority }}"
+    data-task-title="{{ task.title|escape }}"
+    hx-target="this"
+    hx-swap="outerHTML"
+>
+    <form
+        method="post"
+        action="{% url 'common:staff_task_inline_update' task.id %}"
+        class="contents notion-inline-form"
+        data-autosave-form
+        hx-post="{% url 'common:staff_task_inline_update' task.id %}"
+        hx-target="closest tr"
+        hx-swap="outerHTML"
+        hx-indicator="#task-row-indicator-{{ task.id }}"
+    >
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {{ form.impact.as_hidden }}
+        {{ form.description.as_hidden }}
+        {{ form.linked_event.as_hidden }}
+
+        <td class="px-6 py-5 align-middle">
+            {{ form.non_field_errors }}
+            <div class="flex items-center gap-3">
+                <span class="flex h-3.5 w-3.5 rounded-full bg-slate-200 transition-colors" data-status-indicator></span>
+                <div class="flex-1 min-w-0 space-y-1">
+                    <span class="block text-sm font-semibold text-slate-700" data-title-preview>{{ task.title|default:"Untitled task" }}</span>
+                    {{ form.title }}
+                    {{ form.title.errors }}
+                </div>
+            </div>
+        </td>
+        <td class="px-6 py-5 align-middle">
+            <div class="min-w-[10rem] space-y-2">
+                {% if assignee_tokens %}
+                <div class="flex flex-wrap gap-1.5" data-selection-preview>
+                    {% for assignee in assignee_tokens %}
+                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+                        {{ assignee.label }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {{ form.assignee }}
+                {{ form.assignee.errors }}
+            </div>
+        </td>
+        <td class="px-6 py-5 align-middle">
+            <div class="min-w-[8rem] space-y-2">
+                {% if team_tokens %}
+                <div class="flex flex-wrap gap-1.5" data-selection-preview>
+                    {% for team in team_tokens %}
+                    <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+                        {{ team.label }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {{ form.team }}
+                {{ form.team.errors }}
+            </div>
+        </td>
+        <td class="px-6 py-5 align-middle">
+            <div class="min-w-[8rem] space-y-1">
+                {{ form.start_date }}
+                {{ form.start_date.errors }}
+                {% if task.start_date %}
+                <p class="text-xs text-slate-400" data-start-helper>{{ task.start_date|date:"M j, Y" }}</p>
+                {% else %}
+                <p class="text-xs text-slate-400" data-start-helper>No start date</p>
+                {% endif %}
+            </div>
+        </td>
+        <td class="px-6 py-5 align-middle">
+            <div class="space-y-1 min-w-[9rem]">
+                {{ form.due_date }}
+                {{ form.due_date.errors }}
+                {% if task.due_date %}
+                <p class="text-xs text-slate-400" data-due-helper>{{ task.due_date|date:"M j, Y" }}</p>
+                {% else %}
+                <p class="text-xs text-slate-400" data-due-helper>No due date</p>
+                {% endif %}
+            </div>
+        </td>
+        <td class="px-6 py-5 align-middle">
+            <div class="min-w-[8rem]">
+                {{ form.status }}
+                {{ form.status.errors }}
+            </div>
+        </td>
+        <td class="px-6 py-5 align-middle">
+            <div class="min-w-[8rem]">
+                {{ form.priority }}
+                {{ form.priority.errors }}
+            </div>
+        </td>
+        <td class="px-6 py-5 align-middle">
+            <div class="flex items-center gap-3">
+                <div class="w-16">
+                    {{ form.progress }}
+                    {{ form.progress.errors }}
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="h-2 w-24 rounded-full bg-slate-100 overflow-hidden">
+                        <div class="h-full bg-emerald-500 transition-all duration-300" data-progress-bar="{{ task.id }}" style="width: {{ task.progress }}%"></div>
+                    </div>
+                    <span class="text-xs font-semibold text-slate-500" data-progress-label="{{ task.id }}">{{ task.progress }}%</span>
+                </div>
+            </div>
+        </td>
+        <td class="px-6 py-5 align-middle text-right">
+            <div class="flex items-center justify-end gap-3 text-slate-500">
+                <span id="task-row-indicator-{{ task.id }}" class="hidden text-emerald-600" role="status" aria-live="polite">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span class="sr-only">Saving…</span>
+                </span>
+                <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:text-emerald-600 hover:border-emerald-200 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" title="Sync changes">
+                    <i class="fas fa-cloud-arrow-up text-sm"></i>
+                    <span class="sr-only">Save row</span>
+                </button>
+                <a href="{% url 'common:staff_task_modal' task.id %}" class="inline-flex items-center gap-2 px-2 py-1 text-sm font-medium text-slate-500 hover:text-emerald-600 transition-colors" data-modal-link>
+                    <i class="fas fa-up-right-from-square text-xs"></i>
+                    <span class="hidden md:inline">Open detail</span>
+                </a>
+            </div>
+        </td>
+    </form>
+</tr>

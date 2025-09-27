@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}OOBC Calendar Brief{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 print:space-y-4">
+    <header class="border-b border-gray-200 pb-4">
+        <h1 class="text-2xl font-bold text-gray-900">OOBC Calendar Brief</h1>
+        <p class="mt-2 text-sm text-gray-600">
+            Generated {{ generated_at|date:"M d, Y h:i A" }} • Coverage: next {{ window_days }} day{{ window_days|pluralize }}
+        </p>
+    </header>
+
+    <section class="space-y-4">
+        <h2 class="text-xl font-semibold text-gray-900">Upcoming Events</h2>
+        {% if upcoming_events %}
+        <div class="bg-white shadow rounded-xl border border-gray-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Title</th>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Module</th>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Category</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for event in upcoming_events %}
+                    <tr>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ event.start|date:"M d, Y" }} <span class="block text-xs text-gray-500">{{ event.start|time:"g:i A" }}</span></td>
+                        <td class="px-4 py-3 text-gray-900 font-medium">{{ event.title }}</td>
+                        <td class="px-4 py-3 text-gray-700">{{ event.module_label }}</td>
+                        <td class="px-4 py-3 text-gray-700">{{ event.status|default:"—"|capfirst }}</td>
+                        <td class="px-4 py-3 text-gray-700">{{ event.category|default:"—"|capfirst }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-600">No scheduled events within the selected window.</p>
+        {% endif %}
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-xl font-semibold text-gray-900">Follow-up Tasks</h2>
+        {% if follow_up_items %}
+        <div class="bg-white shadow rounded-xl border border-gray-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Due</th>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Task</th>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Module</th>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+                        <th scope="col" class="px-4 py-3 text-left font-semibold text-gray-700">Notes</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for item in follow_up_items %}
+                    <tr>
+                        <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ item.due|date:"M d, Y" }}</td>
+                        <td class="px-4 py-3 text-gray-900 font-medium">{{ item.title }}</td>
+                        <td class="px-4 py-3 text-gray-700">{{ item.module_label }}</td>
+                        <td class="px-4 py-3 text-gray-700">{{ item.status|default:"Pending"|capfirst }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ item.notes|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-600">No follow-up items scheduled within the selected window.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
