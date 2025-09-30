@@ -42,7 +42,8 @@ class StaffManagementViewTests(TestCase):
         )
         self.staff_member.first_name = "Active"
         self.staff_member.last_name = "Member"
-        self.staff_member.save(update_fields=["first_name", "last_name"])
+        self.staff_member.position = "Policy Officer"
+        self.staff_member.save(update_fields=["first_name", "last_name", "position"])
         self.url = reverse("common:staff_management")
         self.task_create_url = reverse("common:staff_task_create")
         self.task_board_url = reverse("common:staff_task_board")
@@ -71,8 +72,8 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.first()
         post_data = {
             "title": "Draft provincial coordination brief",
-            "team": str(team.id),
-            "assignee": str(self.staff_member.id),
+            "teams": [str(team.id)],
+            "assignees": [str(self.staff_member.id)],
             "priority": "high",
             "status": "in_progress",
             "impact": "Aligns inter-agency inputs ahead of the coordination call.",
@@ -89,8 +90,8 @@ class StaffManagementViewTests(TestCase):
             self.fail(f"Task form validation errors: {form_errors}")
         self.assertEqual(response.status_code, 302)
         task = StaffTask.objects.get(title="Draft provincial coordination brief")
-        self.assertEqual(task.team, team)
-        self.assertEqual(task.assignee, self.staff_member)
+        self.assertIn(team, task.teams.all())
+        self.assertIn(self.staff_member, task.assignees.all())
         self.assertEqual(task.created_by, self.admin)
         self.assertEqual(task.status, StaffTask.STATUS_IN_PROGRESS)
         self.assertTrue(
@@ -140,6 +141,7 @@ class StaffManagementViewTests(TestCase):
         response = self.client.post(
             self.team_manage_url,
             {
+                "form_name": "team",
                 "name": "Innovation Unit",
                 "description": "Drives experimentation across programmes.",
                 "mission": "Surface prototypes into scalable interventions.",
@@ -172,10 +174,10 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Coordination Unit")
         task = StaffTask.objects.create(
             title="Prepare coordination brief",
-            team=team,
-            assignee=self.staff_member,
             created_by=self.admin,
         )
+        task.teams.add(team)
+        task.assignees.set([self.staff_member])
 
         board_url = reverse("common:staff_task_board")
         response = self.client.get(board_url)
@@ -203,13 +205,13 @@ class StaffManagementViewTests(TestCase):
         """Table view renders column headers and rows for tasks."""
 
         team = StaffTeam.objects.create(name="Operations")
-        StaffTask.objects.create(
+        task = StaffTask.objects.create(
             title="Publish weekly bulletin",
-            team=team,
-            assignee=self.staff_member,
             created_by=self.admin,
             due_date=date.today(),
         )
+        task.teams.add(team)
+        task.assignees.set([self.staff_member])
 
         response = self.client.get(self.task_board_url, {"view": "table"})
 
@@ -218,15 +220,36 @@ class StaffManagementViewTests(TestCase):
         self.assertContains(response, "Actions")
         self.assertContains(response, "Publish weekly bulletin")
 
+    def test_staff_task_board_partial_switches_to_board_mode(self):
+        """HTMX board partial requests should always return board data."""
+
+        team = StaffTeam.objects.create(name="Innovation")
+        task = StaffTask.objects.create(
+            title="Prototype new workflow",
+            created_by=self.admin,
+        )
+        task.teams.add(team)
+
+        response = self.client.get(
+            self.task_board_url,
+            {"view": "table", "partial": "board"},
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("board_refresh_url", response.context)
+        self.assertEqual(response.context["view_mode"], "board")
+        self.assertContains(response, "Prototype new workflow")
+
     def test_staff_task_board_group_by_team(self):
         """Board grouping by team shows the team column helper text."""
 
         team = StaffTeam.objects.create(name="Rapid Response")
-        StaffTask.objects.create(
+        task = StaffTask.objects.create(
             title="Coordinate field deployment",
-            team=team,
             created_by=self.admin,
         )
+        task.teams.add(team)
 
         response = self.client.get(self.task_board_url, {"group": "team"})
 
@@ -241,16 +264,16 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Metrics")
         older = StaffTask.objects.create(
             title="Compile quarterly report",
-            team=team,
             created_by=self.admin,
             due_date=date(2024, 1, 15),
         )
+        older.teams.add(team)
         newer = StaffTask.objects.create(
             title="Publish monthly digest",
-            team=team,
             created_by=self.admin,
             due_date=date(2024, 3, 10),
         )
+        newer.teams.add(team)
 
         response = self.client.get(
             self.task_board_url,
@@ -269,9 +292,9 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Comms")
         task = StaffTask.objects.create(
             title="Refresh talking points",
-            team=team,
             created_by=self.admin,
         )
+        task.teams.add(team)
 
         next_url = f"{self.task_board_url}?view=table&sort=due_date"
         response = self.client.post(
@@ -294,11 +317,11 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Planning")
         task = StaffTask.objects.create(
             title="Roll up provincial inputs",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_IN_PROGRESS,
             progress=40,
         )
+        task.teams.add(team)
 
         update_url = reverse("common:staff_task_update")
         response = self.client.post(
@@ -330,10 +353,10 @@ class StaffManagementViewTests(TestCase):
         target = StaffTeam.objects.create(name="Comms")
         task = StaffTask.objects.create(
             title="Coordinate provincial rollout",
-            team=source,
-            assignee=self.staff_member,
             created_by=self.admin,
         )
+        task.teams.add(source)
+        task.assignees.set([self.staff_member])
 
         update_url = reverse("common:staff_task_update")
         response = self.client.post(
@@ -354,7 +377,7 @@ class StaffManagementViewTests(TestCase):
         payload = response.json()
         self.assertEqual(payload["task"]["team"], target.name)
         task.refresh_from_db()
-        self.assertEqual(task.team, target)
+        self.assertIn(target, task.teams.all())
         self.assertTrue(
             StaffTeamMembership.objects.filter(team=target, user=self.staff_member).exists()
         )
@@ -365,9 +388,9 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Logistics")
         task = StaffTask.objects.create(
             title="Draft logistics plan",
-            team=team,
             created_by=self.admin,
         )
+        task.teams.add(team)
 
         update_url = reverse("common:staff_task_update")
         response = self.client.post(
@@ -388,9 +411,9 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Strategy")
         task = StaffTask.objects.create(
             title="Coordinate outreach",
-            team=team,
             created_by=self.admin,
         )
+        task.teams.add(team)
 
         modal_url = reverse("common:staff_task_modal", args=[task.id])
         response = self.client.get(modal_url, HTTP_HX_REQUEST="true")
@@ -399,6 +422,29 @@ class StaffManagementViewTests(TestCase):
         self.assertContains(response, "Save changes")
         self.assertContains(response, task.title)
 
+    def test_staff_task_modal_create_prefills_selected_team(self):
+        """Creating a task via HX request preloads the selected team."""
+
+        team = StaffTeam.objects.create(name="Rapid Response")
+
+        modal_url = reverse("common:staff_task_modal_create")
+        response = self.client.get(
+            modal_url,
+            {"team": team.slug},
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        form = response.context.get("form")
+        self.assertIsNotNone(form)
+        selected_teams = form["teams"].value()
+        if isinstance(selected_teams, str):
+            selected_teams = [selected_teams]
+        selected_team_ids = {str(value) for value in selected_teams or []}
+        self.assertIn(str(team.pk), selected_team_ids)
+        self.assertContains(response, team.name)
+        self.assertContains(response, "Save task")
+
     def test_staff_task_modal_update(self):
         """Posting to the modal saves updates and triggers refresh events."""
 
@@ -406,19 +452,20 @@ class StaffManagementViewTests(TestCase):
         new_team = StaffTeam.objects.create(name="Planning")
         task = StaffTask.objects.create(
             title="Conduct field visit",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_IN_PROGRESS,
             progress=40,
         )
+        task.teams.add(team)
+        task.assignees.set([self.staff_member])
 
         modal_url = reverse("common:staff_task_modal", args=[task.id])
         response = self.client.post(
             modal_url,
             {
                 "title": "Conduct field visit - Updated",
-                "team": str(new_team.id),
-                "assignee": str(self.staff_member.id),
+                "teams": [str(new_team.id)],
+                "assignees": [str(self.staff_member.id)],
                 "priority": StaffTask.PRIORITY_HIGH,
                 "status": StaffTask.STATUS_COMPLETED,
                 "impact": "Ensure partner alignment.",
@@ -436,8 +483,9 @@ class StaffManagementViewTests(TestCase):
         self.assertIn("task-board-refresh", trigger)
         task.refresh_from_db()
         self.assertEqual(task.title, "Conduct field visit - Updated")
-        self.assertEqual(task.team, new_team)
+        self.assertIn(new_team, task.teams.all())
         self.assertEqual(task.progress, 100)
+        self.assertIn(self.staff_member, task.assignees.all())
         self.assertEqual(task.status, StaffTask.STATUS_COMPLETED)
 
     def test_staff_task_delete_requires_confirm(self):
@@ -446,9 +494,9 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Ops Center")
         task = StaffTask.objects.create(
             title="Prepare daily brief",
-            team=team,
             created_by=self.admin,
         )
+        task.teams.add(team)
 
         delete_url = reverse("common:staff_task_delete", args=[task.id])
         response = self.client.post(delete_url, {}, HTTP_HX_REQUEST="true")
@@ -463,9 +511,9 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Design")
         task = StaffTask.objects.create(
             title="Update briefing deck",
-            team=team,
             created_by=self.admin,
         )
+        task.teams.add(team)
 
         delete_url = reverse("common:staff_task_delete", args=[task.id])
         response = self.client.post(
@@ -487,12 +535,12 @@ class StaffManagementViewTests(TestCase):
         new_team = StaffTeam.objects.create(name="Updated Team")
         task = StaffTask.objects.create(
             title="Initial title",
-            team=team,
-            assignee=self.staff_member,
             created_by=self.admin,
             status=StaffTask.STATUS_NOT_STARTED,
             progress=10,
         )
+        task.teams.add(team)
+        task.assignees.set([self.staff_member])
 
         inline_url = reverse("common:staff_task_inline_update", args=[task.id])
         next_url = f"{self.task_board_url}?view=table"
@@ -500,8 +548,8 @@ class StaffManagementViewTests(TestCase):
             inline_url,
             {
                 "title": "Revised title",
-                "team": str(new_team.id),
-                "assignee": str(self.staff_member.id),
+                "teams": [str(new_team.id)],
+                "assignees": [str(self.staff_member.id)],
                 "priority": StaffTask.PRIORITY_HIGH,
                 "status": StaffTask.STATUS_IN_PROGRESS,
                 "impact": task.impact,
@@ -518,7 +566,7 @@ class StaffManagementViewTests(TestCase):
         self.assertEqual(response["Location"], next_url)
         task.refresh_from_db()
         self.assertEqual(task.title, "Revised title")
-        self.assertEqual(task.team, new_team)
+        self.assertIn(new_team, task.teams.all())
         self.assertEqual(task.status, StaffTask.STATUS_IN_PROGRESS)
         self.assertEqual(task.progress, 55)
 
@@ -528,22 +576,22 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Strategy")
         task_a = StaffTask.objects.create(
             title="Draft roadmap",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_IN_PROGRESS,
         )
+        task_a.teams.add(team)
         task_b = StaffTask.objects.create(
             title="Collect inputs",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_IN_PROGRESS,
         )
+        task_b.teams.add(team)
         task_c = StaffTask.objects.create(
             title="Prepare digest",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_IN_PROGRESS,
         )
+        task_c.teams.add(team)
 
         update_url = reverse("common:staff_task_update")
         response = self.client.post(
@@ -574,28 +622,28 @@ class StaffManagementViewTests(TestCase):
         team = StaffTeam.objects.create(name="Insights")
         first = StaffTask.objects.create(
             title="Assemble report",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_NOT_STARTED,
         )
+        first.teams.add(team)
         second = StaffTask.objects.create(
             title="Review data",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_NOT_STARTED,
         )
+        second.teams.add(team)
         third = StaffTask.objects.create(
             title="Brief leadership",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_IN_PROGRESS,
         )
+        third.teams.add(team)
         fourth = StaffTask.objects.create(
             title="Vet talking points",
-            team=team,
             created_by=self.admin,
             status=StaffTask.STATUS_IN_PROGRESS,
         )
+        fourth.teams.add(team)
 
         update_url = reverse("common:staff_task_update")
         response = self.client.post(
@@ -684,6 +732,10 @@ class StaffManagementViewTests(TestCase):
         response = self.client.post(
             update_url,
             {
+                "user": str(self.staff_member.id),
+                "staff_member_name": self.staff_member.get_full_name(),
+                "staff_member_username": self.staff_member.username,
+                "staff_member_position": self.staff_member.position,
                 "employment_status": "on_leave",
                 "employment_type": "consultant",
                 "position_classification": "Supervisory",

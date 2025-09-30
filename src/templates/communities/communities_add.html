@@ -165,6 +165,12 @@
                                         {% if form.province.errors %}
                                             <p class="mt-1 text-sm text-red-600">{{ form.province.errors.0 }}</p>
                                         {% endif %}
+                                        {% if not form.municipality %}
+                                        <p id="province-population-preview" class="mt-2 text-sm text-gray-600 hidden">
+                                            <span class="font-medium">Total Population:</span>
+                                            <span id="province-population-value">—</span>
+                                        </p>
+                                        {% endif %}
                                     </div>
                                     {% endif %}
 
@@ -1469,6 +1475,8 @@ function setupLocationSelectors() {
     const barangaySelect = document.getElementById('id_barangay');
     const municipalityPopulationPreview = document.getElementById('municipality-population-preview');
     const municipalityPopulationValue = document.getElementById('municipality-population-value');
+    const provincePopulationPreview = document.getElementById('province-population-preview');
+    const provincePopulationValue = document.getElementById('province-population-value');
     const latitudeField = document.getElementById('id_latitude');
     const longitudeField = document.getElementById('id_longitude');
     let manualCoordinateOverride = false;
@@ -1947,6 +1955,25 @@ function setupLocationSelectors() {
 
     const totalPopulationInput = document.getElementById('id_total_barangay_population');
     const hasBarangayField = Boolean(barangaySelect);
+    const hasMunicipalityField = Boolean(municipalitySelect);
+    const updateProvincePreview = population => {
+        if (!provincePopulationPreview || !provincePopulationValue) {
+            return;
+        }
+        if (population) {
+            let formattedValue = population;
+            try {
+                formattedValue = Number(population).toLocaleString('en-PH');
+            } catch (error) {
+                formattedValue = Number(population).toLocaleString();
+            }
+            provincePopulationValue.textContent = formattedValue;
+            provincePopulationPreview.classList.remove('hidden');
+        } else {
+            provincePopulationValue.textContent = '—';
+            provincePopulationPreview.classList.add('hidden');
+        }
+    };
     const updateMunicipalityPreview = population => {
         if (!municipalityPopulationPreview || !municipalityPopulationValue) {
             return;
@@ -2052,11 +2079,18 @@ function setupLocationSelectors() {
             updateProvinceOptions(regionSelect.value, '');
             updateMunicipalityOptions('', '');
             updateBarangayOptions('', '');
-            applyPopulationValue(municipalitySelect, totalPopulationInput, {
-                clearOnEmpty: hasBarangayField,
-            });
-            if (!hasBarangayField) {
-                updateMunicipalityPreview('');
+            if (hasMunicipalityField) {
+                applyPopulationValue(municipalitySelect, totalPopulationInput, {
+                    clearOnEmpty: hasBarangayField,
+                });
+                if (!hasBarangayField) {
+                    updateMunicipalityPreview('');
+                }
+            } else {
+                applyPopulationValue(provinceSelect, totalPopulationInput, {
+                    clearOnEmpty: true,
+                });
+                updateProvincePreview('');
             }
             updateGeodataNotice();
             updateCoordinateFields();
@@ -2067,8 +2101,15 @@ function setupLocationSelectors() {
         provinceSelect.addEventListener('change', () => {
             const provinceId = toStringId(provinceSelect.value);
             updateMunicipalityOptions(provinceId, '');
-            const autoHandled = autoSelectMunicipalityForProvince();
-            if (!autoHandled) {
+            const autoHandled = hasMunicipalityField ? autoSelectMunicipalityForProvince() : false;
+            if (!hasMunicipalityField) {
+                applyPopulationValue(provinceSelect, totalPopulationInput, {
+                    clearOnEmpty: true,
+                });
+                updateProvincePreview(getSelectedPopulation(provinceSelect));
+                updateGeodataNotice();
+                updateCoordinateFields();
+            } else if (!autoHandled) {
                 updateBarangayOptions('', '');
                 applyPopulationValue(municipalitySelect, totalPopulationInput, {
                     clearOnEmpty: hasBarangayField,
@@ -2121,6 +2162,12 @@ function setupLocationSelectors() {
 
     if (provinceSelect) {
         updateProvinceOptions(initialRegion, initialProvince);
+        if (!hasMunicipalityField) {
+            applyPopulationValue(provinceSelect, totalPopulationInput, {
+                clearOnEmpty: true,
+            });
+            updateProvincePreview(getSelectedPopulation(provinceSelect));
+        }
     }
 
     if (municipalitySelect) {

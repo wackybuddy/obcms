@@ -836,7 +836,7 @@ def build_calendar_payload(
 
     # Staff Tasks -----------------------------------------------------------
     if include_module("staff"):
-        tasks = StaffTask.objects.select_related("team", "assignee")
+        tasks = StaffTask.objects.prefetch_related("teams", "assignees")
 
         for task in tasks:
             start_dt = _combine(task.start_date) if task.start_date else None
@@ -850,6 +850,14 @@ def build_calendar_payload(
             upcoming_flag = bool(aware_due and aware_due >= now)
             completed_flag = task.status == StaffTask.STATUS_COMPLETED
 
+            assignee_names = [
+                member.get_full_name() or member.username
+                for member in task.assignees.all()
+                if member
+            ]
+            task_teams = list(task.teams.all())
+            team_names = [team.name for team in task_teams]
+            team_slugs = [team.slug for team in task_teams]
             payload = {
                 "id": f"staff-task-{task.pk}",
                 "title": task.title,
@@ -863,10 +871,9 @@ def build_calendar_payload(
                     "module": "staff",
                     "category": "task",
                     "status": task.status,
-                    "team": getattr(task.team, "name", ""),
-                    "assignee": getattr(task.assignee, "get_full_name", None)
-                    and task.assignee.get_full_name()
-                    or getattr(task.assignee, "username", ""),
+                    "team": ", ".join(team_names) if team_names else "Unassigned",
+                    "team_slugs": team_slugs,
+                    "assignee": ", ".join(assignee_names) if assignee_names else "Unassigned",
                     "location": None,
                 },
             }

@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Count, F, Q
+from django.db.models import Case, Count, F, IntegerField, Q, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -15,14 +15,30 @@ from ..services.locations import build_location_data
 from common.forms import ProvinceForm
 from common.services.geodata import serialize_layers_for_map
 from mana.forms import (
+    AssessmentUpdateForm,
     DeskReviewQuickEntryForm,
     KIIQuickEntryForm,
     RegionalWorkshopSetupForm,
     SurveyQuickEntryForm,
-    WorkshopActivityProgressForm,
+    Workshop1Form,
+    Workshop2Form,
+    Workshop3Form,
+    Workshop4Form,
+    Workshop5Form,
 )
 from mana.models import Assessment, MANAReport, Need, WorkshopActivity
 from mana.views import create_workshop_activities
+
+WORKSHOP_FORM_MAP = {
+    "workshop_1": Workshop1Form,
+    "workshop_2": Workshop2Form,
+    "workshop_3": Workshop3Form,
+    "workshop_4": Workshop4Form,
+    "workshop_5": Workshop5Form,
+}
+
+WORKSHOP_GENERAL_FIELDS = Workshop1Form.general_fields
+WORKSHOP_SYNTHESIS_FIELDS = Workshop1Form.synthesis_fields
 
 LEGAL_BASIS = [
     {
@@ -346,8 +362,11 @@ def _build_regional_dataset(request):
 
         aggregated = (
             region_assessments.annotate(
-                region_id=F(
-                    "community__barangay__municipality__province__region_id"
+                region_id=Case(
+                    When(community__isnull=False, then=F("community__barangay__municipality__province__region_id")),
+                    When(province__isnull=False, then=F("province__region_id")),
+                    default=None,
+                    output_field=IntegerField()
                 )
             )
             .values("region_id")
@@ -637,8 +656,137 @@ def mana_manage_assessments(request):
 
 
 @login_required
+def mana_assessment_detail(request, assessment_id):
+    """Render a rich detail page for a specific assessment."""
+
+    assessment = get_object_or_404(
+        Assessment.objects.select_related(
+            "category",
+            "lead_assessor",
+            "community__barangay__municipality__province__region",
+            "province__region",
+        ).prefetch_related(
+            "assessmentteammember_set__user",
+            "identified_needs__category",
+            "workshop_activities",
+        ),
+        pk=assessment_id,
+    )
+
+    team_members = (
+        assessment.assessmentteammember_set.select_related("user")
+        .order_by("role", "user__first_name", "user__last_name")
+    )
+
+    needs_queryset = assessment.identified_needs.all()
+    needs_list = list(
+        needs_queryset.order_by("-priority_score", "-impact_severity", "title")
+    )
+    workshops_list = list(
+        assessment.workshop_activities.all().order_by("scheduled_date", "start_time")
+    )
+
+    needs_summary = {
+        "total": len(needs_list),
+        "validated": sum(
+            1
+            for need in needs_list
+            if need.status
+            in {"validated", "prioritized", "planned", "in_progress", "completed"}
+        ),
+        "critical": sum(1 for need in needs_list if need.urgency_level == "immediate"),
+    }
+
+    workshop_summary = {
+        "total": len(workshops_list),
+        "completed": sum(1 for item in workshops_list if item.status == "completed"),
+        "in_progress": sum(1 for item in workshops_list if item.status == "in_progress"),
+    }
+
+    status_display = dict(Assessment.STATUS_CHOICES).get(assessment.status, assessment.status)
+    priority_display = dict(Assessment.PRIORITY_CHOICES).get(
+        assessment.priority, assessment.priority
+    )
+    methodology_display = dict(Assessment.ASSESSMENT_METHODOLOGIES).get(
+        assessment.primary_methodology, assessment.primary_methodology
+    )
+    impact_display = dict(Assessment.PRIORITY_CHOICES).get(
+        assessment.impact_level, assessment.impact_level
+    )
+
+    context = {
+        "assessment": assessment,
+        "team_members": team_members,
+        "needs_list": needs_list,
+        "workshops_list": workshops_list,
+        "needs_summary": needs_summary,
+        "workshop_summary": workshop_summary,
+        "status_display": status_display,
+        "priority_display": priority_display,
+        "methodology_display": methodology_display,
+        "impact_display": impact_display,
+    }
+    return render(request, "mana/mana_assessment_detail.html", context)
+
+
+@login_required
+def mana_assessment_edit(request, assessment_id):
+    """Allow users to edit an assessment using the frontend form."""
+
+    assessment = get_object_or_404(
+        Assessment.objects.select_related(
+            "category",
+            "community__barangay__municipality__province__region",
+            "province__region",
+            "lead_assessor",
+        ),
+        pk=assessment_id,
+    )
+
+    if request.method == "POST":
+        form = AssessmentUpdateForm(
+            request.POST, instance=assessment, user=request.user
+        )
+        if form.is_valid():
+            updated_assessment = form.save(user=request.user)
+            messages.success(
+                request,
+                f'Assessment "{updated_assessment.title}" was updated successfully.',
+            )
+            return redirect(
+                "common:mana_assessment_detail", assessment_id=updated_assessment.id
+            )
+    else:
+        form = AssessmentUpdateForm(instance=assessment, user=request.user)
+
+    return render(
+        request,
+        "mana/mana_assessment_edit.html",
+        {
+            "assessment": assessment,
+            "form": form,
+        },
+    )
+
+
+@login_required
 def mana_regional_overview(request):
-    """Regional-level overview aligning with the MANA implementation guide."""
+    """
+    Regional-level overview aligning with the MANA implementation guide.
+
+    STAFF ONLY: This is the legacy MANA system for OOBC staff and authorized users.
+    Workshop participants should use /mana/workshops/ (new sequential system).
+    """
+    # Enforce staff-only access
+    if not request.user.is_staff and not request.user.has_perm("mana.can_facilitate_workshop"):
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(
+            request,
+            "Access denied. This area is restricted to OOBC staff. "
+            "Participants should access workshops through their participant dashboard."
+        )
+        return redirect("common:dashboard")
 
     regions = Region.objects.filter(is_active=True).order_by("name")
     region_ids = list(regions.values_list("id", flat=True))
@@ -710,29 +858,66 @@ def mana_regional_overview(request):
         requested_tab if requested_tab in workshop_order else workshop_order[0]
     )
     selected_assessment = None
-    regional_workshop_assessments = Assessment.objects.none()
+    regional_workshop_assessments = (
+        Assessment.objects.filter(
+            assessment_level="regional", primary_methodology="workshop"
+        )
+        .select_related(
+            "category",
+            "lead_assessor",
+            "community__barangay__municipality__province__region",
+            "province__region",
+        )
+        .order_by("-created_at")
+    )
     bound_workshop_forms = {}
     workshop_forms = []
 
     region_assessments = Assessment.objects.none()
 
     if region_ids:
+        # Query both community-based and province-based assessments for the regions
+        from django.db.models import Q
+
         region_assessments = (
             Assessment.objects.filter(
-                community__barangay__municipality__province__region_id__in=region_ids
+                Q(community__barangay__municipality__province__region_id__in=region_ids) |
+                Q(province__region_id__in=region_ids)
             )
             .select_related(
                 "community__barangay__municipality__province__region",
+                "province__region",
                 "category",
                 "lead_assessor",
             )
             .order_by("-created_at")
         )
 
+        regional_workshop_assessments = regional_workshop_assessments.filter(
+            Q(province__region_id__in=region_ids)
+            | Q(
+                community__barangay__municipality__province__region_id__in=region_ids
+            )
+        )
+
+        selected_assessment_id = request.POST.get("assessment") or request.GET.get(
+            "assessment"
+        )
+        if selected_assessment_id:
+            selected_assessment = regional_workshop_assessments.filter(
+                id=selected_assessment_id
+            ).first()
+
+        if selected_assessment is None:
+            selected_assessment = regional_workshop_assessments.first()
+
         aggregated = (
             region_assessments.annotate(
-                region_id=F(
-                    "community__barangay__municipality__province__region_id"
+                region_id=Case(
+                    When(community__isnull=False, then=F("community__barangay__municipality__province__region_id")),
+                    When(province__isnull=False, then=F("province__region_id")),
+                    default=None,
+                    output_field=IntegerField()
                 )
             )
             .values("region_id")
@@ -861,72 +1046,30 @@ def mana_regional_overview(request):
                 workshop_activity_map.setdefault(activity.workshop_type, activity)
                 active_workshop_tab = activity.workshop_type
 
-                step_index = (
-                    workshop_order.index(activity.workshop_type)
-                    if activity.workshop_type in workshop_order
-                    else None
-                )
-
-                if step_index is None:
-                    messages.error(request, "Invalid workshop selection.")
-                    bound_workshop_forms[activity.workshop_type] = (
-                        WorkshopActivityProgressForm(request.POST, instance=activity)
-                    )
+                form = None
+                form_class = WORKSHOP_FORM_MAP.get(activity.workshop_type)
+                if form_class is None:
+                    messages.error(request, "Unsupported workshop configuration.")
                 else:
-                    if step_index > 0:
-                        previous_type = workshop_order[step_index - 1]
-                        previous_activity = workshop_activity_map.get(previous_type)
-                        if not previous_activity or previous_activity.status != "completed":
-                            messages.error(
-                                request,
-                                "Complete the previous workshop before proceeding to this step.",
-                            )
-                            bound_workshop_forms[activity.workshop_type] = (
-                                WorkshopActivityProgressForm(
-                                    request.POST, instance=activity
-                                )
-                            )
-                            activity = None
-                        else:
-                            form = WorkshopActivityProgressForm(
-                                request.POST, instance=activity
-                            )
-                            if form.is_valid():
-                                form.save()
-                                messages.success(
-                                    request,
-                                    f'Updated "{activity.title}" workshop details.',
-                                )
-                                query = urlencode(
-                                    {
-                                        "assessment": str(selected_assessment.id),
-                                        "active_tab": activity.workshop_type,
-                                    }
-                                )
-                                return redirect(
-                                    f"{reverse('common:mana_regional_overview')}?{query}"
-                                )
-                            bound_workshop_forms[activity.workshop_type] = form
-                    else:
-                        form = WorkshopActivityProgressForm(
-                            request.POST, instance=activity
+                    form = form_class(request.POST, instance=activity)
+                    if form.is_valid():
+                        form.save()
+                        messages.success(
+                            request,
+                            f'Updated "{activity.title}" workshop details.',
                         )
-                        if form.is_valid():
-                            form.save()
-                            messages.success(
-                                request,
-                                f'Updated "{activity.title}" workshop details.',
-                            )
-                            query = urlencode(
-                                {
-                                    "assessment": str(selected_assessment.id),
-                                    "active_tab": activity.workshop_type,
-                                }
-                            )
-                            return redirect(
-                                f"{reverse('common:mana_regional_overview')}?{query}"
-                            )
-                        bound_workshop_forms[activity.workshop_type] = form
+                        query = urlencode(
+                            {
+                                "assessment": str(selected_assessment.id),
+                                "active_tab": activity.workshop_type,
+                            }
+                        )
+                        return redirect(
+                            f"{reverse('common:mana_regional_overview')}?{query}"
+                        )
+
+                if form is not None:
+                    bound_workshop_forms[activity.workshop_type] = form
         else:
             messages.error(
                 request,
@@ -934,22 +1077,27 @@ def mana_regional_overview(request):
             )
 
     workshop_type_labels = dict(WorkshopActivity.WORKSHOP_TYPES)
-    for index, workshop_type in enumerate(workshop_order):
+    for workshop_type in workshop_order:
+        form_class = WORKSHOP_FORM_MAP.get(workshop_type)
+        base_fields = form_class.base_fields if form_class else {}
+        default_question_prompts = [
+            {
+                "name": name,
+                "label": field.label,
+            }
+            for name, field in base_fields.items()
+            if name not in (*WORKSHOP_GENERAL_FIELDS, *WORKSHOP_SYNTHESIS_FIELDS)
+        ]
+
         activity = workshop_activity_map.get(workshop_type)
         label = workshop_type_labels.get(workshop_type, workshop_type.replace("_", " ").title())
-
-        locked = index > 0
-        if index > 0:
-            previous_activity = workshop_activity_map.get(workshop_order[index - 1])
-            locked = not previous_activity or previous_activity.status != "completed"
 
         form_instance = None
         if activity:
             form_instance = bound_workshop_forms.get(workshop_type)
             if form_instance is None:
-                form_instance = WorkshopActivityProgressForm(instance=activity)
-        else:
-            locked = True
+                if form_class:
+                    form_instance = form_class(instance=activity)
 
         workshop_forms.append(
             {
@@ -957,15 +1105,15 @@ def mana_regional_overview(request):
                 "label": label,
                 "activity": activity,
                 "form": form_instance,
-                "locked": locked,
                 "completed": bool(activity and activity.status == "completed"),
+                "general_fields": WORKSHOP_GENERAL_FIELDS,
+                "synthesis_fields": WORKSHOP_SYNTHESIS_FIELDS,
+                "question_fields": getattr(form_instance, "question_field_names", [])
+                if form_instance
+                else [item["name"] for item in default_question_prompts],
+                "question_prompts": default_question_prompts,
             }
         )
-
-    if workshop_forms:
-        unlocked = [item["type"] for item in workshop_forms if not item["locked"]]
-        if unlocked and active_workshop_tab not in unlocked:
-            active_workshop_tab = unlocked[-1]
 
     regional_workshop_assessments = list(regional_workshop_assessments)
 
@@ -1148,6 +1296,7 @@ def mana_regional_overview(request):
         "workshop_forms": workshop_forms,
         "active_workshop_tab": active_workshop_tab,
         "regional_setup_form": setup_form,
+        "location_data": build_location_data(include_barangays=False),
     }
     return render(request, "mana/mana_regional_overview.html", context)
 
@@ -1220,9 +1369,9 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
 
     aggregated = (
         provincial_assessments.annotate(
-            province_id=F("community__barangay__municipality__province_id")
+            derived_province_id=F("community__barangay__municipality__province_id")
         )
-        .values("province_id")
+        .values("derived_province_id")
         .annotate(
             total=Count("id"),
             completed=Count("id", filter=Q(status="completed")),
@@ -1244,7 +1393,7 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
     )
 
     for row in aggregated:
-        summary = province_summary.get(row["province_id"])
+        summary = province_summary.get(row["derived_province_id"])
         if not summary:
             continue
         assessments = summary["assessments"]
@@ -1267,9 +1416,11 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
 
     needs_agg = (
         needs_queryset.annotate(
-            province_id=F("assessment__community__barangay__municipality__province_id")
+            derived_province_id=F(
+                "assessment__community__barangay__municipality__province_id"
+            )
         )
-        .values("province_id")
+        .values("derived_province_id")
         .annotate(
             total=Count("id"),
             critical=Count("id", filter=Q(urgency_level="immediate")),
@@ -1289,7 +1440,7 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
     )
 
     for row in needs_agg:
-        summary = province_summary.get(row["province_id"])
+        summary = province_summary.get(row["derived_province_id"])
         if not summary:
             continue
         needs = summary["needs"]
@@ -1309,9 +1460,11 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
 
     reports_agg = (
         reports_queryset.annotate(
-            province_id=F("assessment__community__barangay__municipality__province_id")
+            derived_province_id=F(
+                "assessment__community__barangay__municipality__province_id"
+            )
         )
-        .values("province_id")
+        .values("derived_province_id")
         .annotate(
             total=Count("id"),
             finalized=Count(
@@ -1322,7 +1475,7 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
     )
 
     for row in reports_agg:
-        summary = province_summary.get(row["province_id"])
+        summary = province_summary.get(row["derived_province_id"])
         if not summary:
             continue
         reports = summary["reports"]

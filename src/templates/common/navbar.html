@@ -17,6 +17,19 @@
             </div>
             
             <!-- Main Navigation - Desktop -->
+            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+            <div class="hidden lg:flex items-center space-x-1">
+                <a href="{% url 'common:communities_manage_provincial' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
+                    <i class="fas fa-flag text-sm"></i>
+                    <span class="text-sm xl:text-base">Provincial OBC</span>
+                </a>
+                <a href="{% url 'common:mana_regional_overview' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
+                    <i class="fas fa-map-marked-alt text-sm"></i>
+                    <span class="text-sm xl:text-base">Regional MANA</span>
+                </a>
+            </div>
+            {% else %}
+            <!-- Main Navigation - Desktop -->
             <div class="hidden lg:flex items-center space-x-1">
                 <div class="relative group">
                     <a href="{% url 'common:communities_home' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
@@ -220,6 +233,7 @@
 
             </div>
             
+            {% endif %}
             <!-- User Menu -->
             <div class="flex items-center space-x-2 sm:space-x-4">
                 <!-- User Info - Hidden on small screens -->
@@ -269,6 +283,30 @@
     
     <!-- Mobile Navigation Menu -->
     <div id="mobileMenu" class="hidden lg:hidden bg-blue-800 bg-opacity-95 backdrop-blur-sm">
+        {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+        <div class="px-4 py-4 space-y-4">
+            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
+                <a href="{% url 'common:communities_manage_provincial' %}" class="flex items-center space-x-2">
+                    <i class="fas fa-flag w-5"></i>
+                    <span>Provincial OBC</span>
+                </a>
+            </div>
+            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
+                <a href="{% url 'common:mana_regional_overview' %}" class="flex items-center space-x-2">
+                    <i class="fas fa-map-marked-alt w-5"></i>
+                    <span>Regional MANA</span>
+                </a>
+            </div>
+            <a href="{% url 'common:profile' %}" class="mobile-nav-item block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors duration-200 flex items-center space-x-2">
+                <i class="fas fa-user-circle w-5"></i>
+                <span>Profile</span>
+            </a>
+            <a href="{% url 'common:logout' %}" class="mobile-nav-item block px-3 py-2 rounded-md text-red-200 hover:bg-red-600 hover:bg-opacity-50 transition-colors duration-200 flex items-center space-x-2">
+                <i class="fas fa-sign-out-alt w-5"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+        {% else %}
         <div class="px-2 pt-2 pb-3 space-y-1 max-h-screen overflow-y-auto">
             <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
                 <div class="flex items-center space-x-2">
@@ -412,6 +450,7 @@
                 <span>Logout</span>
             </a>
         </div>
+        {% endif %}
     </div>
 </nav>
 {% endif %}

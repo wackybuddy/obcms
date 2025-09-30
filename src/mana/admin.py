@@ -8,8 +8,10 @@ from .models import (Assessment, AssessmentCategory, AssessmentTeamMember,
                      BaselineDataCollection, BaselineIndicator, BaselineStudy,
                      BaselineStudyTeamMember, MANAReport, MappingActivity, Need,
                      NeedsCategory, NeedsPrioritization, NeedsPrioritizationItem,
-                     Survey, SurveyQuestion, SurveyResponse, WorkshopActivity,
-                     WorkshopOutput, WorkshopParticipant, WorkshopSession)
+                     Survey, SurveyQuestion, SurveyResponse, WorkshopAccessLog,
+                     WorkshopActivity, WorkshopOutput, WorkshopParticipant,
+                     WorkshopParticipantAccount, WorkshopQuestionDefinition,
+                     WorkshopResponse, WorkshopSession, WorkshopSynthesis)
 
 
 @admin.register(AssessmentCategory)
@@ -1285,3 +1287,408 @@ class MANAReportAdmin(admin.ModelAdmin):
         self.message_user(request, f"{updated} reports marked as submitted.")
 
     mark_as_submitted.short_description = "Mark as Submitted"
+
+
+# Regional MANA Workshop Redesign Admin Classes
+
+
+@admin.register(WorkshopQuestionDefinition)
+class WorkshopQuestionDefinitionAdmin(admin.ModelAdmin):
+    """Admin interface for workshop question definitions."""
+
+    list_display = [
+        "workshop_type",
+        "question_id",
+        "order",
+        "version",
+        "updated_at",
+    ]
+    list_filter = ["workshop_type", "version", "updated_at"]
+    search_fields = ["question_id", "definition__text"]
+    ordering = ["workshop_type", "order"]
+    readonly_fields = ["created_at", "updated_at"]
+
+@admin.register(WorkshopParticipantAccount)
+class WorkshopParticipantAccountAdmin(admin.ModelAdmin):
+    """Admin interface for Workshop Participant Accounts."""
+
+    list_display = [
+        "user_link",
+        "assessment_link",
+        "province",
+        "stakeholder_type",
+        "progress_badge",
+        "consent_status",
+        "profile_status",
+        "created_at",
+    ]
+    list_filter = [
+        "stakeholder_type",
+        "province",
+        "consent_given",
+        "profile_completed",
+        "current_workshop",
+        "created_at",
+    ]
+    search_fields = [
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "organization",
+        "province__name",
+    ]
+    date_hierarchy = "created_at"
+    ordering = ["province", "user__last_name"]
+    autocomplete_fields = ["user", "assessment", "province", "municipality", "barangay", "created_by"]
+    readonly_fields = ["created_at", "updated_at"]
+
+    fieldsets = (
+        ("Identity", {"fields": ("user", "assessment")}),
+        ("Stakeholder Information", {"fields": ("stakeholder_type", "organization")}),
+        (
+            "Geography",
+            {"fields": (("province", "municipality", "barangay"),)},
+        ),
+        (
+            "Progress",
+            {"fields": ("completed_workshops", "current_workshop")},
+        ),
+        (
+            "Onboarding",
+            {"fields": (("consent_given", "consent_date"), "profile_completed")},
+        ),
+        (
+            "Metadata",
+            {"fields": ("created_by", "created_at", "updated_at"), "classes": ("collapse",)},
+        ),
+    )
+
+    actions = ["mark_consent_given", "mark_profile_complete", "reset_progress"]
+
+    def user_link(self, obj):
+        """Link to user admin page."""
+        url = reverse("admin:auth_user_change", args=[obj.user.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.user.get_full_name())
+
+    user_link.short_description = "User"
+    user_link.admin_order_field = "user__last_name"
+
+    def assessment_link(self, obj):
+        """Link to assessment admin page."""
+        url = reverse("admin:mana_assessment_change", args=[obj.assessment.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.assessment.title)
+
+    assessment_link.short_description = "Assessment"
+
+    def progress_badge(self, obj):
+        """Progress through workshops."""
+        completed = len(obj.completed_workshops or [])
+        total = 6  # Total workshops
+        percentage = (completed / total) * 100
+        color = "#28a745" if percentage >= 75 else "#ffc107" if percentage >= 50 else "#dc3545"
+        return format_html(
+            '<div style="width: 100px; background-color: #e9ecef; border-radius: 3px;">'
+            '<div style="width: {}%; background-color: {}; height: 15px; border-radius: 3px; '
+            'text-align: center; color: white; font-size: 10px; line-height: 15px;">{}/{}</div>'
+            "</div>",
+            percentage,
+            color,
+            completed,
+            total,
+        )
+
+    progress_badge.short_description = "Progress"
+
+    def consent_status(self, obj):
+        """Consent status indicator."""
+        if obj.consent_given:
+            return format_html('<span style="color: green;">✓ Given</span>')
+        return format_html('<span style="color: red;">✗ Not Given</span>')
+
+    consent_status.short_description = "Consent"
+
+    def profile_status(self, obj):
+        """Profile completion status."""
+        if obj.profile_completed:
+            return format_html('<span style="color: green;">✓ Complete</span>')
+        return format_html('<span style="color: orange;">⚠ Incomplete</span>')
+
+    profile_status.short_description = "Profile"
+
+    def mark_consent_given(self, request, queryset):
+        """Bulk action to mark consent as given."""
+        from django.utils import timezone
+        updated = queryset.update(consent_given=True, consent_date=timezone.now())
+        self.message_user(request, f"{updated} participants marked with consent given.")
+
+    mark_consent_given.short_description = "Mark Consent Given"
+
+    def mark_profile_complete(self, request, queryset):
+        """Bulk action to mark profiles as complete."""
+        updated = queryset.update(profile_completed=True)
+        self.message_user(request, f"{updated} profiles marked as complete.")
+
+    mark_profile_complete.short_description = "Mark Profile Complete"
+
+    def reset_progress(self, request, queryset):
+        """Bulk action to reset workshop progress."""
+        updated = queryset.update(completed_workshops=[], current_workshop="workshop_1")
+        self.message_user(request, f"{updated} participants' progress reset.")
+
+    reset_progress.short_description = "Reset Progress"
+
+
+@admin.register(WorkshopResponse)
+class WorkshopResponseAdmin(admin.ModelAdmin):
+    """Admin interface for Workshop Responses."""
+
+    list_display = [
+        "participant_link",
+        "workshop_link",
+        "question_id",
+        "status_badge",
+        "submitted_at",
+        "updated_at",
+    ]
+    list_filter = [
+        "status",
+        "workshop__workshop_type",
+        "submitted_at",
+        "created_at",
+    ]
+    search_fields = [
+        "participant__user__first_name",
+        "participant__user__last_name",
+        "workshop__title",
+        "question_id",
+    ]
+    date_hierarchy = "submitted_at"
+    ordering = ["-updated_at"]
+    autocomplete_fields = ["participant", "workshop"]
+    readonly_fields = ["created_at", "updated_at"]
+
+    fieldsets = (
+        ("Relations", {"fields": ("participant", "workshop", "question_id")}),
+        ("Response", {"fields": ("response_data", "status")}),
+        ("Timestamps", {"fields": ("submitted_at", "created_at", "updated_at")}),
+    )
+
+    def participant_link(self, obj):
+        """Link to participant admin page."""
+        url = reverse("admin:mana_workshopparticipantaccount_change", args=[obj.participant.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.participant.user.get_full_name())
+
+    participant_link.short_description = "Participant"
+
+    def workshop_link(self, obj):
+        """Link to workshop admin page."""
+        url = reverse("admin:mana_workshopactivity_change", args=[obj.workshop.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display())
+
+    workshop_link.short_description = "Workshop"
+
+    def status_badge(self, obj):
+        """Status with color coding."""
+        colors = {
+            "draft": "gray",
+            "submitted": "blue",
+            "validated": "green",
+        }
+        color = colors.get(obj.status, "gray")
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_status_display(),
+        )
+
+    status_badge.short_description = "Status"
+
+
+@admin.register(WorkshopAccessLog)
+class WorkshopAccessLogAdmin(admin.ModelAdmin):
+    """Admin interface for Workshop Access Logs."""
+
+    list_display = [
+        "participant_link",
+        "workshop_link",
+        "action_badge",
+        "created_at",
+    ]
+    list_filter = [
+        "action_type",
+        "workshop__workshop_type",
+        "created_at",
+    ]
+    search_fields = [
+        "participant__user__first_name",
+        "participant__user__last_name",
+        "workshop__title",
+    ]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+    autocomplete_fields = ["participant", "workshop"]
+    readonly_fields = ["created_at"]
+
+    fieldsets = (
+        ("Event", {"fields": ("participant", "workshop", "action_type")}),
+        ("Metadata", {"fields": ("metadata", "created_at")}),
+    )
+
+    def participant_link(self, obj):
+        """Link to participant admin page."""
+        url = reverse("admin:mana_workshopparticipantaccount_change", args=[obj.participant.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.participant.user.get_full_name())
+
+    participant_link.short_description = "Participant"
+
+    def workshop_link(self, obj):
+        """Link to workshop admin page."""
+        url = reverse("admin:mana_workshopactivity_change", args=[obj.workshop.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display())
+
+    workshop_link.short_description = "Workshop"
+
+    def action_badge(self, obj):
+        """Action type with color coding."""
+        colors = {
+            "view": "gray",
+            "submit": "blue",
+            "update": "orange",
+            "unlock": "green",
+            "complete": "purple",
+        }
+        color = colors.get(obj.action_type, "gray")
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_action_type_display(),
+        )
+
+    action_badge.short_description = "Action"
+
+
+@admin.register(WorkshopSynthesis)
+class WorkshopSynthesisAdmin(admin.ModelAdmin):
+    """Admin interface for Workshop Syntheses."""
+
+    list_display = [
+        "workshop_link",
+        "assessment_link",
+        "status_badge",
+        "provider",
+        "model",
+        "tokens_used",
+        "created_by",
+        "created_at",
+        "approved_at",
+    ]
+    list_filter = [
+        "status",
+        "provider",
+        "workshop__workshop_type",
+        "created_at",
+        "approved_at",
+    ]
+    search_fields = [
+        "workshop__title",
+        "assessment__title",
+        "synthesis_text",
+    ]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+    autocomplete_fields = ["assessment", "workshop", "created_by", "reviewed_by"]
+    readonly_fields = [
+        "tokens_used",
+        "processing_time_seconds",
+        "created_at",
+        "updated_at",
+    ]
+
+    fieldsets = (
+        ("Relations", {"fields": ("assessment", "workshop")}),
+        ("Configuration", {"fields": ("prompt_template", "filters")}),
+        (
+            "AI Provider",
+            {"fields": (("provider", "model"), ("tokens_used", "processing_time_seconds"))},
+        ),
+        ("Results", {"fields": ("synthesis_text", "key_themes")}),
+        ("Status", {"fields": ("status", "error_message")}),
+        (
+            "Review and Approval",
+            {
+                "fields": (("reviewed_by", "approved_at"), "review_notes"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Metadata",
+            {"fields": ("created_by", "created_at", "updated_at"), "classes": ("collapse",)},
+        ),
+    )
+
+    actions = ["mark_as_reviewed", "mark_as_approved", "regenerate_synthesis"]
+
+    def workshop_link(self, obj):
+        """Link to workshop admin page."""
+        url = reverse("admin:mana_workshopactivity_change", args=[obj.workshop.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display())
+
+    workshop_link.short_description = "Workshop"
+
+    def assessment_link(self, obj):
+        """Link to assessment admin page."""
+        url = reverse("admin:mana_assessment_change", args=[obj.assessment.pk])
+        return format_html('<a href="{}">{}</a>', url, obj.assessment.title[:30])
+
+    assessment_link.short_description = "Assessment"
+
+    def status_badge(self, obj):
+        """Status with color coding."""
+        colors = {
+            "queued": "gray",
+            "processing": "blue",
+            "completed": "green",
+            "failed": "red",
+            "reviewed": "purple",
+            "approved": "darkgreen",
+        }
+        color = colors.get(obj.status, "gray")
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_status_display(),
+        )
+
+    status_badge.short_description = "Status"
+
+    def mark_as_reviewed(self, request, queryset):
+        """Bulk action to mark syntheses as reviewed."""
+        updated = queryset.filter(status="completed").update(
+            status="reviewed", reviewed_by=request.user
+        )
+        self.message_user(request, f"{updated} syntheses marked as reviewed.")
+
+    mark_as_reviewed.short_description = "Mark as Reviewed"
+
+    def mark_as_approved(self, request, queryset):
+        """Bulk action to mark syntheses as approved."""
+        from django.utils import timezone
+        updated = queryset.filter(status__in=["completed", "reviewed"]).update(
+            status="approved", reviewed_by=request.user, approved_at=timezone.now()
+        )
+        self.message_user(request, f"{updated} syntheses marked as approved.")
+
+    mark_as_approved.short_description = "Mark as Approved"
+
+    def regenerate_synthesis(self, request, queryset):
+        """Bulk action to queue syntheses for regeneration."""
+        updated = queryset.update(status="queued", error_message="")
+        self.message_user(
+            request,
+            f"{updated} syntheses queued for regeneration. Process via Celery task.",
+        )
+
+    regenerate_synthesis.short_description = "Queue for Regeneration"

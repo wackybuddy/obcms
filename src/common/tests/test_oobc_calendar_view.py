@@ -42,18 +42,18 @@ def test_build_calendar_payload_handles_staff_tasks():
         is_approved=True,
     )
     team = StaffTeam.objects.create(name="Coordination Team", description="", is_active=True)
-    StaffTask.objects.create(
+    task = StaffTask.objects.create(
         title="Prepare briefing",
         description="",
         impact="",
         team=team,
-        assignee=staff_user,
         created_by=staff_user,
         status=StaffTask.STATUS_IN_PROGRESS,
         priority=StaffTask.PRIORITY_HIGH,
         start_date=timezone.now().date(),
         due_date=timezone.now().date(),
     )
+    task.assignees.set([staff_user])
 
     payload = build_calendar_payload(filter_modules=["staff"])
 

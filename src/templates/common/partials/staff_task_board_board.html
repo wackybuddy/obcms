@@ -1,3 +1,5 @@
+<!-- DEBUG: view_mode={{ view_mode }}, group_by={{ group_by }}, pipeline_count={{ pipeline|length }} -->
+{% if pipeline %}
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6" data-board data-group-by="{{ group_by }}" data-update-url="{{ update_url }}">
     {% for column in pipeline %}
     <div class="bg-gray-50 border border-gray-200 rounded-2xl shadow-sm flex flex-col" data-board-column data-column-value="{{ column.status_key }}">
@@ -113,3 +115,16 @@
     </div>
     {% endfor %}
 </div>
+{% else %}
+<div class="text-center py-16">
+    <div class="max-w-md mx-auto">
+        <i class="fas fa-exclamation-triangle text-4xl text-amber-500 mb-4"></i>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No Board Data Available</h3>
+        <p class="text-gray-600 mb-4">The Kanban board is not loading data properly.</p>
+        <p class="text-xs text-gray-500">Debug: view_mode={{ view_mode }}, group_by={{ group_by }}, pipeline_count={{ pipeline|length }}</p>
+        <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+            Reload Page
+        </button>
+    </div>
+</div>
+{% endif %}

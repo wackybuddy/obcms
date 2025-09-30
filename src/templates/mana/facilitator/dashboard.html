@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Facilitator Dashboard · {{ assessment.title }}{% endblock %}
+
+{% block content %}
+<div class="bg-neutral-50 min-h-screen py-8">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <header class="bg-white border border-gray-100 rounded-3xl shadow-sm p-8 flex flex-col gap-4">
+            <div class="flex items-start justify-between flex-wrap gap-4">
+                <div>
+                    <p class="text-sm uppercase tracking-wide text-gray-400">Regional MANA Facilitator Workspace</p>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ assessment.title }}</h1>
+                    <p class="text-gray-600 mt-2">Monitor participant submissions, trigger AI synthesis, and orchestrate sequential unlocks across the regional workshop series.</p>
+                </div>
+                <div class="flex flex-col gap-2 text-sm text-gray-500">
+                    <span><i class="fas fa-users text-emerald-500 mr-2"></i>Total participants: <strong class="text-gray-900">{{ total_participants }}</strong></span>
+                    <span><i class="fas fa-check-circle text-emerald-500 mr-2"></i>Submitted this workshop: <strong class="text-emerald-600">{{ submitted_count }}</strong></span>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3 text-sm">
+                {% for item in workshops %}
+                    <a href="{% url 'mana:facilitator_dashboard' assessment.id %}?workshop={{ item.workshop_type }}"
+                       class="px-4 py-2 rounded-xl border text-sm {% if item == workshop %}border-emerald-400 bg-emerald-50 text-emerald-700{% else %}border-gray-200 bg-white text-gray-600 hover:bg-gray-100{% endif %}">
+                        {{ item.get_workshop_type_display }}
+                    </a>
+                {% endfor %}
+            </div>
+            {% if next_workshop %}
+            <form method="post"
+                  hx-post="{% url 'mana:facilitator_advance_workshop' assessment.id next_workshop.workshop_type %}"
+                  hx-target="#responses-panel"
+                  hx-swap="none"
+                  class="flex items-center justify-end">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-200 text-emerald-600 text-sm font-medium hover:bg-emerald-50">
+                    <i class="fas fa-forward"></i>
+                    Advance participants to {{ next_workshop.get_workshop_type_display }}
+                </button>
+            </form>
+            {% endif %}
+        </header>
+
+        {% include "mana/facilitator/partials/responses_table.html" %}
+
+        <section class="bg-white border border-gray-100 rounded-3xl shadow-sm p-8 space-y-6" data-task-id="{{ assessment.id }}">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">AI Synthesis</h2>
+                    <p class="text-sm text-gray-500">Generate consolidations once responses are ready. Regenerate or approve synthesised content before sharing.</p>
+                </div>
+                <form method="post"
+                      hx-post="{% url 'mana:facilitator_generate_synthesis' assessment.id workshop.workshop_type %}"
+                      hx-target="#responses-panel"
+                      hx-swap="none"
+                      class="flex flex-wrap items-end gap-3 bg-neutral-50 border border-gray-100 rounded-2xl px-4 py-3">
+                    {% csrf_token %}
+                    {{ synthesis_form.workshop.as_hidden }}
+                    <div class="flex flex-col">
+                        <label class="text-xs uppercase tracking-wide text-gray-500 mb-1">Province</label>
+                        {{ synthesis_form.filter_province }}
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs uppercase tracking-wide text-gray-500 mb-1">Stakeholder</label>
+                        {{ synthesis_form.filter_stakeholder_type }}
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-xs uppercase tracking-wide text-gray-500 mb-1">Provider</label>
+                        {{ synthesis_form.provider }}
+                    </div>
+                    <button type="submit" class="btn-primary px-5 py-3 rounded-xl text-white font-semibold shadow">Generate Synthesis</button>
+                </form>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                {% for synthesis in syntheses %}
+                    <div class="border border-gray-100 rounded-2xl p-6 bg-neutral-50 space-y-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-600">{{ synthesis.get_status_display }}</p>
+                                <p class="text-xs text-gray-400">{{ synthesis.created_at|date:"M d, Y H:i" }} · {{ synthesis.provider|default:"Pending" }} {{ synthesis.model|default:"" }}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <form method="post" action="{% url 'mana:facilitator_regenerate_synthesis' assessment.id synthesis.id %}">
+                                    {% csrf_token %}
+                                    <button class="text-xs text-emerald-600 hover:text-emerald-700">Regenerate</button>
+                                </form>
+                                <form method="post" action="{% url 'mana:facilitator_approve_synthesis' assessment.id synthesis.id %}">
+                                    {% csrf_token %}
+                                    <button class="text-xs text-gray-500 hover:text-gray-700">Approve</button>
+                                </form>
+                            </div>
+                        </div>
+                        <pre class="text-xs text-gray-700 whitespace-pre-wrap max-h-64 overflow-auto border border-gray-200 rounded-xl bg-white px-4 py-3">{{ synthesis.synthesis_text|default:"(No synthesis yet)" }}</pre>
+                    </div>
+                {% empty %}
+                    <p class="text-sm text-gray-500">No synthesis requests yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

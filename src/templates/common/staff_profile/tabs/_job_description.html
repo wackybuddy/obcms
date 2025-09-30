@@ -1,0 +1,109 @@
+<div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+    <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <i class="fas fa-clipboard-list text-emerald-600"></i>
+            Job purpose & design
+        </h2>
+        <a href="{% url 'common:staff_profile_update' profile.pk %}"
+           class="inline-flex items-center text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+            Update job details
+            <i class="fas fa-arrow-right ml-2 text-xs"></i>
+        </a>
+    </div>
+    {% if profile.job_purpose %}
+    <p class="text-sm text-gray-600">{{ profile.job_purpose|linebreaksbr }}</p>
+    {% endif %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+        {% if profile.key_result_areas %}
+        <div>
+            <h3 class="font-semibold text-gray-800 mb-2">Key result areas</h3>
+            <ul class="space-y-1 list-disc list-inside">
+                {% for item in profile.key_result_areas %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if profile.major_functions %}
+        <div>
+            <h3 class="font-semibold text-gray-800 mb-2">Major functions</h3>
+            <ul class="space-y-1 list-disc list-inside">
+                {% for item in profile.major_functions %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if profile.deliverables %}
+        <div>
+            <h3 class="font-semibold text-gray-800 mb-2">Deliverables / MOVs</h3>
+            <ul class="space-y-1 list-disc list-inside">
+                {% for item in profile.deliverables %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if profile.supervision_lines %}
+        <div>
+            <h3 class="font-semibold text-gray-800 mb-2">Supervision & coordination</h3>
+            <ul class="space-y-1 list-disc list-inside">
+                {% for item in profile.supervision_lines %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        {% if profile.cross_functional_partners %}
+        <div class="md:col-span-2">
+            <h3 class="font-semibold text-gray-800 mb-2">Cross-functional partners</h3>
+            <ul class="flex flex-wrap gap-2 text-xs">
+                {% for partner in profile.cross_functional_partners %}
+                <li class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-semibold">{{ partner }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if profile.qualification_education or profile.qualification_training or profile.qualification_experience or profile.qualification_eligibility or profile.qualification_competency %}
+<div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <i class="fas fa-id-badge text-emerald-600"></i>
+        Qualification standards
+    </h2>
+    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+        {% if profile.qualification_education %}
+        <div>
+            <dt class="font-semibold text-gray-700">Education</dt>
+            <dd>{{ profile.qualification_education }}</dd>
+        </div>
+        {% endif %}
+        {% if profile.qualification_training %}
+        <div>
+            <dt class="font-semibold text-gray-700">Training</dt>
+            <dd>{{ profile.qualification_training }}</dd>
+        </div>
+        {% endif %}
+        {% if profile.qualification_experience %}
+        <div>
+            <dt class="font-semibold text-gray-700">Experience</dt>
+            <dd>{{ profile.qualification_experience }}</dd>
+        </div>
+        {% endif %}
+        {% if profile.qualification_eligibility %}
+        <div>
+            <dt class="font-semibold text-gray-700">Eligibility</dt>
+            <dd>{{ profile.qualification_eligibility }}</dd>
+        </div>
+        {% endif %}
+    </dl>
+    {% if profile.qualification_competency %}
+    <div class="text-sm text-gray-600">
+        <h3 class="font-semibold text-gray-800 mb-1">Competency standards</h3>
+        <p>{{ profile.qualification_competency|linebreaksbr }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}

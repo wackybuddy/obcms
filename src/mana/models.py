@@ -7,7 +7,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from communities.models import OBCCommunity
+from communities.models import OBCCommunity, ProvinceCoverage
 from common.models import Barangay, Municipality, Province, Region
 
 User = get_user_model()
@@ -132,12 +132,23 @@ class Assessment(models.Model):
         null=True, blank=True, help_text="List of secondary methodologies used"
     )
 
-    # Community and Location
+    # Community and Location (flexible for different assessment levels)
     community = models.ForeignKey(
         OBCCommunity,
         on_delete=models.CASCADE,
         related_name="assessments",
-        help_text="Community being assessed",
+        null=True,
+        blank=True,
+        help_text="Community being assessed (for community-level assessments)",
+    )
+
+    province = models.ForeignKey(
+        Province,
+        on_delete=models.CASCADE,
+        related_name="assessments",
+        null=True,
+        blank=True,
+        help_text="Province being assessed (for regional/provincial assessments)",
     )
 
     location_details = models.TextField(
@@ -248,12 +259,17 @@ class Assessment(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["community", "status"]),
+            models.Index(fields=["province", "status"]),
             models.Index(fields=["category", "priority"]),
             models.Index(fields=["planned_start_date", "planned_end_date"]),
         ]
 
     def __str__(self):
-        return f"{self.title} - {self.community.barangay.name}"
+        if self.community:
+            return f"{self.title} - {self.community.barangay.name}"
+        elif self.province:
+            return f"{self.title} - {self.province.name}"
+        return self.title
 
     def clean(self):
         if self.planned_end_date and self.planned_start_date:
@@ -281,6 +297,42 @@ class Assessment(models.Model):
         if self.status not in ["completed", "cancelled"] and self.planned_end_date:
             return timezone.now().date() > self.planned_end_date
         return False
+
+    def clean(self):
+        # Validate that either community OR province is set, not both
+        if not self.community and not self.province:
+            raise ValidationError(
+                "Either community or province must be specified for the assessment."
+            )
+
+        if self.community and self.province:
+            raise ValidationError(
+                "Assessment cannot be linked to both community and province. Choose one."
+            )
+
+        # Validate assessment level consistency
+        if self.assessment_level in ['regional', 'provincial'] and self.community:
+            raise ValidationError(
+                "Regional/Provincial assessments should be linked to a province, not a community."
+            )
+
+        if self.assessment_level in ['community', 'barangay'] and self.province:
+            raise ValidationError(
+                "Community/Barangay assessments should be linked to a community, not a province."
+            )
+
+        # Existing date validations
+        if self.planned_end_date and self.planned_start_date:
+            if self.planned_end_date < self.planned_start_date:
+                raise ValidationError(
+                    "Planned end date cannot be earlier than start date"
+                )
+
+        if self.actual_end_date and self.actual_start_date:
+            if self.actual_end_date < self.actual_start_date:
+                raise ValidationError(
+                    "Actual end date cannot be earlier than start date"
+                )
 
 
 class AssessmentTeamMember(models.Model):
@@ -858,7 +910,11 @@ class Need(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.title} - {self.community.barangay.name}"
+        if self.community:
+            return f"{self.title} - {self.community.barangay.name}"
+        elif self.province:
+            return f"{self.title} - {self.province.name}"
+        return self.title
 
     def calculate_priority_score(self):
         """Calculate priority score based on various factors."""
@@ -1009,7 +1065,11 @@ class NeedsPrioritization(models.Model):
         ordering = ["-start_date"]
 
     def __str__(self):
-        return f"{self.title} - {self.community.barangay.name}"
+        if self.community:
+            return f"{self.title} - {self.community.barangay.name}"
+        elif self.province:
+            return f"{self.title} - {self.province.name}"
+        return self.title
 
 
 class NeedsPrioritizationItem(models.Model):
@@ -1158,6 +1218,10 @@ class WorkshopActivity(models.Model):
         blank=True, help_text="Challenges encountered during workshop"
     )
 
+    workshop_outputs = models.JSONField(
+        null=True, blank=True, help_text="Detailed outputs from the workshop session"
+    )
+
     # Metadata
     created_by = models.ForeignKey(
         User,
@@ -1175,6 +1239,48 @@ class WorkshopActivity(models.Model):
 
     def __str__(self):
         return f"{self.get_workshop_type_display()} - {self.assessment.title}"
+
+
+class WorkshopQuestionDefinition(models.Model):
+    """Canonical question definitions for Regional MANA workshops."""
+
+    workshop_type = models.CharField(
+        max_length=20,
+        choices=WorkshopActivity.WORKSHOP_TYPES,
+        help_text="Workshop this question belongs to",
+    )
+
+    question_id = models.CharField(
+        max_length=50,
+        help_text="Stable identifier matching schema JSON",
+    )
+
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text="Display order within workshop",
+    )
+
+    version = models.CharField(
+        max_length=20,
+        default="v1",
+        help_text="Schema version tag",
+    )
+
+    definition = models.JSONField(
+        help_text="Full question payload including text, type, fields, and metadata",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["workshop_type", "order", "question_id"]
+        unique_together = ["workshop_type", "question_id", "version"]
+        verbose_name = "Workshop Question Definition"
+        verbose_name_plural = "Workshop Question Definitions"
+
+    def __str__(self):
+        return f"{self.workshop_type} - {self.question_id} ({self.version})"
 
 
 class WorkshopSession(models.Model):
@@ -1753,7 +1859,11 @@ class BaselineStudy(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.title} - {self.community.barangay.name}"
+        if self.community:
+            return f"{self.title} - {self.community.barangay.name}"
+        elif self.province:
+            return f"{self.title} - {self.province.name}"
+        return self.title
 
     def clean(self):
         if self.planned_end_date and self.planned_start_date:
@@ -1781,6 +1891,42 @@ class BaselineStudy(models.Model):
         if self.status not in ["completed", "cancelled"] and self.planned_end_date:
             return timezone.now().date() > self.planned_end_date
         return False
+
+    def clean(self):
+        # Validate that either community OR province is set, not both
+        if not self.community and not self.province:
+            raise ValidationError(
+                "Either community or province must be specified for the assessment."
+            )
+
+        if self.community and self.province:
+            raise ValidationError(
+                "Assessment cannot be linked to both community and province. Choose one."
+            )
+
+        # Validate assessment level consistency
+        if self.assessment_level in ['regional', 'provincial'] and self.community:
+            raise ValidationError(
+                "Regional/Provincial assessments should be linked to a province, not a community."
+            )
+
+        if self.assessment_level in ['community', 'barangay'] and self.province:
+            raise ValidationError(
+                "Community/Barangay assessments should be linked to a community, not a province."
+            )
+
+        # Existing date validations
+        if self.planned_end_date and self.planned_start_date:
+            if self.planned_end_date < self.planned_start_date:
+                raise ValidationError(
+                    "Planned end date cannot be earlier than start date"
+                )
+
+        if self.actual_end_date and self.actual_start_date:
+            if self.actual_end_date < self.actual_start_date:
+                raise ValidationError(
+                    "Actual end date cannot be earlier than start date"
+                )
 
     @property
     def completion_rate(self):
@@ -2428,7 +2574,11 @@ class CommunityChallenges(models.Model):
         verbose_name_plural = "Community Challenges"
 
     def __str__(self):
-        return f"{self.title} - {self.community.barangay.name}"
+        if self.community:
+            return f"{self.title} - {self.community.barangay.name}"
+        elif self.province:
+            return f"{self.title} - {self.province.name}"
+        return self.title
 
 
 class CommunityAspirations(models.Model):
@@ -2580,4 +2730,352 @@ class CommunityAspirations(models.Model):
         verbose_name_plural = "Community Aspirations"
 
     def __str__(self):
-        return f"{self.title} - {self.community.barangay.name}"
+        if self.community:
+            return f"{self.title} - {self.community.barangay.name}"
+        elif self.province:
+            return f"{self.title} - {self.province.name}"
+        return self.title
+
+
+class WorkshopParticipantAccount(models.Model):
+    """Authenticated participant account for regional MANA workshops."""
+
+    STAKEHOLDER_TYPES = [
+        ("elder", "Community Elder"),
+        ("women_leader", "Women Leader"),
+        ("youth_leader", "Youth Leader"),
+        ("farmer", "Farmer"),
+        ("fisherfolk", "Fisherfolk"),
+        ("religious_leader", "Religious Leader"),
+        ("traditional_leader", "Traditional Leader"),
+        ("milf_representative", "MILF Representative"),
+        ("mnlf_representative", "MNLF Representative"),
+        ("business_leader", "Business Leader"),
+        ("teacher", "Teacher/Educator"),
+        ("health_worker", "Health Worker"),
+        ("lgu_official", "LGU Official"),
+        ("ngo_representative", "NGO Representative"),
+        ("other", "Other"),
+    ]
+
+    # Identity
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="workshop_participant_account",
+        help_text="Django user account for authentication",
+    )
+
+    assessment = models.ForeignKey(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name="participant_accounts",
+        help_text="Assessment this participant is enrolled in",
+    )
+
+    # Stakeholder Information
+    stakeholder_type = models.CharField(
+        max_length=20, choices=STAKEHOLDER_TYPES, help_text="Type of stakeholder"
+    )
+
+    organization = models.CharField(
+        max_length=200, blank=True, help_text="Organization represented"
+    )
+
+    # Geography
+    province = models.ForeignKey(
+        Province,
+        on_delete=models.CASCADE,
+        related_name="workshop_participants",
+        help_text="Province represented by this participant",
+    )
+
+    municipality = models.ForeignKey(
+        Municipality,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="workshop_participants",
+        help_text="Municipality (optional)",
+    )
+
+    barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="workshop_participants",
+        help_text="Barangay (optional)",
+    )
+
+    # Completion State
+    completed_workshops = models.JSONField(
+        default=list,
+        help_text="List of completed workshop types (e.g., ['workshop_1', 'workshop_2'])",
+    )
+
+    current_workshop = models.CharField(
+        max_length=15,
+        blank=True,
+        help_text="Currently accessible workshop type",
+    )
+
+    # Onboarding
+    consent_given = models.BooleanField(
+        default=False, help_text="Whether participant gave consent"
+    )
+
+    consent_date = models.DateTimeField(
+        null=True, blank=True, help_text="Date consent was given"
+    )
+
+    profile_completed = models.BooleanField(
+        default=False, help_text="Whether profile is complete"
+    )
+
+    # Metadata
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_participant_accounts",
+        help_text="Facilitator who created this account",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["province", "user__last_name"]
+        unique_together = ["user", "assessment"]
+        verbose_name = "Workshop Participant Account"
+        verbose_name_plural = "Workshop Participant Accounts"
+        permissions = [
+            ("can_access_regional_mana", "Can access regional MANA workshops"),
+            ("can_view_provincial_obc", "Can view provincial OBC data"),
+            ("can_facilitate_workshop", "Can facilitate and manage MANA workshops"),
+        ]
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.province.name}"
+
+
+class WorkshopResponse(models.Model):
+    """Structured responses to workshop questions."""
+
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("submitted", "Submitted"),
+        ("validated", "Validated"),
+    ]
+
+    # Relations
+    participant = models.ForeignKey(
+        WorkshopParticipantAccount,
+        on_delete=models.CASCADE,
+        related_name="responses",
+        help_text="Participant who submitted this response",
+    )
+
+    workshop = models.ForeignKey(
+        WorkshopActivity,
+        on_delete=models.CASCADE,
+        related_name="structured_responses",
+        help_text="Workshop this response belongs to",
+    )
+
+    question_id = models.CharField(
+        max_length=50, help_text="Question identifier from schema"
+    )
+
+    # Response Data
+    response_data = models.JSONField(
+        help_text="Response content (structure depends on question type)"
+    )
+
+    status = models.CharField(
+        max_length=15,
+        choices=STATUS_CHOICES,
+        default="draft",
+        help_text="Response status",
+    )
+
+    # Metadata
+    submitted_at = models.DateTimeField(
+        null=True, blank=True, help_text="When response was submitted"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["workshop", "participant", "question_id"]
+        unique_together = ["participant", "workshop", "question_id"]
+        indexes = [
+            models.Index(fields=["workshop", "status"]),
+            models.Index(fields=["participant", "workshop"]),
+        ]
+
+    def __str__(self):
+        return f"{self.participant.user.get_full_name()} - {self.workshop.workshop_type} - Q{self.question_id}"
+
+
+class WorkshopAccessLog(models.Model):
+    """Audit log for workshop access and actions."""
+
+    ACTION_TYPES = [
+        ("view", "Viewed Workshop"),
+        ("submit", "Submitted Response"),
+        ("update", "Updated Response"),
+        ("unlock", "Workshop Unlocked"),
+        ("complete", "Workshop Completed"),
+    ]
+
+    # Relations
+    participant = models.ForeignKey(
+        WorkshopParticipantAccount,
+        on_delete=models.CASCADE,
+        related_name="access_logs",
+        help_text="Participant who performed the action",
+    )
+
+    workshop = models.ForeignKey(
+        WorkshopActivity,
+        on_delete=models.CASCADE,
+        related_name="access_logs",
+        help_text="Workshop accessed",
+    )
+
+    # Action Details
+    action_type = models.CharField(
+        max_length=15, choices=ACTION_TYPES, help_text="Type of action"
+    )
+
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Additional metadata (IP address, user agent, etc.)",
+    )
+
+    # Timestamp
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["participant", "workshop"]),
+            models.Index(fields=["action_type", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.participant.user.get_full_name()} - {self.get_action_type_display()} - {self.created_at}"
+
+
+class WorkshopSynthesis(models.Model):
+    """AI-generated synthesis of workshop outputs."""
+
+    STATUS_CHOICES = [
+        ("queued", "Queued"),
+        ("processing", "Processing"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+        ("reviewed", "Reviewed"),
+        ("approved", "Approved"),
+    ]
+
+    # Relations
+    assessment = models.ForeignKey(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name="workshop_syntheses",
+        help_text="Assessment this synthesis belongs to",
+    )
+
+    workshop = models.ForeignKey(
+        WorkshopActivity,
+        on_delete=models.CASCADE,
+        related_name="syntheses",
+        help_text="Workshop being synthesized",
+    )
+
+    # Synthesis Configuration
+    prompt_template = models.TextField(help_text="Prompt template used for synthesis")
+
+    filters = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Filters applied (province, stakeholder type, etc.)",
+    )
+
+    # Results
+    synthesis_text = models.TextField(
+        blank=True, help_text="Generated synthesis content"
+    )
+
+    key_themes = models.JSONField(
+        null=True, blank=True, help_text="Extracted key themes and patterns"
+    )
+
+    status = models.CharField(
+        max_length=15,
+        choices=STATUS_CHOICES,
+        default="queued",
+        help_text="Synthesis status",
+    )
+
+    # AI Provider Metadata
+    provider = models.CharField(
+        max_length=50, blank=True, help_text="AI provider used (e.g., OpenAI, Anthropic)"
+    )
+
+    model = models.CharField(
+        max_length=50, blank=True, help_text="Model used (e.g., gpt-4, claude-3)"
+    )
+
+    tokens_used = models.IntegerField(
+        null=True, blank=True, help_text="Tokens consumed"
+    )
+
+    processing_time_seconds = models.FloatField(
+        null=True, blank=True, help_text="Processing time in seconds"
+    )
+
+    error_message = models.TextField(blank=True, help_text="Error message if failed")
+
+    # Review and Approval
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_syntheses",
+        help_text="User who reviewed this synthesis",
+    )
+
+    review_notes = models.TextField(blank=True, help_text="Review notes from facilitator")
+
+    approved_at = models.DateTimeField(
+        null=True, blank=True, help_text="When synthesis was approved"
+    )
+
+    # Metadata
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_syntheses",
+        help_text="User who requested this synthesis",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["assessment", "status"]),
+            models.Index(fields=["workshop", "status"]),
+        ]
+        verbose_name = "Workshop Synthesis"
+        verbose_name_plural = "Workshop Syntheses"
+
+    def __str__(self):
+        return f"Synthesis - {self.workshop.get_workshop_type_display()} - {self.get_status_display()}"

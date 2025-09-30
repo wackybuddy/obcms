@@ -1,0 +1,12 @@
+<div class="flex items-center gap-2 text-sm">
+    {% if status == 'submitted' %}
+        <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span class="text-emerald-600 font-medium">Responses submitted · {{ saved_at|date:"M d, Y H:i" }}</span>
+    {% elif status == 'draft' %}
+        <span class="inline-flex w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+        <span class="text-amber-600">Draft saved {{ saved_at|timesince }} ago</span>
+    {% else %}
+        <span class="inline-flex w-2 h-2 rounded-full bg-gray-300"></span>
+        <span class="text-gray-500">Autosave engaged</span>
+    {% endif %}
+</div>

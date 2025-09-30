@@ -150,7 +150,11 @@
                                 <div class="space-y-1">
                                     <div class="text-sm font-semibold text-gray-900">{{ profile.directory_display_name }}</div>
                                     <div class="text-xs text-gray-500">Username: {{ profile.directory_username_display }}</div>
-                                    <div class="text-sm text-gray-600">{{ profile.user.position|default:"Role not set" }}</div>
+                                    {% if profile.directory_position_display %}
+                                    <div class="text-sm text-gray-600">{{ profile.directory_position_display }}</div>
+                                    {% elif not profile.user.position %}
+                                    <div class="text-sm text-gray-500">Role not set</div>
+                                    {% endif %}
                                     <div class="flex flex-wrap items-center gap-2 text-xs">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full font-semibold
                                             {% if profile.employment_status == 'active' %}bg-emerald-100 text-emerald-700

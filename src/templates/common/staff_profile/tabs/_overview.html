@@ -1,0 +1,169 @@
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-3">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <i class="fas fa-info-circle text-emerald-600"></i>
+            Key details
+        </h2>
+        <dl class="grid grid-cols-1 gap-3 text-sm text-gray-600">
+            <div class="flex items-start justify-between">
+                <dt class="font-medium text-gray-500">Organization</dt>
+                <dd class="text-right">{{ profile.user.organization|default:"—" }}</dd>
+            </div>
+            <div class="flex items-start justify-between">
+                <dt class="font-medium text-gray-500">Position classification</dt>
+                <dd class="text-right">{{ profile.position_classification|default:"—" }}</dd>
+            </div>
+            <div class="flex items-start justify-between">
+                <dt class="font-medium text-gray-500">Plantilla / item number</dt>
+                <dd class="text-right">{{ profile.plantilla_item_number|default:"—" }}</dd>
+            </div>
+            <div class="flex items-start justify-between">
+                <dt class="font-medium text-gray-500">Primary location</dt>
+                <dd class="text-right">{{ profile.primary_location|default:"—" }}</dd>
+            </div>
+            <div class="flex items-start justify-between">
+                <dt class="font-medium text-gray-500">Date joined</dt>
+                <dd class="text-right">{% if profile.date_joined_organization %}{{ profile.date_joined_organization|date:"M d, Y" }}{% else %}—{% endif %}</dd>
+            </div>
+            <div class="flex items-start justify-between">
+                <dt class="font-medium text-gray-500">Salary grade / step</dt>
+                <dd class="text-right">{% if profile.salary_grade %}{{ profile.salary_grade }}{% else %}—{% endif %}{% if profile.salary_grade and profile.salary_step %} · {% endif %}{% if profile.salary_step %}Step {{ profile.salary_step }}{% endif %}</dd>
+            </div>
+            <div class="flex items-start justify-between">
+                <dt class="font-medium text-gray-500">Reports to</dt>
+                <dd class="text-right">{{ profile.reports_to|default:"—" }}</dd>
+            </div>
+            <div class="flex items-start justify-between">
+                <dt class="font-medium text-gray-500">Contact</dt>
+                <dd class="text-right">{{ profile.user.email|default:"—" }}</dd>
+            </div>
+        </dl>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-3">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-users text-emerald-600"></i>
+                Team memberships
+            </h2>
+            <a href="{% url 'common:staff_team_manage' %}"
+               class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold">Manage team assignments</a>
+        </div>
+        {% if memberships %}
+        <ul class="space-y-2 text-sm text-gray-600">
+            {% for membership in memberships %}
+            <li class="border border-gray-200 rounded-xl px-3 py-2">
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold text-gray-900">{{ membership.team.name }}</span>
+                    <span class="text-xs text-gray-500">{% if membership.role %}{{ membership.role }}{% else %}Member{% endif %}</span>
+                </div>
+                {% if membership.joined_at %}
+                <p class="text-xs text-gray-500">Joined {{ membership.joined_at|date:"M d, Y" }}</p>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-sm text-gray-500">No active team memberships.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-3">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <i class="fas fa-id-badge text-emerald-600"></i>
+            Role snapshot
+        </h2>
+        {% if profile.job_purpose %}
+        <p class="text-sm text-gray-600">{{ profile.job_purpose|truncatechars:220 }}</p>
+        {% else %}
+        <p class="text-sm text-gray-500">Job purpose is not documented yet.</p>
+        {% endif %}
+        <a href="?tab=job" class="inline-flex items-center text-sm font-semibold text-emerald-600 hover:text-emerald-700" data-tab-target="job">
+            View full job description
+            <i class="fas fa-arrow-right ml-2 text-xs"></i>
+        </a>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-project-diagram text-emerald-600"></i>
+                Workload snapshot
+            </h2>
+            <a href="?tab=tasks" class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold" data-tab-target="tasks">Open tasks tab</a>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            {% for label, count in tasks_by_status.items %}
+            <div class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-3">
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ label }}</p>
+                <p class="text-2xl font-bold text-gray-900">{{ count }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% if recent_tasks %}
+        <div class="text-xs text-gray-500">
+            <p class="font-semibold text-gray-600 mb-1">Latest updates</p>
+            <ul class="space-y-1">
+                {% for task in recent_tasks|slice:":3" %}
+                <li>
+                    <span class="text-gray-700">{{ task.title }}</span>
+                    <span class="text-gray-400">&middot; {{ task.get_status_display }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No tasks assigned yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-graduation-cap text-emerald-600"></i>
+                Growth & development
+            </h2>
+            <a href="?tab=competency" class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold" data-tab-target="competency">Open competency tab</a>
+        </div>
+        <dl class="space-y-2 text-sm text-gray-600">
+            <div class="flex items-center justify-between">
+                <dt class="font-medium text-gray-500">Training enrollments</dt>
+                <dd>{{ trainings|length }}</dd>
+            </div>
+            <div class="flex items-center justify-between">
+                <dt class="font-medium text-gray-500">Development plans</dt>
+                <dd>{{ development_plans|length }}</dd>
+            </div>
+            <div class="flex items-center justify-between">
+                <dt class="font-medium text-gray-500">Performance targets</dt>
+                <dd>{{ performance_targets|length }}</dd>
+            </div>
+        </dl>
+        {% if trainings %}
+        <div class="text-xs text-gray-500">
+            <p class="font-semibold text-gray-600 mb-1">Upcoming training</p>
+            {% for enrollment in trainings|slice:":2" %}
+            <p>
+                {{ enrollment.program.title }}
+                {% if enrollment.scheduled_date %} · {{ enrollment.scheduled_date|date:"M d, Y" }}{% endif %}
+            </p>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No trainings captured yet.</p>
+        {% endif %}
+        {% if development_plans %}
+        <div class="text-xs text-gray-500">
+            <p class="font-semibold text-gray-600 mb-1">Focus areas</p>
+            <ul class="flex flex-wrap gap-2">
+                {% for plan in development_plans|slice:":3" %}
+                {% if plan.competency_focus %}
+                <li class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">{{ plan.competency_focus }}</li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>

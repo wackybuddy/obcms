@@ -121,8 +121,6 @@ def seed_tasks(
         team, _ = StaffTeam.objects.get_or_create(name=blueprint["team"])
         assignee = staff_cycle[index % staff_count]
         defaults = {
-            "team": team,
-            "assignee": assignee,
             "priority": blueprint.get("priority", StaffTask.PRIORITY_MEDIUM),
             "status": blueprint.get("status", StaffTask.STATUS_NOT_STARTED),
             "impact": blueprint.get("impact", ""),
@@ -141,6 +139,8 @@ def seed_tasks(
             title=blueprint["title"],
             defaults=defaults,
         )
+        task.teams.add(team)
+        task.assignees.set([assignee])
         if blueprint.get("status") == StaffTask.STATUS_COMPLETED and task.completed_at is None:
             task.completed_at = timezone.now()
             task.progress = 100

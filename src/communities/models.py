@@ -9,6 +9,39 @@ from common.models import Barangay, Municipality, Province, Region
 User = get_user_model()
 
 
+AGGREGATED_NUMERIC_FIELDS = [
+    "estimated_obc_population",
+    "total_barangay_population",
+    "households",
+    "families",
+    "children_0_9",
+    "adolescents_10_14",
+    "youth_15_30",
+    "adults_31_59",
+    "seniors_60_plus",
+    "women_count",
+    "solo_parents_count",
+    "pwd_count",
+    "farmers_count",
+    "fisherfolk_count",
+    "unemployed_count",
+    "indigenous_peoples_count",
+    "idps_count",
+    "migrants_transients_count",
+    "csos_count",
+    "associations_count",
+    "number_of_peoples_organizations",
+    "number_of_cooperatives",
+    "number_of_social_enterprises",
+    "number_of_micro_enterprises",
+    "number_of_unbanked_obc",
+    "mosques_count",
+    "madrasah_count",
+    "asatidz_count",
+    "religious_leaders_count",
+]
+
+
 class ActiveCommunityManager(models.Manager):
     """Default manager that hides soft-deleted records."""
 
@@ -1480,64 +1513,35 @@ class MunicipalityCoverage(CommunityProfileBase):
 
     def refresh_from_communities(self):
         """Aggregate community data for this municipality when auto-sync is enabled."""
-        if not self.auto_sync:
-            return
+        if self.auto_sync:
+            communities = OBCCommunity.objects.filter(
+                barangay__municipality=self.municipality
+            )
 
-        communities = OBCCommunity.objects.filter(
-            barangay__municipality=self.municipality
-        )
-        numeric_fields = [
-            "estimated_obc_population",
-            "total_barangay_population",
-            "households",
-            "families",
-            "children_0_9",
-            "adolescents_10_14",
-            "youth_15_30",
-            "adults_31_59",
-            "seniors_60_plus",
-            "women_count",
-            "solo_parents_count",
-            "pwd_count",
-            "farmers_count",
-            "fisherfolk_count",
-            "unemployed_count",
-            "indigenous_peoples_count",
-            "idps_count",
-            "migrants_transients_count",
-            "csos_count",
-            "associations_count",
-            "number_of_peoples_organizations",
-            "number_of_cooperatives",
-            "number_of_social_enterprises",
-            "number_of_micro_enterprises",
-            "number_of_unbanked_obc",
-            "mosques_count",
-            "madrasah_count",
-            "asatidz_count",
-            "religious_leaders_count",
-        ]
+            aggregates = communities.aggregate(
+                **{f"{field}__sum": models.Sum(field) for field in AGGREGATED_NUMERIC_FIELDS}
+            )
+            key_barangays = (
+                communities.values_list("barangay__name", flat=True)
+                .order_by("barangay__name")
+                .distinct()
+            )
 
-        aggregates = communities.aggregate(
-            **{f"{field}__sum": models.Sum(field) for field in numeric_fields}
-        )
-        key_barangays = (
-            communities.values_list("barangay__name", flat=True)
-            .order_by("barangay__name")
-            .distinct()
-        )
+            update_kwargs = {
+                "total_obc_communities": communities.count(),
+                "key_barangays": ", ".join(key_barangays),
+            }
 
-        update_kwargs = {
-            "total_obc_communities": communities.count(),
-            "key_barangays": ", ".join(key_barangays),
-        }
+            for field in AGGREGATED_NUMERIC_FIELDS:
+                update_kwargs[field] = aggregates.get(f"{field}__sum") or 0
 
-        for field in numeric_fields:
-            update_kwargs[field] = aggregates.get(f"{field}__sum") or 0
+            MunicipalityCoverage.objects.filter(pk=self.pk).update(**update_kwargs)
+            for field, value in update_kwargs.items():
+                setattr(self, field, value)
 
-        MunicipalityCoverage.objects.filter(pk=self.pk).update(**update_kwargs)
-        for field, value in update_kwargs.items():
-            setattr(self, field, value)
+        province = self.province
+        if province:
+            ProvinceCoverage.sync_for_province(province)
 
     @classmethod
     def sync_for_municipality(cls, municipality):
@@ -1549,6 +1553,142 @@ class MunicipalityCoverage(CommunityProfileBase):
 
         coverage, _ = cls.objects.get_or_create(municipality=municipality)
         coverage.refresh_from_communities()
+        return coverage
+
+
+class ProvinceCoverage(CommunityProfileBase):
+    """Aggregated Bangsamoro coverage data at the provincial level."""
+
+    objects = ActiveCommunityManager()
+    all_objects = models.Manager()
+
+    province = models.OneToOneField(
+        Province,
+        on_delete=models.CASCADE,
+        related_name="obc_coverage",
+        help_text="Province covering multiple municipal OBC records",
+    )
+    total_municipalities = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Number of municipalities or cities with OBC coverage",
+    )
+    total_obc_communities = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Total barangay-level OBC communities aggregated from municipalities",
+    )
+    key_municipalities = models.TextField(
+        blank=True,
+        help_text="Municipalities with notable Bangsamoro presence (comma-separated)",
+    )
+    existing_support_programs = models.TextField(
+        blank=True,
+        help_text="Active support programs at the provincial level",
+    )
+    auto_sync = models.BooleanField(
+        default=True,
+        help_text="Keep provincial totals in sync with municipal coverage records",
+    )
+    created_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="province_coverages_created",
+        help_text="User who recorded this province",
+    )
+    updated_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="province_coverages_updated",
+        help_text="User who last updated this record",
+    )
+
+    class Meta:
+        ordering = [
+            "province__region__name",
+            "province__name",
+        ]
+        verbose_name = "Bangsamoro Province OBC"
+        verbose_name_plural = "Bangsamoro Province OBCs"
+
+    def __str__(self):
+        return f"{self.province.name} Bangsamoro Coverage"
+
+    @property
+    def region(self):
+        """Shortcut to the parent region."""
+        return self.province.region
+
+    @property
+    def display_name(self):
+        """Return province name with region for dashboards."""
+        region = self.region
+        if region:
+            return f"{self.province.name}, {region.name}"
+        return self.province.name
+
+    @property
+    def full_location(self):
+        """Return formatted location string for serializers."""
+        region = self.region
+        if region:
+            return f"{self.province.name}, Region {region.code}"
+        return self.province.name
+
+    def refresh_from_municipalities(self):
+        """Aggregate municipal data for this province when auto-sync is enabled."""
+        if not self.auto_sync:
+            return
+
+        municipal_coverages = MunicipalityCoverage.objects.filter(
+            municipality__province=self.province,
+            is_deleted=False,
+        )
+
+        aggregates = municipal_coverages.aggregate(
+            **{f"{field}__sum": models.Sum(field) for field in AGGREGATED_NUMERIC_FIELDS}
+        )
+
+        total_barangay_communities = (
+            municipal_coverages.aggregate(total=models.Sum("total_obc_communities"))["total"]
+            or 0
+        )
+
+        key_municipalities = (
+            municipal_coverages.values_list("municipality__name", flat=True)
+            .order_by("municipality__name")
+            .distinct()
+        )
+
+        update_kwargs = {
+            "total_municipalities": municipal_coverages.count(),
+            "total_obc_communities": total_barangay_communities,
+            "key_municipalities": ", ".join(key_municipalities),
+        }
+
+        for field in AGGREGATED_NUMERIC_FIELDS:
+            update_kwargs[field] = aggregates.get(f"{field}__sum") or 0
+
+        ProvinceCoverage.objects.filter(pk=self.pk).update(**update_kwargs)
+        for field, value in update_kwargs.items():
+            setattr(self, field, value)
+
+    @classmethod
+    def sync_for_province(cls, province):
+        """Create or update coverage using municipal data."""
+        if province is None:
+            return None
+
+        existing = cls.all_objects.filter(province=province).first()
+        if existing and existing.is_deleted:
+            return existing
+
+        coverage, _ = cls.objects.get_or_create(province=province)
+        coverage.refresh_from_municipalities()
         return coverage
 
 

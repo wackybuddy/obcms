@@ -2,24 +2,30 @@
 
 import json
 from typing import Optional, Tuple
+from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
-from django.core.serializers.json import DjangoJSONEncoder
-
-from ..forms import MunicipalityCoverageForm, OBCCommunityForm
+from ..forms import (
+    MunicipalityCoverageForm,
+    OBCCommunityForm,
+    ProvinceCoverageForm,
+)
 from ..models import Barangay, Municipality, Province, Region
 from ..services.enhanced_geocoding import enhanced_ensure_location_coordinates
 from ..services.locations import build_location_data, get_object_centroid
 
 
 DEFAULT_MAP_CENTER = (7.1907, 125.4553, 6)
+PAGE_SIZE_OPTIONS = (10, 25, 50)
 
 
 def _to_float(value) -> Optional[float]:
@@ -101,6 +107,50 @@ def _resolve_map_payload(
         "fallback_zoom": initial_zoom,
         "has_location": True,
     }
+
+
+def _resolve_page_size(
+    request,
+    param_name: str,
+    *,
+    default: int = PAGE_SIZE_OPTIONS[0],
+) -> int:
+    """Validate requested page size against allowed options."""
+
+    raw_value = request.GET.get(param_name)
+    if raw_value is None:
+        return default
+    try:
+        parsed = int(raw_value)
+    except (TypeError, ValueError):
+        return default
+    return parsed if parsed in PAGE_SIZE_OPTIONS else default
+
+
+def _build_querystring(
+    params: dict,
+    *,
+    exclude: tuple[str, ...] = (),
+    overrides: dict | None = None,
+) -> str:
+    """Compose a querystring while keeping empty values out of the output."""
+
+    overrides = overrides or {}
+    filtered: dict[str, str] = {}
+
+    for key, value in params.items():
+        if key in exclude or key in overrides:
+            continue
+        if value in {"", None}:
+            continue
+        filtered[key] = value
+
+    for key, value in overrides.items():
+        if value in {"", None}:
+            continue
+        filtered[key] = value
+
+    return urlencode(filtered)
 
 
 @login_required
@@ -283,7 +333,7 @@ def communities_add(request):
 @login_required
 def communities_add_municipality(request):
     """Record a municipality or city with Bangsamoro communities."""
-    from communities.models import MunicipalityCoverage
+    from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     if request.method == "POST":
         form = MunicipalityCoverageForm(request.POST)
@@ -315,6 +365,45 @@ def communities_add_municipality(request):
         "page_subtitle": "Capture municipality- or city-wide OBC data that can be disaggregated to barangays later.",
         "form_heading": "Municipality OBC Form",
         "recent_coverages": recent_coverages,
+    }
+    return render(request, "communities/communities_add.html", context)
+
+
+@login_required
+def communities_add_province(request):
+    """Record a province-level Bangsamoro coverage profile."""
+    from communities.models import ProvinceCoverage
+
+    if request.method == "POST":
+        form = ProvinceCoverageForm(request.POST)
+        if form.is_valid():
+            coverage = form.save(commit=False)
+            coverage.created_by = request.user if request.user.is_authenticated else None
+            coverage.updated_by = coverage.created_by
+            coverage.save()
+            coverage.refresh_from_municipalities()
+            messages.success(
+                request,
+                f'Province "{coverage.province.name}" has been added to the Bangsamoro coverage map.',
+            )
+            return redirect("common:communities_manage_provincial")
+    else:
+        form = ProvinceCoverageForm()
+
+    recent_coverages = ProvinceCoverage.objects.select_related(
+        "province__region"
+    ).order_by("-created_at")[:5]
+
+    context = {
+        "form": form,
+        "recent_communities": [],
+        "recent_coverages": recent_coverages,
+        "location_data": build_location_data(include_barangays=False),
+        "show_barangay_field": False,
+        "page_title": "Add Provincial OBC",
+        "breadcrumb_label": "Add Provincial OBC",
+        "page_subtitle": "Capture province-level Bangsamoro coverage data aggregated from constituent municipalities.",
+        "form_heading": "Provincial OBC Form",
     }
     return render(request, "communities/communities_add.html", context)
 
@@ -412,6 +501,32 @@ def communities_manage(request):
         or 0
     )
 
+    barangay_page_size = _resolve_page_size(request, "barangay_page_size")
+    municipality_page_size = _resolve_page_size(
+        request, "municipality_page_size"
+    )
+
+    barangay_page_number = request.GET.get("barangay_page") or 1
+    municipality_page_number = request.GET.get("municipality_page") or 1
+
+    communities_paginator = Paginator(communities, barangay_page_size)
+    communities_page = communities_paginator.get_page(barangay_page_number)
+
+    municipality_paginator = Paginator(
+        municipality_coverages, municipality_page_size
+    )
+    municipality_page = municipality_paginator.get_page(municipality_page_number)
+
+    request_params = request.GET.dict()
+    barangay_base_querystring = _build_querystring(
+        request_params,
+        exclude=("barangay_page",),
+    )
+    municipality_base_querystring = _build_querystring(
+        request_params,
+        exclude=("municipality_page",),
+    )
+
     stat_cards = [
         {
             "title": "Total Barangay OBCs in the Database",
@@ -442,7 +557,7 @@ def communities_manage(request):
     )
 
     context = {
-        "communities": communities,
+        "communities": communities_page,
         "regions": regions,
         "provinces": provinces,
         "current_region": region_filter,
@@ -451,12 +566,20 @@ def communities_manage(request):
         "province_options_json": province_options_json,
         "total_communities": total_barangay_obcs,
         "total_population": total_barangay_population,
-        "municipality_coverages": municipality_coverages,
+        "municipality_coverages": municipality_page,
         "total_municipality_coverages": total_municipality_obcs,
         "total_municipality_population": total_municipality_population,
         "total_municipality_communities": total_municipality_communities,
         "stat_cards": stat_cards,
         "stat_cards_grid_class": stat_cards_grid_class,
+        "barangay_page_size": barangay_page_size,
+        "barangay_page_size_options": PAGE_SIZE_OPTIONS,
+        "barangay_total_pages": max(communities_page.paginator.num_pages, 1),
+        "municipality_page_size": municipality_page_size,
+        "municipality_page_size_options": PAGE_SIZE_OPTIONS,
+        "municipality_total_pages": max(municipality_page.paginator.num_pages, 1),
+        "barangay_base_querystring": barangay_base_querystring,
+        "municipality_base_querystring": municipality_base_querystring,
     }
     return render(request, "communities/communities_manage.html", context)
 
@@ -466,7 +589,7 @@ def communities_manage_municipal(request):
     """Manage municipality-level OBC coverage."""
     from django.db.models import Count, Q
 
-    from communities.models import MunicipalityCoverage
+    from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     show_archived = request.GET.get("archived") == "1"
 
@@ -599,8 +722,20 @@ def communities_manage_municipal(request):
         else "View, edit, and manage municipality-level Bangsamoro coverage data"
     )
 
+    page_size = _resolve_page_size(request, "municipality_page_size")
+    page_number = request.GET.get("municipality_page") or 1
+
+    paginator = Paginator(coverages, page_size)
+    coverages_page = paginator.get_page(page_number)
+
+    request_params = request.GET.dict()
+    coverage_base_querystring = _build_querystring(
+        request_params,
+        exclude=("municipality_page",),
+    )
+
     context = {
-        "coverages": coverages,
+        "coverages": coverages_page,
         "regions": regions,
         "provinces": provinces,
         "current_region": region_filter,
@@ -613,8 +748,176 @@ def communities_manage_municipal(request):
         "show_archived": show_archived,
         "page_title": page_title,
         "page_description": page_description,
+        "municipality_page_size": page_size,
+        "municipality_page_size_options": PAGE_SIZE_OPTIONS,
+        "municipality_base_querystring": coverage_base_querystring,
+        "municipality_total_pages": max(coverages_page.paginator.num_pages, 1),
     }
     return render(request, "communities/municipal_manage.html", context)
+
+
+@login_required
+def communities_manage_provincial(request):
+    """Manage province-level OBC coverage."""
+    from django.db.models import Q
+
+    from communities.models import ProvinceCoverage
+
+    show_archived = request.GET.get("archived") == "1"
+
+    base_manager = (
+        ProvinceCoverage.all_objects if show_archived else ProvinceCoverage.objects
+    )
+
+    coverages = base_manager.select_related(
+        "province__region",
+        "created_by",
+        "updated_by",
+    ).order_by(
+        "province__region__name",
+        "province__name",
+    )
+
+    if show_archived:
+        coverages = coverages.filter(is_deleted=True)
+
+    region_filter = request.GET.get("region")
+    province_filter = request.GET.get("province")
+    search_query = request.GET.get("search")
+
+    if region_filter:
+        coverages = coverages.filter(province__region__id=region_filter)
+
+    if province_filter:
+        coverages = coverages.filter(province__id=province_filter)
+
+    if search_query:
+        coverages = coverages.filter(
+            Q(province__name__icontains=search_query)
+            | Q(province__region__name__icontains=search_query)
+            | Q(province__region__code__icontains=search_query)
+            | Q(key_municipalities__icontains=search_query)
+        )
+
+    regions = Region.objects.all().order_by("name")
+
+    base_provinces_qs = Province.objects.select_related("region").order_by(
+        "region__name", "name"
+    )
+    provinces = base_provinces_qs
+    if region_filter:
+        provinces = provinces.filter(region__id=region_filter)
+
+    province_options = [
+        {
+            "id": str(province.id),
+            "name": province.name,
+            "region_id": str(province.region_id),
+            "region_code": province.region.code,
+        }
+        for province in base_provinces_qs
+    ]
+
+    province_options_json = json.dumps(province_options, cls=DjangoJSONEncoder)
+
+    total_coverages = coverages.count()
+    total_population = (
+        coverages.aggregate(total=Sum("estimated_obc_population"))["total"] or 0
+    )
+    total_municipalities = (
+        coverages.aggregate(total=Sum("total_municipalities"))["total"] or 0
+    )
+    total_barangay_communities = (
+        coverages.aggregate(total=Sum("total_obc_communities"))["total"] or 0
+    )
+    auto_synced = coverages.filter(auto_sync=True).count()
+    manual_updates = coverages.filter(auto_sync=False).count()
+
+    stats = {
+        "total_coverages": total_coverages,
+        "total_population": total_population,
+        "total_municipalities": total_municipalities,
+        "total_barangay_communities": total_barangay_communities,
+        "auto_synced": auto_synced,
+        "manual": manual_updates,
+    }
+
+    stat_cards = [
+        {
+            "title": "Total Provincial OBCs in the Database"
+            if not show_archived
+            else "Total Archived Provincial OBCs",
+            "value": total_coverages,
+            "icon": "fas fa-flag",
+            "gradient": "from-blue-500 via-blue-600 to-blue-700",
+            "text_color": "text-blue-100",
+        },
+        {
+            "title": "Total OBC Population from the Provinces"
+            if not show_archived
+            else "Archived OBC Population Total",
+            "value": total_population,
+            "icon": "fas fa-users",
+            "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
+            "text_color": "text-emerald-100",
+        },
+        {
+            "title": "Auto-Synced Provinces",
+            "value": auto_synced,
+            "icon": "fas fa-sync-alt",
+            "gradient": "from-purple-500 via-purple-600 to-purple-700",
+            "text_color": "text-purple-100",
+        },
+        {
+            "title": "Manually Updated Provinces",
+            "value": manual_updates,
+            "icon": "fas fa-edit",
+            "gradient": "from-orange-500 via-orange-600 to-orange-700",
+            "text_color": "text-orange-100",
+        },
+    ]
+
+    stat_cards_grid_class = "mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+
+    page_title = "Archived Provincial OBCs" if show_archived else "Manage Provincial OBC"
+    page_description = (
+        "Review archived province-level Bangsamoro coverage data"
+        if show_archived
+        else "View, edit, and manage province-level Bangsamoro coverage data"
+    )
+
+    page_size = _resolve_page_size(request, "province_page_size")
+    page_number = request.GET.get("province_page") or 1
+
+    paginator = Paginator(coverages, page_size)
+    coverages_page = paginator.get_page(page_number)
+
+    request_params = request.GET.dict()
+    coverage_base_querystring = _build_querystring(
+        request_params,
+        exclude=("province_page",),
+    )
+
+    context = {
+        "coverages": coverages_page,
+        "regions": regions,
+        "provinces": provinces,
+        "current_region": region_filter,
+        "current_province": province_filter,
+        "search_query": search_query,
+        "province_options_json": province_options_json,
+        "stats": stats,
+        "stat_cards": stat_cards,
+        "stat_cards_grid_class": stat_cards_grid_class,
+        "show_archived": show_archived,
+        "page_title": page_title,
+        "page_description": page_description,
+        "province_page_size": page_size,
+        "province_page_size_options": PAGE_SIZE_OPTIONS,
+        "province_base_querystring": coverage_base_querystring,
+        "province_total_pages": max(coverages_page.paginator.num_pages, 1),
+    }
+    return render(request, "communities/provincial_manage.html", context)
 
 
 @login_required
@@ -709,6 +1012,60 @@ def communities_view_municipal(request, coverage_id):
         ),
     }
     return render(request, "communities/municipal_view.html", context)
+
+
+@login_required
+def communities_view_provincial(request, coverage_id):
+    """Display a read-only view of a province-level OBC coverage."""
+    from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
+
+    coverage = get_object_or_404(
+        ProvinceCoverage.all_objects.select_related("province__region"),
+        pk=coverage_id,
+    )
+
+    delete_review_mode = (
+        request.GET.get("review_delete") == "1" and not coverage.is_deleted
+    )
+    default_next = reverse("common:communities_manage_provincial")
+    if request.GET.get("archived") == "1":
+        default_next = f"{default_next}?archived=1"
+    redirect_after_action = request.GET.get("next") or default_next
+
+    if coverage.is_deleted:
+        delete_review_mode = False
+
+    related_municipal_coverages = (
+        MunicipalityCoverage.objects.select_related(
+            "municipality__province__region"
+        )
+        .filter(municipality__province=coverage.province)
+        .order_by("municipality__name")
+    )
+
+    related_communities = (
+        OBCCommunity.objects.select_related(
+            "barangay__municipality__province__region"
+        )
+        .filter(barangay__municipality__province=coverage.province)
+        .order_by("barangay__name")
+    )
+
+    context = {
+        "coverage": coverage,
+        "related_municipal_coverages": related_municipal_coverages,
+        "related_communities": related_communities,
+        "delete_review_mode": delete_review_mode,
+        "is_archived": coverage.is_deleted,
+        "redirect_after_action": redirect_after_action,
+        "map_payload": _resolve_map_payload(
+            primary_lat=coverage.latitude,
+            primary_lng=coverage.longitude,
+            primary_zoom=9,
+            province=coverage.province,
+        ),
+    }
+    return render(request, "communities/provincial_view.html", context)
 
 
 @login_required
@@ -968,10 +1325,53 @@ def communities_edit_municipal(request, coverage_id):
 
 
 @login_required
+def communities_edit_provincial(request, coverage_id):
+    """Edit an existing province-level coverage record."""
+    from communities.models import ProvinceCoverage
+
+    coverage = get_object_or_404(
+        ProvinceCoverage.objects.select_related("province__region"),
+        pk=coverage_id,
+    )
+
+    if request.method == "POST":
+        form = ProvinceCoverageForm(request.POST, instance=coverage)
+        if form.is_valid():
+            coverage = form.save()
+            coverage.refresh_from_municipalities()
+            messages.success(
+                request,
+                f"Provincial OBC coverage for {coverage.province.name} has been updated.",
+            )
+            return redirect("common:communities_manage_provincial")
+    else:
+        form = ProvinceCoverageForm(instance=coverage)
+
+    recent_coverages = (
+        ProvinceCoverage.objects.exclude(pk=coverage.pk)
+        .select_related("province__region")
+        .order_by("-created_at")[:5]
+    )
+
+    context = {
+        "form": form,
+        "coverage": coverage,
+        "page_title": "Edit Provincial OBC",
+        "breadcrumb_label": "Edit Provincial OBC",
+        "page_subtitle": "Update province-level Bangsamoro coverage data.",
+        "form_heading": "Provincial OBC Form",
+        "location_data": build_location_data(include_barangays=False),
+        "show_barangay_field": False,
+        "recent_coverages": recent_coverages,
+    }
+    return render(request, "communities/communities_add.html", context)
+
+
+@login_required
 @require_POST
 def communities_delete_municipal(request, coverage_id):
     """Delete a municipality coverage record."""
-    from communities.models import MunicipalityCoverage
+    from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     coverage = get_object_or_404(
         MunicipalityCoverage.objects.select_related("municipality__province__region"),
@@ -979,6 +1379,7 @@ def communities_delete_municipal(request, coverage_id):
     )
     municipality_name = coverage.municipality.name
     coverage.soft_delete(user=request.user)
+    ProvinceCoverage.sync_for_province(coverage.municipality.province)
 
     messages.success(
         request,
@@ -994,7 +1395,7 @@ def communities_delete_municipal(request, coverage_id):
 @require_POST
 def communities_restore_municipal(request, coverage_id):
     """Restore a previously archived municipality coverage record."""
-    from communities.models import MunicipalityCoverage
+    from communities.models import MunicipalityCoverage, ProvinceCoverage
 
     coverage = get_object_or_404(
         MunicipalityCoverage.all_objects.select_related(
@@ -1005,6 +1406,7 @@ def communities_restore_municipal(request, coverage_id):
     )
     coverage.restore()
     coverage.refresh_from_communities()
+    ProvinceCoverage.sync_for_province(coverage.municipality.province)
 
     messages.success(
         request,
@@ -1013,17 +1415,70 @@ def communities_restore_municipal(request, coverage_id):
     return redirect(f"{reverse('common:communities_manage_municipal')}?archived=1")
 
 
+@login_required
+@require_POST
+def communities_delete_provincial(request, coverage_id):
+    """Delete a province coverage record."""
+    from communities.models import ProvinceCoverage
+
+    coverage = get_object_or_404(
+        ProvinceCoverage.objects.select_related("province__region"),
+        pk=coverage_id,
+    )
+    province_name = coverage.province.name
+    coverage.soft_delete(user=request.user)
+
+    messages.success(
+        request,
+        (
+            f"Provincial OBC coverage for {province_name} has been archived. "
+            "You can restore it from the Archived Provincial OBCs view."
+        ),
+    )
+    return redirect(f"{reverse('common:communities_manage_provincial')}?archived=1")
+
+
+@login_required
+@require_POST
+def communities_restore_provincial(request, coverage_id):
+    """Restore a previously archived province coverage record."""
+    from communities.models import ProvinceCoverage
+
+    coverage = get_object_or_404(
+        ProvinceCoverage.all_objects.select_related("province__region"),
+        pk=coverage_id,
+        is_deleted=True,
+    )
+    coverage.restore()
+    coverage.refresh_from_municipalities()
+
+    messages.success(
+        request,
+        f"Provincial OBC coverage for {coverage.province.name} has been restored.",
+    )
+    return redirect(f"{reverse('common:communities_manage_provincial')}?archived=1")
+
+
 __all__ = [
     "communities_home",
     "communities_add",
     "communities_add_municipality",
+    "communities_add_province",
     "communities_manage",
     "communities_manage_municipal",
+    "communities_manage_provincial",
+    "communities_view",
+    "communities_view_municipal",
+    "communities_view_provincial",
     "communities_edit",
     "communities_delete",
     "communities_restore",
     "communities_edit_municipal",
     "communities_delete_municipal",
     "communities_restore_municipal",
-    "communities_stakeholders"
+    "communities_edit_provincial",
+    "communities_delete_provincial",
+    "communities_restore_provincial",
+    "communities_stakeholders",
+    "location_centroid",
 ]

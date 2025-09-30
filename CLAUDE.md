@@ -149,4 +149,51 @@ EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 
 ### Data Table Cards
 - Directory/list pages should extend `components/data_table_card.html` so Barangay and Municipal OBC lists stay visually aligned.
-- Pass a `headers` array and `rows` data with `view_url`, `edit_url`, and `delete_preview_url`. The component already handles the action buttons and the two-step delete confirmation (confirm dialog → redirect to detail for “Review before deletion”).
+- Pass a `headers` array and `rows` data with `view_url`, `edit_url`, and `delete_preview_url`. The component already handles the action buttons and the two-step delete confirmation (confirm dialog → redirect to detail for "Review before deletion").
+
+## Instant UI & Smooth User Experience
+
+### Priority: Always Implement Instant UI Updates
+When working on this codebase, **always prioritize instant UI responses** and smooth interactions. Users expect modern web app behavior - no full page reloads, immediate feedback, and seamless transitions.
+
+### HTMX Implementation Requirements
+- **Consistent Targeting**: All interactive elements must use `data-task-id="{{ item.id }}"` for both kanban cards and table rows
+- **Optimistic Updates**: Update the UI immediately when user performs an action, then handle server response
+- **Smooth Animations**: Use `hx-swap="outerHTML swap:300ms"` or `delete swap:200ms` for transitions
+- **Loading Indicators**: Always show spinners, disabled states, or progress feedback during operations
+
+### Backend Response Standards
+All views handling HTMX requests must follow this pattern:
+```python
+def task_operation_view(request, task_id):
+    # ... perform operation ...
+
+    if request.headers.get('HX-Request'):
+        return HttpResponse(
+            status=204,
+            headers={
+                'HX-Trigger': json.dumps({
+                    'task-updated': {'id': task_id, 'action': 'delete'},
+                    'show-toast': 'Task updated successfully',
+                    'refresh-counters': True
+                })
+            }
+        )
+```
+
+### UI Animation Standards
+- **Task Movements**: 300ms smooth transitions between kanban columns
+- **Modal Interactions**: Fade with scale transform for open/close
+- **Button Feedback**: Immediate visual response to clicks (color change, disable state)
+- **Error Handling**: Clear error states with recovery options, no silent failures
+
+### Critical: Never Use Full Page Reloads
+- Implement HTMX for all CRUD operations (Create, Read, Update, Delete)
+- Use out-of-band swaps (`hx-swap-oob`) for updating multiple UI regions simultaneously
+- Provide graceful fallback mechanisms when HTMX fails
+- Maintain accessibility with proper ARIA live regions and state updates
+
+### Current Issue to Fix
+**Known Bug**: Task deletion in kanban view (`/oobc-management/staff/tasks/`) doesn't remove cards instantly. The modal targets `[data-task-row]` but kanban uses `[data-task-id]`. This must be fixed to ensure instant UI updates.
+
+For detailed implementation guidance, refer to `docs/improvements/instant_ui_improvements_plan.md`.

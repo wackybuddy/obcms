@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Assessment · {{ assessment.title }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_manage_assessments' %}" class="text-neutral-500 hover:text-neutral-700">Manage Assessments</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Edit {{ assessment.title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6" data-task-id="{{ assessment.id }}">
+    <header class="bg-white rounded-2xl border border-gray-200 shadow p-6 lg:p-8 flex flex-col gap-4">
+        <div class="flex items-start justify-between gap-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Update Assessment</h1>
+                <p class="text-sm text-gray-600 mt-2">Modify the assessment record while keeping the directory and workshop pipelines in sync.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <a href="{% url 'common:mana_assessment_detail' assessment.id %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
+                    <i class="fas fa-eye"></i>
+                    <span>View Assessment</span>
+                </a>
+                <a href="{% url 'common:mana_manage_assessments' %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Directory</span>
+                </a>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2 text-xs text-gray-600">
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+                <i class="fas fa-clipboard"></i>
+                Current Status: {{ assessment.get_status_display }}
+            </span>
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700">
+                <i class="fas fa-tools"></i>
+                Methodology: {{ assessment.get_primary_methodology_display }}
+            </span>
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-700">
+                <i class="fas fa-flag"></i>
+                Priority: {{ assessment.get_priority_display }}
+            </span>
+        </div>
+    </header>
+
+    <form method="post" class="space-y-8" hx-target="closest.form" hx-swap="outerHTML swap:300ms">
+        {% csrf_token %}
+        <section class="bg-white rounded-2xl border border-gray-200 shadow p-6 lg:p-8 space-y-6">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Core Details</h2>
+                    <p class="text-sm text-gray-600">Update the key descriptors that appear in the assessments directory.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field.html" with field=form.title label="Assessment Title" %}
+                {% include "components/form_field_select.html" with field=form.category label="Category" %}
+                {% include "components/form_field_select.html" with field=form.assessment_level label="Assessment Level" %}
+                {% include "components/form_field_select.html" with field=form.primary_methodology label="Primary Methodology" %}
+                {% include "components/form_field_select.html" with field=form.status label="Status" %}
+                {% include "components/form_field_select.html" with field=form.priority label="Priority" %}
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-gray-200 shadow p-6 lg:p-8 space-y-6">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Location & Leadership</h2>
+                    <p class="text-sm text-gray-600">Match the assessment level with the correct community or province coverage.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field_select.html" with field=form.community label="Community" %}
+                {% include "components/form_field_select.html" with field=form.province label="Province" %}
+                {% include "components/form_field_select.html" with field=form.lead_assessor label="Lead Assessor" %}
+                {% include "components/form_field.html" with field=form.location_details label="Coverage Details" %}
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-gray-200 shadow p-6 lg:p-8 space-y-6">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Timeline</h2>
+                    <p class="text-sm text-gray-600">Clarify planned and actual dates for reporting and monitoring.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field.html" with field=form.planned_start_date label="Planned Start" %}
+                {% include "components/form_field.html" with field=form.planned_end_date label="Planned End" %}
+                {% include "components/form_field.html" with field=form.actual_start_date label="Actual Start" %}
+                {% include "components/form_field.html" with field=form.actual_end_date label="Actual End" %}
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-gray-200 shadow p-6 lg:p-8 space-y-6">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Budget & Progress</h2>
+                    <p class="text-sm text-gray-600">Capture resource use and completion rates for coordination updates.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% include "components/form_field.html" with field=form.estimated_budget label="Estimated Budget" %}
+                {% include "components/form_field.html" with field=form.actual_budget label="Actual Budget" %}
+                {% include "components/form_field_select.html" with field=form.impact_level label="Impact Level" %}
+                <div class="md:col-span-3">
+                    {% include "components/form_field.html" with field=form.progress_percentage label="Progress Percentage" %}
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-gray-200 shadow p-6 lg:p-8 space-y-6">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center">
+                    <i class="fas fa-pen"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Narratives & Learning</h2>
+                    <p class="text-sm text-gray-600">Provide qualitative insights that fuel policy briefs and follow-through.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field.html" with field=form.description label="Assessment Description" %}
+                {% include "components/form_field.html" with field=form.objectives label="Objectives" %}
+                {% include "components/form_field.html" with field=form.key_findings label="Key Findings" %}
+                {% include "components/form_field.html" with field=form.recommendations label="Recommendations" %}
+            </div>
+        </section>
+
+        <div class="flex items-center justify-end gap-3">
+            <a href="{% url 'common:mana_assessment_detail' assessment.id %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
+                <i class="fas fa-ban"></i>
+                <span>Cancel</span>
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                <i class="fas fa-save"></i>
+                <span>Save Changes</span>
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

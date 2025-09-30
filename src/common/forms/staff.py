@@ -176,6 +176,24 @@ class StaffTeamMembershipForm(forms.ModelForm):
 class StaffProfileForm(forms.ModelForm):
     """Manage staff profile metadata and competencies."""
 
+    staff_member_name = forms.CharField(
+        required=False,
+        max_length=255,
+        label="Staff member",
+        help_text="Update the staff member's name as it should appear on records.",
+    )
+    staff_member_username = forms.CharField(
+        required=False,
+        max_length=150,
+        label="Username",
+        help_text="Update the username used for logins.",
+    )
+    staff_member_position = forms.CharField(
+        required=False,
+        max_length=255,
+        label="Official role / title",
+        help_text="Displayed beneath the staff member name on profile pages.",
+    )
     core_competencies = forms.CharField(
         required=False,
         widget=CompetenciesTextarea(),
@@ -331,6 +349,24 @@ class StaffProfileForm(forms.ModelForm):
         if request:
             self.fields["user"].empty_label = "Select staff member"
 
+        editing_existing = bool(self.instance and self.instance.pk)
+        if editing_existing:
+            user = self.instance.user
+            name_field = self.fields["staff_member_name"]
+            name_field.required = True
+            name_field.initial = user.get_full_name() or user.username
+
+            username_field = self.fields["staff_member_username"]
+            username_field.required = True
+            username_field.initial = user.username
+
+            position_field = self.fields["staff_member_position"]
+            position_field.initial = user.position
+        else:
+            self.fields.pop("staff_member_name")
+            self.fields.pop("staff_member_username")
+            self.fields.pop("staff_member_position")
+
         list_fields = (
             "core_competencies",
             "leadership_competencies",
@@ -353,6 +389,66 @@ class StaffProfileForm(forms.ModelForm):
                 self.initial[field_name] = _list_to_newline(suggested)
 
         _apply_form_field_styles(self)
+
+    def clean_staff_member_name(self):
+        name = self.cleaned_data.get("staff_member_name", "").strip()
+        if self.instance and self.instance.pk and not name:
+            raise forms.ValidationError("Staff member name is required.")
+        return name
+
+    def clean_staff_member_username(self):
+        username = self.cleaned_data.get("staff_member_username", "").strip()
+        if self.instance and self.instance.pk:
+            if not username:
+                raise forms.ValidationError("Username is required.")
+            conflict = (
+                User.objects.exclude(pk=self.instance.user_id)
+                .filter(username__iexact=username)
+                .exists()
+            )
+            if conflict:
+                raise forms.ValidationError("Username is already in use.")
+        return username
+
+    def clean_staff_member_position(self):
+        return self.cleaned_data.get("staff_member_position", "").strip()
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+
+        staff_name = self.cleaned_data.get("staff_member_name")
+        username = self.cleaned_data.get("staff_member_username")
+        position = self.cleaned_data.get("staff_member_position")
+
+        if profile.user_id:
+            user = profile.user
+            user_dirty_fields: list[str] = []
+
+            if staff_name is not None:
+                normalized_name = staff_name.strip()
+                if normalized_name:
+                    if user.first_name != normalized_name:
+                        user.first_name = normalized_name
+                        user_dirty_fields.append("first_name")
+                    if user.last_name:
+                        user.last_name = ""
+                        user_dirty_fields.append("last_name")
+
+            if username and username != user.username:
+                user.username = username
+                user_dirty_fields.append("username")
+
+            if position is not None and position != user.position:
+                user.position = position
+                user_dirty_fields.append("position")
+
+            if user_dirty_fields:
+                user.save(update_fields=list(dict.fromkeys(user_dirty_fields)))
+
+        if commit:
+            profile.save()
+            self.save_m2m()
+        return profile
 
     def clean_core_competencies(self):
         return _newline_to_list(self.cleaned_data.get("core_competencies", ""))
@@ -394,8 +490,8 @@ class StaffTaskForm(forms.ModelForm):
         model = StaffTask
         fields = [
             "title",
-            "team",
-            "assignee",
+            "teams",
+            "assignees",
             "priority",
             "status",
             "impact",
@@ -415,17 +511,27 @@ class StaffTaskForm(forms.ModelForm):
         table_mode = kwargs.pop("table_mode", False)
         super().__init__(*args, **kwargs)
         self.table_mode = table_mode
-        self.fields["team"].queryset = StaffTeam.objects.filter(is_active=True).order_by(
+        self.fields["teams"].queryset = StaffTeam.objects.filter(is_active=True).order_by(
             "name"
         )
         staff_qs = User.objects.filter(user_type__in=STAFF_USER_TYPES, is_active=True)
-        self.fields["assignee"].queryset = staff_qs.order_by("last_name", "first_name")
+        self.fields["assignees"].queryset = staff_qs.order_by(
+            "last_name", "first_name"
+        )
+        self.fields["assignees"].required = False
         if request:
-            self.fields["team"].empty_label = "Select team"
-            self.fields["assignee"].empty_label = "Assign to (optional)"
+            self.fields["teams"].help_text = "Select one or more teams."
+            self.fields["assignees"].help_text = "Select one or more staff members."
         if not self.initial.get("start_date"):
             self.initial.setdefault("start_date", timezone.now().date())
         _apply_form_field_styles(self, mode="table" if table_mode else "default")
+
+        def _append_classes(widget: forms.Widget, class_names: str) -> None:
+            existing_classes = widget.attrs.get("class", "").split()
+            for class_name in class_names.split():
+                if class_name and class_name not in existing_classes:
+                    existing_classes.append(class_name)
+            widget.attrs["class"] = " ".join(existing_classes)
 
         title_widget = self.fields["title"].widget
         title_class = title_widget.attrs.get("class", "")
@@ -441,6 +547,32 @@ class StaffTaskForm(forms.ModelForm):
                 "focus:ring-blue-400"
             )
         title_widget.attrs["class"] = (title_class + emphasis_classes).strip()
+
+        status_widget = self.fields["status"].widget
+        priority_widget = self.fields["priority"].widget
+        status_widget.attrs.setdefault("data-color-select", "status")
+        priority_widget.attrs.setdefault("data-color-select", "priority")
+        _append_classes(status_widget, "task-status-select")
+        _append_classes(priority_widget, "task-priority-select")
+
+        team_widget = self.fields["teams"].widget
+        assignee_widget = self.fields["assignees"].widget
+        for widget, key, placeholder, singular, empty in (
+            (team_widget, "teams", "Select one or more teams", "team", "No team selected"),
+            (
+                assignee_widget,
+                "assignees",
+                "Select one or more assignees",
+                "assignee",
+                "No assignee selected",
+            ),
+        ):
+            widget.attrs.setdefault("data-enhanced-multiselect", key)
+            widget.attrs.setdefault("data-placeholder", placeholder)
+            widget.attrs.setdefault("data-search-placeholder", "Search " + key.replace("_", " ") + "...")
+            widget.attrs.setdefault("data-singular-label", singular)
+            widget.attrs.setdefault("data-empty-label", empty)
+            _append_classes(widget, "task-enhanced-multiselect")
 
         if table_mode:
             title_widget.attrs.setdefault("placeholder", "Task name")
@@ -466,8 +598,8 @@ class StaffTaskForm(forms.ModelForm):
                 widget.attrs["style"] = ";".join(style_parts)
                 widget.attrs["data-base-class"] = widget.attrs.get("class", "")
 
-            _configure_select("assignee", "assignee")
-            _configure_select("team", "team")
+            _configure_select("assignees", "assignees")
+            _configure_select("teams", "teams")
             _configure_select("status", "status")
             _configure_select("priority", "priority")
 

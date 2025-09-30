@@ -1,0 +1,139 @@
+{% load static %}
+<tr
+    class="group relative hover:bg-slate-50/30 transition-colors border-b border-slate-100"
+    data-new-task-row
+    data-blank-task-row
+>
+    {% for hidden in form.hidden_fields %}
+        {{ hidden }}
+    {% endfor %}
+
+    <!-- Hidden form fields for auto-save -->
+    <input type="hidden" name="title" id="id_title_new" value="">
+    <input type="hidden" name="assignees" id="id_assignees_new" value="">
+    <input type="hidden" name="teams" id="id_teams_new" value="">
+    <input type="hidden" name="start_date" id="id_start_date_new" value="">
+    <input type="hidden" name="due_date" id="id_due_date_new" value="">
+    <input type="hidden" name="status" id="id_status_new" value="not_started">
+    <input type="hidden" name="priority" id="id_priority_new" value="medium">
+    <input type="hidden" name="progress" id="id_progress_new" value="0">
+
+    <!-- Task Title Cell -->
+    <td class="px-5 py-3 border-r border-slate-100 min-w-[13rem]">
+        <div class="flex items-start gap-2.5">
+            <span class="w-2.5 h-2.5 mt-0.5 rounded-full bg-slate-300"></span>
+            <div
+                class="flex-1 min-h-[38px] flex items-center px-3 py-2 rounded-md hover:bg-slate-100 cursor-text text-sm leading-snug text-slate-400"
+                contenteditable="true"
+                data-field="title"
+                data-task-id="new"
+                data-original-value=""
+                data-placeholder="Enter task title..."
+            >Enter task title...</div>
+        </div>
+    </td>
+
+    <!-- Assignee Cell -->
+    <td class="px-4 py-3 border-r border-slate-100 min-w-[10rem]">
+        <div
+            class="min-h-[38px] flex items-center px-2.5 py-1.5 rounded-md hover:bg-slate-100 cursor-pointer text-sm"
+            data-field="assignees"
+            data-task-id="new"
+            data-original-value=""
+            data-display-value=""
+        >
+            <span class="text-slate-400">Unassigned</span>
+        </div>
+    </td>
+
+    <!-- Teams Cell -->
+    <td class="px-4 py-3 border-r border-slate-100 min-w-[9rem]">
+        <div
+            class="min-h-[38px] flex items-center px-2.5 py-1.5 rounded-md hover:bg-slate-100 cursor-pointer text-sm"
+            data-field="teams"
+            data-task-id="new"
+            data-original-value=""
+            data-display-value=""
+        >
+            <span class="text-slate-400">No teams</span>
+        </div>
+    </td>
+
+    <!-- Start Date Cell -->
+    <td class="px-4 py-2 border-r border-slate-100">
+        <div
+            class="min-h-[32px] flex items-center px-2 py-1 rounded hover:bg-slate-100 cursor-pointer text-sm"
+            data-field="start_date"
+            data-task-id="new"
+            data-original-value=""
+        >
+            <span class="text-slate-400">No start date</span>
+        </div>
+    </td>
+
+    <!-- Due Date Cell -->
+    <td class="px-4 py-2 border-r border-slate-100">
+        <div
+            class="min-h-[32px] flex items-center px-2 py-1 rounded hover:bg-slate-100 cursor-pointer text-sm"
+            data-field="due_date"
+            data-task-id="new"
+            data-original-value=""
+        >
+            <span class="text-slate-400">No due date</span>
+        </div>
+    </td>
+
+    <!-- Status Cell -->
+    <td class="px-2 py-2 border-r border-slate-100">
+        <div
+            class="min-h-[32px] flex items-center px-1 py-1 rounded hover:bg-slate-100 cursor-pointer text-sm"
+            data-field="status"
+            data-task-id="new"
+            data-original-value="not_started"
+        >
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs bg-gray-50 text-gray-700">Not Started</span>
+        </div>
+    </td>
+
+    <!-- Priority Cell -->
+    <td class="px-2 py-2 border-r border-slate-100 min-w-[5rem] w-[5rem]">
+        <div
+            class="min-h-[32px] flex items-center px-1 py-1 rounded hover:bg-slate-100 cursor-pointer text-sm"
+            data-field="priority"
+            data-task-id="new"
+            data-original-value="medium"
+        >
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-xs bg-blue-50 text-blue-700">Medium</span>
+        </div>
+    </td>
+
+    <!-- Progress Cell -->
+    <td class="px-4 py-2 border-r border-slate-100">
+        <div class="min-h-[32px] flex items-center px-2 py-1 rounded hover:bg-slate-100 cursor-pointer text-sm">
+            <div class="flex items-center gap-2 w-full">
+                <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                        class="h-full bg-emerald-500 transition-all duration-300"
+                        style="width: 0%"
+                    ></div>
+                </div>
+                <span
+                    class="text-xs font-medium text-slate-600 min-w-[30px]"
+                    contenteditable="true"
+                    data-field="progress"
+                    data-task-id="new"
+                    data-original-value="0"
+                >0%</span>
+            </div>
+        </div>
+    </td>
+
+    <!-- Actions Cell -->
+    <td class="px-4 py-2">
+        <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="w-4 h-4 hidden" id="saving-new">
+                <i class="fas fa-spinner fa-spin text-xs text-emerald-600"></i>
+            </div>
+        </div>
+    </td>
+</tr>

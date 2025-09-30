@@ -647,16 +647,14 @@ class StaffTask(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     impact = models.CharField(max_length=255, blank=True)
-    team = models.ForeignKey(
+    teams = models.ManyToManyField(
         StaffTeam,
         related_name="tasks",
-        on_delete=models.PROTECT,
+        blank=True,
     )
-    assignee = models.ForeignKey(
+    assignees = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name="assigned_staff_tasks",
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
     )
     created_by = models.ForeignKey(
@@ -695,8 +693,43 @@ class StaffTask(models.Model):
     class Meta:
         ordering = ["board_position", "due_date", "-priority", "title"]
 
+    def __init__(self, *args, **kwargs):
+        self._pending_team_assignment = kwargs.pop("team", None)
+        super().__init__(*args, **kwargs)
+
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        pending_team = getattr(self, "_pending_team_assignment", None)
+        super().save(*args, **kwargs)
+
+        if pending_team is not None:
+            resolved_teams = self._resolve_team_values(pending_team)
+            if resolved_teams:
+                self.teams.set(resolved_teams)
+            else:
+                self.teams.clear()
+            self._pending_team_assignment = None
+
+    def _resolve_team_values(self, value):
+        """Normalize team inputs into iterable of StaffTeam instances."""
+
+        if value is None:
+            return []
+        if isinstance(value, StaffTeam):
+            return [value]
+        if isinstance(value, (list, tuple, set)):
+            resolved = []
+            for item in value:
+                resolved.extend(self._resolve_team_values(item))
+            return resolved
+        if isinstance(value, int):
+            try:
+                return [StaffTeam.objects.get(pk=value)]
+            except StaffTeam.DoesNotExist:
+                return []
+        raise ValueError("Unsupported team assignment value.")
 
     @property
     def is_overdue(self):
@@ -709,15 +742,44 @@ class StaffTask(models.Model):
     def assignee_display_name(self):
         """Return a human-friendly assignee label, handling missing data."""
 
-        if not self.assignee:
+        members = []
+        if hasattr(self, "assignees"):
+            try:
+                members = list(self.assignees.all())
+            except Exception:
+                members = []
+        if not members:
             return "Unassigned"
-        full_name = ""
-        if hasattr(self.assignee, "get_full_name"):
-            full_name = (self.assignee.get_full_name() or "").strip()
-        if full_name:
-            return full_name
-        username = getattr(self.assignee, "username", "")
-        return username or "Unassigned"
+
+        def _display_name(user_obj):
+            if not user_obj:
+                return ""
+            if hasattr(user_obj, "get_full_name"):
+                full_name = (user_obj.get_full_name() or "").strip()
+                if full_name:
+                    return full_name
+            username = getattr(user_obj, "username", "")
+            return username
+
+        labels = [label for label in (_display_name(member) for member in members) if label]
+        if not labels:
+            return "Unassigned"
+        return ", ".join(labels)
+
+    @property
+    def team(self):
+        """Return the first associated team for legacy access patterns."""
+
+        if not hasattr(self, "teams"):
+            return None
+        try:
+            return self.teams.all().first()
+        except Exception:  # pragma: no cover - defensive fallback
+            return None
+
+    @team.setter
+    def team(self, value):
+        self._pending_team_assignment = value
 
 
 class TrainingProgram(models.Model):

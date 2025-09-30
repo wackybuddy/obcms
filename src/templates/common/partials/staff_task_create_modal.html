@@ -29,8 +29,8 @@
                     <i class="fas fa-bolt"></i>
                     {{ priority_label }}
                 </span>
-            </div>
-        </div>
+</div>
+</div>
         <button type="button" class="text-gray-400 hover:text-gray-600" data-close-modal>
             <span class="sr-only">Close</span>
             <i class="fas fa-times text-lg"></i>
@@ -73,13 +73,25 @@
                     {{ form.title }}
                     {{ form.title.errors }}
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.priority.id_for_label }}">Priority</label>
+                <div data-select-group="priority">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide" for="{{ form.priority.id_for_label }}">Priority</label>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-600" data-select-pill>
+                            <i class="fas fa-bolt text-[0.65rem]"></i>
+                            <span data-pill-label>{{ priority_label }}</span>
+                        </span>
+                    </div>
                     {{ form.priority }}
                     {{ form.priority.errors }}
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.status.id_for_label }}">Status</label>
+                <div data-select-group="status">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide" for="{{ form.status.id_for_label }}">Status</label>
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-600" data-select-pill>
+                            <i class="fas fa-signal text-[0.65rem]"></i>
+                            <span data-pill-label>{{ status_label }}</span>
+                        </span>
+                    </div>
                     {{ form.status }}
                     {{ form.status.errors }}
                 </div>
@@ -88,15 +100,43 @@
                     {{ form.progress }}
                     {{ form.progress.errors }}
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.team.id_for_label }}">Team</label>
-                    {{ form.team }}
-                    {{ form.team.errors }}
+                <div data-multiselect-group="teams">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide" for="{{ form.teams.id_for_label }}">Teams</label>
+                        {% with team_count=form.teams.value|length %}
+                        <span class="text-xs font-semibold text-gray-400" data-selected-count>
+                            {% if team_count %}
+                                {{ team_count }} team{% if team_count != 1 %}s{% endif %}
+                            {% else %}
+                                No team selected
+                            {% endif %}
+                        </span>
+                        {% endwith %}
+                    </div>
+                    {{ form.teams }}
+                    {% if form.teams.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">{{ form.teams.help_text }}</p>
+                    {% endif %}
+                    {{ form.teams.errors }}
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.assignee.id_for_label }}">Assignee</label>
-                    {{ form.assignee }}
-                    {{ form.assignee.errors }}
+                <div data-multiselect-group="assignees">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide" for="{{ form.assignees.id_for_label }}">Assignees</label>
+                        {% with assignee_count=form.assignees.value|length %}
+                        <span class="text-xs font-semibold text-gray-400" data-selected-count>
+                            {% if assignee_count %}
+                                {{ assignee_count }} assignee{% if assignee_count != 1 %}s{% endif %}
+                            {% else %}
+                                No assignee selected
+                            {% endif %}
+                        </span>
+                        {% endwith %}
+                    </div>
+                    {{ form.assignees }}
+                    {% if form.assignees.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">{{ form.assignees.help_text }}</p>
+                    {% endif %}
+                    {{ form.assignees.errors }}
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1" for="{{ form.start_date.id_for_label }}">Start date</label>
@@ -137,3 +177,11 @@
         </form>
     </div>
 </div>
+
+<script>
+    window.requestAnimationFrame(function () {
+        if (window.taskModalEnhancer && typeof window.taskModalEnhancer.init === 'function') {
+            window.taskModalEnhancer.init(document.getElementById('taskModalContent'));
+        }
+    });
+</script>

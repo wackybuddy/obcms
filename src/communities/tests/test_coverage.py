@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from common.models import Barangay, Municipality, Province, Region
 
-from ..models import MunicipalityCoverage, OBCCommunity
+from ..models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
 from ..serializers import MunicipalityCoverageSerializer
 
 User = get_user_model()
@@ -210,3 +210,89 @@ class MunicipalityCoverageSyncTest(TestCase):
         self.assertEqual(coverage.total_obc_communities, 99)
         self.assertEqual(coverage.estimated_obc_population, 9999)
         self.assertEqual(coverage.key_barangays, "Custom Entry")
+
+
+class ProvinceCoverageAggregationTest(TestCase):
+    """Ensure provincial coverage aggregates municipal data correctly."""
+
+    def setUp(self):
+        self.region = Region.objects.create(code="R12", name="SOCCSKSARGEN")
+        self.province = Province.objects.create(
+            region=self.region,
+            code="PROV-777",
+            name="Sample Province",
+        )
+        self.municipality_a = Municipality.objects.create(
+            province=self.province,
+            code="MUN-A",
+            name="Municipality A",
+        )
+        self.municipality_b = Municipality.objects.create(
+            province=self.province,
+            code="MUN-B",
+            name="Municipality B",
+        )
+
+        self.coverage_a = MunicipalityCoverage.objects.create(
+            municipality=self.municipality_a,
+            total_obc_communities=3,
+            estimated_obc_population=450,
+            households=90,
+            women_count=180,
+        )
+        self.coverage_b = MunicipalityCoverage.objects.create(
+            municipality=self.municipality_b,
+            total_obc_communities=2,
+            estimated_obc_population=250,
+            households=50,
+            women_count=110,
+        )
+
+    def test_sync_for_province_aggregates_totals(self):
+        coverage = ProvinceCoverage.sync_for_province(self.province)
+        coverage.refresh_from_db()
+
+        self.assertEqual(coverage.total_municipalities, 2)
+        self.assertEqual(coverage.total_obc_communities, 5)
+        self.assertEqual(coverage.estimated_obc_population, 700)
+        self.assertEqual(coverage.households, 140)
+        self.assertIn(self.municipality_a.name, coverage.key_municipalities)
+        self.assertIn(self.municipality_b.name, coverage.key_municipalities)
+
+        MunicipalityCoverage.objects.filter(pk=self.coverage_a.pk).update(
+            total_obc_communities=4,
+            estimated_obc_population=600,
+        )
+        MunicipalityCoverage.objects.filter(pk=self.coverage_b.pk).update(
+            estimated_obc_population=300,
+            households=55,
+        )
+
+        ProvinceCoverage.sync_for_province(self.province)
+        coverage.refresh_from_db()
+
+        self.assertEqual(coverage.total_obc_communities, 6)
+        self.assertEqual(coverage.estimated_obc_population, 900)
+        self.assertEqual(coverage.households, 145)
+
+    def test_auto_sync_respected(self):
+        coverage = ProvinceCoverage.sync_for_province(self.province)
+        coverage.auto_sync = False
+        coverage.save(update_fields=["auto_sync"])
+
+        MunicipalityCoverage.objects.filter(pk=self.coverage_a.pk).update(
+            total_obc_communities=10,
+            estimated_obc_population=1000,
+        )
+        ProvinceCoverage.sync_for_province(self.province)
+
+        coverage.refresh_from_db()
+        self.assertEqual(coverage.total_obc_communities, 5)
+        self.assertEqual(coverage.estimated_obc_population, 700)
+
+        coverage.auto_sync = True
+        coverage.save(update_fields=["auto_sync"])
+        ProvinceCoverage.sync_for_province(self.province)
+        coverage.refresh_from_db()
+        self.assertEqual(coverage.total_obc_communities, 12)
+        self.assertEqual(coverage.estimated_obc_population, 1250)

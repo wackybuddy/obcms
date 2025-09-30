@@ -124,6 +124,31 @@
                 Municipal OBC List
             </h2>
         </div>
+        <div class="px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-gray-200">
+            <form method="get" class="flex items-center gap-2 text-sm text-gray-600">
+                {% for key, value in request.GET.items %}
+                    {% if key != 'municipality_page_size' and key != 'municipality_page' %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <label for="municipality-page-size" class="font-medium">Show</label>
+                <select id="municipality-page-size" name="municipality_page_size"
+                        class="border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        onchange="this.form.submit()">
+                    {% for option in municipality_page_size_options %}
+                        <option value="{{ option }}" {% if municipality_page_size == option %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+                <span>entries</span>
+            </form>
+            <div class="text-sm text-gray-600">
+                {% if coverages.paginator.count %}
+                    Showing {{ coverages.start_index }} – {{ coverages.end_index }} of {{ coverages.paginator.count }} entries
+                {% else %}
+                    Showing 0 entries
+                {% endif %}
+            </div>
+        </div>
         <div class="overflow-x-auto">
             {% if coverages %}
             <table class="w-full">
@@ -210,6 +235,62 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <div class="px-6 py-4 border-t border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-gray-50">
+                <div class="text-sm text-gray-600">
+                    {% if coverages.paginator.count %}
+                        Page {{ coverages.number }} of {{ municipality_total_pages }}
+                    {% else %}
+                        Page 0 of 0
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if coverages.has_previous %}
+                        {% if municipality_base_querystring %}
+                            {% with query=municipality_base_querystring|add:'&municipality_page='|add:coverages.previous_page_number %}
+                                <a href="?{{ query }}"
+                                   class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                    <i class="fas fa-chevron-left mr-1"></i>
+                                    Previous
+                                </a>
+                            {% endwith %}
+                        {% else %}
+                            <a href="?municipality_page={{ coverages.previous_page_number }}"
+                               class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-chevron-left mr-1"></i>
+                                Previous
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-300 bg-white cursor-not-allowed">
+                            <i class="fas fa-chevron-left mr-1"></i>
+                            Previous
+                        </span>
+                    {% endif %}
+
+                    {% if coverages.has_next %}
+                        {% if municipality_base_querystring %}
+                            {% with query=municipality_base_querystring|add:'&municipality_page='|add:coverages.next_page_number %}
+                                <a href="?{{ query }}"
+                                   class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                    Next
+                                    <i class="fas fa-chevron-right ml-1"></i>
+                                </a>
+                            {% endwith %}
+                        {% else %}
+                            <a href="?municipality_page={{ coverages.next_page_number }}"
+                               class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                Next
+                                <i class="fas fa-chevron-right ml-1"></i>
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-300 bg-white cursor-not-allowed">
+                            Next
+                            <i class="fas fa-chevron-right ml-1"></i>
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
             {% else %}
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-city text-4xl mb-4"></i>

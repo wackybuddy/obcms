@@ -4,22 +4,41 @@
 
 The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-based platform designed to support the Office for Other Bangsamoro Communities (OOBC) in managing and coordinating services for Bangsamoro communities outside the Bangsamoro Autonomous Region in Muslim Mindanao (BARMM).
 
-## Quick Start
+## Documentation Index
 
-### For Users
-- [User Guide](user-guide/README.md) - Complete guide for end users
-- [Getting Started](user-guide/getting-started.md) - Quick start tutorial
-- [FAQ](user-guide/faq.md) - Frequently asked questions
+### Administrator Operations
+- [Installation Guide](admin-guide/installation.md)
 
-### For Administrators
-- [Administrator Guide](admin-guide/README.md) - System administration guide
-- [Installation Guide](admin-guide/installation.md) - Server setup and installation
-- [Configuration Guide](admin-guide/configuration.md) - System configuration options
+### Deployment & Infrastructure
+- [Coolify Deployment Plan](deployment/coolify-deployment-plan.md)
+- [Coolify Deployment Checklist](deployment/deployment-coolify.md)
+- [Docker Guide](deployment/docker-guide.md)
+- [PostgreSQL Migration Guide](deployment/postgres-migration-guide.md)
+- [Environment Runbooks](env/)
 
-### For Developers
-- [Developer Guide](developer-guide/README.md) - Technical documentation
-- [API Documentation](api/README.md) - API reference and examples
-- [Contributing](CONTRIBUTING.md) - How to contribute to the project
+### Program Guidelines
+- [Assistance Program Guidelines](guidelines/OBC_guidelines_assistance.md)
+- [MANA Implementation Guidelines](guidelines/OBC_guidelines_mana.md)
+- [Policy Coordination Guidelines](guidelines/OBC_guidelines_policy.md)
+
+### Product Roadmap & Strategy
+- [OBCMS MVP Scope](product/obcMS-MVP.md)
+- [OBCMS Summary](product/obcMS-summary.md)
+- [Improvement Planning Notes](improvements/)
+
+### Reports & Research
+- [OBC Upgrade Proposal](reports/OBC-upgrade.md)
+- [OBC Briefing Deck](reports/OBC_briefer.md)
+- [OBC Data Overview](reports/OBCdata.md)
+- [OOBC Integrative Report](reports/OOBC_integrative_report.md)
+- [System Requirements](reports/obc-system-requirements.md)
+- [Staff Task Board Research](reports/staff_task_board_research.md)
+
+### UI & Experience
+- [Admin Interface Guide](ui/admin-interface-guide.md)
+- [Component Library](ui/component-library.md)
+- [UI Design System](ui/ui-design-system.md)
+- [UI Documentation](ui/ui-documentation.md)
 
 ## System Architecture
 
@@ -63,17 +82,6 @@ The OBC Management System is built using modern web technologies:
 - Field mapping and validation
 - Backup and recovery procedures
 - Data quality management
-
-## Key Features
-
-- **Multi-level Geographic Support**: Region, Province, Municipality, Barangay hierarchy
-- **Role-based Access Control**: Different user types with appropriate permissions
-- **Comprehensive API**: RESTful API for integration and mobile applications
-- **Data Import Tools**: CSV/Excel import with validation and mapping
-- **Audit Trail**: Complete activity logging and user action tracking
-- **Mobile Responsive**: Works on desktop, tablet, and mobile devices
-- **Security**: HTTPS, CSRF protection, SQL injection prevention
-- **Scalability**: Designed to handle thousands of communities and users
 
 ## Support
 

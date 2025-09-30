@@ -3,7 +3,12 @@
 from django import forms
 from django.db import models as django_models
 
-from communities.models import CommunityProfileBase, MunicipalityCoverage, OBCCommunity
+from communities.models import (
+    CommunityProfileBase,
+    MunicipalityCoverage,
+    OBCCommunity,
+    ProvinceCoverage,
+)
 from common.models import Region, Province, Municipality
 
 from . import mixins as _location_mixins
@@ -360,6 +365,97 @@ class MunicipalityCoverageForm(LocationSelectionMixin, forms.ModelForm):
                 )
 
 
+class ProvinceCoverageForm(LocationSelectionMixin, forms.ModelForm):
+    """Form for recording province-level Bangsamoro coverage."""
+
+    location_fields_config = {
+        'region': {'required': True, 'level': 'region', 'zoom': 7},
+        'province': {'required': True, 'level': 'province', 'zoom': 9},
+    }
+
+    region = forms.ModelChoiceField(
+        queryset=Region.objects.filter(is_active=True).order_by("code", "name"),
+        required=True,
+        label="Region",
+    )
+    province = forms.ModelChoiceField(
+        queryset=Province.objects.none(),
+        required=True,
+        label="Province",
+    )
+
+    class Meta:
+        model = ProvinceCoverage
+        fields = (
+            "province",
+            "total_municipalities",
+            "total_obc_communities",
+            "existing_support_programs",
+            "auto_sync",
+            *COMMUNITY_PROFILE_FIELDS,
+        )
+        widgets = {
+            "total_municipalities": forms.NumberInput(
+                attrs={
+                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                    "min": "0",
+                }
+            ),
+            "total_obc_communities": forms.NumberInput(
+                attrs={
+                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                    "min": "0",
+                }
+            ),
+            "existing_support_programs": forms.Textarea(
+                attrs={
+                    "class": "block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500",
+                    "rows": 3,
+                }
+            ),
+            "auto_sync": forms.CheckboxInput(
+                attrs={
+                    "class": "form-check-input h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                }
+            ),
+            **COMMUNITY_PROFILE_WIDGETS,
+        }
+        labels = {
+            "region": "Region",
+            "province": "Province",
+            "total_municipalities": "Municipalities / Cities Tracked",
+            "total_obc_communities": "Barangay OBCs (aggregated)",
+            "existing_support_programs": "Existing Support Programs",
+            "auto_sync": "Automatically sync totals from municipal coverage",
+            **COMMUNITY_PROFILE_LABELS,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        province_field = self.fields.get("province")
+        if province_field:
+            province_choices = Province.objects.select_related("region").order_by(
+                "region__name", "name"
+            )
+            province_field.queryset = province_choices
+
+            existing_coverage_ids = set(
+                ProvinceCoverage.objects.values_list("province_id", flat=True)
+            )
+            if self.instance and self.instance.pk:
+                existing_coverage_ids.discard(self.instance.province_id)
+
+            if existing_coverage_ids:
+                province_field.queryset = province_field.queryset.exclude(
+                    pk__in=existing_coverage_ids
+                )
+
+        if self.instance and self.instance.pk:
+            self.fields["region"].initial = self.instance.province.region
+            self.fields["province"].initial = self.instance.province
+
+
 class OBCCommunityForm(LocationSelectionMixin, forms.ModelForm):
     """Comprehensive form for creating or editing OBC communities."""
 
@@ -410,5 +506,6 @@ __all__ = [
     "COMMUNITY_PROFILE_WIDGETS",
     "COMMUNITY_PROFILE_LABELS",
     "MunicipalityCoverageForm",
+    "ProvinceCoverageForm",
     "OBCCommunityForm",
 ]

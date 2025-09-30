@@ -6,6 +6,7 @@ from .community import (
     COMMUNITY_PROFILE_LABELS,
     COMMUNITY_PROFILE_WIDGETS,
     MunicipalityCoverageForm,
+    ProvinceCoverageForm,
     OBCCommunityForm,
 )
 from .province import ProvinceForm
@@ -28,6 +29,7 @@ __all__ = [
     "COMMUNITY_PROFILE_LABELS",
     "COMMUNITY_PROFILE_WIDGETS",
     "MunicipalityCoverageForm",
+    "ProvinceCoverageForm",
     "OBCCommunityForm",
     "ProvinceForm",
     "StaffProfileForm",

@@ -321,9 +321,11 @@
                         </div>
                         <p class="mt-1 text-xs text-gray-600">
                             {% if task.due_date %}Due {{ task.due_date|date:"M d" }}{% else %}No due date{% endif %}
-                            {% if task.assignee %}
-                                • {{ task.assignee_display_name }}
-                            {% endif %}
+                            {% with assignee_label=task.assignee_display_name %}
+                                {% if assignee_label != 'Unassigned' %}
+                                    • {{ assignee_label }}
+                                {% endif %}
+                            {% endwith %}
                         </p>
                     </div>
                     {% endfor %}

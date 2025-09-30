@@ -26,5 +26,44 @@ Pytest with pytest-django drives the suite, supported by factory fixtures. Name 
 ## Commit & Pull Request Guidelines
 Commits use imperative, capitalized subjects without trailing periods (e.g., `Enhance MANA module workflow`) and should isolate schema, fixture, and UI edits. Pull requests must summarize intent, flag migrations or scripts, link Jira or issue IDs, and add screenshots for template changes. Always report the most recent `pytest`, `flake8`, and coverage results and request reviews from the owning module team.
 
+## Instant UI & Smooth Interactions
+Always prioritize instant UI updates and smooth user interactions. Follow these guidelines:
+
+### HTMX Implementation Standards
+- **Target Consistency**: Use `data-task-id="{{ item.id }}"` for all interactive elements (kanban cards, table rows, modals)
+- **Optimistic Updates**: Update UI immediately, then handle server response. Revert on errors with clear feedback
+- **Smooth Transitions**: Use `hx-swap="outerHTML swap:300ms"` or `delete swap:200ms` for animations
+- **Loading States**: Always provide visual feedback during operations (spinners, disabled states)
+
+### Response Patterns
+Backend views should return HTMX-friendly responses:
+```python
+if request.headers.get('HX-Request'):
+    return HttpResponse(
+        status=204,
+        headers={
+            'HX-Trigger': json.dumps({
+                'task-updated': {'id': item_id, 'action': 'delete'},
+                'show-toast': 'Operation completed successfully',
+                'refresh-counters': True
+            })
+        }
+    )
+```
+
+### Animation Requirements
+- Task movements between kanban columns: 300ms smooth transitions
+- Modal open/close: Fade with scale transform
+- Button clicks: Micro-interactions for immediate feedback
+- Error states: Red flash with recovery options
+
+### Never Use Full Page Reloads
+- Implement HTMX for all CRUD operations
+- Use out-of-band swaps for updating multiple UI regions
+- Provide fallback mechanisms for HTMX failures
+- Ensure accessibility with proper ARIA states
+
+Refer to `docs/improvements/instant_ui_improvements_plan.md` for detailed implementation guidance.
+
 ## Security & Configuration Tips
 Copy `.env.example` to `.env`, fill `SECRET_KEY`, database, Redis, and third-party credentials, and keep secrets out of git. SQLite suffices for quick checks, but align staging with Postgres and Redis. Document integration details and follow-up notes in `docs/` so future contributors can trace decisions.

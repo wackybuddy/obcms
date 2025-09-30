@@ -1,0 +1,202 @@
+{
+  "workshop_1": {
+    "title": "Workshop 1: Understanding the Community Context",
+    "questions": [
+      {
+        "id": "community_description",
+        "text": "Describe the OBCs in your region/province. What is their estimated total population? Are they mostly living in urban or rural areas? What sectors do they represent (farmers, business, laborers, traders, fisherfolk, etc.)?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Capture general community profile and sector representation."
+      },
+      {
+        "id": "quality_of_life",
+        "text": "How would you describe their general quality of life? How is their access to government services such as education, health, and social protection? What are their main sources of livelihood and income?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Discuss wellbeing indicators, service access, and livelihood sources."
+      },
+      {
+        "id": "socio_economic_issues",
+        "text": "What are the most pressing socio-economic issues they face today? What is their level of access to infrastructure (roads, utilities, communication, housing) and financial or business services? Has it improved, worsened, or remained the same in recent years?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Highlight current challenges and trend directions."
+      },
+      {
+        "id": "cultural_preservation",
+        "text": "How are OBCs preserving and promoting their culture, religion, and identity? What cultural issues and challenges do they face?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Explain cultural preservation efforts and hurdles."
+      }
+    ]
+  },
+  "workshop_2": {
+    "title": "Workshop 2: Community Aspirations and Priorities",
+    "questions": [
+      {
+        "id": "vulnerable_areas",
+        "text": "Which OBC municipalities or barangays in your area are most vulnerable? Please identify up to three and explain why.",
+        "type": "long_text",
+        "required": false,
+        "help_text": "List priority geographies and reasons for vulnerability."
+      },
+      {
+        "id": "vulnerable_sectors",
+        "text": "Which sectors of the OBCs (farmers, women, youth, workers, PWDs, IPs, IDPs, business owners, etc.) are most vulnerable? How are these groups coping or responding to these vulnerabilities?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Identify vulnerable groups and coping mechanisms."
+      },
+      {
+        "id": "long_term_aspirations",
+        "text": "What are the common long-term aspirations of OBCs for development, identity, and well-being? Which of these should be achieved in the short term (1–3 years) and which in the long term (5–10 years)?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Capture shared vision with short- and long-term horizons."
+      },
+      {
+        "id": "top_three_issues",
+        "text": "In your opinion, what are the top three issues that must be addressed immediately to improve the quality of life of OBCs?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Rank urgent development issues."
+      },
+      {
+        "id": "prioritized_programs",
+        "text": "What economic, social, and cultural development programs should be prioritized for OBCs in your area?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Suggest priority programs across thematic areas."
+      },
+      {
+        "id": "rights_issues",
+        "text": "What rights issues are most prevalent in OBCs (e.g., access to services, non-discrimination, representation, land, peace and security)? How are the rights of OBCs currently being protected and promoted? What more needs to be done?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Discuss rights concerns, current safeguards, and gaps."
+      }
+    ]
+  },
+  "workshop_3": {
+    "title": "Workshop 3: Community Collaboration and Empowerment",
+    "questions": [
+      {
+        "id": "representation_in_governance",
+        "text": "How are OBCs currently represented in local governance and development processes (barangay, municipal, city, provincial)? Which groups or leaders usually participate, and which sectors are left out?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Describe participation landscape and inclusion gaps."
+      },
+      {
+        "id": "obc_organizations",
+        "text": "Are there OBC organizations in your area—such as youth groups, women’s associations, religious or traditional councils—that significantly contribute to local governance and development?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "List key organizations and their contributions."
+      },
+      {
+        "id": "improving_representation",
+        "text": "How can the representation and participation of OBCs in governance and development be improved? What specific measures should be taken to strengthen the voices of OBCs?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Recommend actions to strengthen participation."
+      },
+      {
+        "id": "collaboration_mechanisms",
+        "text": "What collaboration mechanisms could be established or improved to ensure the protection of rights and promotion of welfare and development of OBCs?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Suggest inter-actor coordination platforms."
+      },
+      {
+        "id": "transparency_and_equity",
+        "text": "How can transparency, accountability, and equity be ensured so that the benefits of development initiatives by government and partners are inclusive and reach all sectors of the OBCs?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Outline safeguards for inclusive implementation."
+      }
+    ]
+  },
+  "workshop_4": {
+    "title": "Workshop 4: Community Feedback on Existing Initiatives",
+    "questions": [
+      {
+        "id": "existing_programs",
+        "text": "What existing programs, projects, and services for OBCs are provided by: LGUs, NGAs, BARMM, Other stakeholders?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Inventory current interventions by stakeholder."
+      },
+      {
+        "id": "access_to_programs",
+        "text": "How are OBCs currently accessing these programs and services? Which groups (women, youth, PWDs, IPs, IDPs) benefit most, and who is being left behind?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Assess reach and equity of service delivery."
+      },
+      {
+        "id": "effectiveness_of_initiatives",
+        "text": "How effective are these initiatives? Which ones have succeeded, which ones have failed or faced significant challenges, and why? What improvements would you recommend to ensure quality delivery and inclusivity?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Evaluate successes, gaps, and improvement ideas."
+      },
+      {
+        "id": "online_access",
+        "text": "How are LGUs, NGAs, and the Bangsamoro Government providing virtual or online access to these services? How is technology and digital connectivity being used to improve access for OBCs?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Describe digital access strategies and barriers."
+      },
+      {
+        "id": "untapped_resources",
+        "text": "What other resources or support are available in your area that OBCs have not yet tapped or optimized (such as scholarships, livelihood programs, ICT hubs, partnerships, or local initiatives)?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Surface additional opportunities to leverage."
+      }
+    ]
+  },
+  "workshop_5": {
+    "title": "Workshop 5: OBCs Needs, Challenges, Factors, and Outcomes",
+    "questions": [
+      {
+        "id": "critical_challenges",
+        "text": "Challenges – What are the most critical challenges faced by OBCs in your area (education, health, livelihood, governance, infrastructure, peace and security)? Who are the most affected (women, youth, PWDs, IPs, IDPs, elders)?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Document major challenges and affected groups."
+      },
+      {
+        "id": "challenge_factors",
+        "text": "Factors – What are the main causes or factors behind each challenge? Are these related to policies, lack of resources, discrimination, geography, or governance gaps? And are these factors internal to the community, external (from government or other stakeholders), or both?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Explain underlying factors for each challenge."
+      },
+      {
+        "id": "specific_needs",
+        "text": "Needs – Based on these challenges and factors, what specific needs must be addressed to improve the OBCs’ situation (e.g., livelihood programs, schools, health facilities, roads, scholarships, justice access, inclusion mechanisms)?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "List priority needs linked to challenges."
+      },
+      {
+        "id": "expected_outcomes",
+        "text": "Outcomes – If these needs are addressed, what positive outcomes or changes do you expect for the OBC? How would these outcomes affect vulnerable groups specifically?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Describe desired impact across groups."
+      },
+      {
+        "id": "prioritization",
+        "text": "Prioritization – Of the challenges and needs identified, which should be addressed first? Why? How are these challenges connected to each other?",
+        "type": "long_text",
+        "required": false,
+        "help_text": "Provide prioritization rationale and linkages."
+      }
+    ]
+  }
+}

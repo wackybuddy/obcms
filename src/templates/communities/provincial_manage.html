@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Provincial OBC - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-900 font-medium">Provincial OBCs</span>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">Manage Provincial OBC</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-flag text-indigo-600"></i>
+                <span>{{ page_title|default:'Manage Provincial OBC' }}</span>
+                {% if show_archived %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded-full bg-amber-100 text-amber-800">
+                    Archived view
+                </span>
+                {% endif %}
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                {{ page_description|default:'View, edit, and manage province-level Bangsamoro coverage data aggregated from municipalities' }}
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            {% if show_archived %}
+            <a href="{% url 'common:communities_manage_provincial' %}"
+               class="inline-flex items-center bg-white border border-emerald-200 text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                <i class="fas fa-list mr-2"></i>
+                Back to active records
+            </a>
+            {% else %}
+            <a href="{% url 'common:communities_manage_provincial' %}?archived=1"
+               class="inline-flex items-center bg-white border border-amber-200 text-amber-600 hover:bg-amber-50 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                <i class="fas fa-archive mr-2"></i>
+                View archived records
+            </a>
+            {% endif %}
+            <a href="{% url 'common:communities_add_province' %}"
+               class="inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                <i class="fas fa-plus mr-2"></i>
+                Add provincial OBC
+            </a>
+        </div>
+    </div>
+
+    <div class="{{ stat_cards_grid_class|default:'mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' }}">
+        {% for card in stat_cards %}
+        <div class="relative overflow-hidden bg-gradient-to-br {{ card.gradient }} rounded-xl shadow-xl">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+            <div class="relative p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="{{ card.text_color }} text-sm font-medium">{{ card.title }}</p>
+                        <p class="text-3xl font-bold">{{ card.value|default:0 }}</p>
+                    </div>
+                    <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="{{ card.icon|default:'fas fa-database' }} text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 mb-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4">
+            <h2 class="text-xl font-bold text-white flex items-center">
+                <i class="fas fa-filter mr-3 text-2xl"></i>
+                Filters & Search
+            </h2>
+        </div>
+        <div class="p-6">
+            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+                <div class="lg:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Region</label>
+                    <select name="region" data-initial="{{ current_region|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                        <option value="">All Regions</option>
+                        {% for region in regions %}
+                        <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="lg:col-span-3">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Province</label>
+                    <select name="province" data-initial="{{ current_province|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                        <option value="">All Provinces</option>
+                        {% for province in provinces %}
+                        <option value="{{ province.id }}" {% if current_province == province.id|stringformat:"s" %}selected{% endif %}>{{ province.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="lg:col-span-4">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+                    <input type="text" name="search" value="{{ search_query|default:'' }}"
+                           placeholder="Search province, region, or key municipalities..."
+                           class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                </div>
+                <div class="lg:col-span-2 flex items-end gap-3">
+                    <button type="submit" class="inline-flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 w-full">
+                        <i class="fas fa-search mr-2"></i>Apply
+                    </button>
+                    <a href="{% url 'common:communities_manage_provincial' %}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-all duration-200 w-full">
+                        <i class="fas fa-times mr-2"></i>Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-gray-50">
+            <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <i class="fas fa-layer-group text-indigo-500"></i>
+                Provincial OBC List
+            </h2>
+            <form method="get" class="flex items-center gap-2">
+                {% for key, value in request.GET.items %}
+                    {% if key != 'province_page_size' and key != 'province_page' %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <label for="province-page-size" class="font-medium">Show</label>
+                <select id="province-page-size" name="province_page_size"
+                        class="border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        onchange="this.form.submit()">
+                    {% for option in province_page_size_options %}
+                        <option value="{{ option }}" {% if province_page_size == option %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+                <span>entries</span>
+            </form>
+            <div class="text-sm text-gray-600">
+                {% if coverages.paginator.count %}
+                    Showing {{ coverages.start_index }} – {{ coverages.end_index }} of {{ coverages.paginator.count }} entries
+                {% else %}
+                    Showing 0 entries
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            {% if coverages %}
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Province</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coverage Snapshot</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sync Mode</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for coverage in coverages %}
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0 w-10 h-10 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                    <i class="fas fa-flag"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ coverage.province.name }}</p>
+                                    <p class="text-xs text-gray-500">{{ coverage.display_name }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            <p class="font-medium text-gray-900">Region {{ coverage.region.code }}</p>
+                            <p class="text-xs text-gray-500">{{ coverage.region.name }}</p>
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            <p class="text-gray-900 font-semibold">{{ coverage.total_municipalities|default:0 }} municipalities tracked</p>
+                            <p class="text-xs text-gray-500">Barangay OBCs: {{ coverage.total_obc_communities|default:0 }}</p>
+                            <p class="text-xs text-gray-500">Est. OBC Population: {{ coverage.estimated_obc_population|default:0 }}</p>
+                            <p class="text-xs text-gray-500">Households: {{ coverage.households|default:0 }}</p>
+                            {% if coverage.key_municipalities %}
+                                <p class="text-xs text-gray-500 mt-2"><span class="font-semibold text-gray-700">Key Municipalities:</span> {{ coverage.key_municipalities }}</p>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if coverage.auto_sync %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">
+                                <i class="fas fa-sync mr-1"></i>Auto-sync
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">
+                                <i class="fas fa-hand-paper mr-1"></i>Manual
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-gray-500">
+                            <p>Updated {{ coverage.updated_at|date:"M d, Y" }}</p>
+                            <p>Created {{ coverage.created_at|date:"M d, Y" }}</p>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex flex-wrap gap-2">
+                                <a href="{% url 'common:communities_view_provincial' coverage.id %}{% if show_archived %}?archived=1{% endif %}"
+                                   class="bg-white border border-indigo-200 text-indigo-600 hover:bg-indigo-50 px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
+                                    <i class="fas fa-eye mr-1"></i>View
+                                </a>
+                                {% if show_archived %}
+                                <form method="post" action="{% url 'common:communities_restore_provincial' coverage.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
+                                        <i class="fas fa-undo mr-1"></i>Restore
+                                    </button>
+                                </form>
+                                {% else %}
+                                <a href="{% url 'common:communities_edit_provincial' coverage.id %}"
+                                   class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
+                                    <i class="fas fa-edit mr-1"></i>Edit
+                                </a>
+                                <button type="button"
+                                        class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200"
+                                        data-delete-view="{% url 'common:communities_view_provincial' coverage.id %}"
+                                        data-confirm="Are you sure you want to delete this provincial OBC coverage? You will review the details before final confirmation.">
+                                    <i class="fas fa-trash-alt mr-1"></i>Delete
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="px-6 py-4 border-t border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-gray-50">
+                <div class="text-sm text-gray-600">
+                    {% if coverages.paginator.count %}
+                        Page {{ coverages.number }} of {{ province_total_pages }}
+                    {% else %}
+                        Page 0 of 0
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if coverages.has_previous %}
+                        {% if province_base_querystring %}
+                            {% with query=province_base_querystring|add:'&province_page='|add:coverages.previous_page_number %}
+                                <a href="?{{ query }}"
+                                   class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                    <i class="fas fa-chevron-left mr-1"></i>
+                                    Previous
+                                </a>
+                            {% endwith %}
+                        {% else %}
+                            <a href="?province_page={{ coverages.previous_page_number }}"
+                               class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-chevron-left mr-1"></i>
+                                Previous
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-300 bg-white cursor-not-allowed">
+                            <i class="fas fa-chevron-left mr-1"></i>
+                            Previous
+                        </span>
+                    {% endif %}
+
+                    {% if coverages.has_next %}
+                        {% if province_base_querystring %}
+                            {% with query=province_base_querystring|add:'&province_page='|add:coverages.next_page_number %}
+                                <a href="?{{ query }}"
+                                   class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                    Next
+                                    <i class="fas fa-chevron-right ml-1"></i>
+                                </a>
+                            {% endwith %}
+                        {% else %}
+                            <a href="?province_page={{ coverages.next_page_number }}"
+                               class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                Next
+                                <i class="fas fa-chevron-right ml-1"></i>
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-300 bg-white cursor-not-allowed">
+                            Next
+                            <i class="fas fa-chevron-right ml-1"></i>
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="p-12 text-center">
+                <div class="mx-auto w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
+                    <i class="fas fa-flag text-2xl"></i>
+                </div>
+                <p class="text-lg font-medium">No provincial OBC records found</p>
+                <p class="text-sm text-gray-600">Try adjusting filters or add a new provincial coverage.</p>
+                <a href="{% url 'common:communities_add_province' %}" class="mt-4 inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>Add provincial OBC
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <a href="{% url 'common:communities_add_province' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <div class="p-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-plus text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                    Add Provincial Coverage
+                </h3>
+                <p class="mt-2 text-sm text-gray-600">
+                    Register province-wide Bangsamoro coverage data and sync with municipal sources.
+                </p>
+                <div class="mt-4 flex items-center text-indigo-600 text-sm font-medium">
+                    <span>Start a new provincial record</span>
+                    <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+        </a>
+
+        <a href="{% url 'common:communities_stakeholders' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <div class="p-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-users text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                    Manage Stakeholders
+                </h3>
+                <p class="mt-2 text-sm text-gray-600">
+                    Coordinate with provincial partners, focal persons, and municipal counterparts.
+                </p>
+                <div class="mt-4 flex items-center text-purple-600 text-sm font-medium">
+                    <span>Open Stakeholder Registry</span>
+                    <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+        </a>
+
+        <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            <div class="p-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
+                    <i class="fas fa-chart-line text-white text-xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                    View Dashboard
+                </h3>
+                <p class="mt-2 text-sm text-gray-600">
+                    Return to OBC insights, KPIs, and geographic coverage analytics.
+                </p>
+                <div class="mt-4 flex items-center text-green-600 text-sm font-medium">
+                    <span>Open Dashboard</span>
+                    <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll("[data-delete-view]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                event.preventDefault();
+                const viewUrl = button.getAttribute("data-delete-view");
+                if (!viewUrl) {
+                    return;
+                }
+                const confirmationMessage =
+                    button.getAttribute("data-confirm") ||
+                    "Are you sure you want to delete this record?";
+                if (window.confirm(confirmationMessage)) {
+                    const separator = viewUrl.includes("?") ? "&" : "?";
+                    window.location.href = `${viewUrl}${separator}review_delete=1`;
+                }
+            });
+        });
+    });
+</script>
+{% if province_options_json %}
+    {{ province_options_json|json_script:"provincial-province-options" }}
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dataElement = document.getElementById("provincial-province-options");
+            if (!dataElement) {
+                return;
+            }
+
+            let provinceOptions;
+            try {
+                provinceOptions = JSON.parse(dataElement.textContent);
+            } catch (error) {
+                console.error("Failed to parse province options", error);
+                provinceOptions = [];
+            }
+
+            const regionSelect = document.querySelector('form select[name="region"]');
+            const provinceSelect = document.querySelector('form select[name="province"]');
+            if (!regionSelect || !provinceSelect) {
+                return;
+            }
+
+            const populateProvinces = (regionId, preserveValue) => {
+                const normalizedId = regionId ? String(regionId) : "";
+                const previousValue = preserveValue || "";
+                const filtered = normalizedId
+                    ? provinceOptions.filter((option) => option.region_id === normalizedId)
+                    : provinceOptions;
+
+                provinceSelect.innerHTML = "";
+                const defaultOption = document.createElement("option");
+                defaultOption.value = "";
+                defaultOption.textContent = "All Provinces";
+                provinceSelect.appendChild(defaultOption);
+
+                filtered.forEach((option) => {
+                    const opt = document.createElement("option");
+                    opt.value = option.id;
+                    opt.textContent = option.name;
+                    provinceSelect.appendChild(opt);
+                });
+
+                if (previousValue && filtered.some((option) => option.id === previousValue)) {
+                    provinceSelect.value = previousValue;
+                }
+            };
+
+            const initialRegion = regionSelect.dataset.initial || regionSelect.value || "";
+            const initialProvince = provinceSelect.dataset.initial || provinceSelect.value || "";
+            populateProvinces(initialRegion, initialProvince);
+
+            regionSelect.addEventListener("change", () => {
+                populateProvinces(regionSelect.value, "");
+            });
+        });
+    </script>
+{% endif %}
+{% endblock %}

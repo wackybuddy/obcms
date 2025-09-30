@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static text_extras %}
 
 {% block title %}OOBC Calendar Management{% endblock %}
 
@@ -306,7 +306,7 @@
                 <div class="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
                     {% for key, value in analytics_workflow_summary.items %}
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
-                        {{ key|replace:"_"," "|title }}: {{ value }}
+                        {{ key|underscore_to_space|title }}: {{ value }}
                     </span>
                     {% endfor %}
                 </div>

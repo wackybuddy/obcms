@@ -140,7 +140,7 @@ def new_assessment(request):
 
 
 def create_workshop_activities(assessment, post_data):
-    """Create the 6 core workshop activities for a workshop-based assessment."""
+    """Create the 5 core workshop activities for a workshop-based assessment."""
 
     start_date = datetime.strptime(
         post_data.get("planned_start_date"), "%Y-%m-%d"
@@ -202,17 +202,6 @@ def create_workshop_activities(assessment, post_data):
             "duration": 3.0,
             "start_time": "13:00",
             "end_time": "16:00",
-        },
-        {
-            "type": "workshop_6",
-            "title": "Ways Forward and Action Planning",
-            "day": "day_4",
-            "description": "Develop potential community-led solutions. Identify roles for different stakeholders. Create preliminary action plans for priority issues.",
-            "methodology": "Solution brainstorming, stakeholder role mapping, action planning templates, resource requirement identification",
-            "expected_outputs": "Inventory of potential solutions, stakeholder role matrices, preliminary action plans, resource requirements",
-            "duration": 2.0,
-            "start_time": "16:00",
-            "end_time": "18:00",
         },
     ]
 

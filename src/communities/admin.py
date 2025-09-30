@@ -4,7 +4,7 @@ from django.utils.html import format_html
 
 from .models import (CommunityInfrastructure, CommunityLivelihood,
                      GeographicDataLayer, MapVisualization, MunicipalityCoverage,
-                     OBCCommunity, SpatialDataPoint, Stakeholder,
+                     OBCCommunity, ProvinceCoverage, SpatialDataPoint, Stakeholder,
                      StakeholderEngagement)
 
 
@@ -1372,3 +1372,79 @@ class SpatialDataPointAdmin(admin.ModelAdmin):
         return "No coordinates"
 
     coordinates_display.short_description = "Coordinates"
+
+
+@admin.register(ProvinceCoverage)
+class ProvinceCoverageAdmin(admin.ModelAdmin):
+    """Admin interface for provincial Bangsamoro coverage records."""
+
+    list_display = (
+        "province",
+        "region",
+        "total_municipalities",
+        "total_obc_communities",
+        "estimated_obc_population",
+        "auto_sync",
+        "created_by",
+        "updated_at",
+    )
+    list_filter = (
+        "province__region",
+        "auto_sync",
+    )
+    search_fields = (
+        "province__name",
+        "province__region__name",
+        "key_municipalities",
+    )
+    readonly_fields = ("created_at", "updated_at")
+    autocomplete_fields = ("province", "created_by", "updated_by")
+
+    fieldsets = (
+        (
+            "Identification & Location",
+            {
+                "fields": (
+                    ("province", "obc_id", "source_document_reference"),
+                    ("community_names",),
+                    ("latitude", "longitude"),
+                    ("proximity_to_barmm", "auto_sync", "is_active"),
+                )
+            },
+        ),
+        (
+            "Aggregated Totals",
+            {
+                "fields": (
+                    ("total_municipalities", "total_obc_communities"),
+                    ("estimated_obc_population", "total_barangay_population"),
+                    ("households", "families"),
+                    ("women_count", "solo_parents_count", "pwd_count"),
+                    ("farmers_count", "fisherfolk_count", "unemployed_count"),
+                    ("indigenous_peoples_count", "idps_count", "migrants_transients_count"),
+                    ("csos_count", "associations_count", "number_of_peoples_organizations"),
+                    ("number_of_cooperatives", "number_of_social_enterprises", "number_of_micro_enterprises"),
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Key Insights",
+            {
+                "fields": (
+                    ("key_municipalities",),
+                    ("existing_support_programs",),
+                    ("notes",),
+                )
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    ("created_by", "updated_by"),
+                    ("created_at", "updated_at"),
+                )
+            },
+        ),
+    )

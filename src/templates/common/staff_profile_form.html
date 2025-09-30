@@ -69,11 +69,20 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {% include "components/form_field_select.html" with field=form.user label="Staff member" %}
+                        {% if profile %}
+                            {{ form.user.as_hidden }}
+                            {% include "components/form_field_input.html" with field=form.staff_member_name label="Staff member" %}
+                            {% include "components/form_field_input.html" with field=form.staff_member_username label="Username" %}
+                        {% else %}
+                            {% include "components/form_field_select.html" with field=form.user label="Staff member" %}
+                        {% endif %}
                         {% include "components/form_field_select.html" with field=form.employment_status label="Employment status" %}
                         {% include "components/form_field_select.html" with field=form.employment_type label="Employment type" help_text=form.employment_type.help_text %}
                         {% include "components/form_field_input.html" with field=form.date_joined_organization label="Date joined organization" %}
                         {% include "components/form_field_input.html" with field=form.position_classification label="Position classification" help_text=form.position_classification.help_text %}
+                        {% if profile %}
+                            {% include "components/form_field_input.html" with field=form.staff_member_position label="Official role / title" %}
+                        {% endif %}
                         {% include "components/form_field_input.html" with field=form.plantilla_item_number label="Plantilla / item number" help_text=form.plantilla_item_number.help_text %}
                         {% include "components/form_field_input.html" with field=form.salary_grade label="Salary grade" help_text=form.salary_grade.help_text %}
                         {% include "components/form_field_input.html" with field=form.salary_step label="Step" help_text=form.salary_step.help_text %}

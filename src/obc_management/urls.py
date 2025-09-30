@@ -43,6 +43,7 @@ urlpatterns = [
     path('communities/', include('communities.urls')),
     path('monitoring/', include('monitoring.urls')),
     path('documents/', include(('recommendations.documents.urls', 'documents'), namespace='documents')),
+    path('mana/workshops/', include(('mana.urls', 'mana'), namespace='mana')),
     
     # API Authentication
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

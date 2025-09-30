@@ -132,6 +132,31 @@
                 Barangay OBC List
             </h2>
         </div>
+        <div class="px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-gray-200">
+            <form method="get" class="flex items-center gap-2 text-sm text-gray-600">
+                {% for key, value in request.GET.items %}
+                    {% if key != 'barangay_page_size' and key != 'barangay_page' %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <label for="barangay-page-size" class="font-medium">Show</label>
+                <select id="barangay-page-size" name="barangay_page_size"
+                        class="border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500"
+                        onchange="this.form.submit()">
+                    {% for option in barangay_page_size_options %}
+                        <option value="{{ option }}" {% if barangay_page_size == option %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+                <span>entries</span>
+            </form>
+            <div class="text-sm text-gray-600">
+                {% if communities.paginator.count %}
+                    Showing {{ communities.start_index }} – {{ communities.end_index }} of {{ communities.paginator.count }} entries
+                {% else %}
+                    Showing 0 entries
+                {% endif %}
+            </div>
+        </div>
         <div class="overflow-x-auto">
             {% if communities %}
             <table class="w-full">
@@ -217,6 +242,62 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <div class="px-6 py-4 border-t border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-gray-50">
+                <div class="text-sm text-gray-600">
+                    {% if communities.paginator.count %}
+                        Page {{ communities.number }} of {{ barangay_total_pages }}
+                    {% else %}
+                        Page 0 of 0
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2">
+                    {% if communities.has_previous %}
+                        {% if barangay_base_querystring %}
+                            {% with query=barangay_base_querystring|add:'&barangay_page='|add:communities.previous_page_number %}
+                                <a href="?{{ query }}"
+                                   class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                    <i class="fas fa-chevron-left mr-1"></i>
+                                    Previous
+                                </a>
+                            {% endwith %}
+                        {% else %}
+                            <a href="?barangay_page={{ communities.previous_page_number }}"
+                               class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-chevron-left mr-1"></i>
+                                Previous
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-300 bg-white cursor-not-allowed">
+                            <i class="fas fa-chevron-left mr-1"></i>
+                            Previous
+                        </span>
+                    {% endif %}
+
+                    {% if communities.has_next %}
+                        {% if barangay_base_querystring %}
+                            {% with query=barangay_base_querystring|add:'&barangay_page='|add:communities.next_page_number %}
+                                <a href="?{{ query }}"
+                                   class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                    Next
+                                    <i class="fas fa-chevron-right ml-1"></i>
+                                </a>
+                            {% endwith %}
+                        {% else %}
+                            <a href="?barangay_page={{ communities.next_page_number }}"
+                               class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                                Next
+                                <i class="fas fa-chevron-right ml-1"></i>
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1.5 rounded-md border border-gray-200 text-sm text-gray-300 bg-white cursor-not-allowed">
+                            Next
+                            <i class="fas fa-chevron-right ml-1"></i>
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
             {% else %}
             <div class="text-center py-12 text-gray-500">
                 <i class="fas fa-search text-4xl mb-4"></i>

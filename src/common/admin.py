@@ -248,16 +248,16 @@ class StaffTaskAdmin(admin.ModelAdmin):
 
     list_display = (
         "title",
-        "team",
-        "assignee",
+        "teams_list",
+        "assignee_list",
         "status",
         "priority",
         "due_date",
         "progress",
     )
-    list_filter = ("status", "priority", "team", "assignee")
+    list_filter = ("status", "priority", "teams", "assignees")
     search_fields = ("title", "description", "impact")
-    autocomplete_fields = ("team", "assignee", "created_by", "linked_event")
+    autocomplete_fields = ("teams", "assignees", "created_by", "linked_event")
     readonly_fields = ("created_at", "updated_at", "completed_at")
     fieldsets = (
         (
@@ -265,8 +265,8 @@ class StaffTaskAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "title",
-                    "team",
-                    "assignee",
+                    "teams",
+                    "assignees",
                     "created_by",
                     "linked_event",
                     "impact",
@@ -283,6 +283,19 @@ class StaffTaskAdmin(admin.ModelAdmin):
             {"fields": ("created_at", "updated_at", "completed_at"), "classes": ("collapse",)},
         ),
     )
+
+    @admin.display(description="Assignees")
+    def assignee_list(self, obj):
+        return obj.assignee_display_name
+
+    def teams_list(self, obj):
+        """Display teams for the task."""
+        teams = list(obj.teams.all())
+        if not teams:
+            return "No teams"
+        return ", ".join(team.name for team in teams)
+
+    teams_list.short_description = "Teams"
 
     fieldsets = (
         (None, {"fields": ("municipality", "code", "name", "is_urban", "is_active")}),

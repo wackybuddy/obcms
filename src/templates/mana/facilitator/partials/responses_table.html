@@ -1,0 +1,103 @@
+<div class="space-y-6" id="responses-panel" data-task-id="{{ workshop.id }}">
+    <form class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 grid gap-4 md:grid-cols-4"
+          hx-get="{% url 'mana:facilitator_dashboard' assessment.id %}"
+          hx-target="#responses-panel"
+          hx-swap="outerHTML swap:300ms">
+        <input type="hidden" name="workshop" value="{{ workshop.workshop_type }}">
+        <div>
+            <label class="block text-sm font-semibold text-gray-600 mb-2">Province</label>
+            <select name="province" class="form-select w-full rounded-xl border border-gray-200 px-4 py-3 text-sm">
+                <option value="">All</option>
+                {% for province in provinces %}
+                    <option value="{{ province.id }}" {% if filters.province|stringformat:'s' == province.id|stringformat:'s' %}selected{% endif %}>{{ province.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-600 mb-2">Stakeholder</label>
+            <select name="stakeholder" class="form-select w-full rounded-xl border border-gray-200 px-4 py-3 text-sm">
+                <option value="">All</option>
+                {% for key, label in stakeholder_types %}
+                    <option value="{{ key }}" {% if filters.stakeholder == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="flex flex-col gap-2">
+            <label class="block text-sm font-semibold text-gray-600 mb-2">Quick Stats</label>
+            <div class="bg-neutral-50 border border-gray-100 rounded-xl px-4 py-3 text-sm text-gray-600">
+                <p>Total participants: <span class="font-semibold text-gray-900">{{ total_participants }}</span></p>
+                <p>Submitted: <span class="font-semibold text-emerald-600">{{ submitted_count }}</span></p>
+            </div>
+        </div>
+        <div class="flex flex-col justify-end gap-2">
+            <button type="submit" class="btn-primary w-full py-3 rounded-xl text-white font-semibold shadow">Apply Filters</button>
+            <div class="flex items-center gap-2 text-xs text-gray-400"><i class="fas fa-bolt"></i>HTMX updates keep the table in sync.</div>
+        </div>
+    </form>
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="text-sm text-gray-500">
+            Showing consolidated responses for <strong>{{ workshop.get_workshop_type_display }}</strong>.
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'mana:facilitator_export_workshop' assessment.id workshop.workshop_type 'xlsx' %}?province={{ filters.province }}&stakeholder={{ filters.stakeholder }}"
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-100">
+                <i class="fas fa-file-excel"></i> Export XLSX
+            </a>
+            <a href="{% url 'mana:facilitator_export_workshop' assessment.id workshop.workshop_type 'csv' %}?province={{ filters.province }}&stakeholder={{ filters.stakeholder }}"
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-100">
+                <i class="fas fa-file-csv"></i> Export CSV
+            </a>
+            <a href="{% url 'mana:facilitator_export_workshop' assessment.id workshop.workshop_type 'pdf' %}?province={{ filters.province }}&stakeholder={{ filters.stakeholder }}"
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-100">
+                <i class="fas fa-file-pdf"></i> Export PDF
+            </a>
+        </div>
+    </div>
+
+    {% if auto_unlocked %}
+    <div class="bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl px-4 py-3 text-sm">
+        <i class="fas fa-info-circle mr-2"></i>Automatically unlocked {{ auto_unlocked }} participant{{ auto_unlocked|pluralize }} based on schedule.
+    </div>
+    {% endif %}
+
+    {% include "components/data_table_card.html" with title="Workshop Question Summary" icon_class="fas fa-clipboard-list" accent_class="bg-gradient-to-r from-emerald-500 to-emerald-600" headers=question_table.headers rows=question_table.rows show_actions=False empty_message="No questions available." %}
+
+    <div class="space-y-5">
+        {% for entry in grouped_responses %}
+            <div id="question-{{ entry.question.id }}" class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 space-y-4">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ entry.question.text }}</h3>
+                        <p class="text-sm text-gray-500">{{ entry.responses|length }} responses</p>
+                    </div>
+                    <span class="text-xs uppercase tracking-wide text-gray-400">{{ entry.question.category|default:'General' }}</span>
+                </div>
+                <div class="space-y-3">
+                    {% for response in entry.responses %}
+                        <div class="border border-gray-100 rounded-2xl px-4 py-3 bg-neutral-50">
+                            <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                                <span>
+                                    {{ response.participant.user.get_full_name|default:response.participant.user.email }} · {{ response.stakeholder }} ·
+                                    {% if response.province %}{{ response.province.name }}{% else %}—{% endif %}
+                                </span>
+                                {% if response.submitted_at %}
+                                    <span>{{ response.submitted_at|date:"M d, Y H:i" }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-sm text-gray-700">
+                                {% if response.is_structured %}
+                                    <pre class="bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-600 overflow-auto">{{ response.rendered }}</pre>
+                                {% else %}
+                                    {{ response.rendered|linebreaksbr }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-sm text-gray-400">No responses yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>

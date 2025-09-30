@@ -1,0 +1,4 @@
+{% load static %}
+<div id="participants-card" class="space-y-4">
+    {% include "components/data_table_card.html" with title="Registered Participants" icon_class="fas fa-users" accent_class="bg-gradient-to-r from-indigo-500 to-purple-500" headers=participant_table.headers rows=participant_table.rows show_actions=True empty_message="No participants registered yet." %}
+</div>

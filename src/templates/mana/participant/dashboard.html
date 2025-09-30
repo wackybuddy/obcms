@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Regional MANA Workshops · {{ assessment.title }}{% endblock %}
+
+{% block content %}
+<div class="bg-neutral-50 min-h-screen py-10">
+    <div class="max-w-5xl mx-auto space-y-8">
+        <header class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col gap-4">
+            <div class="flex items-start justify-between flex-wrap gap-4">
+                <div>
+                    <p class="text-sm uppercase tracking-wide text-gray-400">Regional MANA Assessment</p>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ assessment.title }}</h1>
+                    <p class="text-gray-600 mt-2">Welcome back, {{ request.user.get_full_name|default:request.user.username }}. Continue the workshop flow to keep the regional synthesis on track.</p>
+                </div>
+                <div class="bg-bangsamoro-gradient text-white rounded-2xl px-6 py-4 shadow-lg">
+                    <p class="text-xs uppercase tracking-wide text-white/70">Progress</p>
+                    <p class="text-3xl font-semibold">{{ progress.completed_count }}/{{ progress.total_workshops }}</p>
+                    <p class="text-sm text-white/80">{{ progress.completion_percentage }}% complete</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 text-sm text-gray-500">
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Accessible</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>Locked</span>
+                <span class="inline-flex items-center gap-1"><i class="fas fa-check text-emerald-500"></i>Completed</span>
+            </div>
+        </header>
+
+        <div id="workshop-nav"
+             class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6"
+             data-task-id="{{ assessment.id }}"
+             hx-get="{% url 'mana:participant_dashboard' assessment.id %}"
+             hx-trigger="refresh-workshop-nav from:body"
+             hx-target="this"
+             hx-swap="outerHTML swap:300ms">
+            {% include "mana/participant/partials/workshop_nav.html" %}
+        </div>
+
+        <section class="bg-white border border-gray-100 rounded-3xl shadow-sm p-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">How the workshops flow</h2>
+            <ol class="list-decimal list-inside text-gray-600 space-y-2">
+                <li>Each workshop unlocks after you submit the required responses.</li>
+                <li>Autosave captures updates every few seconds; the Save Draft button locks them in instantly.</li>
+                <li>Once submitted, facilitators consolidate responses and unlock the next workshop.</li>
+                <li>Need help? Contact your facilitator so we can keep the workshop cadence on track.</li>
+            </ol>
+        </section>
+    </div>
+</div>
+{% endblock %}

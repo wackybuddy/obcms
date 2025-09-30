@@ -1,9 +1,11 @@
 """OOBC management module views."""
 
 import json
+import re
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
+from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import OperationalError, transaction
@@ -542,7 +544,8 @@ def staff_management(request):
     ]
 
     task_qs = (
-        StaffTask.objects.select_related("team", "assignee", "linked_event")
+        StaffTask.objects.select_related("linked_event")
+        .prefetch_related("teams", "assignees")
         .order_by("due_date", "-priority")
     )
     task_list = list(task_qs)
@@ -551,8 +554,8 @@ def staff_management(request):
     tasks_by_staff = defaultdict(list)
     for task in task_list:
         tasks_by_status[task.status].append(task)
-        if task.assignee_id:
-            tasks_by_staff[task.assignee_id].append(task)
+        for member in task.assignees.all():
+            tasks_by_staff[member.pk].append(task)
 
     completed_tasks = len(tasks_by_status.get(StaffTask.STATUS_COMPLETED, []))
     total_tasks = len(task_list)
@@ -673,7 +676,7 @@ def staff_management(request):
     )
 
     teams_qs = StaffTeam.objects.prefetch_related(
-        "tasks__assignee", "memberships__user"
+        "tasks__assignees", "memberships__user"
     ).order_by("name")
     team_overview = []
     team_performance = []
@@ -783,14 +786,16 @@ def staff_task_create(request):
             task.completed_at = timezone.now()
             task.progress = 100
         task.save()
+        form.save_m2m()
         assign_board_position(task)
-        if task.assignee:
-            ensure_membership(task.team, task.assignee, request.user)
+        for member in task.assignees.all():
+            for team in task.teams.all():
+                ensure_membership(team, member, request.user)
         messages.success(request, f"Task \"{task.title}\" saved successfully.")
         return redirect("common:staff_management")
 
     recent_tasks = (
-        StaffTask.objects.select_related("team", "assignee")
+        StaffTask.objects.prefetch_related("teams", "assignees")
         .order_by("-created_at")[:10]
     )
 
@@ -826,7 +831,8 @@ def staff_task_modal_create(request):
         except StaffTeam.DoesNotExist:
             team_obj = None
         else:
-            initial["team"] = team_obj
+            # StaffTaskForm expects a list of team ids for the many-to-many field
+            initial["teams"] = [team_obj.pk]
 
     form_kwargs = {"request": request}
 
@@ -850,8 +856,9 @@ def staff_task_modal_create(request):
                         assign_board_position(task)
                     except OperationalError:
                         pass
-                    if task.assignee and task.team:
-                        ensure_membership(task.team, task.assignee, request.user)
+                    for member in task.assignees.all():
+                        for team in task.teams.all():
+                            ensure_membership(team, member, request.user)
             except OperationalError:
                 pass
 
@@ -894,19 +901,30 @@ def staff_task_modal_create(request):
     else:
         due_date_display = None
 
-    team_value = form["team"].value()
-    team_label = form.fields["team"].empty_label or "No team selected"
-    if team_value:
-        team_obj = form.fields["team"].queryset.filter(pk=team_value).first()
-        if team_obj:
-            team_label = team_obj.name
+    team_values = form["teams"].value()
+    if isinstance(team_values, str):
+        team_values = [team_values] if team_values else []
+    team_queryset = form.fields["teams"].queryset
+    selected_teams = list(team_queryset.filter(pk__in=team_values or []))
+    team_label = ", ".join(team.name for team in selected_teams if team)
+    if not team_label:
+        team_label = "No team selected"
 
-    assignee_value = form["assignee"].value()
-    assignee_label = form.fields["assignee"].empty_label or "Assign to (optional)"
-    if assignee_value:
-        assignee_obj = form.fields["assignee"].queryset.filter(pk=assignee_value).first()
-        if assignee_obj:
-            assignee_label = assignee_obj.get_full_name() or assignee_obj.username
+    assignee_values = form["assignees"].value()
+    assignee_queryset = form.fields["assignees"].queryset
+    if isinstance(assignee_values, str):
+        assignee_values = [assignee_values]
+    selected_assignees = list(
+        assignee_queryset.filter(pk__in=assignee_values or [])
+    )
+    assignee_label = "Assign to staff (optional)"
+    assignee_names = [
+        member.get_full_name() or member.username
+        for member in selected_assignees
+        if member
+    ]
+    if assignee_names:
+        assignee_label = ", ".join(assignee_names)
 
     title_preview = form["title"].value() or "New staff task"
 
@@ -960,32 +978,16 @@ def _task_relation_tokens(task: StaffTask) -> tuple[list[dict[str, object]], lis
                     "label": _display_name(member) or "Unassigned",
                 }
             )
-    elif getattr(task, "assignee", None):
-        assignee_tokens.append(
-            {
-                "id": getattr(task.assignee, "pk", None),
-                "label": _display_name(task.assignee) or "Unassigned",
-            }
-        )
-
     team_tokens: list[dict[str, object]] = []
-    if hasattr(task, "teams"):
-        try:
-            team_iter = task.teams.all()
-        except Exception:  # pragma: no cover - gracefully handle missing relation
-            team_iter = []
-        for team in team_iter:
-            team_tokens.append(
-                {
-                    "id": getattr(team, "pk", None),
-                    "label": getattr(team, "name", "Unnamed team"),
-                }
-            )
-    elif getattr(task, "team", None):
+    try:
+        team_iter = task.teams.all()
+    except Exception:  # pragma: no cover - gracefully handle missing relation
+        team_iter = []
+    for team in team_iter:
         team_tokens.append(
             {
-                "id": getattr(task.team, "pk", None),
-                "label": getattr(task.team, "name", "Unnamed team"),
+                "id": getattr(team, "pk", None),
+                "label": getattr(team, "name", "Unnamed team"),
             }
         )
 
@@ -1001,46 +1003,142 @@ def staff_task_board(request):
     status_labels = dict(StaffTask.STATUS_CHOICES)
     priority_labels = dict(StaffTask.PRIORITY_CHOICES)
 
-    if request.method == "POST" and request.POST.get("form_name") == "update_task":
-        redirect_target = request.POST.get("next")
-        if redirect_target and not url_has_allowed_host_and_scheme(
-            redirect_target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
-        ):
-            redirect_target = None
-        task_id = request.POST.get("task_id")
-        status = request.POST.get("status")
-        progress = request.POST.get("progress")
-        if task_id and status in status_labels:
-            try:
-                task = StaffTask.objects.select_for_update().get(pk=task_id)
-            except StaffTask.DoesNotExist:
-                messages.error(request, "Task could not be found.")
+    new_task_form: StaffTaskForm | None = None
+
+    if request.method == "POST":
+        form_name = request.POST.get("form_name")
+
+        if form_name == "create_task":
+            # Debug: Log received POST data
+            print("DEBUG: Received POST data for create_task:")
+            for key, value in request.POST.items():
+                if key != 'csrfmiddlewaretoken':
+                    print(f"  {key} = {value}")
+
+            new_task_form = StaffTaskForm(
+                request.POST,
+                request=request,
+                table_mode=True,
+            )
+
+            # Debug: Log form errors if any
+            if not new_task_form.is_valid():
+                print("DEBUG: Form validation errors:")
+                for field, errors in new_task_form.errors.items():
+                    print(f"  {field}: {errors}")
+
+            is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+            if new_task_form.is_valid():
+                try:
+                    with transaction.atomic():
+                        task = new_task_form.save(commit=False)
+                        if not task.created_by:
+                            task.created_by = request.user
+                        if (
+                            task.status == StaffTask.STATUS_COMPLETED
+                            and not task.completed_at
+                        ):
+                            task.completed_at = timezone.now()
+                            task.progress = 100
+                        task.save()
+                        new_task_form.save_m2m()
+                        try:
+                            assign_board_position(task)
+                        except OperationalError:
+                            pass
+                        for member in task.assignees.all():
+                            for team in task.teams.all():
+                                ensure_membership(team, member, request.user)
+                except OperationalError:
+                    pass
+
+                redirect_target = request.POST.get("next")
+                if redirect_target and not url_has_allowed_host_and_scheme(
+                    redirect_target,
+                    allowed_hosts={request.get_host()},
+                    require_https=request.is_secure(),
+                ):
+                    redirect_target = None
+
+                messages.success(request, f"Task \"{task.title}\" created.")
+
+                if request.headers.get("HX-Request") or is_ajax:
+                    assignee_tokens, team_tokens = _task_relation_tokens(task)
+                    new_row_context = {
+                        "task": task,
+                        "form": StaffTaskForm(instance=task, request=request, table_mode=True),
+                        "assignees": assignee_tokens,
+                        "assignee_ids": [token["id"] for token in assignee_tokens if token.get("id") is not None],
+                        "assignee_display": ", ".join(token["label"] for token in assignee_tokens if token.get("label")) or "Unassigned",
+                        "teams": team_tokens,
+                    }
+                    return render(request, "common/partials/staff_task_table_row.html", new_row_context)
+
+                if redirect_target:
+                    return redirect(redirect_target)
+
+                redirect_params = request.GET.copy()
+                redirect_params["view"] = "table"
+                redirect_url = reverse("common:staff_task_board")
+                if redirect_params:
+                    redirect_url = f"{redirect_url}?{redirect_params.urlencode()}"
+                return redirect(redirect_url)
             else:
-                task.status = status
-                update_fields = ["status", "updated_at"]
-                if progress:
-                    try:
-                        progress_int = max(0, min(100, int(progress)))
-                    except (TypeError, ValueError):
-                        progress_int = task.progress
-                    task.progress = progress_int
-                    update_fields.append("progress")
-                if status == StaffTask.STATUS_COMPLETED and not task.completed_at:
-                    task.completed_at = timezone.now()
-                    task.progress = 100
-                    update_fields.extend(["completed_at", "progress"])
-                task.save(update_fields=update_fields)
-                messages.success(
-                    request,
-                    f"Task \"{task.title}\" updated to {status_labels[status]}.",
-                )
-        if redirect_target:
-            return redirect(redirect_target)
-        return redirect("common:staff_task_board")
+                # Handle AJAX validation errors
+                if is_ajax:
+                    return JsonResponse({
+                        'success': False,
+                        'errors': new_task_form.errors,
+                        'message': 'Please correct the errors below.'
+                    }, status=400)
+
+        elif form_name == "update_task":
+            redirect_target = request.POST.get("next")
+            if redirect_target and not url_has_allowed_host_and_scheme(
+                redirect_target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            ):
+                redirect_target = None
+            task_id = request.POST.get("task_id")
+            status = request.POST.get("status")
+            progress = request.POST.get("progress")
+            if task_id and status in status_labels:
+                try:
+                    task = StaffTask.objects.select_for_update().get(pk=task_id)
+                except StaffTask.DoesNotExist:
+                    messages.error(request, "Task could not be found.")
+                else:
+                    task.status = status
+                    update_fields = ["status", "updated_at"]
+                    if progress:
+                        try:
+                            progress_int = max(0, min(100, int(progress)))
+                        except (TypeError, ValueError):
+                            progress_int = task.progress
+                        task.progress = progress_int
+                        update_fields.append("progress")
+                    if status == StaffTask.STATUS_COMPLETED and not task.completed_at:
+                        task.completed_at = timezone.now()
+                        task.progress = 100
+                        update_fields.extend(["completed_at", "progress"])
+                    task.save(update_fields=update_fields)
+                    messages.success(
+                        request,
+                        f"Task \"{task.title}\" updated to {status_labels[status]}.",
+                    )
+            if redirect_target:
+                return redirect(redirect_target)
+            return redirect("common:staff_task_board")
 
     view_mode = request.GET.get("view", "board")
     valid_views = {"board", "table"}
     if view_mode not in valid_views:
+        view_mode = "board"
+
+    hx_board_partial = (
+        request.headers.get("HX-Request") and request.GET.get("partial") == "board"
+    )
+    if hx_board_partial:
         view_mode = "board"
 
     group_by = request.GET.get("group", "status")
@@ -1054,13 +1152,15 @@ def staff_task_board(request):
         sort_order = "asc"
 
     try:
-        tasks_qs = StaffTask.objects.select_related("team", "assignee").order_by(
-            "board_position", "due_date", "-priority", "title"
+        tasks_qs = (
+            StaffTask.objects.prefetch_related("teams", "assignees")
+            .order_by("board_position", "due_date", "-priority", "title")
         )
         board_ordering_enabled = True
     except OperationalError:
-        tasks_qs = StaffTask.objects.select_related("team", "assignee").order_by(
-            "due_date", "-priority", "title"
+        tasks_qs = (
+            StaffTask.objects.prefetch_related("teams", "assignees")
+            .order_by("due_date", "-priority", "title")
         )
         board_ordering_enabled = False
 
@@ -1073,9 +1173,13 @@ def staff_task_board(request):
     if status_filter in status_labels:
         tasks_qs = tasks_qs.filter(status=status_filter)
     if team_filter:
-        tasks_qs = tasks_qs.filter(team__slug=team_filter)
+        if team_filter == "unassigned":
+            tasks_qs = tasks_qs.filter(teams__isnull=True)
+        else:
+            tasks_qs = tasks_qs.filter(teams__slug=team_filter)
+        tasks_qs = tasks_qs.distinct()
     if assignee_filter:
-        tasks_qs = tasks_qs.filter(assignee_id=assignee_filter)
+        tasks_qs = tasks_qs.filter(assignees__id=assignee_filter)
     if priority_filter in priority_labels:
         tasks_qs = tasks_qs.filter(priority=priority_filter)
     if search_query:
@@ -1119,10 +1223,14 @@ def staff_task_board(request):
     }
 
     def assignee_sort_key(task):
-        if not task.assignee:
+        names = [
+            (member.get_full_name() or member.username).strip().lower()
+            for member in task.assignees.all()
+            if member
+        ]
+        if not names:
             return (1, "")
-        display_name = task.assignee.get_full_name() or task.assignee.username
-        return (0, display_name.lower())
+        return (0, sorted(name for name in names if name)[0])
 
     sort_key_map = {
         "due_date": lambda task: task.due_date or date.max,
@@ -1131,7 +1239,7 @@ def staff_task_board(request):
         "progress": lambda task: task.progress,
         "created": lambda task: task.created_at,
         "assignee": assignee_sort_key,
-        "team": lambda task: (task.team.name.lower() if task.team else ""),
+        "team": lambda task: (", ".join(team.name.lower() for team in task.teams.all()) if task.teams.exists() else ""),
         "title": lambda task: task.title.lower(),
     }
 
@@ -1157,27 +1265,39 @@ def staff_task_board(request):
                 )
         elif grouping == "team":
             team_lookup = {}
+            unassigned_tasks = []
+
             for task in tasks:
-                if task.team_id and task.team_id not in team_lookup:
-                    team_lookup[task.team_id] = task.team
-            teams = sorted(team_lookup.values(), key=lambda team: team.name.lower())
-            for team in teams:
-                grouped_tasks = [task for task in tasks if task.team_id == team.id]
+                task_teams = list(task.teams.all())
+                if task_teams:
+                    for team in task_teams:
+                        if team.id not in team_lookup:
+                            team_lookup[team.id] = {"team": team, "tasks": []}
+                        team_lookup[team.id]["tasks"].append(task)
+                else:
+                    unassigned_tasks.append(task)
+
+            # Sort teams by name
+            teams = sorted(team_lookup.values(), key=lambda item: item["team"].name.lower())
+            for team_data in teams:
+                team = team_data["team"]
+                team_tasks = team_data["tasks"]
                 columns.append(
                     {
                         "status_key": team.slug,
                         "status_label": team.name,
-                        "tasks": grouped_tasks,
-                        "count": len(grouped_tasks),
+                        "tasks": team_tasks,
+                        "count": len(team_tasks),
                     }
                 )
-            unassigned = [task for task in tasks if task.team is None]
+
+            # Always show unassigned column when grouping by team
             columns.append(
                 {
                     "status_key": "unassigned",
                     "status_label": "Unassigned",
-                    "tasks": unassigned,
-                    "count": len(unassigned),
+                    "tasks": unassigned_tasks,
+                    "count": len(unassigned_tasks),
                 }
             )
         else:  # default to status grouping
@@ -1248,27 +1368,41 @@ def staff_task_board(request):
     ]
 
     table_rows = []
-    if view_mode == "table":
-        for task in tasks_list:
-            assignee_tokens, team_tokens = _task_relation_tokens(task)
+    for task in tasks_list:
+        assignee_tokens, team_tokens = _task_relation_tokens(task)
 
-            table_rows.append(
-                {
-                    "task": task,
-                    "form": StaffTaskForm(
-                        instance=task,
-                        request=request,
-                        table_mode=True,
-                    ),
-                    "assignees": assignee_tokens,
-                    "teams": team_tokens,
-                }
-            )
+        table_rows.append(
+            {
+                "task": task,
+                "form": StaffTaskForm(
+                    instance=task,
+                    request=request,
+                    table_mode=True,
+                ),
+                "assignees": assignee_tokens,
+                "assignee_ids": [
+                    token["id"]
+                    for token in assignee_tokens
+                    if token.get("id") is not None
+                ],
+                "assignee_display": ", ".join(
+                    token["label"] for token in assignee_tokens if token.get("label")
+                )
+                or "Unassigned",
+                "teams": team_tokens,
+            }
+        )
+
+    if new_task_form is None:
+        new_task_form = StaffTaskForm(
+            request=request,
+            table_mode=True,
+        )
 
     update_url = reverse("common:staff_task_update")
 
     refresh_params = request.GET.copy()
-    refresh_params["view"] = view_mode
+    refresh_params["view"] = "board"
     refresh_params["group"] = group_by
     refresh_params["partial"] = "board"
     refresh_query = refresh_params.urlencode()
@@ -1293,6 +1427,7 @@ def staff_task_board(request):
         "sort_options": sort_options,
         "table_columns": table_columns,
         "table_rows": table_rows,
+        "new_task_form": new_task_form,
         "tasks": tasks_list,
         "update_url": update_url,
         "board_refresh_url": board_refresh_url,
@@ -1308,8 +1443,11 @@ def staff_task_board(request):
             "order": sort_order,
         },
     }
-    if request.headers.get("HX-Request") and request.GET.get("partial") == "board":
-        return render(request, "common/partials/staff_task_board_wrapper.html", context)
+    if request.headers.get("HX-Request"):
+        if view_mode == 'board':
+            return render(request, "common/partials/staff_task_board_wrapper.html", context)
+        else:
+            return render(request, "common/partials/staff_task_table_wrapper.html", context)
     return render(request, "common/staff_task_board.html", context)
 
 
@@ -1366,7 +1504,8 @@ def staff_task_update(request):
         if grouping == "priority":
             return task_obj.priority
         if grouping == "team":
-            return task_obj.team.slug if task_obj.team else "unassigned"
+            team_slugs = [team.slug for team in task_obj.teams.all()]
+            return team_slugs[0] if team_slugs else "unassigned"
         return ""
 
     def resequence(order_ids, grouping, grouping_value):
@@ -1374,7 +1513,7 @@ def staff_task_update(request):
             return
         tasks = (
             StaffTask.objects.select_for_update()
-            .select_related("team")
+            .prefetch_related("teams")
             .filter(pk__in=order_ids)
         )
         task_lookup = {task.pk: task for task in tasks}
@@ -1426,17 +1565,17 @@ def staff_task_update(request):
                 update_fields.append("priority")
             else:  # team grouping
                 if value == "unassigned":
-                    task.team = None
-                    update_fields.append("team")
+                    task.teams.clear()
                 else:
                     try:
                         team = StaffTeam.objects.get(slug=value)
                     except StaffTeam.DoesNotExist:
                         return JsonResponse({"error": "Team not found."}, status=404)
-                    task.team = team
-                    update_fields.append("team")
-                    if task.assignee:
-                        ensure_membership(team, task.assignee, request.user)
+                    # Add team if not already present
+                    if not task.teams.filter(id=team.id).exists():
+                        task.teams.add(team)
+                    for member in task.assignees.all():
+                        ensure_membership(team, member, request.user)
 
             task.save(update_fields=update_fields)
 
@@ -1465,12 +1604,13 @@ def staff_task_update(request):
     except OperationalError:
         board_position_value = None
 
-    team = task.team
+    teams = list(task.teams.all())
+    first_team = teams[0] if teams else None
     return JsonResponse(
         {
             "ok": True,
             "group": group,
-            "value": value if group != "team" else (team.slug if team else "unassigned"),
+            "value": value if group != "team" else (first_team.slug if first_team else "unassigned"),
             "task": {
                 "id": task.id,
                 "status": task.status,
@@ -1478,8 +1618,8 @@ def staff_task_update(request):
                 "priority": task.priority,
                 "priority_label": priority_labels[task.priority],
                 "progress": task.progress,
-                "team": team.name if team else None,
-                "team_slug": team.slug if team else "unassigned",
+                "team": first_team.name if first_team else None,
+                "team_slug": first_team.slug if first_team else "unassigned",
                 "board_position": board_position_value,
             },
         }
@@ -1492,7 +1632,8 @@ def staff_task_modal(request, task_id: int):
 
     ensure_default_staff_teams()
     task = get_object_or_404(
-        StaffTask.objects.select_related("team", "assignee", "created_by"), pk=task_id
+        StaffTask.objects.select_related("created_by").prefetch_related("teams", "assignees"),
+        pk=task_id,
     )
 
     if request.method == "POST":
@@ -1518,8 +1659,9 @@ def staff_task_modal(request, task_id: int):
                         assign_board_position(updated_task)
                     except OperationalError:
                         pass
-                    if updated_task.assignee and updated_task.team:
-                        ensure_membership(updated_task.team, updated_task.assignee, request.user)
+                    for member in updated_task.assignees.all():
+                        for team in updated_task.teams.all():
+                            ensure_membership(team, member, request.user)
             except OperationalError:
                 pass
 
@@ -1566,11 +1708,228 @@ def staff_task_delete(request, task_id: int):
 
 
 @login_required
+@require_POST
+def staff_task_update_field(request, task_id: int):
+    """Update a single field of a task via AJAX for Notion-style inline editing."""
+
+    try:
+        data = json.loads(request.body)
+        field = data.get('field')
+        value = data.get('value')
+    except (json.JSONDecodeError, TypeError):
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'}, status=400)
+
+    if not field or value is None:
+        return JsonResponse({'success': False, 'error': 'Field and value required'}, status=400)
+
+    try:
+        task = StaffTask.objects.select_for_update().get(pk=task_id)
+    except StaffTask.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Task not found'}, status=404)
+
+    # Validate and update the field
+    try:
+        with transaction.atomic():
+            update_fields = ['updated_at']
+
+            if field == 'title':
+                task.title = value.strip()
+                update_fields.append('title')
+
+            elif field == 'progress':
+                try:
+                    progress_value = int(value)
+                    if 0 <= progress_value <= 100:
+                        task.progress = progress_value
+                        update_fields.append('progress')
+
+                        # Auto-complete task if progress is 100%
+                        if progress_value == 100 and task.status != StaffTask.STATUS_COMPLETED:
+                            task.status = StaffTask.STATUS_COMPLETED
+                            task.completed_at = timezone.now()
+                            update_fields.extend(['status', 'completed_at'])
+                    else:
+                        return JsonResponse({'success': False, 'error': 'Progress must be between 0 and 100'}, status=400)
+                except (ValueError, TypeError):
+                    return JsonResponse({'success': False, 'error': 'Invalid progress value'}, status=400)
+
+            elif field == 'status':
+                status_choices = [choice[0] for choice in StaffTask.STATUS_CHOICES]
+                if value in status_choices:
+                    task.status = value
+                    update_fields.append('status')
+
+                    # Set completed_at when marking as completed
+                    if value == StaffTask.STATUS_COMPLETED and not task.completed_at:
+                        task.completed_at = timezone.now()
+                        update_fields.append('completed_at')
+                        task.progress = 100
+                        update_fields.append('progress')
+                    elif value != StaffTask.STATUS_COMPLETED:
+                        task.completed_at = None
+                        update_fields.append('completed_at')
+                else:
+                    return JsonResponse({'success': False, 'error': 'Invalid status value'}, status=400)
+
+            elif field == 'priority':
+                priority_choices = [choice[0] for choice in StaffTask.PRIORITY_CHOICES]
+                if value in priority_choices:
+                    task.priority = value
+                    update_fields.append('priority')
+                else:
+                    return JsonResponse({'success': False, 'error': 'Invalid priority value'}, status=400)
+
+            elif field == 'start_date':
+                if value:
+                    try:
+                        parsed_date = timezone.datetime.strptime(value, '%Y-%m-%d').date()
+                        task.start_date = parsed_date
+                        update_fields.append('start_date')
+                    except ValueError:
+                        return JsonResponse({'success': False, 'error': 'Invalid date format'}, status=400)
+                else:
+                    task.start_date = None
+                    update_fields.append('start_date')
+
+            elif field == 'due_date':
+                if value:
+                    try:
+                        parsed_date = timezone.datetime.strptime(value, '%Y-%m-%d').date()
+                        task.due_date = parsed_date
+                        update_fields.append('due_date')
+                    except ValueError:
+                        return JsonResponse({'success': False, 'error': 'Invalid date format'}, status=400)
+                else:
+                    task.due_date = None
+                    update_fields.append('due_date')
+
+            elif field == 'assignees':
+                # Handle assignees as comma-separated IDs
+                if value:
+                    assignee_ids = [int(id.strip()) for id in value.split(',') if id.strip()]
+                    try:
+                        assignees = User.objects.filter(id__in=assignee_ids)
+                        task.assignees.set(assignees)
+                        # Ensure team membership for all assignees
+                        for member in assignees:
+                            for team in task.teams.all():
+                                ensure_membership(team, member, request.user)
+                    except (ValueError, TypeError):
+                        return JsonResponse({'success': False, 'error': 'Invalid assignee IDs'}, status=400)
+                else:
+                    task.assignees.clear()
+
+            elif field == 'teams':
+                # Handle teams as comma-separated IDs
+                if value:
+                    team_ids = [int(id.strip()) for id in value.split(',') if id.strip()]
+                    try:
+                        teams = StaffTeam.objects.filter(id__in=team_ids)
+                        task.teams.set(teams)
+                        # Ensure team membership for all assignees
+                        for member in task.assignees.all():
+                            for team in teams:
+                                ensure_membership(team, member, request.user)
+                    except (ValueError, TypeError):
+                        return JsonResponse({'success': False, 'error': 'Invalid team IDs'}, status=400)
+                else:
+                    task.teams.clear()
+
+            else:
+                return JsonResponse({'success': False, 'error': 'Invalid field'}, status=400)
+
+            # Save the task
+            task.save(update_fields=update_fields)
+
+            # Try to update board position
+            try:
+                assign_board_position(task)
+            except OperationalError:
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'field': field,
+            'value': value,
+            'task_id': task.id
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def staff_api_assignees(request):
+    """API endpoint to get staff members for assignee dropdown."""
+    # Define staff user types
+    STAFF_USER_TYPES = ["admin", "oobc_staff"]
+
+    staff_members = User.objects.filter(
+        user_type__in=STAFF_USER_TYPES,
+        is_active=True
+    ).order_by('last_name', 'first_name')
+
+    data = []
+    for member in staff_members:
+        initials = ""
+        if member.first_name and member.last_name:
+            initials = f"{member.first_name[0]}{member.last_name[0]}".upper()
+        elif member.first_name:
+            initials = member.first_name[0].upper()
+        elif member.last_name:
+            initials = member.last_name[0].upper()
+        else:
+            initials = member.username[0].upper() if member.username else "?"
+
+        full_name = f"{member.first_name} {member.last_name}".strip()
+        if not full_name:
+            full_name = member.username
+
+        data.append({
+            'id': member.id,
+            'name': full_name,
+            'initials': initials,
+            'username': member.username
+        })
+
+    return JsonResponse({'staff': data})
+
+
+@login_required
+def staff_api_teams(request):
+    """API endpoint to get teams for team dropdown."""
+    teams = StaffTeam.objects.filter(is_active=True).order_by('name')
+
+    # Color mapping for teams
+    team_colors = [
+        'bg-blue-100 text-blue-800',
+        'bg-green-100 text-green-800',
+        'bg-purple-100 text-purple-800',
+        'bg-orange-100 text-orange-800',
+        'bg-pink-100 text-pink-800',
+        'bg-yellow-100 text-yellow-800',
+        'bg-red-100 text-red-800',
+        'bg-indigo-100 text-indigo-800'
+    ]
+
+    data = []
+    for i, team in enumerate(teams):
+        data.append({
+            'id': team.id,
+            'name': team.name,
+            'slug': team.slug,
+            'color': team_colors[i % len(team_colors)]
+        })
+
+    return JsonResponse({'teams': data})
+
+
+@login_required
 def staff_task_inline_update(request, task_id: int):
     """Inline edit handler for the table view."""
 
     task = get_object_or_404(
-        StaffTask.objects.select_related("team", "assignee"), pk=task_id
+        StaffTask.objects.prefetch_related("teams", "assignees"), pk=task_id
     )
 
     if request.method != "POST":
@@ -1603,8 +1962,9 @@ def staff_task_inline_update(request, task_id: int):
                     assign_board_position(updated_task)
                 except OperationalError:
                     pass
-                if updated_task.assignee and updated_task.team:
-                    ensure_membership(updated_task.team, updated_task.assignee, request.user)
+                for member in updated_task.assignees.all():
+                    for team in updated_task.teams.all():
+                        ensure_membership(team, member, request.user)
         except OperationalError:
             pass
 
@@ -1667,7 +2027,8 @@ def staff_team_manage(request):
     if team_id:
         team = get_object_or_404(StaffTeam, pk=team_id)
 
-    is_team_form = request.method == "POST" and request.POST.get("form_name") == "team"
+    form_name = request.POST.get("form_name") if request.method == "POST" else None
+    is_team_form = request.method == "POST" and form_name in (None, "", "team")
     team_form_kwargs = {"instance": team}
     if is_team_form:
         form = StaffTeamForm(request.POST, **team_form_kwargs)
@@ -1687,7 +2048,7 @@ def staff_team_manage(request):
     if team:
         membership_form_initial["team"] = team
 
-    is_membership_form = request.method == "POST" and request.POST.get("form_name") == "membership"
+    is_membership_form = request.method == "POST" and form_name == "membership"
     membership_form_kwargs = {"request": request, "initial": membership_form_initial}
     if is_membership_form:
         membership_form = StaffTeamMembershipForm(request.POST, **membership_form_kwargs)
@@ -1810,6 +2171,20 @@ def staff_profiles_list(request):
         profile.directory_display_name = (raw_name or "").replace("staff", "Staff")
         username_value = profile.user.username or ""
         profile.directory_username_display = username_value.replace("staff", "Staff")
+        raw_position = (profile.user.position or "").strip()
+        if raw_position:
+            display_name = (profile.directory_display_name or "").strip()
+            normalized_position = re.sub(r"\s+", " ", raw_position).strip()
+            normalized_display = re.sub(r"\s+", " ", display_name).strip()
+            if normalized_position.lower() == normalized_display.lower():
+                profile.directory_position_display = ""
+            elif normalized_display and normalized_position.lower().startswith(normalized_display.lower()):
+                suffix = raw_position[len(display_name) :]
+                profile.directory_position_display = suffix.lstrip(" -–—:|,.").strip()
+            else:
+                profile.directory_position_display = raw_position
+        else:
+            profile.directory_position_display = None
 
     status_totals = (
         StaffProfile.objects.values("employment_status")
@@ -1931,7 +2306,8 @@ def staff_profile_update(request, pk):
     )
     form = StaffProfileForm(request.POST or None, instance=profile, request=request)
     form.fields["user"].queryset = User.objects.filter(pk=profile.user_id)
-    form.fields["user"].disabled = True
+    form.fields["user"].widget = forms.HiddenInput()
+    form.fields["user"].initial = profile.user
 
     if request.method == "POST" and form.is_valid():
         form.save()
@@ -1952,20 +2328,65 @@ def staff_profile_update(request, pk):
 
 @login_required
 def staff_profiles_detail(request, pk):
-    """Display staff profile information with related records."""
+    """Display staff profile information organised into tabs."""
 
     profile = get_object_or_404(
         StaffProfile.objects.select_related("user"), pk=pk
     )
+
+    tab_definitions = (
+        {
+            "key": "overview",
+            "label": "Overview",
+            "icon": "fas fa-layer-group",
+        },
+        {
+            "key": "job",
+            "label": "Job Description",
+            "icon": "fas fa-briefcase",
+        },
+        {
+            "key": "competency",
+            "label": "Competency Framework",
+            "icon": "fas fa-lightbulb",
+        },
+        {
+            "key": "performance",
+            "label": "Performance Dashboard",
+            "icon": "fas fa-chart-line",
+        },
+        {
+            "key": "tasks",
+            "label": "Assigned Tasks",
+            "icon": "fas fa-tasks",
+        },
+    )
+
+    requested_tab = (request.GET.get("tab") or "overview").lower()
+    allowed_tab_keys = {tab["key"] for tab in tab_definitions}
+    active_tab = requested_tab if requested_tab in allowed_tab_keys else "overview"
+
+    detail_url = reverse("common:staff_profiles_detail", args=[profile.pk])
+    tabs = [
+        {
+            **tab,
+            "url": detail_url
+            if tab["key"] == "overview"
+            else f"{detail_url}?tab={tab['key']}",
+            "is_active": tab["key"] == active_tab,
+        }
+        for tab in tab_definitions
+    ]
 
     active_memberships = (
         profile.user.team_memberships.select_related("team")
         .filter(is_active=True)
         .order_by("team__name")
     )
+
     recent_tasks = (
-        StaffTask.objects.filter(assignee=profile.user)
-        .select_related("team")
+        StaffTask.objects.filter(assignees=profile.user)
+        .prefetch_related("teams", "assignees")
         .order_by("-updated_at")[:10]
     )
     trainings = profile.training_enrollments.select_related("program")
@@ -1987,6 +2408,8 @@ def staff_profiles_detail(request, pk):
         "competency_categories": STAFF_COMPETENCY_CATEGORIES,
         "competency_levels": STAFF_COMPETENCY_PROFICIENCY_LEVELS,
         "tasks_by_status": tasks_by_status,
+        "tabs": tabs,
+        "active_tab": active_tab,
     }
     return render(request, "common/staff_profile_detail.html", context)
 
@@ -2480,11 +2903,137 @@ def planning_budgeting(request):
     return render(request, "common/oobc_planning_budgeting.html", context)
 
 
+@login_required
+@require_POST
+def staff_task_delete(request, task_id):
+    """Delete a staff task."""
+    task = get_object_or_404(StaffTask, pk=task_id)
+
+    # Check if this is a confirmation request
+    if request.POST.get('confirm') == 'yes':
+        task_title = task.title
+        task.delete()
+
+        # For HTMX requests, return 204 response to trigger delete swap and close modal
+        if request.headers.get('HX-Request'):
+            response = HttpResponse(status=204)
+            response['HX-Trigger'] = json.dumps({
+                'task-board-refresh': True,
+                'task-modal-close': True,
+                'show-toast': f'Task "{task_title}" deleted successfully'
+            })
+            return response
+
+        # For regular requests, add Django message and redirect to the task board
+        messages.success(request, f'Task "{task_title}" has been deleted.')
+        return redirect('common:staff_task_board')
+
+    # If not confirmed, return an error or redirect
+    if request.headers.get('HX-Request'):
+        return JsonResponse({"error": "Confirmation required."}, status=400)
+
+    messages.error(request, 'Task deletion was not confirmed.')
+    return redirect('common:staff_task_board')
+
+
+@login_required
+@require_POST
+def staff_task_create_api(request):
+    """API endpoint for creating tasks via AJAX - returns JSON."""
+
+    ensure_default_staff_teams()
+
+    if request.content_type == 'application/json':
+        data = json.loads(request.body.decode('utf-8'))
+        form_data = data
+    else:
+        form_data = request.POST
+
+    form = StaffTaskForm(form_data, request=request, table_mode=True)
+
+    if form.is_valid():
+        try:
+            with transaction.atomic():
+                task = form.save(commit=False)
+                if not task.created_by:
+                    task.created_by = request.user
+                if (
+                    task.status == StaffTask.STATUS_COMPLETED
+                    and not task.completed_at
+                ):
+                    task.completed_at = timezone.now()
+                    task.progress = 100
+                task.save()
+                form.save_m2m()
+                try:
+                    assign_board_position(task)
+                except OperationalError:
+                    pass
+                for member in task.assignees.all():
+                    for team in task.teams.all():
+                        ensure_membership(team, member, request.user)
+
+                # Prepare task data for JSON response
+                assignee_tokens, team_tokens = _task_relation_tokens(task)
+                task_data = {
+                    'id': task.id,
+                    'title': task.title,
+                    'status': task.status,
+                    'priority': task.priority,
+                    'progress': task.progress,
+                    'start_date': task.start_date.isoformat() if task.start_date else None,
+                    'due_date': task.due_date.isoformat() if task.due_date else None,
+                    'assignees': [{'id': token['id'], 'label': token['label']} for token in assignee_tokens],
+                    'teams': [{'id': token['id'], 'label': token['label']} for token in team_tokens],
+                    'created_at': task.created_at.isoformat(),
+                    'updated_at': task.updated_at.isoformat(),
+                }
+
+                return JsonResponse({
+                    'success': True,
+                    'task': task_data,
+                    'message': f'Task "{task.title}" created successfully.'
+                })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=400)
+    else:
+        return JsonResponse({
+            'success': False,
+            'error': 'Form validation failed',
+            'errors': form.errors
+        }, status=400)
+
+
 __all__ = [
     "oobc_management_home",
+    "oobc_calendar",
+    "oobc_calendar_feed_json",
+    "oobc_calendar_feed_ics",
+    "oobc_calendar_brief",
+    "planning_budgeting",
     "staff_management",
+    "staff_task_board",
+    "staff_task_modal_create",
+    "staff_task_modal",
+    "staff_task_delete",
+    "staff_task_inline_update",
+    "staff_task_update",
+    "staff_task_update_field",
     "staff_task_create",
+    "staff_task_create_api",
+    "staff_api_assignees",
+    "staff_api_teams",
+    "staff_profiles_list",
+    "staff_profile_create",
+    "staff_profile_update",
+    "staff_profiles_detail",
+    "staff_profile_delete",
+    "staff_performance_dashboard",
+    "staff_training_development",
     "staff_team_assign",
     "staff_team_manage",
-    "planning_budgeting",
 ]

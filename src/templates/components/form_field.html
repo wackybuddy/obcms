@@ -1,15 +1,3 @@
-{#
-Reusable form input template.
-Parameters:
-- field: bound field
-- label (optional)
-- help_text (optional)
-- placeholder (optional)
-- required (bool, optional)
-- widget ("text", "textarea", "select") defaults based on field.widget
-- prefix_icon (optional HTML class)
-- extra_classes (optional str for the wrapper)
-#}
 {% load static form_extras %}
 {% resolve_widget field widget|default:'' as widget_type %}
 <div class="space-y-1 {{ extra_classes }}">

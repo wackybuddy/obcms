@@ -13,6 +13,7 @@ Expected context:
     "delete_message": optional str
   }
 - empty_message: optional fallback text
+- show_actions: optional bool (default True) – hide action column/buttons when False
 #}
 {% load static %}
 <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden" data-table-card>
@@ -23,18 +24,20 @@ Expected context:
         </div>
     </div>
     <div class="divide-y divide-gray-200">
-        <div class="hidden md:grid gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500" style="grid-template-columns: repeat({{ headers|length|add:1 }}, minmax(0, 1fr));">
+        {% with show_actions=show_actions|default:True %}
+        <div class="hidden md:grid gap-4 px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500" style="grid-template-columns: repeat({{ headers|length|add:show_actions|yesno:'1,0' }}, minmax(0, 1fr));">
             {% for header in headers %}
             <div class="{{ header.class|default:'flex items-center' }}">{{ header.label }}</div>
             {% endfor %}
-            <div class="text-right">Actions</div>
+            {% if show_actions %}<div class="text-right">Actions</div>{% endif %}
         </div>
         {% if rows %}
             {% for row in rows %}
-            <div class="px-6 py-4 grid gap-4 md:items-center" style="grid-template-columns: repeat({{ headers|length|add:1 }}, minmax(0, 1fr));">
+            <div class="px-6 py-4 grid gap-4 md:items-center" style="grid-template-columns: repeat({{ headers|length|add:show_actions|yesno:'1,0' }}, minmax(0, 1fr));">
                 {% for cell in row.cells %}
                 <div class="{{ cell.class|default:'text-sm text-gray-700' }}">{{ cell.content|safe }}</div>
                 {% endfor %}
+                {% if show_actions %}
                 <div class="flex items-center justify-end gap-2">
                     <a href="{{ row.view_url }}" class="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100">
                         <i class="fas fa-eye"></i>
@@ -52,6 +55,7 @@ Expected context:
                         <span>Delete</span>
                     </button>
                 </div>
+                {% endif %}
             </div>
             {% endfor %}
         {% else %}
@@ -59,6 +63,7 @@ Expected context:
                 {{ empty_message|default:"No records available." }}
             </div>
         {% endif %}
+        {% endwith %}
     </div>
 </div>
 

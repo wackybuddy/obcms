@@ -1,0 +1,46 @@
+<div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 space-y-4">
+    <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <i class="fas fa-tachometer-alt text-emerald-600"></i>
+            Performance targets
+        </h2>
+        <span class="text-sm text-gray-500">{{ performance_targets|length }} targets tracked</span>
+    </div>
+    {% if performance_targets %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 text-sm text-gray-600">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Metric</th>
+                    <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Standard</th>
+                    <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Target</th>
+                    <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Actual</th>
+                    <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Status</th>
+                    <th class="px-4 py-3 text-left font-semibold text-gray-700 uppercase text-xs">Period</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for target in performance_targets %}
+                <tr>
+                    <td class="px-4 py-3 font-semibold text-gray-900">{{ target.metric_name }}</td>
+                    <td class="px-4 py-3">{{ target.performance_standard|default:"—" }}</td>
+                    <td class="px-4 py-3">{{ target.target_value }}{% if target.unit %} {{ target.unit }}{% endif %}</td>
+                    <td class="px-4 py-3">{{ target.actual_value }}{% if target.unit %} {{ target.unit }}{% endif %}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                            {% if target.status == 'on_track' %}bg-emerald-100 text-emerald-700
+                            {% elif target.status == 'at_risk' %}bg-amber-100 text-amber-700
+                            {% else %}bg-rose-100 text-rose-700{% endif %}">
+                            {{ target.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-xs text-gray-500">{{ target.period_start|date:"M d, Y" }} &ndash; {{ target.period_end|date:"M d, Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-gray-500">No performance targets defined yet.</p>
+    {% endif %}
+</div>

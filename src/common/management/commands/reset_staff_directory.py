@@ -11,17 +11,131 @@ from common.models import User
 
 
 STAFF_DIRECTORY_ENTRIES = [
-    "Executive Director",
-    "Deputy Executive Director",
-    "Executive Assistant / Admin Officer",
-    "Development Management Officer (DMO) IV - Head of Knowledge Management Division",
-    "Development Management Officer (DMO) III - Heal of Monitoring and Evaluation Unit",
-    "Planning Officer",
-    "Budget Officer",
-    "Community Development Officer",
-    "Procurement Officer",
-    "Information Systems Analyst",
-    "Staff (for General Staff Functions)",
+    {
+        "name": "Noron S. Andan, MPA, MAEd",
+        "credentials": "",
+        "position": "Executive Director",
+    },
+    {
+        "name": "Qurash D. Langcap",
+        "credentials": "",
+        "position": "Deputy Executive Director"
+    },
+    {
+        "name": "Norhan B. Hadji Abdullah",
+        "credentials": "",
+        "position": "Development Management Officer IV"
+    },
+    {
+        "name": "Rusman B. Musa",
+        "credentials": "",
+        "position": "Development Management Officer III"
+    },
+    {
+        "name": "Farhanna U. Kabalu",
+        "credentials": "",
+        "position": "Planning Officer II"
+    },
+    {
+        "name": "Al-Amid P. Gandawali",
+        "credentials": "",
+        "position": "Information System Analyst II"
+    },
+    {
+        "name": "Michael A. Berwal",
+        "credentials": "",
+        "position": "Administrative Officer II"
+    },
+    {
+        "name": "Esnain C. Mapait",
+        "credentials": "",
+        "position": "Community Development Officer I"
+    },
+    {
+        "name": "Mohammad Hamid M. Bato",
+        "credentials": "",
+        "position": "Planning Officer I"
+    },
+    {
+        "name": "Habiba B. Abunawas",
+        "credentials": "",
+        "position": "Development Management Officer I"
+    },
+    {
+        "name": "Datu Noah P. Damping",
+        "credentials": "",
+        "position": "Administrative Assistant V"
+    },
+    {
+        "name": "Ramla L. Manguda",
+        "credentials": "",
+        "position": "Administrative Assistant I"
+    },
+    {
+        "name": "Nor-hayya A. Donde",
+        "credentials": "",
+        "position": "Administrative Assistant I"
+    },
+    {
+        "name": "Ummu Calthoom L. Basug",
+        "credentials": "",
+        "position": "Administrative Assistant I"
+    },
+    {
+        "name": "Mardiya M. Jaukal",
+        "credentials": "",
+        "position": "Administrative Assistant I"
+    },
+    {
+        "name": "Rayyana G. Pendi",
+        "credentials": "",
+        "position": "Administrative Assistant I"
+    },
+    {
+        "name": "Herdan V. Tang",
+        "credentials": "",
+        "position": "Records Officer I"
+    },
+    {
+        "name": "Datu Abdulbasit T. Esmael",
+        "credentials": "",
+        "position": "Supply Officer I"
+    },
+    {
+        "name": "Omulheir M. Noddin",
+        "credentials": "",
+        "position": "Information Officer I"
+    },
+    {
+        "name": "Mohadier S. Gawan",
+        "credentials": "",
+        "position": "Project Evaluation Officer I"
+    },
+    {
+        "name": "Sittie Fayesha S. Tumog",
+        "credentials": "",
+        "position": "Information Assistant"
+    },
+    {
+        "name": "Hamde B. Samana",
+        "credentials": "",
+        "position": "Administrative Aide V"
+    },
+    {
+        "name": "Mohaimen R. Gumander",
+        "credentials": "",
+        "position": "Administrative Aide V"
+    },
+    {
+        "name": "Akmad S. Gandawali",
+        "credentials": "",
+        "position": "Administrative Aide V"
+    },
+    {
+        "name": "Marifel C. Introducion",
+        "credentials": "",
+        "position": "Administrative Aide V"
+    },
 ]
 
 
@@ -41,22 +155,44 @@ class Command(BaseCommand):
             deleted_count, _ = User.objects.filter(user_type__in=staff_types).delete()
 
             created_users: list[User] = []
-            for label in directory_entries:
-                username_base = slugify(label) or "staff"
+            for entry in directory_entries:
+                full_name = entry["name"]
+                credentials = entry["credentials"]
+                position = entry["position"]
+
+                # Extract first and last name
+                name_parts = full_name.split()
+                if len(name_parts) >= 2:
+                    first_name = " ".join(name_parts[:-1])
+                    last_name = name_parts[-1]
+                else:
+                    first_name = full_name
+                    last_name = ""
+
+                # Create username from full name
+                username_base = slugify(full_name.replace(".", "")) or "staff"
                 username = username_base
                 suffix = 2
                 while User.objects.filter(username=username).exists():
                     username = f"{username_base}{suffix}"
                     suffix += 1
 
+                # Create display position with credentials if available
+                display_position = position
+                if credentials:
+                    display_position = f"{position} ({credentials})"
+
                 user = User.objects.create(
                     username=username,
-                    first_name=label,
-                    last_name="",
+                    first_name=first_name,
+                    last_name=last_name,
                     user_type="oobc_staff",
                     email=f"{username}@oobc.local",
-                    position=label,
-                    organization="Office of the Bangsamoro Chief Minister",
+                    position=display_position,
+                    organization=(
+                        "Office for Other Bangsamoro Communities, Office of the Chief "
+                        "Minister (Bangsamoro Autonomous Region in Muslim Mindanao)"
+                    ),
                     is_active=True,
                     is_staff=True,
                     is_approved=True,
@@ -65,7 +201,7 @@ class Command(BaseCommand):
                 user.save(update_fields=["password"])
                 created_users.append(user)
 
-        created_list = ", ".join(user.first_name for user in created_users)
+        created_list = ", ".join(user.get_full_name() for user in created_users)
         self.stdout.write(
             self.style.SUCCESS(
                 "Staff directory reset complete. Deleted "

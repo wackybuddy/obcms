@@ -754,6 +754,8 @@ class Organization(models.Model):
         on_delete=models.PROTECT,
         related_name="created_organizations",
         help_text="User who created this organization record",
+        null=True,
+        blank=True,
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

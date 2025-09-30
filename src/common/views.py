@@ -92,6 +92,21 @@ class UserRegistrationView(CreateView):
 @login_required
 def dashboard(request):
     """Main dashboard view after login."""
+    user = request.user
+
+    if (
+        not user.is_staff
+        and not user.is_superuser
+        and user.has_perm("mana.can_access_regional_mana")
+        and not user.has_perm("mana.can_facilitate_workshop")
+    ):
+        participant_account = getattr(user, "workshop_participant_account", None)
+        if participant_account:
+            return redirect(
+                "mana:participant_dashboard",
+                assessment_id=participant_account.assessment_id,
+            )
+
     from communities.models import OBCCommunity, Stakeholder
     from mana.models import Assessment, Need
     from coordination.models import Event, Partnership

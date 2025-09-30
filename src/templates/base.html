@@ -591,6 +591,50 @@
     
     <script src="{% static 'common/js/location_data_loader.js' %}"></script>
     
+    <div id="toast-root" class="fixed top-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+    <script>
+    (function () {
+        const root = document.getElementById('toast-root');
+        if (!root) return;
+
+        function showToast(detail) {
+            const payload = detail || {};
+            const message = typeof payload === 'string' ? payload : (payload.message || 'Action completed');
+            const level = (payload.level || 'success').toLowerCase();
+            const palette = {
+                success: 'from-emerald-500 to-emerald-600',
+                info: 'from-sky-500 to-blue-600',
+                warning: 'from-amber-400 to-orange-500',
+                error: 'from-rose-500 to-rose-600'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto transition-all duration-300 transform translate-y-0 opacity-100';
+            toast.innerHTML = `
+                <div class="flex items-center gap-3 rounded-xl bg-gradient-to-r ${palette[level] || palette.success} text-white shadow-lg px-4 py-3 min-w-[220px]">
+                    <span class="text-sm font-medium">${message}</span>
+                </div>
+            `;
+
+            root.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+            }, 3800);
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 4500);
+        }
+
+        document.body.addEventListener('show-toast', function (event) {
+            showToast(event.detail);
+        });
+    })();
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
