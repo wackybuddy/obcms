@@ -53,13 +53,14 @@ PostgreSQL Migration Guide Updated!
 **TL;DR**: If you're using our Docker setup and want to migrate existing SQLite data:
 
 ```bash
-# 1. Backup current SQLite data
-cp src/db.sqlite3 src/db.sqlite3.backup
+# 1. Backup current SQLite database
+cp src/db.sqlite3 "src/db.sqlite3.backup.$(date +%Y%m%d_%H%M%S)"
 
 # 2. Export existing data (while using SQLite)
 source venv/bin/activate
 cd src
 ./manage.py dumpdata --natural-primary --natural-foreign --exclude contenttypes --exclude auth.Permission --exclude sessions --indent 2 > ../data/sqlite_export.json
+cd ..
 
 # 3. Switch to PostgreSQL (Docker automatically configured)
 cp .env.example .env
@@ -287,8 +288,12 @@ If you have useful data in SQLite (`src/db.sqlite3`), migrate it to PostgreSQL u
 
 ### Method 1: Docker Migration (Recommended)
 
-1. **Backup your current SQLite data**:
+1. **Backup your current SQLite database**:
    ```bash
+   # Create timestamped backup for safety
+   cp src/db.sqlite3 "src/db.sqlite3.backup.$(date +%Y%m%d_%H%M%S)"
+
+   # Also keep a simple backup name for convenience
    cp src/db.sqlite3 src/db.sqlite3.backup
    ```
 
@@ -296,6 +301,10 @@ If you have useful data in SQLite (`src/db.sqlite3`), migrate it to PostgreSQL u
    ```bash
    # Ensure you're using SQLite first (no .env file or comment out DATABASE_URL)
    source venv/bin/activate
+
+   # Create data directory if it doesn't exist
+   mkdir -p data
+
    cd src
    ./manage.py dumpdata \
      --natural-primary \
@@ -304,9 +313,7 @@ If you have useful data in SQLite (`src/db.sqlite3`), migrate it to PostgreSQL u
      --exclude auth.Permission \
      --exclude sessions \
      --indent 2 > ../data/sqlite_export.json
-
-   # Create data directory if it doesn't exist
-   mkdir -p ../data
+   cd ..
    ```
 
 3. **Switch to PostgreSQL configuration**:
@@ -331,11 +338,17 @@ If you have useful data in SQLite (`src/db.sqlite3`), migrate it to PostgreSQL u
 
 ### Method 2: Local PostgreSQL Migration
 
-1. **Export from SQLite** (with no DATABASE_URL set):
+1. **Backup and export from SQLite** (with no DATABASE_URL set):
    ```bash
+   # Backup SQLite database
+   cp src/db.sqlite3 "src/db.sqlite3.backup.$(date +%Y%m%d_%H%M%S)"
+
+   # Export data
    source venv/bin/activate
+   mkdir -p data
    cd src
-   ./manage.py dumpdata --natural-primary --natural-foreign --exclude contenttypes --exclude auth.Permission > ../data/sqlite_export.json
+   ./manage.py dumpdata --natural-primary --natural-foreign --exclude contenttypes --exclude auth.Permission --exclude sessions --indent 2 > ../data/sqlite_export.json
+   cd ..
    ```
 
 2. **Switch to PostgreSQL** and load data:
@@ -416,22 +429,28 @@ If you have useful data in SQLite (`src/db.sqlite3`), migrate it to PostgreSQL u
 
 ### Validation Checklist
 
+- [ ] SQLite database backed up with timestamp
+- [ ] Data exported successfully to JSON
 - [ ] Django admin interface loads without errors
 - [ ] User authentication works (login/logout)
 - [ ] All models visible in admin interface
-- [ ] Data from SQLite appears correctly
+- [ ] Data from SQLite appears correctly (verify counts, key records)
 - [ ] Celery tasks can be queued (if using background tasks)
 - [ ] Static files serve correctly
 - [ ] No database-specific errors in logs
+- [ ] Original SQLite backup preserved and accessible
 
 ## Production Cutover Checklist
 
-- Provision managed PostgreSQL with backups enabled and document retention policies.
-- Update infrastructure as code or deployment manifests with the new connection string.
-- Rotate Django `SECRET_KEY` and any credentials stored alongside the database URL.
-- Schedule a maintenance window, put the site in read-only mode (if needed), and repeat the dump/load flow.
-- Rebuild Docker images or redeploy the service so the new environment variables take effect.
-- Monitor logs and metrics (connection counts, slow queries) after cutover.
+- **Backup SQLite database** with timestamp before any migration steps
+- Provision managed PostgreSQL with backups enabled and document retention policies
+- Update infrastructure as code or deployment manifests with the new connection string
+- Rotate Django `SECRET_KEY` and any credentials stored alongside the database URL
+- Schedule a maintenance window, put the site in read-only mode (if needed), and repeat the dump/load flow
+- **Verify SQLite backup is accessible** and can be restored if rollback needed
+- Rebuild Docker images or redeploy the service so the new environment variables take effect
+- Monitor logs and metrics (connection counts, slow queries) after cutover
+- **Retain SQLite backup** for at least 30 days post-migration
 
 ## Troubleshooting Tips
 

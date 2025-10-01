@@ -183,10 +183,19 @@
                     <dt class="font-medium text-gray-600">Geography</dt>
                     <dd class="text-right">
                         {% if assessment.community %}
-                            {{ assessment.community.barangay.name }}, {{ assessment.community.barangay.municipality.name }}<br>
-                            {{ assessment.community.barangay.municipality.province.name }}
+                            {{ assessment.community.display_name|default:assessment.community.barangay.name }}<br>
+                            {{ assessment.community.barangay.municipality.name }}, {{ assessment.community.barangay.municipality.province.name }}
+                        {% elif assessment.barangay %}
+                            {{ assessment.barangay.name }}<br>
+                            {{ assessment.barangay.municipality.name }}, {{ assessment.barangay.municipality.province.name }}
+                        {% elif assessment.municipality %}
+                            {{ assessment.municipality.name }}<br>
+                            {{ assessment.municipality.province.name }}
                         {% elif assessment.province %}
-                            {{ assessment.province.name }} Region {{ assessment.province.region.code|default:assessment.province.region.name }}
+                            {{ assessment.province.name }}<br>
+                            Region {{ assessment.province.region.code|default:assessment.province.region.name }}
+                        {% elif assessment.region %}
+                            Region {{ assessment.region.code|default:assessment.region.name }}
                         {% else %}
                             —
                         {% endif %}

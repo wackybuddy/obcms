@@ -187,7 +187,11 @@
         <h2 class="text-2xl font-bold text-gray-900 mb-6">System Modules</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- OBC Data Module -->
+            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+            <a href="{% url 'common:communities_manage_provincial' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            {% else %}
             <a href="{% url 'common:communities_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            {% endif %}
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-users text-white text-xl"></i>
@@ -206,7 +210,11 @@
             </a>
 
             <!-- MANA Module -->
+            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop and participant_assessment_id %}
+            <a href="{% url 'mana:participant_dashboard' participant_assessment_id %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            {% else %}
             <a href="{% url 'common:mana_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            {% endif %}
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-map text-white text-xl"></i>
@@ -225,7 +233,11 @@
             </a>
 
             <!-- Coordination Module -->
+            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+            <a href="{% url 'common:page_restricted' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 opacity-60">
+            {% else %}
             <a href="{% url 'common:coordination_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            {% endif %}
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-handshake text-white text-xl"></i>
@@ -244,7 +256,11 @@
             </a>
 
             <!-- Recommendations Module -->
+            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+            <a href="{% url 'common:page_restricted' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 opacity-60">
+            {% else %}
             <a href="{% url 'common:recommendations_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            {% endif %}
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-lightbulb text-white text-xl"></i>
@@ -263,7 +279,11 @@
             </a>
 
             <!-- Monitoring & Evaluation Module -->
+            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+            <a href="{% url 'common:page_restricted' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 opacity-60">
+            {% else %}
             <a href="{% url 'monitoring:home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            {% endif %}
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-chart-pie text-white text-xl"></i>
@@ -282,7 +302,11 @@
             </a>
 
             <!-- OOBC Management Module -->
+            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+            <a href="{% url 'common:page_restricted' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200 opacity-60">
+            {% else %}
             <a href="{% url 'common:oobc_management_home' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all duration-200">
+            {% endif %}
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center mb-4">
                         <i class="fas fa-toolbox text-white text-xl"></i>

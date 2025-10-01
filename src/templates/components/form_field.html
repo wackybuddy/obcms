@@ -10,14 +10,14 @@
     {% if widget_type == 'textarea' %}
         <textarea id="{{ field.id_for_label }}"
                   name="{{ field.html_name }}"
-                  class="block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 {{ field.field.widget.attrs.class }}"
+                  class="hx-field block w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 {{ field.field.widget.attrs.class }}"
                   {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                   {% for attr, value in field.field.widget.attrs.items %}{% if attr not in 'class rows cols placeholder type' %} {{ attr }}="{{ value }}"{% endif %}{% endfor %}>{% if field.value %}{{ field.value }}{% endif %}</textarea>
     {% elif widget_type == 'select' or widget_type == 'selectmultiple' %}
         <div class="relative">
             <select id="{{ field.id_for_label }}"
                     name="{{ field.html_name }}"
-                    class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200 {{ field.field.widget.attrs.class }}"
+                    class="hx-field block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200 {{ field.field.widget.attrs.class }}"
                     {% if required or field.field.required %}required{% endif %}
                     {% for attr, value in field.field.widget.attrs.items %}{% if attr not in 'class' %} {{ attr }}="{{ value }}"{% endif %}{% endfor %}>
                 {% if placeholder %}
@@ -36,7 +36,7 @@
             <input id="{{ field.id_for_label }}"
                    name="{{ field.html_name }}"
                    value="{{ field.value|default_if_none:'' }}"
-                   class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200 {{ field.field.widget.attrs.class }}"
+                   class="hx-field block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200 {{ field.field.widget.attrs.class }}"
                    {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
                    {% for attr, value in field.field.widget.attrs.items %}{% if attr not in 'class type placeholder value' %} {{ attr }}="{{ value }}"{% endif %}{% endfor %}
                    type="{{ field.field.widget.input_type|default:'text' }}" />

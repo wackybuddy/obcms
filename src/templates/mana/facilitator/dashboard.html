@@ -13,9 +13,25 @@
                     <h1 class="text-3xl font-bold text-gray-900">{{ assessment.title }}</h1>
                     <p class="text-gray-600 mt-2">Monitor participant submissions, trigger AI synthesis, and orchestrate sequential unlocks across the regional workshop series.</p>
                 </div>
-                <div class="flex flex-col gap-2 text-sm text-gray-500">
-                    <span><i class="fas fa-users text-emerald-500 mr-2"></i>Total participants: <strong class="text-gray-900">{{ total_participants }}</strong></span>
-                    <span><i class="fas fa-check-circle text-emerald-500 mr-2"></i>Submitted this workshop: <strong class="text-emerald-600">{{ submitted_count }}</strong></span>
+                <div class="flex flex-col gap-3 min-w-[250px]">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-600">Workshop Progress</span>
+                        <span class="font-bold text-gray-900">{{ submitted_count }} / {{ total_participants }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        {% widthratio submitted_count total_participants 100 as progress_pct %}
+                        <div class="h-3 rounded-full transition-all duration-500 {% if progress_pct == 100 %}bg-green-500{% elif progress_pct >= 70 %}bg-emerald-500{% elif progress_pct >= 30 %}bg-blue-500{% else %}bg-amber-500{% endif %}"
+                             style="width: {{ progress_pct }}%"></div>
+                    </div>
+                    <p class="text-xs text-gray-500">
+                        {% if progress_pct == 100 %}
+                            <i class="fas fa-check-circle text-green-500 mr-1"></i>All participants submitted
+                        {% elif progress_pct >= 70 %}
+                            <i class="fas fa-thumbs-up text-emerald-500 mr-1"></i>Most participants submitted
+                        {% else %}
+                            <i class="fas fa-clock text-amber-500 mr-1"></i>Waiting for more submissions
+                        {% endif %}
+                    </p>
                 </div>
             </div>
             <div class="flex flex-wrap gap-3 text-sm">
@@ -27,17 +43,75 @@
                 {% endfor %}
             </div>
             {% if next_workshop %}
-            <form method="post"
-                  hx-post="{% url 'mana:facilitator_advance_workshop' assessment.id next_workshop.workshop_type %}"
-                  hx-target="#responses-panel"
-                  hx-swap="none"
-                  class="flex items-center justify-end">
-                {% csrf_token %}
-                <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-200 text-emerald-600 text-sm font-medium hover:bg-emerald-50">
-                    <i class="fas fa-forward"></i>
-                    Advance participants to {{ next_workshop.get_workshop_type_display }}
+            <div class="flex items-center justify-end">
+                <button type="button"
+                        onclick="openAdvanceModal()"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-sm">
+                    <i class="fas fa-rocket"></i>
+                    Advance All Participants to {{ next_workshop.get_workshop_type_display }}
                 </button>
-            </form>
+            </div>
+
+            <!-- Confirmation Modal -->
+            <div id="advanceModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-rocket text-emerald-600 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Advance Participants?</h3>
+                            <p class="text-sm text-gray-600 mb-4">
+                                This will unlock <strong>{{ next_workshop.get_workshop_type_display }}</strong> for all <strong>{{ total_participants }} participants</strong> in this assessment.
+                            </p>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                                <p class="text-xs text-blue-800">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Participants who haven't submitted {{ workshop.get_workshop_type_display }} will still be advanced. They can access the next workshop immediately.
+                                </p>
+                            </div>
+                            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <p class="text-xs text-amber-800 font-semibold">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                                    Current progress: {{ submitted_count }}/{{ total_participants }} submitted
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 pt-4 border-t border-gray-200">
+                        <button type="button"
+                                onclick="closeAdvanceModal()"
+                                class="flex-1 px-4 py-2.5 rounded-lg bg-gray-100 text-gray-700 font-semibold hover:bg-gray-200 transition-all duration-200">
+                            Cancel
+                        </button>
+                        <form method="post"
+                              hx-post="{% url 'mana:facilitator_advance_workshop' assessment.id next_workshop.workshop_type %}"
+                              hx-target="body"
+                              hx-swap="none"
+                              class="flex-1">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    onclick="closeAdvanceModal()"
+                                    class="w-full px-4 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-sm">
+                                <i class="fas fa-check mr-2"></i>Confirm Advancement
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function openAdvanceModal() {
+                    document.getElementById('advanceModal').classList.remove('hidden');
+                }
+                function closeAdvanceModal() {
+                    document.getElementById('advanceModal').classList.add('hidden');
+                }
+                // Close modal on ESC key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') closeAdvanceModal();
+                });
+            </script>
             {% endif %}
         </header>
 

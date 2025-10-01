@@ -1,13 +1,32 @@
 """Dashboard landing views."""
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 
 @login_required
 def dashboard(request):
     """Main dashboard view after login."""
+
+    # Redirect MANA Participants and Facilitators to their respective dashboards
+    if not request.user.is_staff and not request.user.is_superuser:
+        if request.user.has_perm("mana.can_access_regional_mana"):
+            # Facilitators go to Manage Assessments dashboard
+            if request.user.has_perm("mana.can_facilitate_workshop"):
+                return redirect("common:mana_manage_assessments")
+            # Participants go to their participant dashboard
+            else:
+                # Get participant's assessment
+                try:
+                    from mana.models import WorkshopParticipantAccount
+                    participant = WorkshopParticipantAccount.objects.get(user=request.user)
+                    # Redirect to participant dashboard for their assessment
+                    return redirect("mana:participant_dashboard", assessment_id=str(participant.assessment.id))
+                except WorkshopParticipantAccount.DoesNotExist:
+                    # No participant account - redirect to regional overview
+                    return redirect("common:mana_regional_overview")
+
     from django.db.models import Avg, Count
 
     from communities.models import (

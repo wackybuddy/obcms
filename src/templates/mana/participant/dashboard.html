@@ -6,25 +6,70 @@
 {% block content %}
 <div class="bg-neutral-50 min-h-screen py-10">
     <div class="max-w-5xl mx-auto space-y-8">
-        <header class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col gap-4">
-            <div class="flex items-start justify-between flex-wrap gap-4">
-                <div>
+        <header class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 flex flex-col gap-6">
+            <div class="flex flex-col lg:flex-row lg:items-start gap-6">
+                <div class="flex-1">
                     <p class="text-sm uppercase tracking-wide text-gray-400">Regional MANA Assessment</p>
                     <h1 class="text-3xl font-bold text-gray-900">{{ assessment.title }}</h1>
                     <p class="text-gray-600 mt-2">Welcome back, {{ request.user.get_full_name|default:request.user.username }}. Continue the workshop flow to keep the regional synthesis on track.</p>
+
+                    <div class="mt-6 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Accessible</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>Locked</span>
+                        <span class="inline-flex items-center gap-1"><i class="fas fa-check text-emerald-500"></i>Completed</span>
+                    </div>
                 </div>
-                <div class="bg-bangsamoro-gradient text-white rounded-2xl px-6 py-4 shadow-lg">
-                    <p class="text-xs uppercase tracking-wide text-white/70">Progress</p>
-                    <p class="text-3xl font-semibold">{{ progress.completed_count }}/{{ progress.total_workshops }}</p>
-                    <p class="text-sm text-white/80">{{ progress.completion_percentage }}% complete</p>
+                <div class="w-full lg:max-w-xs">
+                    <div class="bg-bangsamoro-gradient text-white rounded-2xl px-6 py-5 shadow-lg">
+                        <p class="text-xs uppercase tracking-wide text-white/70">Progress</p>
+                        <p class="text-3xl font-semibold">{{ progress.completed_count }}/{{ progress.total_workshops }}</p>
+                        <p class="text-sm text-white/80">{{ progress.completion_percentage }}% complete</p>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-center gap-3 text-sm text-gray-500">
-                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Accessible</span>
-                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-gray-300"></span>Locked</span>
-                <span class="inline-flex items-center gap-1"><i class="fas fa-check text-emerald-500"></i>Completed</span>
             </div>
         </header>
+
+        <!-- Notifications Section -->
+        {% if unread_notifications %}
+        <div class="space-y-3">
+            {% for notification in unread_notifications %}
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 shadow-sm relative"
+                 id="notification-{{ notification.id }}">
+                <div class="flex items-start gap-4">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas {% if notification.notification_type == 'workshop_advanced' %}fa-rocket{% elif notification.notification_type == 'workshop_reminder' %}fa-bell{% else %}fa-check-circle{% endif %} text-white"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-base font-bold text-blue-900">{{ notification.title }}</h3>
+                        <p class="text-sm text-blue-700 mt-1">{{ notification.message }}</p>
+                        <p class="text-xs text-blue-600 mt-2">
+                            <i class="fas fa-clock mr-1"></i>{{ notification.created_at|timesince }} ago
+                        </p>
+                    </div>
+                    <form method="post"
+                          hx-post="{% url 'mana:mark_notification_read' assessment.id notification.id %}"
+                          hx-target="#notification-{{ notification.id }}"
+                          hx-swap="outerHTML swap:300ms">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </form>
+                </div>
+                {% if notification.workshop %}
+                <div class="mt-3 pt-3 border-t border-blue-200">
+                    <a href="{% url 'mana:participant_workshop_detail' assessment.id notification.workshop.workshop_type %}"
+                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-all duration-200">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Start Workshop</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
         <div id="workshop-nav"
              class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6"
@@ -45,6 +90,41 @@
                 <li>Need help? Contact your facilitator so we can keep the workshop cadence on track.</li>
             </ol>
         </section>
+
+        {% if quick_action %}
+        <section class="bg-white border border-gray-100 rounded-3xl shadow-sm p-8" data-task-id="{{ quick_action.id }}">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Quick Action</p>
+                    <h2 class="mt-1 text-xl font-semibold text-gray-900">{{ quick_action.number }}</h2>
+                    <p class="mt-1 text-sm text-gray-600 max-w-2xl">{{ quick_action.title }}</p>
+                </div>
+                <div class="flex flex-col sm:items-end gap-3 text-sm text-gray-700">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-calendar-day text-emerald-600"></i>
+                        <span>{{ quick_action.scheduled_date|date:"F j, Y" }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-clock text-emerald-600"></i>
+                        <span>{{ quick_action.start_time|time:"g:i A" }} &ndash; {{ quick_action.end_time|time:"g:i A" }}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-signal text-emerald-600"></i>
+                        <span>Status: <span class="font-semibold text-emerald-700">{{ quick_action.status }}</span></span>
+                    </div>
+                    <a href="{{ quick_action.url }}"
+                       hx-boost="true"
+                       hx-target="body"
+                       hx-swap="innerHTML transition:true"
+                       data-task-id="{{ quick_action.id }}"
+                       class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-all duration-200">
+                        <span>Start {{ quick_action.number }}</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

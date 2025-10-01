@@ -69,6 +69,50 @@ PERFORMANCE_STATUS_WEIGHTS = {
     StaffTask.STATUS_AT_RISK: 0.1,
 }
 
+# Positions authorized to approve user accounts
+USER_APPROVAL_AUTHORIZED_POSITIONS = [
+    "Executive Director",
+    "Deputy Executive Director",
+    "DMO IV",
+    "DMO III",
+    "Information System Analyst",
+    "Information System Analyst II",
+    "Planning Officer I",
+    "Planning Officer II",
+    "Community Development Officer I",
+]
+
+
+def _can_approve_users(user):
+    """
+    Check if a user has authorization to approve user accounts.
+
+    Authorized roles:
+    - Superusers
+    - Users with user_type="admin" (OBCMS System Administrators)
+    - OOBC Staff with specific positions: Executive Director, Deputy Executive Director,
+      DMO IV, DMO III, Information System Analyst, Planning Officers, Community Development Officer I
+
+    Args:
+        user: User instance to check
+
+    Returns:
+        bool: True if user can approve accounts, False otherwise
+    """
+    # Superusers always have approval authority
+    if user.is_superuser:
+        return True
+
+    # System administrators (user_type="admin") can approve
+    if user.user_type == "admin":
+        return True
+
+    # OOBC staff with authorized positions can approve
+    if user.user_type == "oobc_staff" and user.position in USER_APPROVAL_AUTHORIZED_POSITIONS:
+        return True
+
+    return False
+
 
 def _parse_module_filters(request):
     """Return a sanitized list of module filters from query params."""
@@ -112,6 +156,16 @@ def staff_queryset():
 @login_required
 def oobc_management_home(request):
     """Surface OOBC management overview data for internal operations."""
+    # Restrict access for MANA participants
+    user = request.user
+    if (
+        not user.is_staff
+        and not user.is_superuser
+        and user.has_perm("mana.can_access_regional_mana")
+        and not user.has_perm("mana.can_facilitate_workshop")
+    ):
+        return redirect("common:page_restricted")
+
     staff_qs = staff_queryset().order_by("-date_joined")
     pending_qs = User.objects.filter(is_approved=False).order_by("-date_joined")
 
@@ -3008,6 +3062,93 @@ def staff_task_create_api(request):
         }, status=400)
 
 
+@login_required
+def user_approvals(request):
+    """User approval management page - review and approve pending user accounts."""
+
+    # Restrict to authorized approvers only
+    if not _can_approve_users(request.user):
+        return redirect("common:page_restricted")
+
+    # Get all pending users ordered by registration date
+    pending_users = User.objects.filter(is_approved=False).order_by("-date_joined")
+
+    # Get recently approved users for reference
+    recently_approved = User.objects.filter(is_approved=True).order_by("-approved_at")[:10]
+
+    context = {
+        "pending_users": pending_users,
+        "recently_approved": recently_approved,
+        "pending_count": pending_users.count(),
+    }
+
+    return render(request, "common/user_approvals.html", context)
+
+
+@login_required
+@require_POST
+def user_approval_action(request, user_id: int):
+    """Process user approval/rejection action."""
+
+    # Restrict to authorized approvers only
+    if not _can_approve_users(request.user):
+        return JsonResponse({"success": False, "error": "Unauthorized"}, status=403)
+
+    user_to_process = get_object_or_404(User, id=user_id, is_approved=False)
+    action = request.POST.get("action")
+
+    if action == "approve":
+        user_to_process.is_approved = True
+        user_to_process.approved_by = request.user
+        user_to_process.approved_at = timezone.now()
+        user_to_process.save()
+
+        messages.success(
+            request,
+            f"✓ {user_to_process.get_full_name() or user_to_process.username} has been approved."
+        )
+
+        # Return HTMX response to refresh the page
+        if request.headers.get("HX-Request"):
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "user-approved": {"id": user_id},
+                        "refresh-page": True,
+                    })
+                }
+            )
+        return redirect("common:user_approvals")
+
+    elif action == "reject":
+        # For rejection, we could either delete or mark inactive
+        # For safety, we'll just mark inactive but keep the record
+        user_to_process.is_active = False
+        user_to_process.save()
+
+        messages.warning(
+            request,
+            f"✗ {user_to_process.get_full_name() or user_to_process.username} has been rejected and marked inactive."
+        )
+
+        # Return HTMX response to refresh the page
+        if request.headers.get("HX-Request"):
+            return HttpResponse(
+                status=204,
+                headers={
+                    "HX-Trigger": json.dumps({
+                        "user-rejected": {"id": user_id},
+                        "refresh-page": True,
+                    })
+                }
+            )
+        return redirect("common:user_approvals")
+
+    messages.error(request, "Invalid action specified.")
+    return redirect("common:user_approvals")
+
+
 __all__ = [
     "oobc_management_home",
     "oobc_calendar",
@@ -3036,4 +3177,6 @@ __all__ = [
     "staff_training_development",
     "staff_team_assign",
     "staff_team_manage",
+    "user_approvals",
+    "user_approval_action",
 ]

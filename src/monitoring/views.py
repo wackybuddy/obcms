@@ -60,6 +60,15 @@ def _prefetch_entries():
 @login_required
 def monitoring_dashboard(request):
     """Render the consolidated Monitoring & Evaluation workspace."""
+    # Restrict access for MANA participants
+    user = request.user
+    if (
+        not user.is_staff
+        and not user.is_superuser
+        and user.has_perm("mana.can_access_regional_mana")
+        and not user.has_perm("mana.can_facilitate_workshop")
+    ):
+        return redirect("common:page_restricted")
 
     entries = _prefetch_entries()
     base_queryset = MonitoringEntry.objects.all()

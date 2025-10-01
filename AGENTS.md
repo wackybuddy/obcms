@@ -6,6 +6,9 @@ The Django project lives in `src/`; `obc_management` supplies settings/URLs whil
 ## Build, Test, and Development Commands
 Run `./scripts/bootstrap_venv.sh && source venv/bin/activate` to create and enter the Python 3.12 virtualenv. `pip install -r requirements/development.txt` brings in Django, DRF, pytest, and tooling. Inside `src/`, use `./manage.py migrate` then `./manage.py runserver` for local development. `black src && isort src && flake8 src` keeps style checks clean; run `pytest --ds=obc_management.settings` (optionally `-k <pattern>`) and `coverage run -m pytest && coverage report` before merging.
 
+### ⚠️ CRITICAL: Database Protection Policy ⚠️
+**NEVER delete `src/db.sqlite3` or any database file.** The database contains essential development data, user accounts, test scenarios, and ongoing work. Always apply migrations to the existing database using `./manage.py migrate`. If migration conflicts occur: (1) DO NOT delete the database, (2) resolve conflicts using Django migration tools (`--fake`, `--fake-initial`, `squashmigrations`), (3) ask the user before any destructive action. Deleting the database destroys all development progress and is unacceptable.
+
 ## Coding Style & Naming Conventions
 Black's defaults (88-character width, four spaces) govern formatting. Modules stay snake_case; models, services, and forms use PascalCase. Keep serializers beside their DRF views, management commands under `<app>/management/commands/`, and shared enums in `src/common`. Use descriptive template blocks such as `{% block community_summary %}` to clarify intent. Trigger `pre-commit run --all-files` when hooks are enabled.
 
@@ -14,6 +17,19 @@ Black's defaults (88-character width, four spaces) govern formatting. Modules st
 - Prefer `{% include "components/form_field_select.html" with field=form.region placeholder="Select region..." %}` instead of hand-coding select markup so dropdowns match the Barangay OBC UI.
 - The helpers already wire help text, errors, and the chevron icon; only pass `label`, `placeholder`, and `extra_classes` when you need overrides.
 - Keep widget classes in forms via `_apply_form_field_styles` (e.g., `src/common/forms/staff.py`) so future refactors stay centralized.
+
+### Form Design Standards
+**CRITICAL**: When designing or modifying forms, ALWAYS reference existing templates first:
+1. **Review similar forms** in `src/templates/` to understand established UI patterns
+2. **Use component templates** from `src/templates/components/` for standard elements
+3. **Follow dropdown styling standards**:
+   - Use `rounded-xl` borders, `border-gray-200` color
+   - Apply emerald focus rings: `focus:ring-emerald-500 focus:border-emerald-500`
+   - Include chevron icons positioned right
+   - Maintain 48px minimum height for touch targets
+   - Use smooth transitions: `transition-all duration-200`
+4. **Reference templates**: Check `src/templates/communities/provincial_manage.html` and `src/templates/components/form_field_select.html` for examples
+5. **Maintain visual consistency** across all forms in spacing, colors, borders, and interactive states
 
 ### List/Table Card Template
 - Use `components/data_table_card.html` for directory/list pages (Barangay & Municipal OBC tables) to keep the gradient header, column layout, and View/Edit/Delete actions consistent.

@@ -89,7 +89,8 @@ def setup_workshop_environment():
         user=participant_user,
         assessment=assessment,
         stakeholder_type="elder",
-        organization="Community Council",
+        region=province.region,
+        office_business_name="Community Council",
         province=province,
         created_by=facilitator,
         current_workshop="workshop_1",
@@ -127,10 +128,11 @@ class TestWorkshopAccessManager:
         assert not manager.is_workshop_accessible(participant, "workshop_2")
 
     def test_mark_workshop_complete_advances(self, setup_workshop_environment):
-        """Completing workshop should advance to next."""
+        """Completing a workshop records progress without auto-advancing."""
         env = setup_workshop_environment
         participant = env["participant"]
         assessment = env["assessment"]
+        facilitator = env["facilitator"]
 
         manager = WorkshopAccessManager(assessment)
         result = manager.mark_workshop_complete(
@@ -140,19 +142,25 @@ class TestWorkshopAccessManager:
         assert result is True
         participant.refresh_from_db()
         assert "workshop_1" in participant.completed_workshops
-        assert participant.current_workshop == "workshop_2"
+        assert participant.current_workshop == "workshop_1"
+        assert participant.facilitator_advanced_to == "workshop_1"
 
-        # Can access both workshop 1 (completed) and workshop 2 (current)
         allowed = manager.get_allowed_workshops(participant)
-        assert "workshop_1" in allowed
-        assert "workshop_2" in allowed
-        assert "workshop_3" not in allowed
+        assert allowed == ["workshop_1"]
+
+        # Facilitator advancement unlocks workshop 2
+        manager.advance_all_participants("workshop_2", facilitator)
+        participant.refresh_from_db()
+        allowed_after_advance = manager.get_allowed_workshops(participant)
+        assert participant.current_workshop == "workshop_2"
+        assert allowed_after_advance[:2] == ["workshop_1", "workshop_2"]
 
     def test_complete_all_workshops(self, setup_workshop_environment):
         """Complete all 5 workshops sequentially."""
         env = setup_workshop_environment
         participant = env["participant"]
         assessment = env["assessment"]
+        facilitator = env["facilitator"]
 
         manager = WorkshopAccessManager(assessment)
 
@@ -161,10 +169,15 @@ class TestWorkshopAccessManager:
             workshop_type = f"workshop_{i}"
             result = manager.mark_workshop_complete(participant, workshop_type)
             assert result is True
+            if i < 5:
+                manager.advance_all_participants(
+                    f"workshop_{i + 1}", facilitator
+                )
 
         participant.refresh_from_db()
         assert len(participant.completed_workshops) == 5
-        assert participant.current_workshop == ""  # All done
+        assert participant.current_workshop == "workshop_5"
+        assert participant.facilitator_advanced_to == "workshop_5"
 
     def test_cannot_complete_already_completed(self, setup_workshop_environment):
         """Cannot mark same workshop complete twice."""
@@ -230,7 +243,8 @@ class TestWorkshopAccessManager:
             user=user2,
             assessment=assessment,
             stakeholder_type="youth_leader",
-            organization="Youth Org",
+            region=env["province"].region,
+            office_business_name="Youth Org",
             province=env["province"],
             created_by=facilitator,
             current_workshop="workshop_1",
@@ -249,20 +263,23 @@ class TestWorkshopAccessManager:
         env = setup_workshop_environment
         participant = env["participant"]
         assessment = env["assessment"]
+        facilitator = env["facilitator"]
 
         manager = WorkshopAccessManager(assessment)
 
         # Complete 2 workshops
         manager.mark_workshop_complete(participant, "workshop_1")
+        manager.advance_all_participants("workshop_2", facilitator)
         manager.mark_workshop_complete(participant, "workshop_2")
 
+        participant.refresh_from_db()
         summary = manager.get_progress_summary(participant)
 
         assert summary["completed_count"] == 2
         assert summary["total_workshops"] == 5
         assert summary["completion_percentage"] == 40.0
-        assert summary["current_workshop"] == "workshop_3"
-        assert summary["next_workshop"] == "workshop_4"
+        assert summary["current_workshop"] == "workshop_2"
+        assert summary["next_workshop"] == "workshop_3"
 
     def test_assessment_progress_summary(self, setup_workshop_environment):
         """Assessment-level progress tracking works."""
@@ -281,7 +298,8 @@ class TestWorkshopAccessManager:
             user=user2,
             assessment=assessment,
             stakeholder_type="farmer",
-            organization="Farmers Assoc",
+            region=env["province"].region,
+            office_business_name="Farmers Assoc",
             province=env["province"],
             created_by=facilitator,
             current_workshop="workshop_1",
@@ -294,11 +312,19 @@ class TestWorkshopAccessManager:
 
         # Participant 1 completes 2 workshops
         manager.mark_workshop_complete(participant1, "workshop_1")
-        manager.mark_workshop_complete(participant1, "workshop_2")
+        manager.mark_workshop_complete(participant2, "workshop_1")
+        manager.advance_all_participants("workshop_2", facilitator)
 
-        # Participant 2 completes all 5
-        for i in range(1, 6):
-            manager.mark_workshop_complete(participant2, f"workshop_{i}")
+        manager.mark_workshop_complete(participant1, "workshop_2")
+        manager.mark_workshop_complete(participant2, "workshop_2")
+        manager.advance_all_participants("workshop_3", facilitator)
+
+        # Participant 2 completes remaining workshops with facilitator advancement
+        manager.mark_workshop_complete(participant2, "workshop_3")
+        manager.advance_all_participants("workshop_4", facilitator)
+        manager.mark_workshop_complete(participant2, "workshop_4")
+        manager.advance_all_participants("workshop_5", facilitator)
+        manager.mark_workshop_complete(participant2, "workshop_5")
 
         summary = manager.get_assessment_progress_summary()
 
@@ -328,14 +354,19 @@ class TestWorkshopAccessControl:
         env = setup_workshop_environment
         participant = env["participant"]
         assessment = env["assessment"]
+        facilitator = env["facilitator"]
 
         manager = WorkshopAccessManager(assessment)
         manager.mark_workshop_complete(participant, "workshop_1")
+        manager.advance_all_participants("workshop_2", facilitator)
         manager.mark_workshop_complete(participant, "workshop_2")
+        manager.advance_all_participants("workshop_3", facilitator)
 
+        participant.refresh_from_db()
         # Workshop 1 should still be accessible
         assert manager.is_workshop_accessible(participant, "workshop_1")
-        # Current workshop (3) should be accessible
+        assert manager.is_workshop_accessible(participant, "workshop_2")
+        # Current workshop (3) should be accessible after facilitator advancement
         assert manager.is_workshop_accessible(participant, "workshop_3")
 
     def test_manual_unlock_by_facilitator(self, setup_workshop_environment):

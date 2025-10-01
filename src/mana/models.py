@@ -133,13 +133,13 @@ class Assessment(models.Model):
     )
 
     # Community and Location (flexible for different assessment levels)
-    community = models.ForeignKey(
-        OBCCommunity,
-        on_delete=models.CASCADE,
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.SET_NULL,
         related_name="assessments",
         null=True,
         blank=True,
-        help_text="Community being assessed (for community-level assessments)",
+        help_text="Region covered by the assessment",
     )
 
     province = models.ForeignKey(
@@ -149,6 +149,33 @@ class Assessment(models.Model):
         null=True,
         blank=True,
         help_text="Province being assessed (for regional/provincial assessments)",
+    )
+
+    municipality = models.ForeignKey(
+        Municipality,
+        on_delete=models.SET_NULL,
+        related_name="assessments",
+        null=True,
+        blank=True,
+        help_text="Municipality or city covered by the assessment",
+    )
+
+    barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.SET_NULL,
+        related_name="assessments",
+        null=True,
+        blank=True,
+        help_text="Barangay covered by the assessment",
+    )
+
+    community = models.ForeignKey(
+        OBCCommunity,
+        on_delete=models.CASCADE,
+        related_name="assessments",
+        null=True,
+        blank=True,
+        help_text="Community being assessed (for community-level assessments)",
     )
 
     location_details = models.TextField(
@@ -260,29 +287,26 @@ class Assessment(models.Model):
         indexes = [
             models.Index(fields=["community", "status"]),
             models.Index(fields=["province", "status"]),
+            models.Index(fields=["municipality", "status"]),
+            models.Index(fields=["barangay", "status"]),
+            models.Index(fields=["region", "status"]),
             models.Index(fields=["category", "priority"]),
             models.Index(fields=["planned_start_date", "planned_end_date"]),
         ]
 
     def __str__(self):
         if self.community:
-            return f"{self.title} - {self.community.barangay.name}"
-        elif self.province:
+            display = self.community.display_name or self.community.barangay.name
+            return f"{self.title} - {display}"
+        if self.barangay:
+            return f"{self.title} - {self.barangay.name}"
+        if self.municipality:
+            return f"{self.title} - {self.municipality.name}"
+        if self.province:
             return f"{self.title} - {self.province.name}"
+        if self.region:
+            return f"{self.title} - {self.region.name}"
         return self.title
-
-    def clean(self):
-        if self.planned_end_date and self.planned_start_date:
-            if self.planned_end_date < self.planned_start_date:
-                raise ValidationError(
-                    "Planned end date cannot be earlier than start date"
-                )
-
-        if self.actual_end_date and self.actual_start_date:
-            if self.actual_end_date < self.actual_start_date:
-                raise ValidationError(
-                    "Actual end date cannot be earlier than start date"
-                )
 
     @property
     def duration_days(self):
@@ -299,40 +323,125 @@ class Assessment(models.Model):
         return False
 
     def clean(self):
-        # Validate that either community OR province is set, not both
-        if not self.community and not self.province:
-            raise ValidationError(
-                "Either community or province must be specified for the assessment."
-            )
+        super().clean()
 
-        if self.community and self.province:
-            raise ValidationError(
-                "Assessment cannot be linked to both community and province. Choose one."
-            )
+        errors = {}
 
-        # Validate assessment level consistency
-        if self.assessment_level in ['regional', 'provincial'] and self.community:
-            raise ValidationError(
-                "Regional/Provincial assessments should be linked to a province, not a community."
-            )
-
-        if self.assessment_level in ['community', 'barangay'] and self.province:
-            raise ValidationError(
-                "Community/Barangay assessments should be linked to a community, not a province."
-            )
-
-        # Existing date validations
+        # Validate planned/actual timelines
         if self.planned_end_date and self.planned_start_date:
             if self.planned_end_date < self.planned_start_date:
-                raise ValidationError(
-                    "Planned end date cannot be earlier than start date"
+                errors["planned_end_date"] = ValidationError(
+                    "Planned end date cannot be earlier than start date."
                 )
-
         if self.actual_end_date and self.actual_start_date:
             if self.actual_end_date < self.actual_start_date:
-                raise ValidationError(
-                    "Actual end date cannot be earlier than start date"
+                errors["actual_end_date"] = ValidationError(
+                    "Actual end date cannot be earlier than start date."
                 )
+
+        # Auto-align hierarchical relationships
+        if self.community:
+            community_barangay = self.community.barangay
+            if community_barangay:
+                self.barangay = community_barangay
+                self.municipality = community_barangay.municipality
+                if self.municipality:
+                    self.province = self.municipality.province
+                    if self.province:
+                        self.region = self.province.region
+
+        if self.barangay and not self.municipality:
+            self.municipality = self.barangay.municipality
+        if self.municipality and not self.province:
+            self.province = self.municipality.province
+        if self.province and not self.region:
+            self.region = self.province.region
+
+        # Validate hierarchical coherence when explicit selections are provided
+        if self.barangay and self.municipality and self.barangay.municipality_id != self.municipality_id:
+            errors["barangay"] = ValidationError(
+                "Selected barangay must belong to the chosen municipality."
+            )
+        if self.municipality and self.province and self.municipality.province_id != self.province_id:
+            errors["municipality"] = ValidationError(
+                "Selected municipality must belong to the chosen province."
+            )
+        if self.province and self.region and self.province.region_id != self.region_id:
+            errors["province"] = ValidationError(
+                "Selected province must belong to the chosen region."
+            )
+
+        level = self.assessment_level or "community"
+
+        if level == "regional":
+            if not self.region:
+                errors["region"] = ValidationError(
+                    "Regional assessments must specify a region."
+                )
+            self.province = None
+            self.municipality = None
+            self.barangay = None
+            self.community = None
+        elif level == "provincial":
+            if not self.region:
+                errors["region"] = ValidationError(
+                    "Provincial assessments must specify a region."
+                )
+            if not self.province:
+                errors["province"] = ValidationError(
+                    "Provincial assessments must specify a province."
+                )
+            self.municipality = None
+            self.barangay = None
+            self.community = None
+        elif level == "city_municipal":
+            if not self.region:
+                errors["region"] = ValidationError(
+                    "City/Municipal assessments must specify a region."
+                )
+            if not self.province:
+                errors["province"] = ValidationError(
+                    "City/Municipal assessments must specify a province."
+                )
+            if not self.municipality:
+                errors["municipality"] = ValidationError(
+                    "City/Municipal assessments must specify a municipality."
+                )
+            self.barangay = None
+            self.community = None
+        elif level == "barangay":
+            if not self.region:
+                errors["region"] = ValidationError(
+                    "Barangay assessments must specify a region."
+                )
+            if not self.province:
+                errors["province"] = ValidationError(
+                    "Barangay assessments must specify a province."
+                )
+            if not self.municipality:
+                errors["municipality"] = ValidationError(
+                    "Barangay assessments must specify a municipality."
+                )
+            if not self.barangay:
+                errors["barangay"] = ValidationError(
+                    "Barangay assessments must specify a barangay."
+                )
+            self.community = None
+        else:  # Community level and other granular configurations
+            if not self.community:
+                errors["community"] = ValidationError(
+                    "Community assessments must be linked to a community."
+                )
+            # Hierarchy already enforced through auto-alignment above.
+
+        if not self.region:
+            errors.setdefault(
+                "region",
+                ValidationError("An assessment must be associated with at least one region."),
+            )
+
+        if errors:
+            raise ValidationError(errors)
 
 
 class AssessmentTeamMember(models.Model):
@@ -2773,16 +2882,104 @@ class WorkshopParticipantAccount(models.Model):
         help_text="Assessment this participant is enrolled in",
     )
 
+    # Demographics
+    age = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Participant's age"
+    )
+
+    SEX_CHOICES = [
+        ("male", "Male"),
+        ("female", "Female"),
+    ]
+
+    sex = models.CharField(
+        max_length=10, choices=SEX_CHOICES, blank=True, help_text="Participant's sex"
+    )
+
     # Stakeholder Information
     stakeholder_type = models.CharField(
         max_length=20, choices=STAKEHOLDER_TYPES, help_text="Type of stakeholder"
     )
 
-    organization = models.CharField(
-        max_length=200, blank=True, help_text="Organization represented"
+    # Education
+    EDUCATIONAL_LEVELS = [
+        ("graduate_degree", "Graduate Degree Holder"),
+        ("bachelors_degree", "Bachelor's Degree Holder"),
+        ("college_level", "College Level"),
+        ("high_school_graduate", "High School Graduate"),
+        ("high_school_level", "High School Level"),
+        ("elementary_level", "Elementary Level"),
+        ("no_formal_education", "No Formal Education"),
+    ]
+
+    educational_level = models.CharField(
+        max_length=50,
+        choices=EDUCATIONAL_LEVELS,
+        blank=True,
+        help_text="Educational attainment",
     )
 
-    # Geography
+    ARABIC_EDUCATION_LEVELS = [
+        ("kulliyah_graduate", "Kulliyah Graduate"),
+        ("thanawiyyah_level", "Thanawiyyah Level"),
+        ("mutawassitah_level", "Mutawassitah Level"),
+        ("ibtidaiyyah_level", "Ibtidaiyyah Level"),
+        ("tahfidz_graduate", "Tahfidz Graduate/Level"),
+        ("no_arabic_education", "No Arabic Education"),
+    ]
+
+    arabic_education_level = models.CharField(
+        max_length=50,
+        choices=ARABIC_EDUCATION_LEVELS,
+        blank=True,
+        help_text="Arabic/Islamic education level",
+    )
+
+    # Occupation
+    OCCUPATION_CHOICES = [
+        ("government_employee", "Government Employee"),
+        ("business_owner", "Business Owner"),
+        ("private_sector", "Private Sector Employee"),
+        ("ngo_worker", "NGO Worker"),
+        ("farmer", "Farmer"),
+        ("fisherfolk", "Fisherfolk"),
+        ("teacher", "Teacher/Educator"),
+        ("health_worker", "Health Worker"),
+        ("religious_worker", "Religious Worker/Imam"),
+        ("traditional_leader", "Traditional/Community Leader"),
+        ("student", "Student"),
+        ("self_employed", "Self-Employed"),
+        ("unemployed", "Unemployed"),
+        ("retired", "Retired"),
+        ("other", "Other"),
+    ]
+
+    occupation = models.CharField(
+        max_length=50,
+        choices=OCCUPATION_CHOICES,
+        blank=True,
+        help_text="Current occupation",
+    )
+
+    # Office/Business Information (Optional)
+    office_business_name = models.CharField(
+        max_length=200, blank=True, help_text="Name of office or business (optional)"
+    )
+
+    office_mandate = models.TextField(
+        blank=True, help_text="Mandate of office (if government agency, optional)"
+    )
+
+    # Geography - Participant Address
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.CASCADE,
+        related_name="workshop_participants_region",
+        null=True,
+        blank=True,
+        help_text="Region of participant",
+    )
+
     province = models.ForeignKey(
         Province,
         on_delete=models.CASCADE,
@@ -2806,6 +3003,49 @@ class WorkshopParticipantAccount(models.Model):
         blank=True,
         related_name="workshop_participants",
         help_text="Barangay (optional)",
+    )
+
+    # Office/Business Address (Optional)
+    office_region = models.ForeignKey(
+        Region,
+        on_delete=models.SET_NULL,
+        related_name="office_participants",
+        null=True,
+        blank=True,
+        help_text="Office region (optional)",
+    )
+
+    office_province = models.ForeignKey(
+        Province,
+        on_delete=models.SET_NULL,
+        related_name="office_participants",
+        null=True,
+        blank=True,
+        help_text="Office province (optional)",
+    )
+
+    office_municipality = models.ForeignKey(
+        Municipality,
+        on_delete=models.SET_NULL,
+        related_name="office_participants",
+        null=True,
+        blank=True,
+        help_text="Office municipality (optional)",
+    )
+
+    office_barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.SET_NULL,
+        related_name="office_participants",
+        null=True,
+        blank=True,
+        help_text="Office barangay (optional)",
+    )
+
+    # Mandate Awareness
+    aware_of_mandate = models.BooleanField(
+        default=False,
+        help_text="Aware of the Mandate for Assistance to Other Bangsamoro Communities",
     )
 
     # Completion State
@@ -2844,6 +3084,13 @@ class WorkshopParticipantAccount(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # Facilitator-controlled advancement tracking
+    facilitator_advanced_to = models.CharField(
+        max_length=15,
+        default="workshop_1",
+        help_text="Maximum workshop unlocked by facilitator for this participant",
+    )
+
     class Meta:
         ordering = ["province", "user__last_name"]
         unique_together = ["user", "assessment"]
@@ -2857,6 +3104,110 @@ class WorkshopParticipantAccount(models.Model):
 
     def __str__(self):
         return f"{self.user.get_full_name()} - {self.province.name}"
+
+
+class FacilitatorAssessmentAssignment(models.Model):
+    """Assignment of facilitators to specific MANA assessments."""
+
+    facilitator = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="facilitator_assignments",
+        help_text="Facilitator user assigned to this assessment",
+    )
+
+    assessment = models.ForeignKey(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name="facilitator_assignments",
+        help_text="Assessment the facilitator is assigned to",
+    )
+
+    assigned_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="facilitator_assignments_created",
+        help_text="Staff/superuser who made this assignment",
+    )
+
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-assigned_at"]
+        unique_together = ["facilitator", "assessment"]
+        verbose_name = "Facilitator Assessment Assignment"
+        verbose_name_plural = "Facilitator Assessment Assignments"
+
+    def __str__(self):
+        return f"{self.facilitator.get_full_name()} → {self.assessment.title}"
+
+
+class WorkshopNotification(models.Model):
+    """In-app notifications for workshop participants."""
+
+    NOTIFICATION_TYPES = [
+        ("workshop_advanced", "Workshop Advanced"),
+        ("workshop_reminder", "Workshop Reminder"),
+        ("assessment_complete", "Assessment Complete"),
+    ]
+
+    participant = models.ForeignKey(
+        WorkshopParticipantAccount,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        help_text="Participant receiving this notification",
+    )
+
+    notification_type = models.CharField(
+        max_length=30,
+        choices=NOTIFICATION_TYPES,
+        help_text="Type of notification",
+    )
+
+    title = models.CharField(
+        max_length=200,
+        help_text="Notification title",
+    )
+
+    message = models.TextField(
+        help_text="Notification message content",
+    )
+
+    workshop = models.ForeignKey(
+        WorkshopActivity,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="notifications",
+        help_text="Related workshop (if applicable)",
+    )
+
+    is_read = models.BooleanField(
+        default=False,
+        help_text="Whether participant has read this notification",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Workshop Notification"
+        verbose_name_plural = "Workshop Notifications"
+        indexes = [
+            models.Index(fields=["participant", "-created_at"]),
+            models.Index(fields=["participant", "is_read"]),
+        ]
+
+    def __str__(self):
+        return f"{self.participant.user.get_full_name()} - {self.title}"
+
+    def mark_as_read(self):
+        """Mark notification as read."""
+        if not self.is_read:
+            self.is_read = True
+            self.read_at = timezone.now()
+            self.save(update_fields=["is_read", "read_at"])
 
 
 class WorkshopResponse(models.Model):

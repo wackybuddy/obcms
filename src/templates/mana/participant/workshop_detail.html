@@ -5,9 +5,10 @@
 
 {% block content %}
 <div class="bg-neutral-50 min-h-screen py-10">
-    <div class="max-w-5xl mx-auto space-y-8">
+    <div class="max-w-7xl mx-auto space-y-1">
+        <!-- Workshop Tabs -->
         <div id="workshop-nav"
-             class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6"
+             class="bg-white border border-gray-100 shadow-sm"
              data-task-id="{{ assessment.id }}"
              hx-get="{% url 'mana:participant_dashboard' assessment.id %}"
              hx-trigger="refresh-workshop-nav from:body"
@@ -16,68 +17,411 @@
             {% include "mana/participant/partials/workshop_nav.html" %}
         </div>
 
-        <main class="bg-white border border-gray-100 rounded-3xl shadow-xl p-8 space-y-8" data-task-id="{{ workshop.id }}">
-            <header class="space-y-3">
-                <p class="text-sm uppercase tracking-wide text-gray-400">{{ workshop.get_workshop_type_display }}</p>
-                <h1 class="text-2xl font-bold text-gray-900">{{ workshop.title }}</h1>
-                <p class="text-gray-600">{{ workshop.description }}</p>
-            </header>
+        <main class="bg-white border-x border-b border-gray-100 shadow-xl overflow-hidden" data-task-id="{{ workshop.id }}">
+            <!-- Workshop Details -->
+            <section class="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100 p-6">
+                <div class="max-w-4xl">
+                    <p class="text-xs uppercase tracking-wide text-emerald-600 font-semibold">{{ workshop.get_workshop_type_display }}</p>
+                    <h1 class="text-2xl font-bold text-gray-900 mt-2">{{ workshop.title }}</h1>
+                    <p class="text-gray-700 mt-2">{{ workshop.description }}</p>
 
-            <div id="autosave-status" class="flex items-center gap-2 text-sm text-gray-500">
-                <span class="inline-flex w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Changes auto-save while you type. Submit once you're confident with your responses.
+                    <!-- Progress bar -->
+                    <div class="mt-4 space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600 font-medium">Your Progress</span>
+                            <span class="text-emerald-600 font-semibold"><span id="progress-count">0</span> of {{ question_field_pairs|length }} questions answered</span>
+                        </div>
+                        <div class="w-full bg-white/50 rounded-full h-2 overflow-hidden">
+                            <div id="progress-bar" class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {% if is_submitted %}
+            <div class="flex items-center gap-3 text-sm bg-green-50 border-b border-green-200 px-8 py-4">
+                <i class="fas fa-check-circle text-green-600 text-lg"></i>
+                <div>
+                    <p class="text-green-800 font-semibold">This workshop has been submitted</p>
+                    <p class="text-green-700 text-xs mt-0.5">Your responses are locked and cannot be edited to maintain data integrity.</p>
+                </div>
+            </div>
+            {% else %}
+            <div id="autosave-status" class="flex items-center gap-2 text-sm bg-emerald-50 border-b border-emerald-100 px-8 py-3">
+                <span class="inline-flex w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-emerald-700 font-medium">Changes auto-save while you type. Submit once you're confident with your responses.</span>
+            </div>
+            {% endif %}
+
+            <!-- Tabs Navigation -->
+            <div class="border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white">
+                <div class="px-8 py-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Workshop Questions</h3>
+                        <span class="text-xs text-gray-500">Click a question to jump to it</span>
+                    </div>
+                    <nav class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" role="tablist">
+                        {% for pair in question_field_pairs %}
+                        <button type="button"
+                                data-tab-target="question-{{ forloop.counter }}"
+                                data-question-index="{{ forloop.counter }}"
+                                class="tab-button group relative flex-shrink-0 px-5 py-4 text-sm font-medium whitespace-nowrap transition-all duration-300 rounded-xl border-2 {% if forloop.first %}active border-emerald-500 bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-700 shadow-md{% else %}border-gray-200 bg-white text-gray-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 hover:shadow-md{% endif %}"
+                                onclick="switchTab(event, 'question-{{ forloop.counter }}')">
+                            <div class="flex items-center gap-3">
+                                <span class="question-badge inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300 {% if forloop.first %}bg-emerald-500 text-white ring-2 ring-emerald-200{% else %}bg-gray-200 text-gray-700 group-hover:bg-emerald-500 group-hover:text-white{% endif %} text-sm font-bold">
+                                    {{ forloop.counter }}
+                                </span>
+                                <div class="flex flex-col items-start">
+                                    <span class="font-semibold">Question {{ forloop.counter }}</span>
+                                    <span class="answer-status hidden text-xs text-emerald-600 font-medium mt-0.5">
+                                        <i class="fas fa-check-circle"></i> Answered
+                                    </span>
+                                </div>
+                            </div>
+                            <!-- Active indicator -->
+                            <span class="absolute inset-x-0 -bottom-0.5 h-1 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transform transition-all duration-300 {% if not forloop.first %}scale-x-0 opacity-0{% endif %}"></span>
+                        </button>
+                        {% endfor %}
+                    </nav>
+                </div>
             </div>
 
             <form id="workshop-response-form"
                   method="post"
+                  {% if not is_submitted %}
                   hx-post="{% url 'mana:participant_workshop_detail' assessment.id workshop.workshop_type %}"
                   hx-trigger="change delay:1200ms, keyup changed delay:1200ms from:.hx-field"
                   hx-target="#autosave-status"
                   hx-swap="outerHTML swap:200ms"
                   hx-include="#workshop-response-form"
-                  hx-sync="closest form:queue">
+                  hx-sync="closest form:queue"
+                  {% endif %}>
                 {% csrf_token %}
-                <div class="space-y-6">
+
+                <!-- Tab Contents -->
+                <div class="p-8">
                     {% for pair in question_field_pairs %}
                         {% with question=pair.question field=pair.field %}
-                            {% if question.type == 'repeater' or question.type == 'structured' %}
-                                {% include "mana/participant/partials/question_dynamic.html" with question=question field=field %}
-                            {% else %}
-                                <div class="bg-neutral-50 border border-gray-100 rounded-2xl p-6">
-                                    {% include "components/form_field.html" with field=field label=field.label placeholder=field.help_text %}
+                        <div id="question-{{ forloop.counter }}"
+                             class="tab-content {% if not forloop.first %}hidden{% endif %}"
+                             data-question-id="{{ question.id }}">
+                            <div class="max-w-3xl mx-auto space-y-6">
+                                <!-- Question Header -->
+                                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-6 space-y-3">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <h2 class="text-lg font-semibold text-gray-900 flex items-start gap-3">
+                                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-white text-sm font-bold flex-shrink-0 mt-0.5">{{ forloop.counter }}</span>
+                                            <span>{{ question.text }}</span>
+                                        </h2>
+                                    </div>
+                                    {% if question.help_text %}
+                                    <p class="text-sm text-emerald-700 italic ml-11">💡 {{ question.help_text }}</p>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
+
+                                <!-- Question Field -->
+                                {% if question.type == 'repeater' or question.type == 'structured' %}
+                                    {% include "mana/participant/partials/question_dynamic.html" with question=question field=field %}
+                                {% else %}
+                                    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                                        {% include "components/form_field.html" with field=field label="" placeholder=field.help_text %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- Navigation Buttons -->
+                                <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                                    {% if not forloop.first %}
+                                    <button type="button"
+                                            onclick="navigateTab('question-{{ forloop.counter|add:"-1" }}')"
+                                            class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                                        <i class="fas fa-arrow-left"></i>
+                                        Previous Question
+                                    </button>
+                                    {% else %}
+                                    <div></div>
+                                    {% endif %}
+
+                                    {% if not forloop.last %}
+                                    <button type="button"
+                                            onclick="navigateTab('question-{{ forloop.counter|add:"1" }}')"
+                                            class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition shadow-md hover:shadow-lg">
+                                        Next Question
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
                         {% endwith %}
                     {% endfor %}
                 </div>
 
-                <div class="flex flex-wrap items-center justify-between gap-3 mt-8">
-                    <button type="submit"
-                            name="action"
-                            value="save_draft"
-                            class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition">
-                        <i class="fas fa-save"></i>
-                        Save Draft
-                    </button>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs text-gray-400">Submitting will lock this workshop and unlock the next session.</span>
+                <!-- Form Actions (Sticky Footer) -->
+                {% if not is_submitted %}
+                <div class="sticky bottom-0 bg-white border-t border-gray-200 shadow-lg p-6">
+                    <div class="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-3">
                         <button type="submit"
                                 name="action"
-                                value="submit"
-                                class="btn-primary px-6 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transition">
-                            <i class="fas fa-paper-plane mr-2"></i> Submit Workshop
+                                value="save_draft"
+                                class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                            <i class="fas fa-save"></i>
+                            Save Draft
                         </button>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-gray-500">Submitting will lock this workshop and unlock the next session.</span>
+                            <button type="submit"
+                                    name="action"
+                                    value="submit"
+                                    class="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl hover:bg-emerald-700 transition">
+                                <i class="fas fa-paper-plane"></i>
+                                Submit Workshop
+                            </button>
+                        </div>
                     </div>
                 </div>
+                {% endif %}
             </form>
         </main>
     </div>
 </div>
 {% endblock %}
 
+{% block extra_css %}
+{{ super }}
+<style>
+/* Enhanced scrollbar for question tabs navigation */
+.scrollbar-thin::-webkit-scrollbar {
+    height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, #10b981, #14b8a6);
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, #059669, #0d9488);
+}
+
+/* Tab button animations */
+@keyframes tabSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.tab-button {
+    animation: tabSlideIn 0.3s ease-out forwards;
+}
+
+/* Stagger animation for question tabs */
+.tab-button:nth-child(1) { animation-delay: 0.05s; }
+.tab-button:nth-child(2) { animation-delay: 0.1s; }
+.tab-button:nth-child(3) { animation-delay: 0.15s; }
+.tab-button:nth-child(4) { animation-delay: 0.2s; }
+.tab-button:nth-child(5) { animation-delay: 0.25s; }
+.tab-button:nth-child(6) { animation-delay: 0.3s; }
+.tab-button:nth-child(7) { animation-delay: 0.35s; }
+.tab-button:nth-child(8) { animation-delay: 0.4s; }
+
+/* Enhanced focus states */
+.tab-button:focus-visible {
+    outline: 3px solid rgba(16, 185, 129, 0.5);
+    outline-offset: 2px;
+}
+
+/* Smooth transitions for answer status */
+.answer-status {
+    transition: all 0.3s ease-in-out;
+}
+
+/* Progress bar shimmer effect */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+#progress-bar {
+    background: linear-gradient(
+        90deg,
+        #10b981 0%,
+        #14b8a6 25%,
+        #10b981 50%,
+        #14b8a6 75%,
+        #10b981 100%
+    );
+    background-size: 2000px 100%;
+    animation: shimmer 3s linear infinite;
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
 {{ super }}
 <script>
+// Tab switching functionality
+function switchTab(event, tabId) {
+    // Remove active state from all tabs
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'border-emerald-500', 'bg-gradient-to-br', 'from-emerald-50', 'to-teal-50', 'text-emerald-700', 'shadow-md');
+        btn.classList.add('border-gray-200', 'bg-white', 'text-gray-600');
+
+        // Reset badge styling
+        const badge = btn.querySelector('.question-badge');
+        if (badge) {
+            badge.classList.remove('bg-emerald-500', 'text-white', 'ring-2', 'ring-emerald-200');
+            badge.classList.add('bg-gray-200', 'text-gray-700');
+        }
+
+        // Hide active indicator
+        const indicator = btn.querySelector('.absolute.inset-x-0');
+        if (indicator) {
+            indicator.classList.add('scale-x-0', 'opacity-0');
+        }
+    });
+
+    // Hide all tab contents with fade out
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.opacity = '0';
+        setTimeout(() => {
+            content.classList.add('hidden');
+        }, 150);
+    });
+
+    // Activate clicked tab
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.add('active', 'border-emerald-500', 'bg-gradient-to-br', 'from-emerald-50', 'to-teal-50', 'text-emerald-700', 'shadow-md');
+        event.currentTarget.classList.remove('border-gray-200', 'bg-white', 'text-gray-600');
+
+        // Update badge styling
+        const badge = event.currentTarget.querySelector('.question-badge');
+        if (badge) {
+            badge.classList.add('bg-emerald-500', 'text-white', 'ring-2', 'ring-emerald-200');
+            badge.classList.remove('bg-gray-200', 'text-gray-700');
+        }
+
+        // Show active indicator
+        const indicator = event.currentTarget.querySelector('.absolute.inset-x-0');
+        if (indicator) {
+            indicator.classList.remove('scale-x-0', 'opacity-0');
+        }
+
+        // Scroll tab into view
+        event.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+
+    // Show target content with fade in animation
+    setTimeout(() => {
+        const targetContent = document.getElementById(tabId);
+        if (targetContent) {
+            targetContent.classList.remove('hidden');
+            targetContent.style.opacity = '0';
+            targetContent.style.transform = 'translateY(10px)';
+            setTimeout(() => {
+                targetContent.style.transition = 'opacity 400ms ease-out, transform 400ms ease-out';
+                targetContent.style.opacity = '1';
+                targetContent.style.transform = 'translateY(0)';
+            }, 50);
+        }
+    }, 150);
+}
+
+function navigateTab(tabId) {
+    const tabButton = document.querySelector(`[data-tab-target="${tabId}"]`);
+    if (tabButton) {
+        switchTab({ currentTarget: tabButton }, tabId);
+    }
+}
+
+// Progress tracking
+function updateProgress() {
+    const totalQuestions = {{ question_field_pairs|length }};
+    let answeredCount = 0;
+
+    document.querySelectorAll('.tab-content').forEach(tabContent => {
+        const questionId = tabContent.dataset.questionId;
+        const field = document.querySelector(`[name="${questionId}"]`);
+
+        if (field && field.value && field.value.trim() !== '') {
+            answeredCount++;
+        }
+    });
+
+    const percentage = Math.round((answeredCount / totalQuestions) * 100);
+
+    const progressBar = document.getElementById('progress-bar');
+    const progressCount = document.getElementById('progress-count');
+
+    if (progressBar) {
+        progressBar.style.width = percentage + '%';
+    }
+
+    if (progressCount) {
+        progressCount.textContent = answeredCount;
+    }
+
+    // Update tab indicators with enhanced styling
+    document.querySelectorAll('.tab-content').forEach((tabContent, index) => {
+        const questionId = tabContent.dataset.questionId;
+        const field = document.querySelector(`[name="${questionId}"]`);
+        const tabButton = document.querySelectorAll('.tab-button')[index];
+        const badge = tabButton?.querySelector('.question-badge');
+        const answerStatus = tabButton?.querySelector('.answer-status');
+        const isAnswered = field && field.value && field.value.trim() !== '';
+
+        if (badge) {
+            if (isAnswered) {
+                // Don't override active state styling
+                if (!tabButton.classList.contains('active')) {
+                    badge.classList.remove('bg-gray-200', 'text-gray-700');
+                    badge.classList.add('bg-emerald-500', 'text-white');
+                }
+                // Show answered status
+                if (answerStatus) {
+                    answerStatus.classList.remove('hidden');
+                }
+            } else {
+                // Reset badge if not answered and not active
+                if (!tabButton.classList.contains('active')) {
+                    badge.classList.remove('bg-emerald-500', 'text-white');
+                    badge.classList.add('bg-gray-200', 'text-gray-700');
+                }
+                // Hide answered status
+                if (answerStatus) {
+                    answerStatus.classList.add('hidden');
+                }
+            }
+        }
+    });
+}
+
+// Initialize progress on page load
+document.addEventListener('DOMContentLoaded', () => {
+    updateProgress();
+
+    // Track changes to update progress
+    document.querySelectorAll('input, textarea, select').forEach(field => {
+        field.addEventListener('input', updateProgress);
+        field.addEventListener('change', updateProgress);
+    });
+});
+
+// Structured and repeater field management
 (function() {
     const structuredConfig = new Map();
 
@@ -231,5 +575,22 @@
         sync();
     });
 })();
+
+// Disable all form fields if workshop is submitted
+{% if is_submitted %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Disable all input, textarea, select, and button elements
+    document.querySelectorAll('#workshop-response-form input, #workshop-response-form textarea, #workshop-response-form select, #workshop-response-form button').forEach(field => {
+        field.disabled = true;
+        field.classList.add('opacity-60', 'cursor-not-allowed');
+    });
+
+    // Add visual indicator that fields are read-only
+    document.querySelectorAll('#workshop-response-form input, #workshop-response-form textarea, #workshop-response-form select').forEach(field => {
+        field.style.backgroundColor = '#f9fafb';
+        field.style.borderColor = '#e5e7eb';
+    });
+});
+{% endif %}
 </script>
 {% endblock %}

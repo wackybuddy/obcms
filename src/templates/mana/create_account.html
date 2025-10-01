@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% block title %}Create MANA Account{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_regional_overview' %}" class="text-neutral-500 hover:text-neutral-700">Regional MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Create Account</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <header class="mb-8">
+        <div class="flex items-center mb-4">
+            <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                <i class="fas fa-user-plus text-white text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Create MANA Account</h1>
+                <p class="mt-1 text-base text-gray-600">Create facilitator or participant accounts for regional MANA workshops</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Form -->
+    <div class="bg-white rounded-xl shadow-xl border border-gray-200">
+        <div class="p-8">
+            <form method="post" id="accountForm">
+                {% csrf_token %}
+
+                <!-- Account Type Selection -->
+                <div class="mb-8 pb-8 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-user-tag text-emerald-500"></i>
+                        Account Type
+                    </h2>
+                    <div class="space-y-2">
+                        {% include "components/form_field.html" with field=form.account_type label=form.account_type.label %}
+                    </div>
+                    <p class="mt-2 text-sm text-gray-600">
+                        <strong>Facilitator:</strong> Can manage workshops, view all responses, and advance participants<br>
+                        <strong>Participant:</strong> Can complete workshops and view their own submissions
+                    </p>
+                </div>
+
+                <!-- User Details (Common) -->
+                <div class="mb-8 pb-8 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-id-card text-blue-500"></i>
+                        User Details
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            {% include "components/form_field.html" with field=form.username label=form.username.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.email label=form.email.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.first_name label=form.first_name.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.last_name label=form.last_name.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.password label=form.password.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.password_confirm label=form.password_confirm.label %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Facilitator-Specific Fields -->
+                <div id="facilitatorFields" class="hidden mb-8">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-chalkboard-teacher text-blue-500"></i>
+                        Facilitator Assignment
+                    </h2>
+
+                    <!-- Assessment Assignment -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                            <div>
+                                <h3 class="text-sm font-semibold text-blue-900 mb-1">Assessment Assignment</h3>
+                                <p class="text-sm text-blue-700">Select one or more regional MANA assessments this facilitator will manage. They will be able to monitor participants, review responses, and advance cohorts for these assessments only.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            {% include "components/form_field.html" with field=form.facilitator_assessments label=form.facilitator_assessments.label %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Participant-Specific Fields -->
+                <div id="participantFields" class="hidden mb-8">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                        <i class="fas fa-users text-purple-500"></i>
+                        Participant Details
+                    </h2>
+
+                    <!-- Assessment Selection -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                            <div>
+                                <h3 class="text-sm font-semibold text-blue-900 mb-1">Assessment Enrollment</h3>
+                                <p class="text-sm text-blue-700">Select the regional MANA assessment this participant will be enrolled in. They will have access to all 5 workshops in the selected assessment.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            {% include "components/form_field.html" with field=form.assessment label=form.assessment.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.stakeholder_type label=form.stakeholder_type.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.province label=form.province.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.municipality label=form.municipality.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.barangay label=form.barangay.label %}
+                        </div>
+                        <div>
+                            {% include "components/form_field.html" with field=form.office_business_name label=form.office_business_name.label %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Errors -->
+                {% if form.non_field_errors %}
+                <div class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <i class="fas fa-exclamation-circle text-red-500 mt-1"></i>
+                        <div>
+                            <h3 class="text-sm font-semibold text-red-900 mb-1">Form Errors</h3>
+                            {% for error in form.non_field_errors %}
+                            <p class="text-sm text-red-700">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                    <a href="{% url 'common:mana_regional_overview' %}" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gray-100 text-gray-700 text-base font-semibold hover:bg-gray-200 transition-all duration-200">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Cancel</span>
+                    </a>
+                    <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald-600 text-white text-base font-semibold hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 shadow-sm">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Create Account</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const accountTypeSelect = document.getElementById('id_account_type');
+    const facilitatorFields = document.getElementById('facilitatorFields');
+    const participantFields = document.getElementById('participantFields');
+
+    function toggleAccountFields() {
+        const accountType = accountTypeSelect.value;
+
+        if (accountType === 'facilitator') {
+            facilitatorFields.classList.remove('hidden');
+            participantFields.classList.add('hidden');
+        } else if (accountType === 'participant') {
+            participantFields.classList.remove('hidden');
+            facilitatorFields.classList.add('hidden');
+        } else {
+            facilitatorFields.classList.add('hidden');
+            participantFields.classList.add('hidden');
+        }
+    }
+
+    // Initialize on page load
+    toggleAccountFields();
+
+    // Update when account type changes
+    accountTypeSelect.addEventListener('change', toggleAccountFields);
+});
+</script>
+{% endblock %}

@@ -5,6 +5,29 @@ from . import facilitator_views, participant_views
 app_name = "mana"
 
 urlpatterns = [
+    # Account creation
+    path(
+        "create-account/",
+        facilitator_views.create_account,
+        name="create_account",
+    ),
+    # Assessment selection
+    path(
+        "participant/assessments/",
+        participant_views.participant_assessments_list,
+        name="participant_assessments_list",
+    ),
+    path(
+        "facilitator/assessments/",
+        facilitator_views.facilitator_assessments_list,
+        name="facilitator_assessments_list",
+    ),
+    # Facilitator dashboard redirects to assessments list
+    path(
+        "facilitator/dashboard/",
+        facilitator_views.facilitator_assessments_list,
+        name="facilitator_dashboard_redirect",
+    ),
     # Participant-facing routes
     path(
         "assessments/<uuid:assessment_id>/participant/onboarding/",
@@ -20,6 +43,21 @@ urlpatterns = [
         "assessments/<uuid:assessment_id>/participant/workshops/<str:workshop_type>/",
         participant_views.participant_workshop_detail,
         name="participant_workshop_detail",
+    ),
+    path(
+        "assessments/<uuid:assessment_id>/participant/workshops/<str:workshop_type>/review/",
+        participant_views.participant_workshop_review,
+        name="participant_workshop_review",
+    ),
+    path(
+        "assessments/<uuid:assessment_id>/participant/workshops/<str:workshop_type>/outputs/",
+        participant_views.participant_workshop_outputs,
+        name="participant_workshop_outputs",
+    ),
+    path(
+        "assessments/<uuid:assessment_id>/participant/notifications/<int:notification_id>/mark-read/",
+        participant_views.mark_notification_read,
+        name="mark_notification_read",
     ),
     # Facilitator routes
     path(

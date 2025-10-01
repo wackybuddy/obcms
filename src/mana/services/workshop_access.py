@@ -35,27 +35,24 @@ class WorkshopAccessManager:
         """
         Get list of workshop types that participant can currently access.
 
-        Access model:
-        - All previously completed workshops remain accessible for review
-        - The participant's current workshop is unlocked for active editing
-        - No other workshops are accessible until marked complete
+        NEW Facilitator-Controlled Access Model:
+        - Participant can only access workshops up to facilitator_advanced_to
+        - All completed workshops remain accessible for review (read-only)
+        - Current workshop is accessible for editing (if not submitted)
+        - Future workshops are locked until facilitator advances
         """
-        completed = list(participant.completed_workshops or [])
+        # Maximum workshop unlocked by facilitator
+        max_allowed = participant.facilitator_advanced_to or "workshop_1"
 
-        current = participant.current_workshop
-        if not current:
-            current = self.WORKSHOP_SEQUENCE[0]
+        try:
+            max_index = self.WORKSHOP_SEQUENCE.index(max_allowed)
+        except ValueError:
+            max_index = 0  # Default to workshop_1
 
-        if current not in completed:
-            completed.append(current)
+        # Can only access workshops up to facilitator's max
+        allowed_workshops = self.WORKSHOP_SEQUENCE[:max_index + 1]
 
-        ordered_allowed = [
-            workshop_type
-            for workshop_type in self.WORKSHOP_SEQUENCE
-            if workshop_type in completed
-        ]
-
-        return ordered_allowed
+        return allowed_workshops
 
     def is_workshop_accessible(
         self, participant: WorkshopParticipantAccount, workshop_type: str
@@ -148,7 +145,10 @@ class WorkshopAccessManager:
         metadata: Optional[dict] = None,
     ) -> bool:
         """
-        Mark a workshop as completed for a participant.
+        Mark a workshop as completed (submitted) for a participant.
+
+        IMPORTANT: This does NOT auto-advance the participant to the next workshop.
+        Participant stays on current workshop until facilitator advances cohort.
 
         Returns True if marked complete, False if already completed.
         """
@@ -160,17 +160,10 @@ class WorkshopAccessManager:
         completed.append(workshop_type)
         participant.completed_workshops = completed
 
-        # Update current workshop to next in sequence
-        try:
-            current_index = self.WORKSHOP_SEQUENCE.index(workshop_type)
-            if current_index < len(self.WORKSHOP_SEQUENCE) - 1:
-                participant.current_workshop = self.WORKSHOP_SEQUENCE[current_index + 1]
-            else:
-                participant.current_workshop = ""  # All workshops completed
-        except ValueError:
-            pass
+        # DO NOT UPDATE current_workshop - wait for facilitator to advance
+        # Participant will be shown "waiting for facilitator" state
 
-        participant.save(update_fields=["completed_workshops", "current_workshop", "updated_at"])
+        participant.save(update_fields=["completed_workshops", "updated_at"])
 
         # Log completion
         workshop = WorkshopActivity.objects.filter(
@@ -192,16 +185,58 @@ class WorkshopAccessManager:
         """
         Advance all participants to a specific workshop (facilitator bulk action).
 
+        This is the PRIMARY way participants progress through workshops.
+
+        Steps:
+        1. Update facilitator_advanced_to to the target workshop
+        2. If participant completed previous workshop, update current_workshop
+        3. Log the advancement action
+
         Returns count of participants advanced.
         """
         participants = WorkshopParticipantAccount.objects.filter(
             assessment=self.assessment
         )
 
+        try:
+            target_index = self.WORKSHOP_SEQUENCE.index(workshop_type)
+        except ValueError:
+            return 0
+
         count = 0
+        workshop = WorkshopActivity.objects.filter(
+            assessment=self.assessment, workshop_type=workshop_type
+        ).first()
+
         for participant in participants:
-            if self.unlock_workshop(participant, workshop_type, by_user):
-                count += 1
+            # Update facilitator_advanced_to (max accessible)
+            participant.facilitator_advanced_to = workshop_type
+
+            # If participant completed previous workshop, move them to this one
+            if target_index > 0:
+                prev_workshop = self.WORKSHOP_SEQUENCE[target_index - 1]
+                if prev_workshop in (participant.completed_workshops or []):
+                    participant.current_workshop = workshop_type
+            else:
+                # First workshop, always set as current
+                participant.current_workshop = workshop_type
+
+            participant.save(update_fields=["facilitator_advanced_to", "current_workshop", "updated_at"])
+
+            # Log advancement
+            if workshop:
+                WorkshopAccessLog.objects.create(
+                    participant=participant,
+                    workshop=workshop,
+                    action_type="unlock",
+                    metadata={
+                        "advanced_by": by_user.get_full_name() if hasattr(by_user, 'get_full_name') else str(by_user),
+                        "to_workshop": workshop_type,
+                        "bulk_advancement": True,
+                    },
+                )
+
+            count += 1
 
         return count
 
@@ -282,19 +317,25 @@ class WorkshopAccessManager:
                 'fully_completed': int,
             }
         """
-        participants = WorkshopParticipantAccount.objects.filter(
+        participants_qs = WorkshopParticipantAccount.objects.filter(
             assessment=self.assessment
-        )
+        ).select_related("user")
+        participants = list(participants_qs)
 
-        total_participants = participants.count()
+        total_participants = len(participants)
         by_workshop = {}
-        fully_completed = 0
 
         for workshop_type in self.WORKSHOP_SEQUENCE:
-            completed = participants.filter(
-                completed_workshops__contains=[workshop_type]
-            ).count()
-            in_progress = participants.filter(current_workshop=workshop_type).count()
+            completed = sum(
+                1
+                for participant in participants
+                if workshop_type in (participant.completed_workshops or [])
+            )
+            in_progress = sum(
+                1
+                for participant in participants
+                if participant.current_workshop == workshop_type
+            )
 
             by_workshop[workshop_type] = {
                 "completed": completed,
@@ -304,8 +345,8 @@ class WorkshopAccessManager:
         # Count fully completed participants
         fully_completed = sum(
             1
-            for p in participants
-            if len(p.completed_workshops or []) == len(self.WORKSHOP_SEQUENCE)
+            for participant in participants
+            if len(participant.completed_workshops or []) == len(self.WORKSHOP_SEQUENCE)
         )
 
         return {

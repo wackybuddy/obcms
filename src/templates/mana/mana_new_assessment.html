@@ -53,100 +53,119 @@
                                 <i class="fas fa-info-circle text-green-500 mr-2"></i>
                                 Basic Information
                             </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="md:col-span-2">
+                            <div class="grid grid-cols-1 gap-4">
+                                <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">Assessment Title</label>
                                     <input type="text" name="title"
                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                            placeholder="e.g., OBC-MANA Activity in [Region/Province] - [Year]">
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Target Community</label>
-                                    <select name="community" 
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="">Select Community</option>
-                                        {% for community in communities %}
-                                        <option value="{{ community.id }}" {% if request.GET.community == community.id|stringformat:'s' %}selected{% endif %}>{{ community.barangay.name }}, {{ community.barangay.municipality.name }}</option>
-                                        {% endfor %}
-                                    </select>
+                            </div>
+                        </div>
+
+                        <!-- Geographic Coverage -->
+                        <div class="bg-white rounded-xl p-6 border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-map-marked-alt text-blue-500 mr-2"></i>
+                                Geographic Coverage
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-1">
+                                    <label for="region-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Region<span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <select id="region-select" name="region" required
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Region</option>
+                                            {% for region in regions %}
+                                            <option value="{{ region.id }}">{{ region.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Geographic Coverage</label>
-                                    <select name="geographic_coverage" 
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="regional">Regional Level</option>
-                                        <option value="provincial">Provincial Level</option>
-                                        <option value="city_municipal">City/Municipal Level</option>
-                                        <option value="barangay">Barangay Level</option>
-                                        <option value="community">Community Level</option>
-                                    </select>
+                                <div class="space-y-1">
+                                    <label for="province-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Province
+                                    </label>
+                                    <div class="relative">
+                                        <select id="province-select" name="province"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Province</option>
+                                            {% for province in provinces %}
+                                            <option value="{{ province.id }}" data-region="{{ province.region_id }}">{{ province.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- MANA Methodology -->
-                        <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-6 border border-gray-200">
+                        <div class="bg-white rounded-xl p-6 border border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                                 <i class="fas fa-tasks text-blue-500 mr-2"></i>
                                 MANA Methodology
                             </h3>
                             {% with methodology=request.GET.primary_methodology|default:'workshop' %}
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-3">Primary MANA Activity</label>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                                        Primary MANA Activity<span class="text-red-500">*</span>
+                                    </label>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <label class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-blue-50 cursor-pointer">
-                                            <input type="radio" name="primary_methodology" value="desk_review" class="mr-3" {% if methodology == 'desk_review' %}checked{% endif %}>
+                                        <label class="flex items-start p-4 border-2 border-emerald-500 bg-emerald-50 rounded-xl cursor-pointer transition-all hover:shadow-md">
+                                            <input type="radio" name="primary_methodology" value="workshop" class="mt-1 mr-3 text-emerald-600 focus:ring-emerald-500" {% if methodology == 'workshop' %}checked{% endif %} required>
+                                            <div>
+                                                <div class="font-semibold text-emerald-900">FGD / Workshops</div>
+                                                <div class="text-sm text-emerald-700 mt-1">5-day workshop structure</div>
+                                            </div>
+                                        </label>
+                                        <label class="flex items-start p-4 border-2 border-gray-200 bg-white rounded-xl cursor-pointer transition-all hover:border-gray-300 hover:shadow-md">
+                                            <input type="radio" name="primary_methodology" value="desk_review" class="mt-1 mr-3 text-emerald-600 focus:ring-emerald-500" {% if methodology == 'desk_review' %}checked{% endif %}>
                                             <div>
                                                 <div class="font-semibold text-gray-900">Desk Review / Research</div>
-                                                <div class="text-sm text-gray-600">Literature review and secondary data analysis</div>
+                                                <div class="text-sm text-gray-600 mt-1">Literature review and analysis</div>
                                             </div>
                                         </label>
-                                        <label class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-blue-50 cursor-pointer">
-                                            <input type="radio" name="primary_methodology" value="survey" class="mr-3" {% if methodology == 'survey' %}checked{% endif %}>
+                                        <label class="flex items-start p-4 border-2 border-gray-200 bg-white rounded-xl cursor-pointer transition-all hover:border-gray-300 hover:shadow-md">
+                                            <input type="radio" name="primary_methodology" value="survey" class="mt-1 mr-3 text-emerald-600 focus:ring-emerald-500" {% if methodology == 'survey' %}checked{% endif %}>
                                             <div>
                                                 <div class="font-semibold text-gray-900">Surveys</div>
-                                                <div class="text-sm text-gray-600">Structured questionnaires and data collection</div>
+                                                <div class="text-sm text-gray-600 mt-1">Structured questionnaires</div>
                                             </div>
                                         </label>
-                                        <label class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-blue-50 cursor-pointer">
-                                            <input type="radio" name="primary_methodology" value="kii" class="mr-3" {% if methodology == 'kii' %}checked{% endif %}>
+                                        <label class="flex items-start p-4 border-2 border-gray-200 bg-white rounded-xl cursor-pointer transition-all hover:border-gray-300 hover:shadow-md">
+                                            <input type="radio" name="primary_methodology" value="kii" class="mt-1 mr-3 text-emerald-600 focus:ring-emerald-500" {% if methodology == 'kii' %}checked{% endif %}>
                                             <div>
-                                                <div class="font-semibold text-gray-900">Key Informant Interviews (KIIs)</div>
-                                                <div class="text-sm text-gray-600">In-depth interviews with key stakeholders</div>
-                                            </div>
-                                        </label>
-                                        <label class="flex items-center p-4 border border-blue-500 bg-blue-50 rounded-lg cursor-pointer">
-                                            <input type="radio" name="primary_methodology" value="workshop" class="mr-3" {% if methodology == 'workshop' %}checked{% endif %}>
-                                            <div>
-                                                <div class="font-semibold text-blue-900">FGD / Workshops</div>
-                                                <div class="text-sm text-blue-700">5-day workshop structure (Currently implemented)</div>
+                                                <div class="font-semibold text-gray-900">Key Informant Interviews</div>
+                                                <div class="text-sm text-gray-600 mt-1">In-depth stakeholder interviews</div>
                                             </div>
                                         </label>
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Priority Level</label>
-                                    <select name="priority" 
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="critical">Critical Priority</option>
-                                        <option value="high">High Priority</option>
-                                        <option value="medium" selected>Medium Priority</option>
-                                        <option value="low">Low Priority</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Assessment Level</label>
-                                    <select name="assessment_level" 
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        {% with level=request.GET.assessment_level|default:'community' %}
-                                        <option value="regional" {% if level == 'regional' %}selected{% endif %}>Regional Level</option>
-                                        <option value="provincial" {% if level == 'provincial' %}selected{% endif %}>Provincial Level</option>
-                                        <option value="city_municipal" {% if level == 'city_municipal' %}selected{% endif %}>City/Municipal Level</option>
-                                        <option value="barangay" {% if level == 'barangay' %}selected{% endif %}>Barangay Level</option>
-                                        <option value="community" {% if level == 'community' %}selected{% endif %}>Community Level</option>
-                                        {% endwith %}
-                                    </select>
+                                <div class="space-y-1">
+                                    <label for="priority-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Priority Level
+                                    </label>
+                                    <div class="relative">
+                                        <select id="priority-select" name="priority"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="critical">Critical Priority</option>
+                                            <option value="high">High Priority</option>
+                                            <option value="medium" selected>Medium Priority</option>
+                                            <option value="low">Low Priority</option>
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             {% endwith %}
@@ -199,115 +218,149 @@
                             </div>
                         </div>
                         
-                        <!-- Assessment Focus Areas -->
-                        <div class="bg-gradient-to-r from-gray-50 to-indigo-50 rounded-lg p-6 border border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                <i class="fas fa-bullseye text-indigo-500 mr-2"></i>
-                                OBC-MANA Focus Areas
-                            </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-3">Primary Assessment Domain</label>
-                                    <select name="primary_focus"
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="">Select Primary Focus</option>
-                                        <option value="social_development">Social Development (Education, Health, Social Protection)</option>
-                                        <option value="economic_development">Economic Development (Livelihoods, Halal Industry, MSMEs)</option>
-                                        <option value="cultural_development">Cultural Development (Heritage, Arts, Religious Institutions)</option>
-                                        <option value="rights_protection">Protection of Rights (Governance, Justice, Land Rights)</option>
-                                        <option value="comprehensive">Comprehensive Assessment (All Areas)</option>
-                                    </select>
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-3">Secondary Focus Areas</label>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        <label class="flex items-center p-2 hover:bg-indigo-50 rounded">
-                                            <input type="checkbox" name="secondary_focus" value="education" class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                            <span class="text-sm text-gray-700">Education & Islamic Studies</span>
-                                        </label>
-                                        <label class="flex items-center p-2 hover:bg-indigo-50 rounded">
-                                            <input type="checkbox" name="secondary_focus" value="health" class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                            <span class="text-sm text-gray-700">Health & Nutrition</span>
-                                        </label>
-                                        <label class="flex items-center p-2 hover:bg-indigo-50 rounded">
-                                            <input type="checkbox" name="secondary_focus" value="livelihoods" class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                            <span class="text-sm text-gray-700">Livelihoods & Employment</span>
-                                        </label>
-                                        <label class="flex items-center p-2 hover:bg-indigo-50 rounded">
-                                            <input type="checkbox" name="secondary_focus" value="infrastructure" class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                            <span class="text-sm text-gray-700">Infrastructure</span>
-                                        </label>
-                                        <label class="flex items-center p-2 hover:bg-indigo-50 rounded">
-                                            <input type="checkbox" name="secondary_focus" value="cultural" class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                            <span class="text-sm text-gray-700">Cultural Preservation</span>
-                                        </label>
-                                        <label class="flex items-center p-2 hover:bg-indigo-50 rounded">
-                                            <input type="checkbox" name="secondary_focus" value="governance" class="mr-2 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                            <span class="text-sm text-gray-700">Governance & Participation</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- Team Composition -->
-                        <div class="bg-gradient-to-r from-gray-50 to-orange-50 rounded-lg p-6 border border-gray-200">
+                        <div class="bg-white rounded-xl p-6 border border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                                 <i class="fas fa-users-cog text-orange-500 mr-2"></i>
                                 OBC-MANA Team Composition
+                                <span class="ml-2 text-xs text-gray-500 font-normal">(OOBC Staff/Executives only)</span>
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Team Leader / Executive Director</label>
-                                    <select name="team_leader"
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="">Select Team Leader</option>
-                                        <!-- This would be populated from User model -->
-                                    </select>
+                                <div class="space-y-1">
+                                    <label for="team-leader-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Team Leader
+                                    </label>
+                                    <div class="relative">
+                                        <select id="team-leader-select" name="team_leader"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Team Leader</option>
+                                            {% for staff in staff_members %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}{% if staff.staff_profile.position_classification %} - {{ staff.staff_profile.position_classification }}{% endif %}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Deputy Team Leader / DMO IV</label>
-                                    <select name="deputy_leader" 
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="">Select Deputy Leader</option>
-                                        <!-- This would be populated from User model -->
-                                    </select>
+                                <div class="space-y-1">
+                                    <label for="deputy-leader-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Deputy Team Leader
+                                    </label>
+                                    <div class="relative">
+                                        <select id="deputy-leader-select" name="deputy_leader"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Deputy Leader</option>
+                                            {% for staff in staff_members %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}{% if staff.staff_profile.position_classification %} - {{ staff.staff_profile.position_classification }}{% endif %}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Primary Facilitator</label>
-                                    <select name="primary_facilitator" 
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="">Select Primary Facilitator</option>
-                                        <!-- This would be populated from User model -->
-                                    </select>
+                                <div class="space-y-1">
+                                    <label for="workshop-1-facilitator" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Workshop 1 Facilitator
+                                    </label>
+                                    <div class="relative">
+                                        <select id="workshop-1-facilitator" name="workshop_1_facilitator"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Facilitator</option>
+                                            {% for staff in staff_members %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Lead Documenter</label>
-                                    <select name="lead_documenter" 
-                                            class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200 bg-white">
-                                        <option value="">Select Lead Documenter</option>
-                                        <!-- This would be populated from User model -->
-                                    </select>
+                                <div class="space-y-1">
+                                    <label for="workshop-2-facilitator" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Workshop 2 Facilitator
+                                    </label>
+                                    <div class="relative">
+                                        <select id="workshop-2-facilitator" name="workshop_2_facilitator"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Facilitator</option>
+                                            {% for staff in staff_members %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-semibold text-gray-700 mb-2">Additional Team Members</label>
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                                        <label class="flex items-center">
-                                            <input type="checkbox" name="team_roles" value="info_analyst" class="mr-1">
-                                            <span>Info System Analyst</span>
-                                        </label>
-                                        <label class="flex items-center">
-                                            <input type="checkbox" name="team_roles" value="secretariat" class="mr-1">
-                                            <span>Secretariat/Admin</span>
-                                        </label>
-                                        <label class="flex items-center">
-                                            <input type="checkbox" name="team_roles" value="additional_facilitator" class="mr-1">
-                                            <span>Additional Facilitators</span>
-                                        </label>
-                                        <label class="flex items-center">
-                                            <input type="checkbox" name="team_roles" value="additional_documenter" class="mr-1">
-                                            <span>Additional Documenters</span>
-                                        </label>
+                                <div class="space-y-1">
+                                    <label for="workshop-3-facilitator" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Workshop 3 Facilitator
+                                    </label>
+                                    <div class="relative">
+                                        <select id="workshop-3-facilitator" name="workshop_3_facilitator"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Facilitator</option>
+                                            {% for staff in staff_members %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label for="workshop-4-facilitator" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Workshop 4 Facilitator
+                                    </label>
+                                    <div class="relative">
+                                        <select id="workshop-4-facilitator" name="workshop_4_facilitator"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Facilitator</option>
+                                            {% for staff in staff_members %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label for="workshop-5-facilitator" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Workshop 5 Facilitator
+                                    </label>
+                                    <div class="relative">
+                                        <select id="workshop-5-facilitator" name="workshop_5_facilitator"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Facilitator</option>
+                                            {% for staff in staff_members %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label for="lead-documenter-select" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Lead Documenter
+                                    </label>
+                                    <div class="relative">
+                                        <select id="lead-documenter-select" name="lead_documenter"
+                                                class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+                                            <option value="">Select Lead Documenter</option>
+                                            {% for staff in staff_members %}
+                                            <option value="{{ staff.id }}">{{ staff.get_full_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -554,7 +607,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const methodologyRadios = document.querySelectorAll('input[name="primary_methodology"]');
     const workshopConfig = document.getElementById('workshop_config');
-    
+
     function toggleWorkshopConfig() {
         const selectedMethodology = document.querySelector('input[name="primary_methodology"]:checked')?.value;
         if (selectedMethodology === 'workshop') {
@@ -563,19 +616,19 @@ document.addEventListener('DOMContentLoaded', function() {
             workshopConfig.style.display = 'none';
         }
     }
-    
+
     // Initial state
     toggleWorkshopConfig();
-    
+
     // Listen for changes
     methodologyRadios.forEach(radio => {
         radio.addEventListener('change', toggleWorkshopConfig);
     });
-    
+
     // Set default dates (5 days from start date for workshops)
     const startDateInput = document.querySelector('input[name="planned_start_date"]');
     const endDateInput = document.querySelector('input[name="planned_end_date"]');
-    
+
     startDateInput?.addEventListener('change', function() {
         const selectedMethodology = document.querySelector('input[name="primary_methodology"]:checked')?.value;
         if (selectedMethodology === 'workshop' && this.value) {
@@ -585,6 +638,37 @@ document.addEventListener('DOMContentLoaded', function() {
             endDateInput.value = endDate.toISOString().split('T')[0];
         }
     });
+
+    // Region-Province cascading dropdown
+    const regionSelect = document.getElementById('region-select');
+    const provinceSelect = document.getElementById('province-select');
+
+    if (regionSelect && provinceSelect) {
+        const allProvinceOptions = Array.from(provinceSelect.options);
+
+        regionSelect.addEventListener('change', function() {
+            const selectedRegionId = this.value;
+
+            // Clear province dropdown
+            provinceSelect.innerHTML = '<option value="">Select Province</option>';
+
+            if (selectedRegionId) {
+                // Filter and add provinces for selected region
+                allProvinceOptions.forEach(option => {
+                    if (option.value && option.dataset.region === selectedRegionId) {
+                        provinceSelect.appendChild(option.cloneNode(true));
+                    }
+                });
+            } else {
+                // If no region selected, show all provinces
+                allProvinceOptions.forEach(option => {
+                    if (option.value) {
+                        provinceSelect.appendChild(option.cloneNode(true));
+                    }
+                });
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

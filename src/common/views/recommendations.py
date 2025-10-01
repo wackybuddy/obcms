@@ -9,6 +9,18 @@ from ..constants import RECOMMENDATIONS_AREAS
 @login_required
 def recommendations_home(request):
     """Recommendations Tracking module home page."""
+    from django.shortcuts import redirect
+
+    # Restrict access for MANA participants
+    user = request.user
+    if (
+        not user.is_staff
+        and not user.is_superuser
+        and user.has_perm("mana.can_access_regional_mana")
+        and not user.has_perm("mana.can_facilitate_workshop")
+    ):
+        return redirect("common:page_restricted")
+
     from django.db.models import Count, Q
 
     from recommendations.policy_tracking.models import (

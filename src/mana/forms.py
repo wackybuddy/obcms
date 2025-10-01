@@ -275,7 +275,6 @@ class AssessmentUpdateForm(forms.ModelForm):
         model = Assessment
         fields = [
             "title",
-            "category",
             "assessment_level",
             "primary_methodology",
             "status",
@@ -284,8 +283,11 @@ class AssessmentUpdateForm(forms.ModelForm):
             "planned_end_date",
             "actual_start_date",
             "actual_end_date",
-            "community",
+            "region",
             "province",
+            "municipality",
+            "barangay",
+            "community",
             "location_details",
             "description",
             "objectives",
@@ -299,13 +301,15 @@ class AssessmentUpdateForm(forms.ModelForm):
         ]
         widgets = {
             "title": forms.TextInput(attrs={"class": INPUT_CLASS}),
-            "category": forms.Select(attrs={"class": SELECT_CLASS}),
             "assessment_level": forms.Select(attrs={"class": SELECT_CLASS}),
             "primary_methodology": forms.Select(attrs={"class": SELECT_CLASS}),
             "status": forms.Select(attrs={"class": SELECT_CLASS}),
             "priority": forms.Select(attrs={"class": SELECT_CLASS}),
-            "community": forms.Select(attrs={"class": SELECT_CLASS}),
+            "region": forms.Select(attrs={"class": SELECT_CLASS}),
             "province": forms.Select(attrs={"class": SELECT_CLASS}),
+            "municipality": forms.Select(attrs={"class": SELECT_CLASS}),
+            "barangay": forms.Select(attrs={"class": SELECT_CLASS}),
+            "community": forms.Select(attrs={"class": SELECT_CLASS}),
             "lead_assessor": forms.Select(attrs={"class": SELECT_CLASS}),
             "impact_level": forms.Select(attrs={"class": SELECT_CLASS}),
             "progress_percentage": forms.NumberInput(
@@ -331,39 +335,126 @@ class AssessmentUpdateForm(forms.ModelForm):
 
         user_model = get_user_model()
 
-        self.fields["category"].queryset = AssessmentCategory.objects.filter(
-            is_active=True
-        ).order_by("name")
-        self.fields["community"].queryset = (
+        region_field = self.fields["region"]
+        region_field.queryset = Region.objects.filter(is_active=True).order_by("code", "name")
+        region_field.empty_label = "Select region..."
+        region_field.required = False
+        region_field.widget.attrs.update(
+            {
+                "data-level": "region",
+                "data-placeholder": "Select region...",
+            }
+        )
+
+        province_field = self.fields["province"]
+        province_field.queryset = (
+            Province.objects.filter(is_active=True, region__is_active=True)
+            .select_related("region")
+            .order_by("region__name", "name")
+        )
+        province_field.empty_label = "Select province..."
+        province_field.required = False
+        province_field.widget.attrs.update(
+            {
+                "data-level": "province",
+                "data-placeholder": "Select province...",
+            }
+        )
+
+        municipality_field = self.fields["municipality"]
+        municipality_field.queryset = (
+            Municipality.objects.filter(
+                is_active=True,
+                province__is_active=True,
+                province__region__is_active=True,
+            )
+            .select_related("province__region")
+            .order_by("name")
+        )
+        municipality_field.empty_label = "Select municipality..."
+        municipality_field.required = False
+        municipality_field.widget.attrs.update(
+            {
+                "data-level": "municipality",
+                "data-placeholder": "Select municipality...",
+            }
+        )
+
+        barangay_field = self.fields["barangay"]
+        barangay_field.queryset = (
+            Barangay.objects.filter(
+                is_active=True,
+                municipality__is_active=True,
+                municipality__province__is_active=True,
+                municipality__province__region__is_active=True,
+            )
+            .select_related("municipality__province__region")
+            .order_by("name")
+        )
+        barangay_field.empty_label = "Select barangay..."
+        barangay_field.required = False
+        barangay_field.widget.attrs.update(
+            {
+                "data-level": "barangay",
+                "data-placeholder": "Select barangay...",
+            }
+        )
+
+        community_field = self.fields["community"]
+        community_field.queryset = (
             OBCCommunity.objects.filter(is_active=True)
-            .select_related("barangay__municipality__province")
+            .select_related(
+                "barangay__municipality__province__region",
+            )
             .order_by(
                 "barangay__municipality__province__name",
                 "barangay__municipality__name",
                 "barangay__name",
+                "name",
             )
         )
-        self.fields["province"].queryset = Province.objects.filter(is_active=True).order_by(
-            "region__name",
-            "name",
+        community_field.empty_label = "Select community..."
+        community_field.required = False
+        community_field.widget.attrs.update(
+            {
+                "data-level": "community",
+                "data-placeholder": "Select community...",
+            }
         )
+
         self.fields["lead_assessor"].queryset = user_model.objects.filter(
             is_active=True
         ).order_by("first_name", "last_name")
 
-        self.fields["community"].required = False
-        self.fields["province"].required = False
+        # Optional financial fields
         self.fields["impact_level"].required = False
         self.fields["estimated_budget"].required = False
         self.fields["actual_budget"].required = False
 
+        # Store initial values for location-dependent widgets
+        if not self.is_bound and self.instance:
+            if self.instance.region_id:
+                region_field.initial = self.instance.region_id
+            if self.instance.province_id:
+                province_field.initial = self.instance.province_id
+            if self.instance.municipality_id:
+                municipality_field.initial = self.instance.municipality_id
+            if self.instance.barangay_id:
+                barangay_field.initial = self.instance.barangay_id
+            if self.instance.community_id:
+                community_field.initial = self.instance.community_id
+
+        for name in ("region", "province", "municipality", "barangay", "community"):
+            field = self.fields[name]
+            field.widget.attrs.setdefault("class", SELECT_CLASS)
+            if field.initial:
+                field.widget.attrs.setdefault("data-initial", str(field.initial))
+
+        if not self.is_bound and not (self.instance and self.instance.title):
+            self.fields["title"].initial = "OBC MANA Assessment"
+
         if not self.instance.pk and user and user.is_authenticated:
             self.fields["lead_assessor"].initial = user.pk
-
-        if self.instance and self.instance.community:
-            self.fields["community"].initial = self.instance.community_id
-        if self.instance and self.instance.province:
-            self.fields["province"].initial = self.instance.province_id
 
     def clean(self):
         cleaned_data = super().clean()
@@ -385,44 +476,96 @@ class AssessmentUpdateForm(forms.ModelForm):
             )
 
         level = cleaned_data.get("assessment_level")
-        community = cleaned_data.get("community")
+        region = cleaned_data.get("region")
         province = cleaned_data.get("province")
+        municipality = cleaned_data.get("municipality")
+        barangay = cleaned_data.get("barangay")
+        community = cleaned_data.get("community")
 
-        if community and province:
-            self.add_error(
-                "community",
-                "Select either a community or a province, not both.",
+        if level == "regional":
+            if not region:
+                self.add_error("region", "Regional assessments require a region selection.")
+            cleaned_data.update(
+                {
+                    "province": None,
+                    "municipality": None,
+                    "barangay": None,
+                    "community": None,
+                }
             )
-            self.add_error(
-                "province",
-                "Select either a community or a province, not both.",
-            )
-
-        if level in {"regional", "provincial"}:
+        elif level == "provincial":
+            if not region:
+                self.add_error("region", "Provincial assessments require a region selection.")
             if not province:
-                self.add_error(
-                    "province",
-                    "Regional and provincial assessments must be linked to a province.",
-                )
+                self.add_error("province", "Provincial assessments require a province selection.")
+            elif region and province.region_id != region.id:
+                self.add_error("province", "Selected province does not belong to the chosen region.")
+            cleaned_data.update(
+                {
+                    "municipality": None,
+                    "barangay": None,
+                    "community": None,
+                }
+            )
+        elif level == "city_municipal":
+            if not region:
+                self.add_error("region", "City/Municipal assessments require a region selection.")
+            if not province:
+                self.add_error("province", "City/Municipal assessments require a province selection.")
+            elif region and province.region_id != region.id:
+                self.add_error("province", "Selected province does not belong to the chosen region.")
+            if not municipality:
+                self.add_error("municipality", "City/Municipal assessments require a municipality selection.")
+            elif province and municipality.province_id != province.id:
+                self.add_error("municipality", "Selected municipality does not belong to the chosen province.")
+            cleaned_data.update(
+                {
+                    "barangay": None,
+                    "community": None,
+                }
+            )
+        elif level == "barangay":
+            if not region:
+                self.add_error("region", "Barangay assessments require a region selection.")
+            if not province:
+                self.add_error("province", "Barangay assessments require a province selection.")
+            elif region and province.region_id != region.id:
+                self.add_error("province", "Selected province does not belong to the chosen region.")
+            if not municipality:
+                self.add_error("municipality", "Barangay assessments require a municipality selection.")
+            elif province and municipality.province_id != province.id:
+                self.add_error("municipality", "Selected municipality does not belong to the chosen province.")
+            if not barangay:
+                self.add_error("barangay", "Barangay assessments require a barangay selection.")
+            elif municipality and barangay.municipality_id != municipality.id:
+                self.add_error("barangay", "Selected barangay does not belong to the chosen municipality.")
             cleaned_data["community"] = None
-            self.instance.community = None
-        else:
+        else:  # community-level and other granular entries
             if not community:
-                self.add_error(
-                    "community",
-                    "Community, barangay, and city/municipal assessments must be linked to a community.",
+                self.add_error("community", "Community assessments require a community selection.")
+            elif community:
+                linked_barangay = community.barangay
+                linked_municipality = linked_barangay.municipality if linked_barangay else None
+                linked_province = (
+                    linked_municipality.province if linked_municipality else None
                 )
-            cleaned_data["province"] = None
-            self.instance.province = None
+                linked_region = linked_province.region if linked_province else None
+
+                cleaned_data["barangay"] = linked_barangay
+                cleaned_data["municipality"] = linked_municipality
+                cleaned_data["province"] = linked_province
+                cleaned_data["region"] = linked_region
 
         return cleaned_data
 
     def save(self, user=None, commit=True):
         instance = super().save(commit=False)
 
-        # Ensure the instance relation matches cleaned data
-        instance.community = self.cleaned_data.get("community")
+        instance.region = self.cleaned_data.get("region")
         instance.province = self.cleaned_data.get("province")
+        instance.municipality = self.cleaned_data.get("municipality")
+        instance.barangay = self.cleaned_data.get("barangay")
+        instance.community = self.cleaned_data.get("community")
 
         if user is not None and not instance.lead_assessor_id:
             instance.lead_assessor = user
@@ -665,6 +808,8 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
         if province:
             self.instance.province = province
             self.instance.community = None
+        if region:
+            self.instance.region = region
 
         self.instance.assessment_level = "regional"
         self.instance.primary_methodology = "workshop"
@@ -692,8 +837,11 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
         assessment.primary_methodology = "workshop"
         assessment.priority = assessment.priority or "medium"
 
-        # Link to province instead of community
-        assessment.province = self.cleaned_data['province']
+        # Persist the selected location details on the new region-aware fields
+        assessment.region = self.cleaned_data.get('region')
+        assessment.province = self.cleaned_data.get('province')
+        assessment.municipality = None
+        assessment.barangay = None
         assessment.community = None  # Regional assessments don't link to specific communities
 
         # Set user as lead assessor if provided
@@ -926,19 +1074,6 @@ class Workshop5Form(BaseWorkshopForm):
 class ParticipantOnboardingForm(forms.ModelForm):
     """Form for participant onboarding and profile completion."""
 
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={"class": INPUT_CLASS}),
-        label="Temporary Password",
-        help_text="You will be able to change this after first login",
-        required=True,
-    )
-
-    password_confirm = forms.CharField(
-        widget=forms.PasswordInput(attrs={"class": INPUT_CLASS}),
-        label="Confirm Password",
-        required=True,
-    )
-
     consent = forms.BooleanField(
         required=True,
         label="I consent to participate in this workshop and allow my responses to be used for assessment purposes",
@@ -947,38 +1082,77 @@ class ParticipantOnboardingForm(forms.ModelForm):
     class Meta:
         model = WorkshopParticipantAccount
         fields = [
+            "age",
+            "sex",
             "stakeholder_type",
-            "organization",
+            "region",
             "province",
             "municipality",
             "barangay",
+            "educational_level",
+            "arabic_education_level",
+            "occupation",
+            "office_business_name",
+            "office_region",
+            "office_province",
+            "office_municipality",
+            "office_barangay",
+            "office_mandate",
+            "aware_of_mandate",
         ]
         widgets = {
+            "age": forms.NumberInput(attrs={"class": INPUT_CLASS, "min": 1, "max": 120}),
+            "sex": forms.Select(attrs={"class": SELECT_CLASS}),
             "stakeholder_type": forms.Select(attrs={"class": SELECT_CLASS}),
-            "organization": forms.TextInput(
-                attrs={
-                    "class": INPUT_CLASS,
-                    "placeholder": "Organization or community you represent",
-                }
-            ),
+            "region": forms.Select(attrs={"class": SELECT_CLASS}),
             "province": forms.Select(attrs={"class": SELECT_CLASS}),
             "municipality": forms.Select(attrs={"class": SELECT_CLASS}),
             "barangay": forms.Select(attrs={"class": SELECT_CLASS}),
+            "educational_level": forms.Select(attrs={"class": SELECT_CLASS}),
+            "arabic_education_level": forms.Select(attrs={"class": SELECT_CLASS}),
+            "occupation": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_business_name": forms.TextInput(
+                attrs={"class": INPUT_CLASS, "placeholder": "Name of office or business"}
+            ),
+            "office_region": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_province": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_municipality": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_barangay": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_mandate": forms.Textarea(
+                attrs={"class": TEXTAREA_CLASS, "rows": 3, "placeholder": "Mandate of your office (if government agency)"}
+            ),
+            "aware_of_mandate": forms.RadioSelect(
+                choices=[(True, "Yes"), (False, "No")],
+                attrs={"class": "radio-inline"}
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Make optional fields not required
         self.fields["municipality"].required = False
         self.fields["barangay"].required = False
+        self.fields["office_business_name"].required = False
+        self.fields["office_region"].required = False
+        self.fields["office_province"].required = False
+        self.fields["office_municipality"].required = False
+        self.fields["office_barangay"].required = False
+        self.fields["office_mandate"].required = False
 
         instance = self.instance
         province = getattr(instance, "province", None)
+        region = getattr(instance, "region", None) if province else None
 
+        # Set up region queryset
+        self.fields["region"].queryset = Region.objects.filter(is_active=True).order_by("name")
+        if region:
+            self.fields["region"].initial = region.id
+
+        # Set up address querysets
         if province:
             self.fields["province"].queryset = Province.objects.filter(pk=province.pk)
             self.fields["province"].initial = province
-            self.fields["province"].widget = forms.HiddenInput()
-            self.fields["province"].required = False
             self.fields["municipality"].queryset = (
                 Municipality.objects.filter(province=province).order_by("name")
             )
@@ -986,66 +1160,38 @@ class ParticipantOnboardingForm(forms.ModelForm):
                 Barangay.objects.filter(municipality__province=province).order_by("name")
             )
         else:
-            self.fields["province"].queryset = Province.objects.none()
+            self.fields["province"].queryset = Province.objects.all().order_by("name")
             self.fields["municipality"].queryset = Municipality.objects.none()
             self.fields["barangay"].queryset = Barangay.objects.none()
 
-    def clean(self):
-        cleaned_data = super().clean()
-        province = getattr(self.instance, "province", None)
-        cleaned_data["province"] = province
-
-        municipality = cleaned_data.get("municipality")
-        if municipality and province and municipality.province_id != province.id:
-            self.add_error("municipality", "Select a municipality within your province.")
-            cleaned_data["municipality"] = None
-
-        barangay = cleaned_data.get("barangay")
-        if barangay and province and barangay.municipality.province_id != province.id:
-            self.add_error("barangay", "Select a barangay within your province.")
-            cleaned_data["barangay"] = None
-
-        return cleaned_data
-
-        instance = self.instance
-        province = getattr(instance, "province", None)
-
-        if province:
-            self.fields["province"].queryset = Province.objects.filter(pk=province.pk)
-            self.fields["province"].initial = province
-            self.fields["province"].widget = forms.HiddenInput()
-            self.fields["province"].required = False
-            self.fields["municipality"].queryset = (
-                Municipality.objects.filter(province=province).order_by("name")
-            )
-            self.fields["barangay"].queryset = (
-                Barangay.objects.filter(municipality__province=province).order_by("name")
-            )
-        else:
-            self.fields["province"].queryset = Province.objects.none()
-            self.fields["municipality"].queryset = Municipality.objects.none()
-            self.fields["barangay"].queryset = Barangay.objects.none()
+        # Set up office address querysets
+        self.fields["office_region"].queryset = Region.objects.filter(is_active=True).order_by("name")
+        self.fields["office_province"].queryset = Province.objects.all().order_by("name")
+        self.fields["office_municipality"].queryset = Municipality.objects.none()
+        self.fields["office_barangay"].queryset = Barangay.objects.none()
 
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        password_confirm = cleaned_data.get("password_confirm")
 
-        if password and password_confirm and password != password_confirm:
-            raise forms.ValidationError("Passwords do not match")
-
-        province = getattr(self.instance, "province", None)
-        cleaned_data["province"] = province
-
+        # Validate participant address
+        province = cleaned_data.get("province")
         municipality = cleaned_data.get("municipality")
         if municipality and province and municipality.province_id != province.id:
             self.add_error("municipality", "Select a municipality within your province.")
-            cleaned_data["municipality"] = None
 
         barangay = cleaned_data.get("barangay")
-        if barangay and province and barangay.municipality.province_id != province.id:
-            self.add_error("barangay", "Select a barangay within your province.")
-            cleaned_data["barangay"] = None
+        if barangay and municipality and barangay.municipality_id != municipality.id:
+            self.add_error("barangay", "Select a barangay within your municipality.")
+
+        # Validate office address
+        office_province = cleaned_data.get("office_province")
+        office_municipality = cleaned_data.get("office_municipality")
+        if office_municipality and office_province and office_municipality.province_id != office_province.id:
+            self.add_error("office_municipality", "Select a municipality within your office province.")
+
+        office_barangay = cleaned_data.get("office_barangay")
+        if office_barangay and office_municipality and office_barangay.municipality_id != office_municipality.id:
+            self.add_error("office_barangay", "Select a barangay within your office municipality.")
 
         return cleaned_data
 
@@ -1056,18 +1202,40 @@ class ParticipantProfileForm(forms.ModelForm):
     class Meta:
         model = WorkshopParticipantAccount
         fields = [
+            "age",
+            "sex",
             "stakeholder_type",
-            "organization",
+            "region",
             "province",
             "municipality",
             "barangay",
+            "educational_level",
+            "arabic_education_level",
+            "occupation",
+            "office_business_name",
+            "office_region",
+            "office_province",
+            "office_municipality",
+            "office_barangay",
+            "office_mandate",
         ]
         widgets = {
+            "age": forms.NumberInput(attrs={"class": INPUT_CLASS}),
+            "sex": forms.Select(attrs={"class": SELECT_CLASS}),
             "stakeholder_type": forms.Select(attrs={"class": SELECT_CLASS}),
-            "organization": forms.TextInput(attrs={"class": INPUT_CLASS}),
+            "region": forms.Select(attrs={"class": SELECT_CLASS}),
             "province": forms.Select(attrs={"class": SELECT_CLASS}),
             "municipality": forms.Select(attrs={"class": SELECT_CLASS}),
             "barangay": forms.Select(attrs={"class": SELECT_CLASS}),
+            "educational_level": forms.Select(attrs={"class": SELECT_CLASS}),
+            "arabic_education_level": forms.Select(attrs={"class": SELECT_CLASS}),
+            "occupation": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_business_name": forms.TextInput(attrs={"class": INPUT_CLASS}),
+            "office_region": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_province": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_municipality": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_barangay": forms.Select(attrs={"class": SELECT_CLASS}),
+            "office_mandate": forms.Textarea(attrs={"class": TEXTAREA_CLASS, "rows": 3}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1137,14 +1305,16 @@ class FacilitatorParticipantForm(forms.ModelForm):
         model = WorkshopParticipantAccount
         fields = [
             "stakeholder_type",
-            "organization",
+            "office_business_name",
+            "region",
             "province",
             "municipality",
             "barangay",
         ]
         widgets = {
             "stakeholder_type": forms.Select(attrs={"class": SELECT_CLASS}),
-            "organization": forms.TextInput(attrs={"class": INPUT_CLASS}),
+            "office_business_name": forms.TextInput(attrs={"class": INPUT_CLASS}),
+            "region": forms.Select(attrs={"class": SELECT_CLASS}),
             "province": forms.Select(attrs={"class": SELECT_CLASS}),
             "municipality": forms.Select(attrs={"class": SELECT_CLASS}),
             "barangay": forms.Select(attrs={"class": SELECT_CLASS}),
@@ -1413,3 +1583,156 @@ class WorkshopSynthesisRequestForm(forms.Form):
             self.fields["workshop"].queryset = WorkshopActivity.objects.filter(
                 assessment=assessment
             ).order_by("workshop_day", "start_time")
+
+
+class AccountCreationForm(forms.Form):
+    """Form for creating MANA Facilitator or Participant accounts."""
+
+    ACCOUNT_TYPE_CHOICES = [
+        ("", "-- Select Account Type --"),
+        ("facilitator", "MANA Facilitator"),
+        ("participant", "MANA Participant"),
+    ]
+
+    # Account type selection
+    account_type = forms.ChoiceField(
+        choices=ACCOUNT_TYPE_CHOICES,
+        widget=forms.Select(attrs={"class": SELECT_CLASS, "id": "id_account_type"}),
+        label="Account Type",
+        required=True,
+    )
+
+    # User details (common for both)
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
+        label="Username",
+        help_text="Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+    )
+
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={"class": INPUT_CLASS}),
+        label="Email Address",
+        required=False,
+    )
+
+    first_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
+        label="First Name",
+    )
+
+    last_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
+        label="Last Name",
+    )
+
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": INPUT_CLASS}),
+        label="Password",
+        help_text="Enter a strong password for the user.",
+    )
+
+    password_confirm = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": INPUT_CLASS}),
+        label="Confirm Password",
+    )
+
+    # Facilitator-specific fields
+    facilitator_assessments = forms.ModelMultipleChoiceField(
+        queryset=Assessment.objects.filter(
+            primary_methodology="workshop", assessment_level="regional"
+        ).order_by("-planned_start_date"),
+        widget=forms.SelectMultiple(attrs={
+            "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[120px] transition-all duration-200 bg-white",
+            "id": "id_facilitator_assessments"
+        }),
+        label="Assigned Assessments",
+        required=False,
+        help_text="Select one or more assessments this facilitator will manage. Hold Ctrl/Cmd to select multiple.",
+    )
+
+    # Participant-specific fields
+    assessment = forms.ModelChoiceField(
+        queryset=Assessment.objects.filter(
+            primary_methodology="workshop", assessment_level="regional"
+        ).order_by("-planned_start_date"),
+        widget=forms.Select(attrs={"class": SELECT_CLASS, "id": "id_assessment"}),
+        label="Assessment",
+        required=False,
+        help_text="Select the regional workshop assessment to enroll this participant in.",
+    )
+
+    province = forms.ModelChoiceField(
+        queryset=Province.objects.all().order_by("name"),
+        widget=forms.Select(attrs={"class": SELECT_CLASS, "id": "id_province"}),
+        label="Province",
+        required=False,
+    )
+
+    municipality = forms.ModelChoiceField(
+        queryset=Municipality.objects.all().order_by("name"),
+        widget=forms.Select(attrs={"class": SELECT_CLASS, "id": "id_municipality"}),
+        label="Municipality",
+        required=False,
+    )
+
+    barangay = forms.ModelChoiceField(
+        queryset=Barangay.objects.all().order_by("name"),
+        widget=forms.Select(attrs={"class": SELECT_CLASS, "id": "id_barangay"}),
+        label="Barangay",
+        required=False,
+    )
+
+    stakeholder_type = forms.ChoiceField(
+        choices=[("", "-- Select Stakeholder Type --")]
+        + WorkshopParticipantAccount.STAKEHOLDER_TYPES,
+        widget=forms.Select(attrs={"class": SELECT_CLASS, "id": "id_stakeholder_type"}),
+        label="Stakeholder Type",
+        required=False,
+    )
+
+    office_business_name = forms.CharField(
+        max_length=200,
+        widget=forms.TextInput(attrs={"class": INPUT_CLASS}),
+        label="Office/Business Name",
+        required=False,
+        help_text="Optional: Organization represented by this participant.",
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        account_type = cleaned_data.get("account_type")
+        password = cleaned_data.get("password")
+        password_confirm = cleaned_data.get("password_confirm")
+
+        # Validate password confirmation
+        if password and password_confirm and password != password_confirm:
+            raise forms.ValidationError("Passwords do not match.")
+
+        # Validate facilitator-specific fields
+        if account_type == "facilitator":
+            facilitator_assessments = cleaned_data.get("facilitator_assessments")
+            if not facilitator_assessments:
+                self.add_error(
+                    "facilitator_assessments",
+                    "At least one assessment must be assigned to the facilitator."
+                )
+
+        # Validate participant-specific fields
+        if account_type == "participant":
+            assessment = cleaned_data.get("assessment")
+            province = cleaned_data.get("province")
+            stakeholder_type = cleaned_data.get("stakeholder_type")
+
+            if not assessment:
+                self.add_error("assessment", "Assessment is required for participants.")
+            if not province:
+                self.add_error("province", "Province is required for participants.")
+            if not stakeholder_type:
+                self.add_error(
+                    "stakeholder_type", "Stakeholder type is required for participants."
+                )
+
+        return cleaned_data

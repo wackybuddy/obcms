@@ -1606,6 +1606,23 @@ class ProvinceCoverage(CommunityProfileBase):
         related_name="province_coverages_updated",
         help_text="User who last updated this record",
     )
+    is_submitted = models.BooleanField(
+        default=False,
+        help_text="Whether this record has been submitted by a MANA participant (becomes read-only)",
+    )
+    submitted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Timestamp when this record was submitted",
+    )
+    submitted_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="province_coverages_submitted",
+        help_text="User who submitted this record",
+    )
 
     class Meta:
         ordering = [

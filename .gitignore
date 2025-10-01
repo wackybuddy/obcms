@@ -44,6 +44,10 @@ media/
 # Static files
 staticfiles/
 static/
+!src/static/
+src/static/*
+!src/static/admin/
+!src/static/admin/**
 
 # IDE
 .vscode/

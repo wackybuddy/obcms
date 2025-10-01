@@ -1,6 +1,12 @@
 """Domain-organised view exports for the common app."""
 
-from .auth import CustomLoginView, CustomLogoutView, UserRegistrationView, profile
+from .auth import (
+    CustomLoginView,
+    CustomLogoutView,
+    UserRegistrationView,
+    page_restricted,
+    profile,
+)
 from .communities import (
     communities_add,
     communities_add_municipality,
@@ -22,6 +28,7 @@ from .communities import (
     communities_edit,
     communities_edit_municipal,
     communities_edit_provincial,
+    communities_submit_provincial,
     location_centroid,
 )
 from .coordination import (
@@ -71,8 +78,11 @@ from .management import (
     staff_training_development,
     staff_team_assign,
     staff_team_manage,
+    user_approvals,
+    user_approval_action,
 )
 from .mana import (
+    mana_assessment_delete,
     mana_assessment_detail,
     mana_assessment_edit,
     mana_desk_review,
@@ -104,6 +114,7 @@ __all__ = [
     "CustomLogoutView",
     "UserRegistrationView",
     "profile",
+    "page_restricted",
     "dashboard",
     "oobc_management_home",
     "oobc_calendar",
@@ -132,6 +143,8 @@ __all__ = [
     "staff_team_assign",
     "staff_team_manage",
     "planning_budgeting",
+    "user_approvals",
+    "user_approval_action",
     "communities_home",
     "communities_add",
     "communities_add_municipality",
@@ -145,6 +158,7 @@ __all__ = [
     "communities_edit",
     "communities_edit_municipal",
     "communities_edit_provincial",
+    "communities_submit_provincial",
     "communities_delete",
     "communities_delete_municipal",
     "communities_delete_provincial",
@@ -156,6 +170,7 @@ __all__ = [
     "mana_home",
     "mana_new_assessment",
     "mana_manage_assessments",
+    "mana_assessment_delete",
     "mana_assessment_detail",
     "mana_assessment_edit",
     "mana_regional_overview",

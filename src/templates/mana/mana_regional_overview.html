@@ -150,8 +150,14 @@
                         {{ assessment.title }} •
                         {% if assessment.community %}
                             {{ assessment.community.barangay.name }}, {{ assessment.community.barangay.municipality.name }}
+                        {% elif assessment.barangay %}
+                            {{ assessment.barangay.name }}, {{ assessment.barangay.municipality.name }}
+                        {% elif assessment.municipality %}
+                            {{ assessment.municipality.name }}, {{ assessment.municipality.province.name }}
                         {% elif assessment.province %}
-                            {{ assessment.province.name }} ({{ assessment.province.region.name }})
+                            {{ assessment.province.name }} (Region {{ assessment.province.region.code|default:assessment.province.region.name }})
+                        {% elif assessment.region %}
+                            Region {{ assessment.region.code|default:assessment.region.name }}
                         {% else %}
                             Coverage pending assignment
                         {% endif %}
@@ -264,6 +270,126 @@
                     </div>
                     {% endif %}
 
+                    <!-- Participant Response Analytics Section -->
+                    {% if item.response_analytics %}
+                    <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-200">
+                        <h4 class="text-lg font-semibold text-indigo-900 mb-4 flex items-center gap-2">
+                            <i class="fas fa-chart-bar text-indigo-600"></i>
+                            Participant Submission Analytics
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-600 font-medium">Total Participants</p>
+                                        <p class="text-2xl font-bold text-gray-900 mt-1">{{ item.response_analytics.total_participants }}</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-users text-indigo-600"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-600 font-medium">Submitted</p>
+                                        <p class="text-2xl font-bold text-emerald-600 mt-1">{{ item.response_analytics.submitted_count }}</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-check-circle text-emerald-600"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-600 font-medium">Completion Rate</p>
+                                        <p class="text-2xl font-bold text-blue-600 mt-1">{{ item.response_analytics.submission_rate|floatformat:0 }}%</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-percentage text-blue-600"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Individual Participant Responses Section -->
+                    {% if item.participant_responses %}
+                    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        <div class="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4">
+                            <h4 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <i class="fas fa-comments"></i>
+                                Participant Responses ({{ item.participant_responses|length }})
+                            </h4>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            {% for participant_data in item.participant_responses %}
+                            <details class="group">
+                                <summary class="cursor-pointer px-6 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                            {{ participant_data.participant.user.first_name.0|default:"U" }}{{ participant_data.participant.user.last_name.0|default:"" }}
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-gray-900">{{ participant_data.participant.user.get_full_name }}</p>
+                                            <p class="text-sm text-gray-500">
+                                                {% if participant_data.participant.province %}{{ participant_data.participant.province.name }}{% endif %}
+                                                {% if participant_data.participant.stakeholder_type %} • {{ participant_data.participant.get_stakeholder_type_display }}{% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        {% if participant_data.submitted_at %}
+                                        <span class="text-xs text-gray-500">Submitted: {{ participant_data.submitted_at|date:"M d, Y g:i A" }}</span>
+                                        {% endif %}
+                                        <i class="fas fa-chevron-down text-gray-400 group-open:rotate-180 transition-transform"></i>
+                                    </div>
+                                </summary>
+                                <div class="px-6 py-4 bg-gray-50 space-y-4">
+                                    {% for qa in participant_data.responses %}
+                                    <div class="bg-white rounded-lg p-4 border border-gray-200">
+                                        <p class="text-sm font-semibold text-gray-700 mb-2">
+                                            <i class="fas fa-question-circle text-indigo-500 mr-1"></i>
+                                            {{ qa.question.text }}
+                                        </p>
+                                        {% if qa.response %}
+                                        <div class="text-sm text-gray-900 mt-2">
+                                            {% if qa.question.type == "repeater" or qa.question.type == "structured" %}
+                                                {% if qa.response.response_data %}
+                                                <ul class="list-disc list-inside space-y-1">
+                                                    {% for item in qa.response.response_data %}
+                                                    <li class="ml-2">
+                                                        {% if item is mapping %}
+                                                            {% for key, value in item.items %}
+                                                            <span class="font-medium">{{ key }}:</span> {{ value }}{% if not forloop.last %}, {% endif %}
+                                                            {% endfor %}
+                                                        {% else %}
+                                                            {{ item }}
+                                                        {% endif %}
+                                                    </li>
+                                                    {% endfor %}
+                                                </ul>
+                                                {% else %}
+                                                <p class="text-gray-400 italic">No structured data provided</p>
+                                                {% endif %}
+                                            {% else %}
+                                                <p class="whitespace-pre-wrap">{{ qa.response.response_data|default:"No response" }}</p>
+                                            {% endif %}
+                                        </div>
+                                        {% else %}
+                                        <p class="text-sm text-gray-400 italic mt-2">No response provided</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
                     <!-- Submit Button -->
                     <div class="flex items-center justify-end pt-6 border-t border-gray-200">
                         <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-blue-600 text-white text-base font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm">
@@ -323,7 +449,7 @@
             <h2 class="text-xl font-semibold text-gray-900">Quick Actions</h2>
             <p class="mt-1 text-sm text-gray-600">Launch planning, logging, processing, or open the detailed MANA playbook.</p>
         </div>
-        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <a href="{% url 'common:mana_activity_planner' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-4">
@@ -337,15 +463,28 @@
                     </div>
                 </div>
             </a>
-            <a href="{% url 'common:mana_activity_log' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
+            <a href="{% url 'mana:create_account' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
                 <div class="p-6">
                     <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center mb-4">
-                        <i class="fas fa-clipboard-check text-white text-xl"></i>
+                        <i class="fas fa-user-plus text-white text-xl"></i>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">Log Daily Activities</h3>
-                    <p class="mt-2 text-sm text-gray-600">Capture attendance, workshop outputs, issues, and action points per field day.</p>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">Create MANA Facilitator / Participant Account</h3>
+                    <p class="mt-2 text-sm text-gray-600">Create and approve facilitator and participant accounts for regional workshops.</p>
                     <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
-                        <span>Open Activity Log</span>
+                        <span>Create Account</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+            <a href="{% url 'mana:facilitator_assessments_list' %}" class="group bg-white rounded-lg shadow-lg border border-gray-200 hover-lift transition-all.duration-200">
+                <div class="p-6">
+                    <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-users-cog text-white text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors">Group Accounts to Assessment</h3>
+                    <p class="mt-2 text-sm text-gray-600">Assign facilitators and participants into specific assessments and coordinate workshop teams.</p>
+                    <div class="mt-4 flex items-center text-cyan-600 text-sm font-medium">
+                        <span>Open Grouping Hub</span>
                         <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>

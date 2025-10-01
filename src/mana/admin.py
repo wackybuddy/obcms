@@ -1334,7 +1334,7 @@ class WorkshopParticipantAccountAdmin(admin.ModelAdmin):
         "user__username",
         "user__first_name",
         "user__last_name",
-        "organization",
+        "office_business_name",
         "province__name",
     ]
     date_hierarchy = "created_at"
@@ -1344,7 +1344,7 @@ class WorkshopParticipantAccountAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Identity", {"fields": ("user", "assessment")}),
-        ("Stakeholder Information", {"fields": ("stakeholder_type", "organization")}),
+        ("Stakeholder Information", {"fields": ("stakeholder_type", "office_business_name")}),
         (
             "Geography",
             {"fields": (("province", "municipality", "barangay"),)},

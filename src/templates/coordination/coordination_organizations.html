@@ -194,7 +194,7 @@
                                     View
                                 </a>
                                 {% if perms.coordination.change_organization %}
-                                <a href="{% url 'common:coordination_organization_add' %}?organization={{ org.id }}"
+                                <a href="{% url 'common:coordination_organization_edit' org.id %}"
                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200">
                                     <i class="fas fa-edit mr-1"></i>
                                     Edit

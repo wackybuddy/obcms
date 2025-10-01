@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}MANA Facilitator Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Facilitator Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <header class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">MANA Facilitator Dashboard</h1>
+                <p class="mt-2 text-lg text-gray-600">Manage and monitor regional workshop assessments</p>
+            </div>
+            <a href="{% url 'mana:create_account' %}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-sm">
+                <i class="fas fa-user-plus"></i>
+                <span>Create Account</span>
+            </a>
+        </div>
+    </header>
+
+    {% if assessments %}
+        <!-- Assessments Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {% for item in assessments %}
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-200">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-sm">
+                            {% if item.status == 'completed' %}
+                                <i class="fas fa-check-circle"></i> Completed
+                            {% elif item.status == 'active' %}
+                                <i class="fas fa-play-circle"></i> Active
+                            {% else %}
+                                <i class="fas fa-clock"></i> Not Started
+                            {% endif %}
+                        </span>
+                    </div>
+                    <h3 class="text-xl font-bold text-white">{{ item.assessment.title }}</h3>
+                </div>
+
+                <!-- Assessment Details -->
+                <div class="px-6 py-5 space-y-4">
+                    <!-- Description -->
+                    {% if item.assessment.description %}
+                    <p class="text-sm text-gray-600 line-clamp-2">{{ item.assessment.description|truncatewords:25 }}</p>
+                    {% endif %}
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <p class="text-2xl font-bold text-gray-900">{{ item.total_participants }}</p>
+                            <p class="text-xs text-gray-600 mt-1">Participants</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <p class="text-2xl font-bold text-gray-900">{{ item.total_workshops }}</p>
+                            <p class="text-xs text-gray-600 mt-1">Workshops</p>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <p class="text-2xl font-bold text-gray-900">{{ item.overall_progress|floatformat:0 }}%</p>
+                            <p class="text-xs text-gray-600 mt-1">Complete</p>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-medium text-gray-700">Overall Progress</span>
+                            <span class="text-gray-900 font-semibold">{{ item.overall_progress|floatformat:0 }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            <div class="h-2.5 rounded-full transition-all duration-500
+                                {% if item.status == 'completed' %}bg-gradient-to-r from-green-500 to-green-600
+                                {% elif item.status == 'active' %}bg-gradient-to-r from-blue-500 to-blue-600
+                                {% else %}bg-gray-400{% endif %}"
+                                 style="width: {{ item.overall_progress }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Metadata -->
+                    <div class="flex flex-wrap gap-3 text-xs text-gray-600 pt-2 border-t border-gray-100">
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-map-marker-alt text-gray-400"></i>
+                            {{ item.assessment.province.name }}
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-calendar text-gray-400"></i>
+                            {{ item.assessment.planned_start_date|date:"M d, Y" }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="px-6 pb-6 flex gap-3">
+                    <a href="{% url 'mana:facilitator_dashboard' item.assessment.id %}"
+                       class="flex-1 text-center px-4 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-all duration-200">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Open Dashboard
+                    </a>
+                    <a href="{% url 'mana:facilitator_manage_participants' item.assessment.id %}"
+                       class="flex-1 text-center px-4 py-3 rounded-lg bg-gray-600 text-white font-semibold hover:bg-gray-700 transition-all duration-200">
+                        <i class="fas fa-users mr-2"></i>Manage Participants
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+            <div class="max-w-md mx-auto">
+                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-clipboard-list text-4xl text-blue-500"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-3">No Assessments Found</h2>
+                <p class="text-gray-600 mb-6">
+                    There are no regional workshop assessments in the system yet.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href="{% url 'common:mana_new_assessment' %}?assessment_level=regional&primary_methodology=workshop"
+                       class="inline-flex items-center gap-2 rounded-lg bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 hover:bg-blue-700 transition-all duration-200">
+                        <i class="fas fa-plus"></i>
+                        <span>Create New Assessment</span>
+                    </a>
+                    <a href="{% url 'common:mana_regional_overview' %}"
+                       class="inline-flex items-center gap-2 rounded-lg bg-gray-100 text-gray-700 text-sm font-semibold px-5 py-2.5 hover:bg-gray-200 transition-all duration-200">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back to Regional MANA</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

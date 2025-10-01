@@ -4,51 +4,370 @@
 {% block title %}Complete Your Profile · {{ assessment.title }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-neutral-50 flex items-center justify-center py-16 px-4">
-    <div class="w-full max-w-3xl">
-        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-10 space-y-6">
-            <header class="space-y-2 text-center">
-                <p class="text-sm uppercase tracking-wide text-gray-400">Regional MANA Participant Onboarding</p>
-                <h1 class="text-3xl font-bold text-gray-900">Tell us about yourself</h1>
-                <p class="text-gray-600">We use this profile to understand the stakeholders contributing to the assessment. Once completed, Workshop 1 will unlock automatically.</p>
+<div class="min-h-screen bg-neutral-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 lg:p-12 space-y-8">
+            <!-- Header -->
+            <header class="space-y-3 text-center">
+                <p class="text-sm uppercase tracking-wide text-gray-400 font-semibold">Regional MANA Participant Onboarding</p>
+                <h1 class="text-4xl font-bold text-gray-900">Tell us about yourself</h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    We use this profile to understand the stakeholders contributing to the assessment. Once completed, Workshop 1 will unlock automatically.
+                </p>
             </header>
 
-            <div class="bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl px-6 py-4 text-sm">
-                <p><strong>Signed in as:</strong> {{ request.user.email }}</p>
-                <p>Your responses remain confidential and will only be used for the Regional MANA assessment.</p>
+            <!-- Account Info Banner -->
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-6 py-4 text-sm">
+                <p class="text-emerald-900"><strong>Signed in as:</strong> {{ request.user.get_full_name|default:request.user.username }}</p>
+                <p class="text-emerald-700 mt-1">Your responses remain confidential and will only be used for the Regional MANA assessment.</p>
             </div>
 
-            <form method="post" class="space-y-6" data-task-id="{{ participant.id }}">
+            <form method="post" class="space-y-10">
                 {% csrf_token %}
-                <div class="grid gap-6 md:grid-cols-2">
-                    {% include "components/form_field.html" with field=form.stakeholder_type label="Stakeholder type" placeholder="Select your stakeholder role" %}
-                    {% include "components/form_field.html" with field=form.organization label="Organization" placeholder="Organization or community group" %}
-                </div>
-                <div class="grid gap-6 md:grid-cols-3">
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Province</label>
-                        <div class="px-4 py-2 bg-neutral-100 border border-neutral-200 rounded-xl text-sm text-gray-700">{{ participant.province.name }}</div>
-                        {{ form.province }}
+
+                <!-- Section 1: Demographics -->
+                <section class="space-y-6">
+                    <div class="border-b border-gray-200 pb-3">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600 text-sm font-bold">1</span>
+                            Demographics
+                        </h2>
+                        <p class="text-sm text-gray-500 ml-13 mt-1">Basic demographic information</p>
                     </div>
-                    {% include "components/form_field.html" with field=form.municipality label="Municipality" placeholder="Optional" %}
-                    {% include "components/form_field.html" with field=form.barangay label="Barangay" placeholder="Optional" %}
-                </div>
-                <div class="grid gap-6 md:grid-cols-2">
-                    {% include "components/form_field.html" with field=form.password label="Set new password" placeholder="Enter a secure password" %}
-                    {% include "components/form_field.html" with field=form.password_confirm label="Confirm password" placeholder="Re-type password" %}
-                </div>
-                <div class="bg-white border border-emerald-100 rounded-2xl px-6 py-5 flex items-start gap-3">
-                    <input type="checkbox" name="consent" id="consent" class="mt-1 h-4 w-4 text-emerald-600 border-gray-300 rounded" required>
-                    <label for="consent" class="text-sm text-gray-700 leading-relaxed">
-                        I consent to participate in the Regional MANA workshops and allow my responses to be used for the collaborative assessment, in accordance with OOBC privacy guidelines.
-                    </label>
-                </div>
-                <div class="flex items-center justify-end gap-3">
-                    <a href="{% url 'mana:participant_dashboard' assessment.id %}" class="text-sm text-gray-500 hover:text-gray-700">Back to dashboard</a>
-                    <button type="submit" class="btn-primary px-6 py-3 rounded-xl text-white font-semibold shadow-lg hover:shadow-xl transition">Save and unlock Workshop 1</button>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% include "components/form_field.html" with field=form.age label="Age" %}
+                        {% include "components/form_field.html" with field=form.sex label="Sex" %}
+                    </div>
+                </section>
+
+                <!-- Section 2: Stakeholder Information -->
+                <section class="space-y-6">
+                    <div class="border-b border-gray-200 pb-3">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 text-purple-600 text-sm font-bold">2</span>
+                            Stakeholder Information
+                        </h2>
+                        <p class="text-sm text-gray-500 ml-13 mt-1">Your role and representation</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        {% include "components/form_field.html" with field=form.stakeholder_type label="Stakeholder Type" %}
+                    </div>
+                </section>
+
+                <!-- Section 3: Address -->
+                <section class="space-y-6">
+                    <div class="border-b border-gray-200 pb-3">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-green-100 text-green-600 text-sm font-bold">3</span>
+                            Address
+                        </h2>
+                        <p class="text-sm text-gray-500 ml-13 mt-1">Your residential location</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {% include "components/form_field.html" with field=form.region label="Region" %}
+                        {% include "components/form_field.html" with field=form.province label="Province" %}
+                        <div class="lg:col-span-1">
+                            {% include "components/form_field.html" with field=form.municipality label="Municipality" placeholder="Optional" %}
+                        </div>
+                        <div class="lg:col-span-1">
+                            {% include "components/form_field.html" with field=form.barangay label="Barangay" placeholder="Optional" %}
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 4: Education -->
+                <section class="space-y-6">
+                    <div class="border-b border-gray-200 pb-3">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 text-sm font-bold">4</span>
+                            Education
+                        </h2>
+                        <p class="text-sm text-gray-500 ml-13 mt-1">Your educational background</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {% include "components/form_field.html" with field=form.educational_level label="Educational Level" %}
+                        {% include "components/form_field.html" with field=form.arabic_education_level label="Arabic Education Level" %}
+                    </div>
+                </section>
+
+                <!-- Section 5: Occupation -->
+                <section class="space-y-6">
+                    <div class="border-b border-gray-200 pb-3">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-orange-100 text-orange-600 text-sm font-bold">5</span>
+                            Occupation
+                        </h2>
+                        <p class="text-sm text-gray-500 ml-13 mt-1">Your current work or livelihood</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        {% include "components/form_field.html" with field=form.occupation label="Occupation" %}
+                    </div>
+                </section>
+
+                <!-- Section 6: Office/Business Information (Optional) -->
+                <section class="space-y-6">
+                    <div class="border-b border-gray-200 pb-3">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-teal-100 text-teal-600 text-sm font-bold">6</span>
+                            Office / Business Information
+                            <span class="text-sm font-normal text-gray-500">(Optional)</span>
+                        </h2>
+                        <p class="text-sm text-gray-500 ml-13 mt-1">Details about your workplace or business</p>
+                    </div>
+
+                    <div class="space-y-6">
+                        {% include "components/form_field.html" with field=form.office_business_name label="Name of Office / Business" placeholder="Optional" %}
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {% include "components/form_field.html" with field=form.office_region label="Office Region" placeholder="Optional" %}
+                            {% include "components/form_field.html" with field=form.office_province label="Office Province" placeholder="Optional" %}
+                            <div class="lg:col-span-1">
+                                {% include "components/form_field.html" with field=form.office_municipality label="Office Municipality" placeholder="Optional" %}
+                            </div>
+                            <div class="lg:col-span-1">
+                                {% include "components/form_field.html" with field=form.office_barangay label="Office Barangay" placeholder="Optional" %}
+                            </div>
+                        </div>
+
+                        {% include "components/form_field.html" with field=form.office_mandate label="Mandate of Office (If Government Agency)" placeholder="Optional" %}
+                    </div>
+                </section>
+
+                <!-- Section 7: Mandate Awareness -->
+                <section class="space-y-6">
+                    <div class="border-b border-gray-200 pb-3">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 text-amber-600 text-sm font-bold">7</span>
+                            Mandate Awareness
+                        </h2>
+                        <p class="text-sm text-gray-500 ml-13 mt-1">Understanding the legal mandate for OBC assistance</p>
+                    </div>
+
+                    <!-- Mandate Information Box -->
+                    <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-6 space-y-4">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-12 h-12 bg-emerald-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-balance-scale text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-emerald-900 mb-2">Assistance to Other Bangsamoro Communities</h3>
+                                <div class="prose prose-sm prose-emerald text-gray-700 leading-relaxed space-y-3">
+                                    <p>
+                                        The National Government shall ensure the <strong class="text-emerald-900">protection of the rights</strong> of the Bangsamoro people residing in communities outside the Bangsamoro Autonomous Region and undertake <strong class="text-emerald-900">programs for their rehabilitation and development</strong>.
+                                    </p>
+                                    <p>
+                                        The Bangsamoro Government, in coordination with local government units where these communities are located and the appropriate national government agencies, shall provide <strong class="text-emerald-900">assistance to enhance their economic, social and cultural development</strong>.
+                                    </p>
+                                    <div class="mt-4 pt-4 border-t border-emerald-200">
+                                        <p class="text-sm font-semibold text-emerald-800">
+                                            <i class="fas fa-gavel mr-2"></i>Section 12, Article VI, Republic Act No. 11054
+                                        </p>
+                                        <p class="text-xs text-emerald-700 mt-1 italic">Organic Law for the Bangsamoro Autonomous Region in Muslim Mindanao</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Awareness Question -->
+                    <div class="space-y-3">
+                        <label class="block text-base font-semibold text-gray-900">
+                            Were you aware of the Mandate for Assistance to Other Bangsamoro Communities?
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <div class="flex items-center gap-8 ml-1">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="radio" name="aware_of_mandate" value="True" class="w-5 h-5 text-emerald-600 border-gray-300 focus:ring-emerald-500" required>
+                                <span class="text-base text-gray-700 font-medium">Yes</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="radio" name="aware_of_mandate" value="False" class="w-5 h-5 text-emerald-600 border-gray-300 focus:ring-emerald-500" required>
+                                <span class="text-base text-gray-700 font-medium">No</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 8: Data Privacy Consent -->
+                <section class="space-y-6">
+                    <div class="border-b border-gray-200 pb-3">
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            <span class="flex items-center justify-center w-10 h-10 rounded-full bg-red-100 text-red-600 text-sm font-bold">8</span>
+                            Data Privacy Consent
+                        </h2>
+                        <p class="text-sm text-gray-500 ml-13 mt-1">Your consent to data collection and use</p>
+                    </div>
+
+                    <!-- Privacy Notice -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 space-y-3">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-shield-alt text-blue-600 text-2xl mt-1"></i>
+                            <div class="flex-1 text-sm text-blue-900 leading-relaxed space-y-2">
+                                <p class="font-semibold">Data Privacy Notice</p>
+                                <p>
+                                    In compliance with the <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong>, the Office for Other Bangsamoro Communities (OOBC) collects and processes your personal information for the following purposes:
+                                </p>
+                                <ul class="list-disc list-inside space-y-1 ml-2">
+                                    <li>Mapping and needs assessment of Other Bangsamoro Communities</li>
+                                    <li>Policy development and program planning</li>
+                                    <li>Stakeholder engagement and consultation</li>
+                                    <li>Monitoring and evaluation of OOBC programs</li>
+                                </ul>
+                                <p>
+                                    Your data will be kept confidential and will only be shared with authorized personnel for legitimate assessment purposes. You have the right to access, correct, and request deletion of your personal data at any time.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consent Checkbox -->
+                    <div class="bg-white border-2 border-gray-200 rounded-xl p-6">
+                        <div class="flex items-start gap-4">
+                            <input type="checkbox" name="consent" id="consent" class="mt-1 h-5 w-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" required>
+                            <label for="consent" class="text-base text-gray-800 leading-relaxed">
+                                <strong>I consent</strong> to participate in the Regional MANA workshops and allow my responses to be collected, processed, and used for the collaborative assessment, in accordance with the Data Privacy Act of 2012 and OOBC privacy guidelines. I understand that my information will be kept confidential and used solely for assessment and program development purposes.
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                    <a href="{% url 'mana:participant_dashboard' assessment.id %}" class="text-base text-gray-500 hover:text-gray-700 font-medium flex items-center gap-2">
+                        <i class="fas fa-arrow-left"></i>
+                        Back to dashboard
+                    </a>
+                    <button type="submit" class="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-lg font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-emerald-700 hover:to-teal-700 transform hover:-translate-y-0.5 transition-all duration-200">
+                        <i class="fas fa-check-circle"></i>
+                        Save Profile & Unlock Workshop 1
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<script>
+// Cascade dropdowns for participant address
+document.addEventListener('DOMContentLoaded', function() {
+    const regionField = document.getElementById('id_region');
+    const provinceField = document.getElementById('id_province');
+    const municipalityField = document.getElementById('id_municipality');
+    const barangayField = document.getElementById('id_barangay');
+
+    const officeRegionField = document.getElementById('id_office_region');
+    const officeProvinceField = document.getElementById('id_office_province');
+    const officeMunicipalityField = document.getElementById('id_office_municipality');
+    const officeBarangayField = document.getElementById('id_office_barangay');
+
+    // Participant address cascading
+    if (regionField && provinceField) {
+        regionField.addEventListener('change', function() {
+            const regionId = this.value;
+            if (regionId) {
+                fetch(`/api/provinces/?region=${regionId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        provinceField.innerHTML = '<option value="">Select province...</option>';
+                        data.forEach(province => {
+                            provinceField.innerHTML += `<option value="${province.id}">${province.name}</option>`;
+                        });
+                        municipalityField.innerHTML = '<option value="">Select municipality...</option>';
+                        barangayField.innerHTML = '<option value="">Select barangay...</option>';
+                    });
+            }
+        });
+    }
+
+    if (provinceField && municipalityField) {
+        provinceField.addEventListener('change', function() {
+            const provinceId = this.value;
+            if (provinceId) {
+                fetch(`/api/municipalities/?province=${provinceId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        municipalityField.innerHTML = '<option value="">Select municipality...</option>';
+                        data.forEach(municipality => {
+                            municipalityField.innerHTML += `<option value="${municipality.id}">${municipality.name}</option>`;
+                        });
+                        barangayField.innerHTML = '<option value="">Select barangay...</option>';
+                    });
+            }
+        });
+    }
+
+    if (municipalityField && barangayField) {
+        municipalityField.addEventListener('change', function() {
+            const municipalityId = this.value;
+            if (municipalityId) {
+                fetch(`/api/barangays/?municipality=${municipalityId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        barangayField.innerHTML = '<option value="">Select barangay...</option>';
+                        data.forEach(barangay => {
+                            barangayField.innerHTML += `<option value="${barangay.id}">${barangay.name}</option>`;
+                        });
+                    });
+            }
+        });
+    }
+
+    // Office address cascading
+    if (officeRegionField && officeProvinceField) {
+        officeRegionField.addEventListener('change', function() {
+            const regionId = this.value;
+            if (regionId) {
+                fetch(`/api/provinces/?region=${regionId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        officeProvinceField.innerHTML = '<option value="">Select province...</option>';
+                        data.forEach(province => {
+                            officeProvinceField.innerHTML += `<option value="${province.id}">${province.name}</option>`;
+                        });
+                        officeMunicipalityField.innerHTML = '<option value="">Select municipality...</option>';
+                        officeBarangayField.innerHTML = '<option value="">Select barangay...</option>';
+                    });
+            }
+        });
+    }
+
+    if (officeProvinceField && officeMunicipalityField) {
+        officeProvinceField.addEventListener('change', function() {
+            const provinceId = this.value;
+            if (provinceId) {
+                fetch(`/api/municipalities/?province=${provinceId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        officeMunicipalityField.innerHTML = '<option value="">Select municipality...</option>';
+                        data.forEach(municipality => {
+                            officeMunicipalityField.innerHTML += `<option value="${municipality.id}">${municipality.name}</option>`;
+                        });
+                        officeBarangayField.innerHTML = '<option value="">Select barangay...</option>';
+                    });
+            }
+        });
+    }
+
+    if (officeMunicipalityField && officeBarangayField) {
+        officeMunicipalityField.addEventListener('change', function() {
+            const municipalityId = this.value;
+            if (municipalityId) {
+                fetch(`/api/barangays/?municipality=${municipalityId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        officeBarangayField.innerHTML = '<option value="">Select barangay...</option>';
+                        data.forEach(barangay => {
+                            officeBarangayField.innerHTML += `<option value="${barangay.id}">${barangay.name}</option>`;
+                        });
+                    });
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

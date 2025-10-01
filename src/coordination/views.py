@@ -42,10 +42,16 @@ def _organization_form(request, organization_id=None):
     organization = None
 
     if is_edit:
-        organization = get_object_or_404(Organization, pk=organization_id)
-        if not request.user.has_perm("coordination.change_organization"):
-            raise PermissionDenied
-    else:
+        try:
+            organization = get_object_or_404(Organization, pk=organization_id)
+            if not request.user.has_perm("coordination.change_organization"):
+                raise PermissionDenied
+        except (Organization.DoesNotExist, ValueError):
+            # Invalid or non-existent organization ID - treat as create
+            is_edit = False
+            organization = None
+
+    if not is_edit:
         if not request.user.has_perm("coordination.add_organization"):
             raise PermissionDenied
 

@@ -1,0 +1,367 @@
+ministries:
+  - name: Office of the Chief Minister
+    acronym: OCM
+    mandate: >-
+      The Office of the Chief Minister serves as the highest executive office of the
+      Bangsamoro Government, leading the government of the day and representing the
+      Bangsamoro Autonomous Region in all official affairs.
+    powers_and_functions:
+      - Head the Bangsamoro Government.
+      - Appoint heads of ministries, agencies, bureaus, and offices.
+      - Formulate a platform of government subject to Bangsamoro Parliament approval.
+      - Issue executive orders and other policies of the Bangsamoro Government.
+      - Represent the Bangsamoro Government in internal and external affairs.
+      - Proclaim a state of calamity when necessary.
+      - Exercise additional powers provided by the Bangsamoro Administrative Code and other laws.
+    attached_agencies:
+      - name: Bangsamoro Planning and Development Authority
+        acronym: BPDA
+        mandate: >-
+          Serves as the planning, coordinating, and monitoring agency for all
+          development plans, policies, programs, and projects of the Bangsamoro
+          Government, and acts as the counterpart of the National Economic
+          Development Authority in the region.
+      - name: Bangsamoro Board of Investments
+        acronym: BBOI
+        mandate: >-
+          Promotes regional and national economic development through support for
+          investments that foster competitiveness, region-wide growth, and quality
+          employment.
+      - name: Bangsamoro Information Office
+        acronym: BIO
+        mandate: >-
+          Functions as the center of information for the Bangsamoro Autonomous
+          Region’s communication platforms to promote transparency, moral
+          governance, and informed public discourse.
+      - name: Bangsamoro Information and Communications Technology Office
+        acronym: BICTO
+        mandate: >-
+          Formulates and implements ICT development plans, ensures alignment with
+          government priorities, monitors e-government initiatives, and establishes
+          ICT policies and standards for the Bangsamoro region.
+      - name: Office for Settler Communities
+        acronym: OSC
+        mandate: >-
+          Leads the promotion of welfare and addresses issues and concerns of
+          settler communities, guaranteeing their rights under the Bangsamoro
+          Organic Law, the Constitution, and subsequent legislation.
+      - name: Bangsamoro Pilgrimage Authority
+        acronym: BPA
+        mandate: >-
+          Administers the annual Muslim pilgrimage to Mecca for Bangsamoro pilgrims
+          and implements programs that ensure efficient and effective pilgrimage
+          management.
+      - name: Development Academy of the Bangsamoro
+        acronym: DAB
+        mandate: >-
+          Acts as the central human capital development, training, and research arm
+          of the Bangsamoro Government for its agencies and employees.
+      - name: Bangsamoro Darul-Ifta'
+        acronym: BDI
+        mandate: >-
+          Serves as the consultative body for policy making through Islamic
+          jurisprudence and issues guidelines, rules, and regulations required for
+          the proper management of the office.
+      - name: Cooperatives and Social Enterprise Authority
+        acronym: CSEA
+        mandate: >-
+          Promotes the viability and growth of cooperatives and social enterprises
+          in the Bangsamoro region and serves as the sole registration authority for
+          such organizations.
+      - name: Bangsamoro Women Commission
+        acronym: BWC
+        mandate: >-
+          Acts as the primary policy-making, coordinating, and monitoring body on
+          women, gender, and development concerns; safeguards women’s rights, and
+          advances gender equality and women’s participation in governance.
+      - name: Bangsamoro Youth Commission
+        acronym: BYC
+        mandate: >-
+          Functions as the primary policy-making and coordinating body on all youth
+          matters, ensuring ministries and agencies deliver programs that address
+          Bangsamoro youth needs.
+      - name: Bangsamoro Commission for the Preservation of Cultural Heritage
+        acronym: BCPCH
+        mandate: >-
+          Leads the preservation of Bangsamoro cultural heritage, coordinates with
+          national cultural agencies, and establishes institutions, programs, and
+          projects to protect historical and cultural assets.
+      - name: Bangsamoro Sports Commission
+        acronym: BSC
+        mandate: >-
+          Formulates policy and implements programs for sports development, using
+          sports as a tool for peace, transitional justice, and community building.
+  - name: Ministry of Agriculture, Fisheries and Agrarian Reform
+    acronym: MAFAR
+    mandate: >-
+      Promotes sustainable agri-fishery growth, equitable land distribution, and
+      tenurial security, ensuring food security through climate-resilient support
+      services and agri-aqua enterprise development.
+    powers_and_functions:
+      - Provide integrated services on production, utilization, conservation, and disposition of agricultural, livestock, and fishery resources.
+      - Plan, formulate, execute, regulate, and monitor agriculture and food supply programs.
+      - Promulgate and enforce laws and regulations on conserving and utilizing agricultural, livestock, and fishery resources.
+      - Establish information systems that support production, marketing, and financing for farmers and investors.
+      - Deliver extension services and training covering financing, production, and marketing of agricultural and fishery enterprises.
+      - Conduct and disseminate research on technologies for agricultural crops, livestock, fisheries, and allied commodities.
+      - Facilitate farmer, fisherfolk, and entrepreneur participation in policy and program formulation.
+      - Coordinate with public and private agencies to support ministry policies and programs.
+      - Regulate import and export of agricultural and fishery commodities within existing guidelines.
+      - Approve charter contracts and issue fishing permits and licenses within BARMM waters.
+      - Designate fish landing points and assist LGUs in managing municipal waters.
+      - Regulate production, capture, and gathering of fish and aquatic products and designate fishery reserves.
+      - Implement agrarian laws, issue legal orders, and enforce agrarian reform decisions.
+      - Advise on executive orders and legislation to strengthen agrarian reform and protect beneficiaries.
+      - Establish policies, rules, and priorities for agrarian reform implementation in BARMM.
+      - Coordinate agrarian reform programs with Land Bank of the Philippines and relevant agencies.
+      - Acquire, administer, distribute, and develop agricultural lands for agrarian purposes.
+      - Conduct land surveys and issue Certificates of Land Ownership Awards and emancipation patents.
+      - Provide legal services to beneficiaries and resolve agrarian conflicts.
+      - Promote cooperatives and organizations of agrarian reform beneficiaries and deliver continuing education.
+      - Approve land-use conversion requests and mobilize support from governmental and non-governmental organizations.
+  - name: Ministry of Basic, Higher, and Technical Education
+    acronym: MBHTE
+    mandate: >-
+      Formulates, plans, implements, and coordinates policies and programs for
+      formal and non-formal education at all levels, ensuring an integrated system
+      of education responsive to Bangsamoro needs.
+    powers_and_functions:
+      - Develop and coordinate policies and programs covering basic, secondary, higher, technical, Madaris, non-formal, and indigenous education.
+      - Establish and maintain an integrated system of quality education aligned with the national framework.
+      - Create educational frameworks and curricula that reflect Bangsamoro ideals and institutionalize peace education.
+      - Supervise and regulate public and private educational institutions, including Madaris.
+      - Ensure integration of Islamic and Arabic studies in public elementary and high school curricula.
+      - Develop curricula, textbooks, and teaching materials and maintain comprehensive physical education programs.
+      - Establish training linkages for teaching and non-teaching personnel and manage recruitment, appointment, and promotion.
+      - Determine organizational structures for divisions, districts, and schools and promulgate administrative guidelines.
+      - Evaluate school division leadership and perform additional functions provided by law.
+  - name: Ministry of Environment, Natural Resources and Energy
+    acronym: MENRE
+    mandate: >-
+      Oversees exploration, utilization, management, conservation, protection, and
+      sustainable development of the region’s environment, natural resources, and
+      energy sources.
+    powers_and_functions:
+      - Recommend regional legislation on natural resources, energy development, and pollution control.
+      - Formulate and implement policies and programs for managing environment, natural resources, and energy.
+      - Promulgate rules regulating exploration, development, conservation, and commercial activities affecting resources.
+      - Exercise supervision over forest lands, agricultural lands, mineral resources, and national parks.
+      - Recommend protected area declarations and conduct resource assessments.
+      - Coordinate with private sector on resource utilization, perform geological surveys, and implement conservation programs.
+      - Issue regulations on land classification, forest resource use, and mineral exploration.
+      - Administer public lands, control pollution, and oversee energy industry restructuring.
+      - Supervise energy projects, conserve biodiversity, and develop multi-sectoral conservation strategies.
+  - name: Ministry of Finance, and Budget and Management
+    acronym: MFBM
+    mandate: >-
+      Evolves sound, efficient, and responsive fiscal management for the Bangsamoro
+      Government by formulating, institutionalizing, and administering fiscal
+      policies and resource utilization.
+    powers_and_functions:
+      - Formulate medium-term expenditure frameworks and annual resource mobilization plans.
+      - Prepare the Bangsamoro Government’s annual budget and manage fiscal and tax policy.
+      - Supervise revenue collection, manage financial resources, and administer public debt.
+      - Coordinate policies of financial institutions and government-owned corporations.
+      - Implement local revenue administration policies and coordinate on fiscal and monetary matters.
+      - Maintain standard accounting systems, study bureaucracy performance, and manage compensation and position classification.
+      - Streamline government systems and perform additional functions assigned by the Minister.
+  - name: Ministry of Health
+    acronym: MOH
+    mandate: >-
+      Formulates, plans, implements, and coordinates health policies and programs to
+      promote, protect, preserve, and restore the health of the Bangsamoro people.
+    powers_and_functions:
+      - Define health policy, develop the Bangsamoro health plan, and advise on health implications of government measures.
+      - Provide health programs, services, facilities, and coordinate with communities and partners.
+      - Administer health laws, collect and disseminate health data, and propagate health information.
+      - Conduct health research and training, regulate health facilities, and issue implementation orders.
+      - Develop policies consistent with Islamic teachings and supervise provincial health offices.
+  - name: Ministry of Human Settlements and Development
+    acronym: MHSD
+    mandate: >-
+      Acts as the primary agency for managing housing, human settlements, and urban
+      development, crafting strategies that deliver adequate and affordable housing
+      in the Bangsamoro Autonomous Region.
+    powers_and_functions:
+      - Develop integrated housing and settlement plans with LGUs and stakeholders.
+      - Coordinate development undertakings, manage proclaimed housing sites, and enter into development agreements.
+      - Receive and manage assets for housing, implement single regulatory systems, and conduct housing research.
+      - Promote resilient, inclusive, and climate-adaptive housing policies and collect regulatory fees.
+      - Recommend legislation, promote indigenous materials, regulate subdivision roads, and monitor LGU performance.
+      - Develop people’s plans with beneficiaries, establish housing one-stop centers, secure land for housing, and perform other necessary functions.
+  - name: Ministry of Indigenous Peoples' Affairs
+    acronym: MIPA
+    mandate: >-
+      Protects, promotes, and preserves the interests and well-being of indigenous
+      peoples, recognizing their ancestral domains and rights within the Bangsamoro
+      Autonomous Region.
+    powers_and_functions:
+      - Serve as the primary ministry assisting indigenous peoples in the region.
+      - Review conditions and policies affecting IPs and propose relevant legislation.
+      - Issue Certificates of Ancestral Domain Title and register them pursuant to Bangsamoro laws.
+      - Formulate, implement, and monitor policies and programs for IP development and protection.
+      - Engage experts, negotiate funding, and coordinate development programs for IP advancement.
+      - Convene assemblies of IPs, issue marital certificates consistent with customs, and perform other related functions.
+  - name: Ministry of Interior and Local Government
+    acronym: MILG
+    mandate: >-
+      Exercises general supervision over Bangsamoro local government units, ensuring
+      public safety, disaster preparedness, local autonomy, decentralization, and
+      community empowerment.
+    powers_and_functions:
+      - Advise the Chief Minister on supervision policies for local governments.
+      - Issue rules implementing laws on local supervision and autonomy and monitor compliance.
+      - Provide technical assistance for regional legislation affecting LGUs.
+      - Strengthen administrative, technical, and fiscal capabilities of local offices.
+      - Implement public order, safety, and disaster preparedness programs and formulate emergency plans.
+      - Enforce disciplinary authority over elective officials and perform additional statutory duties.
+  - name: Ministry of Labor and Employment
+    acronym: MOLE
+    mandate: >-
+      Serves as the primary entity for labor and employment policy, fostering gainful
+      employment, protecting workers’ welfare, and maintaining industrial peace in
+      the Bangsamoro Autonomous Region.
+    powers_and_functions:
+      - Enforce labor legislation and regulate employer-worker relations.
+      - Develop policies on manpower development, training, and allocation.
+      - Recommend legislation for Bangsamoro labor force advancement and protect workers seeking local or overseas employment.
+      - Regulate alien employment, formulate wage guidelines, and promote decent working conditions.
+      - Maintain harmonious labor relations, uphold organizing rights, and facilitate dispute resolution.
+  - name: Ministry of Public Order and Safety
+    acronym: MPOS
+    mandate: >-
+      Responsible for public safety, coordinating peace-building, reconciliation,
+      and unification initiatives across the Bangsamoro Autonomous Region.
+    powers_and_functions:
+      - Participate in the Regional Peace and Order Council and coordinate with security agencies.
+      - Monitor peace and security conditions, maintain early warning systems, and implement programs on tolerance and countering violent extremism.
+      - Lead initiatives on peace, reconciliation, rido settlement, and implement laws on public order and safety.
+  - name: Ministry of Public Works
+    acronym: MPW
+    mandate: >-
+      Functions as the engineering and construction arm of the Bangsamoro Government
+      for planning, designing, constructing, rehabilitating, and maintaining
+      regional infrastructure.
+    powers_and_functions:
+      - Plan, design, construct, and supervise infrastructure within the region.
+      - Maintain public works, manage necessary equipment, and seek national funding support.
+      - Enforce construction standards, supervise public works quality, and provide technical assistance.
+      - Coordinate with agencies and communities to ensure responsive infrastructure services.
+  - name: Ministry of Science and Technology
+    acronym: MOST
+    mandate: >-
+      Provides leadership in science, research, technological education, and
+      innovation, ensuring broad participation in planning and implementing
+      scientific initiatives in the Bangsamoro Autonomous Region.
+    powers_and_functions:
+      - Formulate comprehensive science and technology plans and oversee implementation.
+      - Pursue research and development addressing regional priorities and support technology commercialization.
+      - Enhance services in IT and disaster risk reduction, manage science data, and administer scholarships and awards.
+      - Improve science education infrastructure, conduct advanced research, and develop quality standards including halal testing.
+  - name: Ministry of Social Services and Development
+    acronym: MSSD
+    mandate: >-
+      Provides balanced, responsive social welfare services that protect the rights
+      and address the needs of marginalized and vulnerable sectors, especially in
+      times of crisis.
+    powers_and_functions:
+      - Formulate and implement social welfare plans and adopt effective program policies.
+      - Support non-governmental welfare services, operate institutional facilities, and strengthen people’s organizations.
+      - Coordinate service networks, accredit social welfare institutions, and conduct research.
+      - Build local and international linkages, develop training programs, disseminate information, and deputize agencies for rights protection.
+      - Regulate fund drives, set service standards, supervise social workers, coordinate disaster relief, and oversee programs for marginalized sectors.
+  - name: Ministry of Trade, Investments, and Tourism
+    acronym: MTIT
+    mandate: >-
+      Implements laws and programs on trade, investments, and tourism to drive
+      Bangsamoro industrialization, liberalization, and market expansion aligned
+      with inclusive economic growth.
+    powers_and_functions:
+      - Formulate development policies and coordinate enforcement with relevant agencies.
+      - Maintain investment-friendly environments, promote local and foreign investment, and manage marketing initiatives.
+      - Set standards for tourism establishments, regulate operations, and protect tourists.
+      - Coordinate infrastructure and social support for tourist zones and lead halal industry development.
+      - Support MSMEs, local economic development, and establish business support centers.
+      - Administer adjudication on trade, investment, tourism, and cooperative laws.
+  - name: Ministry of Transportation and Communications
+    acronym: MOTC
+    mandate: >-
+      Leads policy, planning, regulation, and administration of transportation and
+      communications networks, delivering fast, safe, efficient, and reliable
+      services in the Bangsamoro Autonomous Region.
+    powers_and_functions:
+      - Administer transportation and communications laws and deputize enforcement agencies.
+      - Formulate policies, grant franchises, register transport and telecommunications operators, and exercise quasi-judicial functions.
+      - Manage inland navigation, landside port and airport operations, and regulate telecommunications utilities.
+      - Monitor postal services, generate revenues from transport operations, and impose duties and fees.
+      - Ensure free movement across zones of joint cooperation and execute additional devolved functions.
+other_entities:
+  - name: Office of the Wali
+    acronym: WALI
+    mandate: >-
+      Serves as the ceremonial head of the Bangsamoro Government, preserving
+      Bangsamoro culture, well-being, and unity through public and ceremonial
+      representation.
+  - name: Bangsamoro Human Rights Commission
+    acronym: BHRC
+    mandate: >-
+      Protects and promotes human rights in the Bangsamoro Autonomous Region,
+      ensuring adherence to international standards and providing transitional
+      justice mechanisms.
+  - name: Bangsamoro Ports Management Authority
+    acronym: BPMA
+    mandate: >-
+      Manages and oversees public port operations within the Bangsamoro Autonomous
+      Region, aligning port facilities with the national maritime transport chain.
+  - name: Bangsamoro Disaster Risk Reduction and Management Council
+    acronym: BDRRMC
+    mandate: >-
+      Coordinates, integrates, supervises, and evaluates disaster risk reduction and
+      management activities, ensuring disaster-sensitive regional development plans
+      and coordinated emergency response.
+  - name: Bangsamoro Economic and Development Council
+    acronym: BEDC
+    mandate: >-
+      Acts as the socio-economic planning, monitoring, and coordinating agency for
+      development plans, programs, and projects of the Bangsamoro Government.
+  - name: Bangsamoro Regional Peace and Order Council
+    acronym: BRPOC
+    mandate: >-
+      Formulates peace and order measures, monitors implementation, and addresses
+      complaints to enhance public safety throughout the Bangsamoro region.
+  - name: Bangsamoro Sustainable Development Board
+    acronym: BSDB
+    mandate: >-
+      Promotes sustainable development by integrating environmental, social, and
+      economic considerations into regional policies and projects.
+  - name: Bangsamoro Halal Board
+    acronym: BHB
+    mandate: >-
+      Provides policy direction for the Halal industry, ensuring standards compliance
+      and promoting Halal-certified products in the Bangsamoro Autonomous Region.
+  - name: Bangsamoro Education Board
+    acronym: BEB
+    mandate: >-
+      Formulates education policies and standards to deliver quality education that
+      responds to the needs of the Bangsamoro people.
+  - name: Bangsamoro Economic Zone Authority
+    acronym: BEZA
+    mandate: >-
+      Encourages and accelerates industrial, economic, and social development through
+      the establishment of special economic zones and free ports, attracting
+      investments and job creation.
+  - name: Bangsamoro Maritime Industry Authority
+    acronym: BMARINA
+    mandate: >-
+      Regulates maritime activities, issues licenses, registers vessels, and ensures
+      maritime safety and compliance within the Bangsamoro Autonomous Region.
+  - name: Civil Aeronautics Board of the Bangsamoro
+    acronym: CABB
+    mandate: >-
+      Regulates air carriers and related services in the region, issuing certificates
+      of public convenience and ensuring passenger safety and rights.
+  - name: Civil Aviation Authority of the Bangsamoro
+    acronym: CAAB
+    mandate: >-
+      Manages, supervises, and controls government airports in the Bangsamoro
+      Autonomous Region, maintaining safe and secure civil aviation operations.

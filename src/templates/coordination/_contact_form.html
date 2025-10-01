@@ -1,4 +1,5 @@
-<div class="bg-gray-50 border border-gray-200 rounded-xl p-6 space-y-4 contact-form" data-form-index="{{ index }}">
+{% load static %}
+<div class="bg-white border border-gray-200 rounded-2xl p-6 space-y-5 shadow-sm contact-form" data-form-index="{{ index }}">
     {% for hidden_field in form.hidden_fields %}
         {{ hidden_field }}
     {% endfor %}
@@ -26,123 +27,39 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.contact_type.label }}</label>
-            {{ form.contact_type }}
-            {% if form.contact_type.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.contact_type.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.preferred_communication_method.label }}</label>
-            {{ form.preferred_communication_method }}
-            {% if form.preferred_communication_method.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.preferred_communication_method.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
+        {% include "components/form_field.html" with field=form.contact_type label=form.contact_type.label extra_classes="md:col-span-1" %}
+        {% include "components/form_field.html" with field=form.preferred_communication_method label=form.preferred_communication_method.label extra_classes="md:col-span-1" %}
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.title.label }}</label>
-            {{ form.title }}
-            {% if form.title.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.title.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.first_name.label }}</label>
-            {{ form.first_name }}
-            {% if form.first_name.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.first_name.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.last_name.label }}</label>
-            {{ form.last_name }}
-            {% if form.last_name.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.last_name.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
+        {% include "components/form_field.html" with field=form.title label=form.title.label extra_classes="md:col-span-1" %}
+        {% include "components/form_field.html" with field=form.first_name label=form.first_name.label extra_classes="md:col-span-1" %}
+        {% include "components/form_field.html" with field=form.last_name label=form.last_name.label extra_classes="md:col-span-1" %}
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.middle_name.label }}</label>
-            {{ form.middle_name }}
-            {% if form.middle_name.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.middle_name.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.position.label }}</label>
-            {{ form.position }}
-            {% if form.position.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.position.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
+        {% include "components/form_field.html" with field=form.middle_name label=form.middle_name.label extra_classes="md:col-span-1" %}
+        {% include "components/form_field.html" with field=form.position label=form.position.label extra_classes="md:col-span-1" %}
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.department.label }}</label>
-            {{ form.department }}
-            {% if form.department.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.department.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.languages_spoken.label }}</label>
-            {{ form.languages_spoken }}
-            {% if form.languages_spoken.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.languages_spoken.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
+        {% include "components/form_field.html" with field=form.department label=form.department.label extra_classes="md:col-span-1" %}
+        {% include "components/form_field.html" with field=form.languages_spoken label=form.languages_spoken.label extra_classes="md:col-span-1" %}
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.email.label }}</label>
-            {{ form.email }}
-            {% if form.email.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.email.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.alternative_email.label }}</label>
-            {{ form.alternative_email }}
-            {% if form.alternative_email.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.alternative_email.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
+        {% include "components/form_field.html" with field=form.email label=form.email.label extra_classes="md:col-span-1" %}
+        {% include "components/form_field.html" with field=form.alternative_email label=form.alternative_email.label extra_classes="md:col-span-1" %}
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.phone.label }}</label>
-            {{ form.phone }}
-            {% if form.phone.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.phone.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.mobile.label }}</label>
-            {{ form.mobile }}
-            {% if form.mobile.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.mobile.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
+        {% include "components/form_field.html" with field=form.phone label=form.phone.label extra_classes="md:col-span-1" %}
+        {% include "components/form_field.html" with field=form.mobile label=form.mobile.label extra_classes="md:col-span-1" %}
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.best_contact_time.label }}</label>
-            {{ form.best_contact_time }}
-            {% if form.best_contact_time.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.best_contact_time.errors|join:' ' }}</p>
-            {% endif %}
-        </div>
-        <div class="flex items-center space-x-6">
+        {% include "components/form_field.html" with field=form.best_contact_time label=form.best_contact_time.label extra_classes="md:col-span-1" %}
+        <div class="flex items-center gap-6 md:col-span-1">
             <label class="inline-flex items-center space-x-2 text-sm font-medium text-gray-700">
                 {{ form.is_primary }}
                 <span>{{ form.is_primary.label }}</span>
@@ -153,25 +70,13 @@
             </label>
         </div>
         {% if form.is_primary.errors or form.is_active.errors %}
-        <div class="md:col-span-2 text-sm text-red-600">
-            {{ form.is_primary.errors|join:' ' }} {{ form.is_active.errors|join:' ' }}
+        <div class="md:col-span-2 text-sm text-rose-600">
+            {{ form.is_primary.errors|join:', ' }} {{ form.is_active.errors|join:', ' }}
         </div>
         {% endif %}
     </div>
 
-    <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.areas_of_responsibility.label }}</label>
-        {{ form.areas_of_responsibility }}
-        {% if form.areas_of_responsibility.errors %}
-        <p class="mt-1 text-sm text-red-600">{{ form.areas_of_responsibility.errors|join:' ' }}</p>
-        {% endif %}
-    </div>
+    {% include "components/form_field.html" with field=form.areas_of_responsibility label=form.areas_of_responsibility.label %}
 
-    <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1">{{ form.notes.label }}</label>
-        {{ form.notes }}
-        {% if form.notes.errors %}
-        <p class="mt-1 text-sm text-red-600">{{ form.notes.errors|join:' ' }}</p>
-        {% endif %}
-    </div>
+    {% include "components/form_field.html" with field=form.notes label=form.notes.label %}
 </div>

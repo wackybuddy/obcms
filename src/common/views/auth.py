@@ -63,9 +63,16 @@ def profile(request):
     return render(request, "common/profile.html", {"user": request.user})
 
 
+@login_required
+def page_restricted(request):
+    """Render the restricted-access placeholder screen."""
+    return render(request, "common/page_restricted.html")
+
+
 __all__ = [
     "CustomLoginView",
     "CustomLogoutView",
     "UserRegistrationView",
     "profile",
+    "page_restricted",
 ]

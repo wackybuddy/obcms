@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Workshop Submitted - {{ workshop.title }}{% endblock %}
+
+{% block content %}
+<div class="bg-neutral-50 min-h-screen py-10">
+    <div class="max-w-5xl mx-auto px-4 space-y-6">
+
+        <!-- Success Header -->
+        <div class="bg-white border border-green-200 rounded-2xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6">
+                <div class="flex items-center gap-4">
+                    <div class="flex-shrink-0 w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                        <i class="fas fa-check-circle text-green-600 text-3xl"></i>
+                    </div>
+                    <div class="flex-1 text-white">
+                        <h1 class="text-2xl font-bold">✓ Workshop Submitted Successfully</h1>
+                        <p class="text-green-100 mt-1">{{ workshop.title }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-8 py-6 space-y-4">
+                <div class="flex items-center justify-between text-sm">
+                    <div>
+                        <span class="text-gray-600">Submitted:</span>
+                        <span class="font-semibold text-gray-900 ml-2">
+                            {{ submitted_at|date:"F d, Y \a\t g:i A" }}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">Participant:</span>
+                        <span class="font-semibold text-gray-900 ml-2">
+                            {{ participant.user.get_full_name }}
+                        </span>
+                    </div>
+                </div>
+
+                <p class="text-gray-700">
+                    Your responses have been successfully submitted and locked.
+                    They are now available for facilitator review.
+                </p>
+            </div>
+        </div>
+
+        <!-- Waiting Status or Next Workshop Available -->
+        {% if next_workshop_unlocked %}
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border-l-4 border-emerald-500 rounded-lg p-6 shadow-sm">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-rocket text-emerald-600 text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-lg font-bold text-emerald-900">🎉 Next Workshop Now Available!</h2>
+                    <p class="text-emerald-800 mt-2">
+                        The facilitator has advanced the cohort. You can now begin the next workshop session.
+                    </p>
+                    {% if next_workshop %}
+                    <div class="mt-4">
+                        <a href="{% url 'mana:participant_workshop_detail' assessment.id next_workshop_type %}"
+                           class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200">
+                            <i class="fas fa-arrow-right"></i>
+                            Start {{ next_workshop.title }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-500 rounded-lg p-6 shadow-sm">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-hourglass-half text-amber-600 text-2xl animate-pulse"></i>
+                </div>
+                <div class="flex-1">
+                    <h2 class="text-lg font-bold text-amber-900">⏳ Waiting for Facilitator</h2>
+                    <p class="text-amber-800 mt-2">
+                        The facilitator will review all participant submissions before advancing
+                        the cohort to the next workshop. You'll be notified when the next session
+                        becomes available.
+                    </p>
+                    <div class="mt-3 flex items-center gap-2 text-sm text-amber-700">
+                        <i class="fas fa-users"></i>
+                        <span>
+                            <strong>{{ submitted_count }}</strong> of <strong>{{ total_participants }}</strong>
+                            participants have submitted
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Review Your Answers -->
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 px-8 py-4">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center gap-3">
+                    <i class="fas fa-clipboard-list text-gray-600"></i>
+                    Review Your Submitted Answers
+                </h2>
+                <p class="text-sm text-gray-600 mt-1">Read-only view • Cannot be edited after submission</p>
+            </div>
+
+            <div class="px-8 py-6 space-y-6">
+                {% for pair in qa_pairs %}
+                <div class="border-l-4 border-indigo-200 bg-indigo-50/50 rounded-lg p-5">
+                    <!-- Question -->
+                    <div class="mb-3">
+                        <div class="flex items-start gap-3">
+                            <span class="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-500 text-white text-sm font-bold">
+                                {{ forloop.counter }}
+                            </span>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900">{{ pair.question.label }}</h3>
+                                {% if pair.question.help_text %}
+                                <p class="text-sm text-gray-600 mt-1">{{ pair.question.help_text }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Answer -->
+                    <div class="ml-11 bg-white border border-gray-200 rounded-lg p-4">
+                        {% if pair.response %}
+                            {% if pair.question.type == 'repeater' or pair.question.type == 'structured' %}
+                                <!-- Structured/Repeater Data -->
+                                <div class="text-sm text-gray-900">
+                                    {% if pair.response.response_data %}
+                                        {% if pair.question.type == 'repeater' %}
+                                            <div class="space-y-2">
+                                                {% for item in pair.response.response_data %}
+                                                <div class="bg-gray-50 border border-gray-200 rounded p-3">
+                                                    {% for key, value in item.items %}
+                                                    <div class="flex gap-2">
+                                                        <span class="font-semibold text-gray-700">{{ key|title }}:</span>
+                                                        <span class="text-gray-900">{{ value }}</span>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <!-- Structured -->
+                                            <div class="space-y-1">
+                                                {% for key, value in pair.response.response_data.items %}
+                                                <div class="flex gap-2">
+                                                    <span class="font-semibold text-gray-700">{{ key|title }}:</span>
+                                                    <span class="text-gray-900">{{ value }}</span>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-500 italic">No data provided</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <!-- Regular Text Response -->
+                                <div class="text-gray-900 whitespace-pre-wrap">{{ pair.response.response_data|default:"No answer provided" }}</div>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-gray-500 italic">No response recorded</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-8">No questions found for this workshop.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-between gap-4">
+            <a href="{% url 'mana:participant_dashboard' assessment.id %}"
+               class="inline-flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-xl font-semibold transition-all duration-200">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+
+            {% if next_workshop_unlocked and next_workshop %}
+            <a href="{% url 'mana:participant_workshop_detail' assessment.id next_workshop_type %}"
+               class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200">
+                Continue to Next Workshop
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

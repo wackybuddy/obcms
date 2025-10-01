@@ -28,16 +28,21 @@ from rest_framework_simplejwt.views import (
 # Import admin customizations
 from . import admin as admin_customizations
 from common.admin_views import group_changelist_view
+from common.views.health import health_check, readiness_check
 # API docs import removed - documentation now backend-only
 
 # Main API router
 api_router = DefaultRouter()
 
 urlpatterns = [
+    # Health check endpoints (no authentication required)
+    path('health/', health_check, name='health'),
+    path('ready/', readiness_check, name='readiness'),
+
     # Custom admin views (must come before admin.site.urls)
     path("admin/auth/group/", group_changelist_view, name='custom_group_changelist'),
     path("admin/", admin.site.urls),
-    
+
     # Main application URLs
     path('', include('common.urls')),
     path('communities/', include('communities.urls')),

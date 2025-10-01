@@ -18,13 +18,13 @@ The planning and budgeting dashboard at `common/oobc_planning_budgeting.html` cu
 
 ## Proposed Enhancements
 ### 1. Data Model Enrichment
-- Extend `MonitoringEntry` (and related serializers/forms) with plan year, sector, appropriation class (PS/MOOE/CO), funding type (GAA, BARMM block grant, LGU counterpart, donor), DBM/BARMM program codes, and goal alignment tags (PDP, OPIF, Moral Governance).
+- Extend `MonitoringEntry` (and related serializers/forms) with plan year, sector, appropriation class (PS/MOOE/CO), funding type (GAA, BARMM block grant, LGU counterpart, donor), DBM/BARMM program codes, and goal alignment tags (Bangsamoro Development Plan or BDP).
 - Allow multiple funding tranches per PPA (sub-model for allocations, obligations, disbursements) to track execution detail.
-- Add compliance flags for Gender and Development (GAD), Climate Change Expenditure Tagging (CCET), Indigenous Peoples, and Peace/SDG commitments.
+- Add compliance flags for Gender and Development (GAD), Climate Change Expenditure Tagging (CCET), Youth, and Peace/SDG commitments.
 
 ### 2. Workflow & Approvals
 - Model the Philippine budget cycle stages: Budget Call → Formulation → Technical Budget Hearing → Budget Legislation → Program Execution → Accountability.
-- Capture stage owners (OOBC planning team, BARMM MOF, DBM, LGUs) and deadlines with automated reminders and escalations.
+- Capture stage owners (OOBC Planning Unit, Office of the Chief Minister, MFBM (Ministry of Budget, Finance and Management), MOAs (Ministries, Offices, and Agencies), LGUs) and deadlines with automated reminders and escalations.
 - Log approval history, remarks, and uploaded documents (budget call memoranda, AIP submissions, MOA drafts).
 
 ### 3. Needs-to-Budget Integration
@@ -39,9 +39,9 @@ The planning and budgeting dashboard at `common/oobc_planning_budgeting.html` cu
 - Auto-generate accountability scorecards combining financial and physical progress.
 
 ### 5. Compliance & Cross-Cutting Views
-- Embed CCET and GAD tagging checklists plus summary dashboards to meet national submission standards.
+- Embed GAD tagging checklists plus summary dashboards to meet national submission standards.
 - Align indicators with Results-Based Monitoring & Evaluation (RBME) and OPIF outputs, highlighting KPI contributions.
-- Provide reports for SDG tracking, Moral Governance commitments, and BARMM strategic agenda alignment.
+- Provide reports for SDG tracking, Moral Governance commitments, and Bangsamoro Development Pan and Chief Minister's Priority Agenda alignment.
 
 ### 6. Collaboration & Reporting Tools
 - Enable inline commenting, task assignments, and versioned adjustments per PPA.

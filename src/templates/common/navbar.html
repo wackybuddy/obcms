@@ -17,7 +17,8 @@
             </div>
             
             <!-- Main Navigation - Desktop -->
-            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+            {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana %}
+            <!-- Restricted menu for MANA Participants and Facilitators -->
             <div class="hidden lg:flex items-center space-x-1">
                 <a href="{% url 'common:communities_manage_provincial' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
                     <i class="fas fa-flag text-sm"></i>
@@ -27,6 +28,14 @@
                     <i class="fas fa-map-marked-alt text-sm"></i>
                     <span class="text-sm xl:text-base">Regional MANA</span>
                 </a>
+                {% if perms.mana.can_facilitate_workshop %}
+                <div class="relative group">
+                    <a href="{% url 'common:mana_manage_assessments' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2">
+                        <i class="fas fa-chalkboard-teacher text-sm"></i>
+                        <span class="text-sm xl:text-base">Facilitator Dashboard</span>
+                    </a>
+                </div>
+                {% endif %}
             </div>
             {% else %}
             <!-- Main Navigation - Desktop -->
@@ -50,6 +59,13 @@
                             <span>
                                 <span class="block font-semibold text-gray-900">Municipal OBCs</span>
                                 <span class="block text-xs text-gray-500">View municipal coverage snapshots and trends.</span>
+                            </span>
+                        </a>
+                        <a href="{% url 'common:communities_manage_provincial' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
+                            <i class="fas fa-flag text-emerald-500 mt-1"></i>
+                            <span>
+                                <span class="block font-semibold text-gray-900">Provincial OBCs</span>
+                                <span class="block text-xs text-gray-500">View provincial coverage and OBC statistics.</span>
                             </span>
                         </a>
                         <a href="{% url 'common:mana_geographic_data' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
@@ -228,6 +244,15 @@
                                 <span class="block text-xs text-gray-500">Organization-wide schedule for coordination, MANA, and staff actions.</span>
                             </span>
                         </a>
+                        {% if user.is_superuser or user.user_type == 'admin' or user.user_type == 'oobc_staff' and user.position == 'Executive Director' or user.user_type == 'oobc_staff' and user.position == 'Deputy Executive Director' or user.user_type == 'oobc_staff' and user.position == 'DMO IV' or user.user_type == 'oobc_staff' and user.position == 'DMO III' or user.user_type == 'oobc_staff' and user.position == 'Information System Analyst' or user.user_type == 'oobc_staff' and user.position == 'Information System Analyst II' or user.user_type == 'oobc_staff' and user.position == 'Planning Officer I' or user.user_type == 'oobc_staff' and user.position == 'Planning Officer II' or user.user_type == 'oobc_staff' and user.position == 'Community Development Officer I' %}
+                        <a href="{% url 'common:user_approvals' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
+                            <i class="fas fa-user-check text-amber-500 mt-1"></i>
+                            <span>
+                                <span class="block font-semibold text-gray-900">User Approvals</span>
+                                <span class="block text-xs text-gray-500">Review and approve pending user account registrations.</span>
+                            </span>
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -283,7 +308,8 @@
     
     <!-- Mobile Navigation Menu -->
     <div id="mobileMenu" class="hidden lg:hidden bg-blue-800 bg-opacity-95 backdrop-blur-sm">
-        {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana and not perms.mana.can_facilitate_workshop %}
+        {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana %}
+        <!-- Restricted mobile menu for MANA Participants and Facilitators -->
         <div class="px-4 py-4 space-y-4">
             <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
                 <a href="{% url 'common:communities_manage_provincial' %}" class="flex items-center space-x-2">
@@ -297,6 +323,14 @@
                     <span>Regional MANA</span>
                 </a>
             </div>
+            {% if perms.mana.can_facilitate_workshop %}
+            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
+                <a href="{% url 'common:mana_manage_assessments' %}" class="flex items-center space-x-2">
+                    <i class="fas fa-chalkboard-teacher w-5"></i>
+                    <span>Facilitator Dashboard</span>
+                </a>
+            </div>
+            {% endif %}
             <a href="{% url 'common:profile' %}" class="mobile-nav-item block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors duration-200 flex items-center space-x-2">
                 <i class="fas fa-user-circle w-5"></i>
                 <span>Profile</span>
@@ -321,6 +355,10 @@
                     <a href="{% url 'common:communities_add_municipality' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Municipal OBCs
                         <span class="block text-xs text-white text-opacity-70">Review municipal coverage snapshots</span>
+                    </a>
+                    <a href="{% url 'common:communities_manage_provincial' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                        Provincial OBCs
+                        <span class="block text-xs text-white text-opacity-70">View provincial coverage and OBC statistics</span>
                     </a>
                     <a href="{% url 'common:mana_geographic_data' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Geographic Data

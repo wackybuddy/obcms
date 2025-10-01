@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}My MANA Assessments{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">My Assessments</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
+    <header class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">My MANA Assessments</h1>
+                <p class="mt-2 text-lg text-gray-600">Regional workshop assessments you're enrolled in</p>
+            </div>
+        </div>
+    </header>
+
+    {% if assessments %}
+        <!-- Assessments Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for item in assessments %}
+            <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-200">
+                <!-- Status Badge -->
+                <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+                    <div class="flex items-start justify-between mb-3">
+                        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold
+                            {% if item.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif item.status == 'active' %}bg-blue-100 text-blue-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {% if item.status == 'completed' %}
+                                <i class="fas fa-check-circle"></i> Completed
+                            {% elif item.status == 'active' %}
+                                <i class="fas fa-play-circle"></i> In Progress
+                            {% else %}
+                                <i class="fas fa-circle"></i> Not Started
+                            {% endif %}
+                        </span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900">{{ item.assessment.title }}</h3>
+                </div>
+
+                <!-- Assessment Details -->
+                <div class="px-6 py-4 space-y-4">
+                    <!-- Description -->
+                    {% if item.assessment.description %}
+                    <p class="text-sm text-gray-600 line-clamp-2">{{ item.assessment.description|truncatewords:20 }}</p>
+                    {% endif %}
+
+                    <!-- Progress Bar -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="font-medium text-gray-700">Workshop Progress</span>
+                            <span class="text-gray-900 font-semibold">{{ item.progress_pct|floatformat:0 }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                            <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2.5 rounded-full transition-all duration-500"
+                                 style="width: {{ item.progress_pct }}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500">
+                            {{ item.completed_workshops }} of {{ item.total_workshops }} workshops completed
+                        </p>
+                    </div>
+
+                    <!-- Current Workshop -->
+                    {% if item.current_workshop_display and item.status != 'completed' %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p class="text-xs font-semibold text-blue-900 mb-1">Current Workshop</p>
+                        <p class="text-sm text-blue-700">{{ item.current_workshop_display }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Metadata -->
+                    <div class="flex flex-wrap gap-3 text-xs text-gray-600">
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-map-marker-alt text-gray-400"></i>
+                            {{ item.assessment.province.name }}
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-calendar text-gray-400"></i>
+                            Started {{ item.account.created_at|date:"M d, Y" }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="px-6 pb-6">
+                    <a href="{% url 'mana:participant_dashboard' item.assessment.id %}"
+                       class="block w-full text-center px-4 py-3 rounded-lg font-semibold text-white transition-all duration-200
+                              {% if item.status == 'completed' %}
+                              bg-gray-600 hover:bg-gray-700
+                              {% else %}
+                              bg-emerald-600 hover:bg-emerald-700
+                              {% endif %}">
+                        {% if item.status == 'completed' %}
+                            <i class="fas fa-eye mr-2"></i>View Summary
+                        {% else %}
+                            <i class="fas fa-arrow-right mr-2"></i>Continue Assessment
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+            <div class="max-w-md mx-auto">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-clipboard-list text-4xl text-gray-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-3">No Assessments Yet</h2>
+                <p class="text-gray-600 mb-6">
+                    You haven't been enrolled in any MANA regional workshop assessments yet.
+                </p>
+                <p class="text-sm text-gray-500">
+                    Contact your OOBC facilitator or coordinator to get enrolled in an assessment.
+                </p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

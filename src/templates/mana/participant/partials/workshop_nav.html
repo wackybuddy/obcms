@@ -1,32 +1,25 @@
-<div class="space-y-4" hx-boost="true">
-    <div class="grid gap-4 sm:grid-cols-2">
+<!-- Workshop Tabs (Minimal) -->
+<div class="bg-white border-b border-gray-200">
+    <nav class="flex" role="tablist">
         {% for item in nav_items %}
         <a href="{{ item.url }}"
-           class="group rounded-2xl border px-6 py-5 transition-all duration-200 {% if item.accessible %}border-emerald-200 bg-emerald-50 hover:bg-emerald-100{% else %}border-gray-200 bg-gray-50 cursor-not-allowed pointer-events-none{% endif %}"
-           data-task-id="{{ item.workshop.id }}">
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <p class="text-xs uppercase tracking-wide text-gray-500">{{ item.workshop.get_workshop_type_display }}</p>
-                    <h3 class="text-lg font-semibold text-gray-900 mt-1">{{ item.workshop.title }}</h3>
-                </div>
-                <div class="flex items-center gap-2">
-                    {% if item.completed %}
-                        <span class="inline-flex items-center gap-1 text-emerald-600 text-sm"><i class="fas fa-check-circle"></i> Done</span>
-                    {% elif item.accessible %}
-                        <span class="inline-flex items-center gap-1 text-emerald-600 text-sm"><i class="fas fa-unlock"></i> Open</span>
-                    {% else %}
-                        <span class="inline-flex items-center gap-1 text-gray-400 text-sm"><i class="fas fa-lock"></i> Locked</span>
-                    {% endif %}
-                </div>
+           hx-boost="true"
+           hx-target="body"
+           hx-swap="innerHTML transition:true"
+           class="flex-1 px-4 py-3 text-center text-sm font-medium transition-all duration-200 border-b-2 {% if item.is_current %}border-emerald-500 bg-emerald-50 text-emerald-700{% elif item.accessible %}border-transparent hover:border-emerald-300 hover:bg-gray-50 text-gray-700{% else %}border-transparent bg-gray-50 text-gray-400 cursor-not-allowed pointer-events-none{% endif %}"
+           data-workshop-id="{{ item.workshop.id }}"
+           {% if not item.accessible %}aria-disabled="true"{% endif %}>
+            <div class="flex items-center justify-center gap-2">
+                <span>Workshop {{ forloop.counter }}</span>
+                {% if item.completed %}
+                    <i class="fas fa-check-circle text-emerald-600 text-xs"></i>
+                {% elif item.is_current %}
+                    <i class="fas fa-circle text-amber-500 text-xs animate-pulse"></i>
+                {% elif not item.accessible %}
+                    <i class="fas fa-lock text-gray-400 text-xs"></i>
+                {% endif %}
             </div>
-            <p class="text-sm text-gray-600 mt-3">{{ item.workshop.description|truncatewords:30 }}</p>
-            {% if item.is_current %}
-            <div class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-emerald-600">
-                <span class="inline-flex w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Currently Unlocked
-            </div>
-            {% endif %}
         </a>
         {% endfor %}
-    </div>
+    </nav>
 </div>

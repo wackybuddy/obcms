@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
 
+from common.models import Province
 from mana.models import Assessment, WorkshopParticipantAccount
 
 User = get_user_model()
@@ -78,12 +79,25 @@ class Command(BaseCommand):
                 )
                 ensure_permissions(user)
 
+                province_id = row.get("province_id") or None
+                region_id = row.get("region_id") or None
+                if not region_id and province_id:
+                    region_id = (
+                        Province.objects.filter(pk=province_id)
+                        .values_list("region_id", flat=True)
+                        .first()
+                    )
+
                 WorkshopParticipantAccount.objects.create(
                     assessment=assessment,
                     user=user,
                     stakeholder_type=row.get("stakeholder_type", "other"),
-                    organization=row.get("organization", ""),
-                    province_id=row.get("province_id") or None,
+                    office_business_name=(
+                        row.get("office_business_name")
+                        or row.get("organization", "")
+                    ),
+                    region_id=region_id,
+                    province_id=province_id,
                     municipality_id=row.get("municipality_id") or None,
                     barangay_id=row.get("barangay_id") or None,
                     created_by=assessment.created_by,

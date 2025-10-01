@@ -596,6 +596,15 @@ class Organization(models.Model):
         blank=True, help_text="Description of the organization and its mandate"
     )
 
+    # Mandate and Functions (particularly for government agencies)
+    mandate = models.TextField(
+        blank=True, help_text="Official mandate of the organization (particularly for government agencies)"
+    )
+
+    powers_and_functions = models.TextField(
+        blank=True, help_text="Powers and functions of the organization (particularly for government agencies)"
+    )
+
     # Contact Information
     address = models.TextField(
         blank=True, help_text="Physical address of the organization"

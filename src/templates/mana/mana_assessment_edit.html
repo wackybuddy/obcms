@@ -56,7 +56,7 @@
         </div>
     </header>
 
-    <form method="post" class="space-y-8" hx-target="closest.form" hx-swap="outerHTML swap:300ms">
+    <form method="post" class="space-y-8" hx-target="closest.form" hx-swap="outerHTML swap:300ms" data-location-form>
         {% csrf_token %}
         <section class="bg-white rounded-2xl border border-gray-200 shadow p-6 lg:p-8 space-y-6">
             <div class="flex items-center gap-2">
@@ -70,7 +70,6 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {% include "components/form_field.html" with field=form.title label="Assessment Title" %}
-                {% include "components/form_field_select.html" with field=form.category label="Category" %}
                 {% include "components/form_field_select.html" with field=form.assessment_level label="Assessment Level" %}
                 {% include "components/form_field_select.html" with field=form.primary_methodology label="Primary Methodology" %}
                 {% include "components/form_field_select.html" with field=form.status label="Status" %}
@@ -88,11 +87,28 @@
                     <p class="text-sm text-gray-600">Match the assessment level with the correct community or province coverage.</p>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% include "components/form_field_select.html" with field=form.community label="Community" %}
-                {% include "components/form_field_select.html" with field=form.province label="Province" %}
-                {% include "components/form_field_select.html" with field=form.lead_assessor label="Lead Assessor" %}
-                {% include "components/form_field.html" with field=form.location_details label="Coverage Details" %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" data-location-fields>
+                <div data-location-field="region" class="transition-opacity duration-200">
+                    {% include "components/form_field_select.html" with field=form.region label="Region" placeholder="Select region..." %}
+                </div>
+                <div data-location-field="province" class="transition-opacity duration-200">
+                    {% include "components/form_field_select.html" with field=form.province label="Province" placeholder="Select province..." %}
+                </div>
+                <div data-location-field="municipality" class="transition-opacity duration-200">
+                    {% include "components/form_field_select.html" with field=form.municipality label="City / Municipality" placeholder="Select municipality..." %}
+                </div>
+                <div data-location-field="barangay" class="transition-opacity duration-200">
+                    {% include "components/form_field_select.html" with field=form.barangay label="Barangay" placeholder="Select barangay..." %}
+                </div>
+                <div data-location-field="community" class="transition-opacity duration-200">
+                    {% include "components/form_field_select.html" with field=form.community label="Community" placeholder="Select community..." %}
+                </div>
+                <div class="md:col-span-2">
+                    {% include "components/form_field_select.html" with field=form.lead_assessor label="Lead Assessor" %}
+                </div>
+                <div class="md:col-span-2">
+                    {% include "components/form_field.html" with field=form.location_details label="Coverage Details" %}
+                </div>
             </div>
         </section>
 
@@ -166,4 +182,324 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+    {{ location_data|json_script:"mana-location-data" }}
+    {{ community_data|json_script:"mana-community-data" }}
+    <script>
+        (function () {
+            "use strict";
+
+            const form = document.querySelector("form[data-location-form]");
+            if (!form) {
+                return;
+            }
+
+            const levelSelect = document.getElementById("id_assessment_level");
+            const selects = {
+                region: document.getElementById("id_region"),
+                province: document.getElementById("id_province"),
+                municipality: document.getElementById("id_municipality"),
+                barangay: document.getElementById("id_barangay"),
+                community: document.getElementById("id_community"),
+            };
+
+            const wrappers = {
+                region: form.querySelector('[data-location-field="region"]'),
+                province: form.querySelector('[data-location-field="province"]'),
+                municipality: form.querySelector('[data-location-field="municipality"]'),
+                barangay: form.querySelector('[data-location-field="barangay"]'),
+                community: form.querySelector('[data-location-field="community"]'),
+            };
+
+            const parseData = (scriptId) => {
+                const node = document.getElementById(scriptId);
+                if (!node) {
+                    return null;
+                }
+                try {
+                    return JSON.parse(node.textContent);
+                } catch (error) {
+                    console.error("Unable to parse location data", error);
+                    return null;
+                }
+            };
+
+            const locationData = parseData("mana-location-data") || {};
+            const communityData = parseData("mana-community-data") || [];
+
+            const regions = locationData.regions || [];
+            const provinces = locationData.provinces || [];
+            const municipalities = locationData.municipalities || [];
+            const barangays = locationData.barangays || [];
+
+            const provincesByRegion = new Map();
+            provinces.forEach((province) => {
+                const key = String(province.region_id);
+                if (!provincesByRegion.has(key)) {
+                    provincesByRegion.set(key, []);
+                }
+                provincesByRegion.get(key).push(province);
+            });
+
+            const municipalitiesByProvince = new Map();
+            municipalities.forEach((municipality) => {
+                const key = String(municipality.province_id);
+                if (!municipalitiesByProvince.has(key)) {
+                    municipalitiesByProvince.set(key, []);
+                }
+                municipalitiesByProvince.get(key).push(municipality);
+            });
+
+            const barangaysByMunicipality = new Map();
+            barangays.forEach((barangay) => {
+                const key = String(barangay.municipality_id);
+                if (!barangaysByMunicipality.has(key)) {
+                    barangaysByMunicipality.set(key, []);
+                }
+                barangaysByMunicipality.get(key).push(barangay);
+            });
+
+            const communitiesByBarangay = new Map();
+            communityData.forEach((community) => {
+                const key = String(community.barangay_id);
+                if (!communitiesByBarangay.has(key)) {
+                    communitiesByBarangay.set(key, []);
+                }
+                communitiesByBarangay.get(key).push(community);
+            });
+
+            const ensureArray = (value) => (Array.isArray(value) ? value : []);
+
+            const toggleField = (key, shouldShow) => {
+                const wrapper = wrappers[key];
+                if (!wrapper) {
+                    return;
+                }
+                if (shouldShow) {
+                    wrapper.classList.remove("hidden", "opacity-0", "pointer-events-none");
+                    return;
+                }
+                wrapper.classList.add("opacity-0", "pointer-events-none");
+                window.setTimeout(() => {
+                    wrapper.classList.add("hidden");
+                }, 200);
+            };
+
+            const clearSelect = (select) => {
+                if (!select) {
+                    return;
+                }
+                if (select.value) {
+                    select.value = "";
+                    select.dispatchEvent(new Event("change"));
+                }
+            };
+
+            const buildOption = (value, label, { disabled = false } = {}) => {
+                const option = document.createElement("option");
+                option.value = String(value);
+                option.textContent = label;
+                if (disabled) {
+                    option.disabled = true;
+                }
+                return option;
+            };
+
+            const findMatch = (options, candidate) => {
+                if (!candidate) {
+                    return "";
+                }
+                const target = String(candidate);
+                return options.some((option) => String(option.id) === target) ? target : "";
+            };
+
+            const populateSelect = (select, sourceOptions, config = {}) => {
+                if (!select) {
+                    return;
+                }
+                const options = ensureArray(sourceOptions);
+                const placeholder = config.placeholder || select.dataset.placeholder || "Select option...";
+                const preserve = config.preserve === true;
+                const candidates = [];
+
+                if (config.initial !== undefined) {
+                    candidates.push(config.initial);
+                }
+                if (preserve && select.value) {
+                    candidates.push(select.value);
+                }
+                if (select.dataset.initial) {
+                    candidates.push(select.dataset.initial);
+                }
+
+                const currentScroll = select.scrollTop;
+
+                select.innerHTML = "";
+                select.appendChild(buildOption("", placeholder, { disabled: false }));
+
+                options.forEach((option) => {
+                    const node = buildOption(option.id, option.label || option.name || option.title || "");
+                    select.appendChild(node);
+                });
+
+                let resolvedValue = "";
+                for (let index = 0; index < candidates.length; index += 1) {
+                    resolvedValue = findMatch(options, candidates[index]);
+                    if (resolvedValue) {
+                        break;
+                    }
+                }
+                select.value = resolvedValue;
+                if (!resolvedValue && select.dataset.initial) {
+                    select.dataset.initial = "";
+                }
+
+                select.scrollTop = currentScroll;
+
+                return resolvedValue;
+            };
+
+            const formatRegion = (region) => {
+                if (!region) {
+                    return "";
+                }
+                if (region.code) {
+                    return `Region ${region.code} - ${region.name}`;
+                }
+                return region.name;
+            };
+
+            const enrichOptions = (collection, formatter) =>
+                ensureArray(collection).map((item) => ({
+                    ...item,
+                    label: formatter ? formatter(item) : item.name,
+                }));
+
+            const allRegions = enrichOptions(regions, formatRegion);
+            const allProvinces = enrichOptions(provinces);
+            const allMunicipalities = enrichOptions(municipalities);
+            const allBarangays = enrichOptions(barangays);
+            const allCommunities = enrichOptions(communityData, (community) => community.name);
+
+            const updateProvinceOptions = () => {
+                const regionValue = selects.region ? selects.region.value || selects.region.dataset.initial : "";
+                const scoped = regionValue ? provincesByRegion.get(regionValue) : null;
+                const resolved = populateSelect(selects.province, enrichOptions(scoped || (regionValue ? [] : allProvinces)), {
+                    preserve: true,
+                    placeholder: "Select province...",
+                });
+                if (!resolved) {
+                    clearSelect(selects.municipality);
+                }
+                updateMunicipalityOptions();
+            };
+
+            const updateMunicipalityOptions = () => {
+                const provinceValue = selects.province ? selects.province.value || selects.province.dataset.initial : "";
+                const scoped = provinceValue ? municipalitiesByProvince.get(provinceValue) : null;
+                const resolved = populateSelect(selects.municipality, enrichOptions(scoped || (provinceValue ? [] : allMunicipalities)), {
+                    preserve: true,
+                    placeholder: "Select municipality...",
+                });
+                if (!resolved) {
+                    clearSelect(selects.barangay);
+                }
+                updateBarangayOptions();
+            };
+
+            const updateBarangayOptions = () => {
+                const municipalityValue = selects.municipality ? selects.municipality.value || selects.municipality.dataset.initial : "";
+                const scoped = municipalityValue ? barangaysByMunicipality.get(municipalityValue) : null;
+                const resolved = populateSelect(selects.barangay, enrichOptions(scoped || (municipalityValue ? [] : allBarangays)), {
+                    preserve: true,
+                    placeholder: "Select barangay...",
+                });
+                if (!resolved) {
+                    clearSelect(selects.community);
+                }
+                updateCommunityOptions();
+            };
+
+            const updateCommunityOptions = () => {
+                const barangayValue = selects.barangay ? selects.barangay.value || selects.barangay.dataset.initial : "";
+                const scoped = barangayValue ? communitiesByBarangay.get(barangayValue) : null;
+                populateSelect(selects.community, enrichOptions(scoped || (barangayValue ? [] : allCommunities)), {
+                    preserve: true,
+                    placeholder: "Select community...",
+                });
+            };
+
+            const applyLevelVisibility = (level) => {
+                const showProvince = ["provincial", "city_municipal", "barangay", "community"].includes(level);
+                const showMunicipality = ["city_municipal", "barangay", "community"].includes(level);
+                const showBarangay = ["barangay", "community"].includes(level);
+                const showCommunity = level === "community";
+
+                toggleField("region", true);
+                toggleField("province", showProvince);
+                toggleField("municipality", showMunicipality);
+                toggleField("barangay", showBarangay);
+                toggleField("community", showCommunity);
+
+                if (!showProvince) {
+                    clearSelect(selects.province);
+                }
+                if (!showMunicipality) {
+                    clearSelect(selects.municipality);
+                }
+                if (!showBarangay) {
+                    clearSelect(selects.barangay);
+                }
+                if (!showCommunity) {
+                    clearSelect(selects.community);
+                }
+            };
+
+            populateSelect(selects.region, allRegions, {
+                preserve: true,
+                placeholder: "Select region...",
+            });
+            updateProvinceOptions();
+            updateMunicipalityOptions();
+            updateBarangayOptions();
+            updateCommunityOptions();
+
+            if (levelSelect) {
+                applyLevelVisibility(levelSelect.value || levelSelect.dataset.initial || "community");
+                levelSelect.addEventListener("change", () => {
+                    applyLevelVisibility(levelSelect.value);
+                });
+            }
+
+            if (selects.region) {
+                selects.region.addEventListener("change", () => {
+                    selects.region.dataset.initial = "";
+                    updateProvinceOptions();
+                });
+            }
+
+            if (selects.province) {
+                selects.province.addEventListener("change", () => {
+                    selects.province.dataset.initial = "";
+                    updateMunicipalityOptions();
+                });
+            }
+
+            if (selects.municipality) {
+                selects.municipality.addEventListener("change", () => {
+                    selects.municipality.dataset.initial = "";
+                    updateBarangayOptions();
+                });
+            }
+
+            if (selects.barangay) {
+                selects.barangay.addEventListener("change", () => {
+                    selects.barangay.dataset.initial = "";
+                    updateCommunityOptions();
+                });
+            }
+        })();
+    </script>
 {% endblock %}

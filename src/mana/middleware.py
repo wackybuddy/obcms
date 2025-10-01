@@ -102,14 +102,24 @@ class ManaParticipantAccessMiddleware(MiddlewareMixin):
         except WorkshopParticipantAccount.DoesNotExist:
             return redirect("common:dashboard")
 
-        onboarding_url = reverse("mana:participant_onboarding", args=[participant_account.assessment_id])
+        onboarding_url = reverse(
+            "mana:participant_onboarding",
+            args=[participant_account.assessment_id],
+        )
 
-        if not participant_account.profile_completed or not participant_account.consent_given:
-            if path != onboarding_url:
-                return redirect(onboarding_url)
+        if path == onboarding_url:
             return None
 
-        if path in self.ALLOWED_PATHS or path.startswith(self.ALLOWED_PREFIXES) or path == onboarding_url:
+        if path == "/logout/":
+            return None
+
+        if path.startswith("/static/") or path.startswith("/media/"):
+            return None
+
+        if not participant_account.profile_completed or not participant_account.consent_given:
+            return redirect(onboarding_url)
+
+        if path in self.ALLOWED_PATHS or path.startswith(self.ALLOWED_PREFIXES):
             return None
 
         participant_dashboard = reverse("mana:participant_dashboard", args=[participant_account.assessment_id])

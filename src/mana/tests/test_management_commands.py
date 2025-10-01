@@ -25,6 +25,8 @@ def test_sync_mana_question_schema(tmp_path, settings):
     schema_path = tmp_path / "schema.json"
     schema_path.write_text(json.dumps(schema_data), encoding="utf-8")
 
+    settings.MANA_QUESTION_SCHEMA_VERSION = "test"
+
     management.call_command(
         "sync_mana_question_schema", str(schema_path), schema_version="test"
     )

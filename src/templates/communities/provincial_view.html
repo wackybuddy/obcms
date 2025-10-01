@@ -39,6 +39,10 @@
                 <span>{{ coverage.province.name }} Provincial OBC</span>
                 {% if is_archived %}
                 <span class="inline-flex items-center px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded-full bg-amber-100 text-amber-800">Archived</span>
+                {% elif coverage.is_submitted %}
+                <span class="inline-flex items-center px-3 py-1 text-xs font-semibold uppercase tracking-wide rounded-full bg-green-100 text-green-800">
+                    <i class="fas fa-check-circle mr-1"></i>Submitted
+                </span>
                 {% endif %}
             </h1>
             <p class="mt-2 text-lg text-gray-600">
@@ -55,10 +59,21 @@
                 </button>
             </form>
             {% else %}
-            <a href="{% url 'common:communities_edit_provincial' coverage.id %}"
-               class="inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
-                <i class="fas fa-edit mr-2"></i>Edit
-            </a>
+                {% if can_edit %}
+                <a href="{% url 'common:communities_edit_provincial' coverage.id %}"
+                   class="inline-flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                    <i class="fas fa-edit mr-2"></i>Edit
+                </a>
+                {% endif %}
+                {% if can_submit %}
+                <form method="post" action="{% url 'common:communities_submit_provincial' coverage.id %}" class="inline" onsubmit="return confirm('Are you sure you want to submit this Provincial OBC? Once submitted, you will not be able to edit it.');">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit
+                    </button>
+                </form>
+                {% endif %}
             {% endif %}
             <a href="{{ redirect_after_action }}"
                class="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-all duration-200">
@@ -99,6 +114,19 @@
         </h2>
         <p class="mt-2 text-sm text-amber-800">
             This provincial coverage is archived and excluded from summaries. Restore it to resume editing and include it in reports.
+        </p>
+    </div>
+    {% elif coverage.is_submitted %}
+    <div class="mb-6 border-l-4 border-green-500 bg-green-50 rounded-lg p-5 shadow-sm">
+        <h2 class="text-lg font-semibold text-green-800 flex items-center gap-2">
+            <i class="fas fa-check-circle"></i>
+            Submitted Provincial OBC
+        </h2>
+        <p class="mt-2 text-sm text-green-800">
+            This Provincial OBC has been submitted{% if coverage.submitted_at %} on {{ coverage.submitted_at|date:"F d, Y \a\t g:i A" }}{% endif %}{% if coverage.submitted_by %} by {{ coverage.submitted_by.get_full_name }}{% endif %}.
+            {% if is_mana_participant %}
+            This record is now read-only. Contact OOBC staff if you need to make changes.
+            {% endif %}
         </p>
     </div>
     {% endif %}

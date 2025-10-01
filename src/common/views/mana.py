@@ -1,16 +1,22 @@
 """Views for the MANA (Mapping and Needs Assessment) module."""
 
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Case, Count, F, IntegerField, Q, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from ..models import Barangay, Municipality, Province, Region
+from communities.models import OBCCommunity
+
+from ..models import Barangay, Municipality, Province, Region, StaffProfile
 from ..services.locations import build_location_data
 from common.forms import ProvinceForm
 from common.services.geodata import serialize_layers_for_map
@@ -26,7 +32,16 @@ from mana.forms import (
     Workshop4Form,
     Workshop5Form,
 )
-from mana.models import Assessment, MANAReport, Need, WorkshopActivity
+from mana.models import (
+    Assessment,
+    AssessmentCategory,
+    AssessmentTeamMember,
+    MANAReport,
+    Need,
+    WorkshopActivity,
+    WorkshopParticipantAccount,
+    WorkshopResponse,
+)
 from mana.views import create_workshop_activities
 
 WORKSHOP_FORM_MAP = {
@@ -362,14 +377,14 @@ def _build_regional_dataset(request):
 
         aggregated = (
             region_assessments.annotate(
-                region_id=Case(
+                resolved_region_id=Case(
                     When(community__isnull=False, then=F("community__barangay__municipality__province__region_id")),
                     When(province__isnull=False, then=F("province__region_id")),
                     default=None,
                     output_field=IntegerField()
                 )
             )
-            .values("region_id")
+            .values("resolved_region_id")
             .annotate(
                 total=Count("id"),
                 completed=Count("id", filter=Q(status="completed")),
@@ -390,7 +405,7 @@ def _build_regional_dataset(request):
         )
 
         for row in aggregated:
-            summary = region_summary.get(row["region_id"])
+            summary = region_summary.get(row["resolved_region_id"])
             if not summary:
                 continue
             assessments = summary["assessments"]
@@ -411,11 +426,11 @@ def _build_regional_dataset(request):
                 assessment__community__barangay__municipality__province__region_id__in=region_ids
             )
             .annotate(
-                region_id=F(
+                resolved_region_id=F(
                     "assessment__community__barangay__municipality__province__region_id"
                 )
             )
-            .values("region_id")
+            .values("resolved_region_id")
             .annotate(
                 total=Count("id"),
                 critical=Count("id", filter=Q(urgency_level="immediate")),
@@ -435,7 +450,7 @@ def _build_regional_dataset(request):
         )
 
         for row in needs_agg:
-            summary = region_summary.get(row["region_id"])
+            summary = region_summary.get(row["resolved_region_id"])
             if not summary:
                 continue
             summary["needs"].update(
@@ -449,11 +464,11 @@ def _build_regional_dataset(request):
                 assessment__community__barangay__municipality__province__region_id__in=region_ids
             )
             .annotate(
-                region_id=F(
+                resolved_region_id=F(
                     "assessment__community__barangay__municipality__province__region_id"
                 )
             )
-            .values("region_id")
+            .values("resolved_region_id")
             .annotate(
                 total=Count("id"),
                 finalized=Count(
@@ -464,7 +479,7 @@ def _build_regional_dataset(request):
         )
 
         for row in reports_agg:
-            summary = region_summary.get(row["region_id"])
+            summary = region_summary.get(row["resolved_region_id"])
             if not summary:
                 continue
             summary["reports"].update(
@@ -592,17 +607,250 @@ def mana_home(request):
 @login_required
 def mana_new_assessment(request):
     """New MANA assessment page."""
-    from communities.models import OBCCommunity
-    from mana.models import Assessment, NeedsCategory
-
     recent_assessments = Assessment.objects.order_by("-created_at")[:5]
-    communities = OBCCommunity.objects.filter(is_active=True).order_by("barangay__name")
-    categories = NeedsCategory.objects.all().order_by("name")
+    regions = Region.objects.filter(is_active=True).order_by("code", "name")
+    provinces = (
+        Province.objects.filter(is_active=True)
+        .select_related("region")
+        .order_by("name")
+    )
+
+    staff_profiles = (
+        StaffProfile.objects.filter(
+            user__is_active=True,
+            employment_status=StaffProfile.STATUS_ACTIVE,
+        )
+        .select_related("user")
+        .order_by("user__first_name", "user__last_name")
+    )
+    staff_members = [profile.user for profile in staff_profiles]
+
+    if request.method == "POST":
+        form_data = request.POST
+        errors: list[str] = []
+
+        title = form_data.get("title", "").strip()
+        primary_methodology = form_data.get("primary_methodology", "workshop")
+        priority = form_data.get("priority", "medium")
+        objectives = form_data.get("objectives", "").strip()
+        description = form_data.get("description", "").strip()
+        venue_location = form_data.get("venue_location", "").strip()
+        funding_source = form_data.get("funding_source", "").strip()
+
+        planned_start_raw = form_data.get("planned_start_date", "").strip()
+        planned_end_raw = form_data.get("planned_end_date", "").strip()
+        estimated_budget_raw = form_data.get("estimated_budget", "").strip()
+
+        region_id = form_data.get("region") or None
+        province_id = form_data.get("province") or None
+        municipality_id = form_data.get("municipality") or None
+        barangay_id = form_data.get("barangay") or None
+        community_id = form_data.get("community") or None
+
+        assessment_level = form_data.get("assessment_level") or None
+        if not assessment_level:
+            if community_id:
+                assessment_level = "community"
+            elif barangay_id:
+                assessment_level = "barangay"
+            elif municipality_id:
+                assessment_level = "city_municipal"
+            elif province_id:
+                assessment_level = "provincial"
+            else:
+                assessment_level = "regional"
+
+        if not title:
+            errors.append("Provide an assessment title.")
+
+        if not objectives:
+            errors.append("Outline the key objectives for this assessment.")
+
+        if not description:
+            errors.append("Add a short description summarizing the activity.")
+
+        def parse_date(value: str, label: str) -> date | None:
+            if not value:
+                errors.append(f"Specify the {label}.")
+                return None
+            try:
+                return datetime.strptime(value, "%Y-%m-%d").date()
+            except ValueError:
+                errors.append(f"Invalid {label} format. Use YYYY-MM-DD.")
+                return None
+
+        planned_start_date = parse_date(planned_start_raw, "planned start date")
+        planned_end_date = parse_date(planned_end_raw, "planned end date")
+
+        estimated_budget = None
+        if estimated_budget_raw:
+            try:
+                estimated_budget = Decimal(estimated_budget_raw)
+            except (InvalidOperation, TypeError):
+                errors.append("Enter a valid estimated budget amount.")
+
+        region = None
+        if region_id:
+            region = Region.objects.filter(pk=region_id).first()
+            if not region:
+                errors.append("Selected region was not found.")
+        else:
+            errors.append("Select the region covered by this assessment.")
+
+        province = None
+        if province_id:
+            province = Province.objects.filter(pk=province_id).select_related("region").first()
+            if not province:
+                errors.append("Selected province was not found.")
+
+        municipality = None
+        if municipality_id:
+            municipality = (
+                Municipality.objects.filter(pk=municipality_id)
+                .select_related("province__region")
+                .first()
+            )
+            if not municipality:
+                errors.append("Selected municipality was not found.")
+
+        barangay = None
+        if barangay_id:
+            barangay = (
+                Barangay.objects.filter(pk=barangay_id)
+                .select_related("municipality__province__region")
+                .first()
+            )
+            if not barangay:
+                errors.append("Selected barangay was not found.")
+
+        community = None
+        if community_id:
+            community = (
+                OBCCommunity.objects.select_related(
+                    "barangay__municipality__province__region"
+                )
+                .filter(pk=community_id)
+                .first()
+            )
+            if not community:
+                errors.append("Selected community was not found.")
+
+        # Gather team member ids
+        team_leader_id = form_data.get("team_leader") or None
+        deputy_leader_id = form_data.get("deputy_leader") or None
+        documenter_id = form_data.get("lead_documenter") or None
+        facilitator_ids = {
+            member_id
+            for member_id in [
+                form_data.get("workshop_1_facilitator"),
+                form_data.get("workshop_2_facilitator"),
+                form_data.get("workshop_3_facilitator"),
+                form_data.get("workshop_4_facilitator"),
+                form_data.get("workshop_5_facilitator"),
+            ]
+            if member_id
+        }
+
+        target_participants = form_data.get("target_participants") or "30"
+
+        if not errors:
+            try:
+                with transaction.atomic():
+                    category, _ = AssessmentCategory.objects.get_or_create(
+                        name="OBC-MANA Workshop",
+                        defaults={
+                            "category_type": "needs_assessment",
+                            "description": (
+                                "Other Bangsamoro Communities Mapping and Needs Assessment"
+                            ),
+                            "icon": "fas fa-users",
+                            "color": "#3B82F6",
+                        },
+                    )
+
+                    assessment = Assessment(
+                        title=title,
+                        category=category,
+                        description=description,
+                        objectives=objectives,
+                        assessment_level=assessment_level,
+                        primary_methodology=primary_methodology,
+                        priority=priority,
+                        planned_start_date=planned_start_date,
+                        planned_end_date=planned_end_date,
+                        estimated_budget=estimated_budget,
+                        location_details=venue_location,
+                        lead_assessor=request.user,
+                        created_by=request.user,
+                    )
+
+                    if funding_source:
+                        supplemental_note = f"Funding source: {funding_source}"
+                        assessment.location_details = (
+                            f"{venue_location}\n{supplemental_note}"
+                            if venue_location
+                            else supplemental_note
+                        )
+
+                    if region:
+                        assessment.region = region
+                    if province:
+                        assessment.province = province
+                    if municipality:
+                        assessment.municipality = municipality
+                    if barangay:
+                        assessment.barangay = barangay
+                    if community:
+                        assessment.community = community
+
+                    assessment.full_clean()
+                    assessment.save()
+
+                    def add_team_member(user_id: str | None, role: str) -> None:
+                        if not user_id:
+                            return
+                        AssessmentTeamMember.objects.create(
+                            assessment=assessment,
+                            user_id=user_id,
+                            role=role,
+                        )
+
+                    add_team_member(team_leader_id, "team_leader")
+                    add_team_member(deputy_leader_id, "deputy_leader")
+                    add_team_member(documenter_id, "documenter")
+                    for facilitator_id in facilitator_ids:
+                        add_team_member(facilitator_id, "facilitator")
+
+                    if primary_methodology == "workshop":
+                        create_workshop_activities(
+                            assessment,
+                            {
+                                "planned_start_date": planned_start_raw,
+                                "target_participants": target_participants,
+                            },
+                        )
+
+                messages.success(
+                    request,
+                    f'Assessment "{assessment.title}" was created successfully.',
+                )
+                return redirect("common:mana_manage_assessments")
+            except ValidationError as exc:
+                for field, field_errors in exc.message_dict.items():
+                    for error in field_errors:
+                        errors.append(f"{field.replace('_', ' ').title()}: {error}")
+            except Exception as exc:  # pragma: no cover - guarded fallback
+                errors.append("Unable to create the assessment. Please try again.")
+
+        for error in errors:
+            messages.error(request, error)
 
     context = {
         "recent_assessments": recent_assessments,
-        "communities": communities,
-        "categories": categories,
+        "regions": regions,
+        "provinces": provinces,
+        "staff_members": staff_members,
+        "form_data": request.POST if request.method == "POST" else None,
     }
     return render(request, "mana/mana_new_assessment.html", context)
 
@@ -665,6 +913,9 @@ def mana_assessment_detail(request, assessment_id):
             "lead_assessor",
             "community__barangay__municipality__province__region",
             "province__region",
+            "region",
+            "municipality__province__region",
+            "barangay__municipality__province__region",
         ).prefetch_related(
             "assessmentteammember_set__user",
             "identified_needs__category",
@@ -738,6 +989,9 @@ def mana_assessment_edit(request, assessment_id):
             "category",
             "community__barangay__municipality__province__region",
             "province__region",
+            "region",
+            "municipality__province__region",
+            "barangay__municipality__province__region",
             "lead_assessor",
         ),
         pk=assessment_id,
@@ -759,14 +1013,54 @@ def mana_assessment_edit(request, assessment_id):
     else:
         form = AssessmentUpdateForm(instance=assessment, user=request.user)
 
+    community_records = (
+        OBCCommunity.objects.filter(is_active=True)
+        .select_related("barangay__municipality__province__region")
+        .order_by(
+            "barangay__municipality__province__name",
+            "barangay__municipality__name",
+            "barangay__name",
+            "name",
+        )
+    )
+
+    community_data = [
+        {
+            "id": str(community.id),
+            "name": community.display_name or community.barangay.name,
+            "barangay_id": community.barangay_id,
+            "municipality_id": community.barangay.municipality_id,
+            "province_id": community.barangay.municipality.province_id,
+            "region_id": community.barangay.municipality.province.region_id,
+        }
+        for community in community_records
+    ]
+
     return render(
         request,
         "mana/mana_assessment_edit.html",
         {
             "assessment": assessment,
             "form": form,
+            "location_data": build_location_data(include_barangays=True),
+            "community_data": community_data,
         },
     )
+
+
+@login_required
+def mana_assessment_delete(request, assessment_id):
+    """Delete a MANA assessment."""
+    assessment = get_object_or_404(Assessment, pk=assessment_id)
+
+    assessment_title = assessment.title
+    assessment.delete()
+
+    messages.success(
+        request,
+        f'Assessment "{assessment_title}" was deleted successfully.',
+    )
+    return redirect("common:mana_manage_assessments")
 
 
 @login_required
@@ -913,14 +1207,14 @@ def mana_regional_overview(request):
 
         aggregated = (
             region_assessments.annotate(
-                region_id=Case(
+                resolved_region_id=Case(
                     When(community__isnull=False, then=F("community__barangay__municipality__province__region_id")),
                     When(province__isnull=False, then=F("province__region_id")),
                     default=None,
                     output_field=IntegerField()
                 )
             )
-            .values("region_id")
+            .values("resolved_region_id")
             .annotate(
                 total=Count("id"),
                 completed=Count("id", filter=Q(status="completed")),
@@ -941,7 +1235,7 @@ def mana_regional_overview(request):
         )
 
         for row in aggregated:
-            summary = region_summary.get(row["region_id"])
+            summary = region_summary.get(row["resolved_region_id"])
             if not summary:
                 continue
             assessments = summary["assessments"]
@@ -960,11 +1254,11 @@ def mana_regional_overview(request):
                 assessment__community__barangay__municipality__province__region_id__in=region_ids
             )
             .annotate(
-                region_id=F(
+                resolved_region_id=F(
                     "assessment__community__barangay__municipality__province__region_id"
                 )
             )
-            .values("region_id")
+            .values("resolved_region_id")
             .annotate(
                 total=Count("id"),
                 critical=Count("id", filter=Q(urgency_level="immediate")),
@@ -984,7 +1278,7 @@ def mana_regional_overview(request):
         )
 
         for row in needs_agg:
-            summary = region_summary.get(row["region_id"])
+            summary = region_summary.get(row["resolved_region_id"])
             if not summary:
                 continue
             needs = summary["needs"]
@@ -997,11 +1291,11 @@ def mana_regional_overview(request):
                 assessment__community__barangay__municipality__province__region_id__in=region_ids
             )
             .annotate(
-                region_id=F(
+                resolved_region_id=F(
                     "assessment__community__barangay__municipality__province__region_id"
                 )
             )
-            .values("region_id")
+            .values("resolved_region_id")
             .annotate(
                 total=Count("id"),
                 finalized=Count(
@@ -1012,7 +1306,7 @@ def mana_regional_overview(request):
         )
 
         for row in reports_agg:
-            summary = region_summary.get(row["region_id"])
+            summary = region_summary.get(row["resolved_region_id"])
             if not summary:
                 continue
             reports = summary["reports"]
@@ -1099,6 +1393,53 @@ def mana_regional_overview(request):
                 if form_class:
                     form_instance = form_class(instance=activity)
 
+        # Aggregate participant response analytics for this workshop
+        response_analytics = None
+        participant_responses = []
+        if activity and selected_assessment:
+            total_participants = WorkshopParticipantAccount.objects.filter(
+                assessment=selected_assessment
+            ).count()
+
+            submitted_responses = WorkshopResponse.objects.filter(
+                workshop=activity,
+                status="submitted"
+            ).select_related("participant__user")
+
+            submitted_count = submitted_responses.values("participant").distinct().count()
+
+            response_analytics = {
+                "total_participants": total_participants,
+                "submitted_count": submitted_count,
+                "submission_rate": (submitted_count / total_participants * 100) if total_participants > 0 else 0,
+            }
+
+            # Fetch individual participant responses
+            from mana.schema import get_questions_for_workshop
+            questions = get_questions_for_workshop(workshop_type)
+
+            participants_with_responses = submitted_responses.values("participant").distinct()
+
+            for participant_data in participants_with_responses:
+                participant_id = participant_data["participant"]
+                participant = WorkshopParticipantAccount.objects.select_related("user", "province").get(id=participant_id)
+
+                responses = submitted_responses.filter(participant=participant).order_by("question_id")
+
+                qa_pairs = []
+                for question in questions:
+                    response = responses.filter(question_id=question["id"]).first()
+                    qa_pairs.append({
+                        "question": question,
+                        "response": response,
+                    })
+
+                participant_responses.append({
+                    "participant": participant,
+                    "responses": qa_pairs,
+                    "submitted_at": responses.first().submitted_at if responses.exists() else None,
+                })
+
         workshop_forms.append(
             {
                 "type": workshop_type,
@@ -1112,6 +1453,8 @@ def mana_regional_overview(request):
                 if form_instance
                 else [item["name"] for item in default_question_prompts],
                 "question_prompts": default_question_prompts,
+                "response_analytics": response_analytics,
+                "participant_responses": participant_responses,
             }
         )
 

@@ -7,12 +7,18 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List
 
+from django.conf import settings
 from django.db import transaction
 
 from .models import WorkshopQuestionDefinition
 
 SCHEMA_PATH = Path(__file__).resolve().parent / "data" / "workshop_questions_schema.json"
-SCHEMA_VERSION = "participant_v1"
+DEFAULT_SCHEMA_VERSION = "participant_v1"
+
+
+def get_schema_version() -> str:
+    """Return the active workshop schema version from settings."""
+    return getattr(settings, "MANA_QUESTION_SCHEMA_VERSION", DEFAULT_SCHEMA_VERSION)
 
 
 @lru_cache(maxsize=1)
@@ -61,6 +67,8 @@ def _ensure_schema_version(workshop_type: str) -> List[dict]:
 
     normalised = _normalise_questions(questions)
 
+    version = get_schema_version()
+
     for order, question in enumerate(normalised):
         question_id = question.get("id")
         if not question_id:
@@ -68,7 +76,7 @@ def _ensure_schema_version(workshop_type: str) -> List[dict]:
         WorkshopQuestionDefinition.objects.update_or_create(
             workshop_type=workshop_type,
             question_id=question_id,
-            version=SCHEMA_VERSION,
+            version=version,
             defaults={
                 "order": order,
                 "definition": question,
@@ -77,7 +85,7 @@ def _ensure_schema_version(workshop_type: str) -> List[dict]:
 
     hydrated = (
         WorkshopQuestionDefinition.objects.filter(
-            workshop_type=workshop_type, version=SCHEMA_VERSION
+            workshop_type=workshop_type, version=version
         )
         .order_by("order", "question_id")
         .values_list("definition", flat=True)
@@ -87,8 +95,9 @@ def _ensure_schema_version(workshop_type: str) -> List[dict]:
 
 def get_questions_for_workshop(workshop_type: str) -> List[dict]:
     """Return the question definitions for a specific workshop."""
+    version = get_schema_version()
     definitions = WorkshopQuestionDefinition.objects.filter(
-        workshop_type=workshop_type, version=SCHEMA_VERSION
+        workshop_type=workshop_type, version=version
     ).order_by("order", "question_id")
 
     if definitions.exists():

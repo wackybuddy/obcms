@@ -164,12 +164,19 @@ def dashboard(request):
             ).count(),
         }
     }
-    
+
+    # Check if user is a MANA participant and get their assessment ID
+    participant_account = getattr(user, "workshop_participant_account", None)
+    participant_assessment_id = None
+    if participant_account:
+        participant_assessment_id = str(participant_account.assessment_id)
+
     context = {
         'user': request.user,
         'user_type_display': request.user.get_user_type_display(),
         'is_approved': request.user.is_approved,
         'stats': stats,
+        'participant_assessment_id': participant_assessment_id,
     }
     return render(request, 'common/dashboard.html', context)
 

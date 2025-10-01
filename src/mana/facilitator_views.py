@@ -32,6 +32,8 @@ except ImportError:  # pragma: no cover
     canvas = None
     letter = None
 
+from common.models import Province
+
 from .decorators import facilitator_required
 from .forms import (
     FacilitatorBulkImportForm,
@@ -40,7 +42,9 @@ from .forms import (
 )
 from .models import (
     Assessment,
+    FacilitatorAssessmentAssignment,
     WorkshopActivity,
+    WorkshopNotification,
     WorkshopParticipantAccount,
     WorkshopResponse,
     WorkshopSynthesis,
@@ -98,7 +102,7 @@ def _group_responses_by_question(
         entry["responses"].append(
             {
                 "participant": participant,
-                "organization": participant.organization,
+                "organization": participant.office_business_name,
                 "province": participant.province,
                 "stakeholder": participant.get_stakeholder_type_display(),
                 "status": response.status,
@@ -312,14 +316,27 @@ def manage_participants(request, assessment_id):
                         )
                         _ensure_participant_permissions(user)
 
+                        province_id = row.get("province_id") or None
+                        region_id = row.get("region_id") or None
+                        if not region_id and province_id:
+                            region_id = (
+                                Province.objects.filter(pk=province_id)
+                                .values_list("region_id", flat=True)
+                                .first()
+                            )
+
                         participant = WorkshopParticipantAccount.objects.create(
                             assessment=assessment,
                             user=user,
                             stakeholder_type=row.get("stakeholder_type", "other"),
-                            organization=row.get("organization", ""),
-                            province_id=row.get("province_id") or None,
+                            region_id=region_id,
+                            province_id=province_id,
                             municipality_id=row.get("municipality_id") or None,
                             barangay_id=row.get("barangay_id") or None,
+                            office_business_name=(
+                                row.get("office_business_name")
+                                or row.get("organization", "")
+                            ),
                             created_by=request.user,
                             current_workshop="workshop_1",
                             completed_workshops=[],
@@ -456,6 +473,17 @@ def advance_workshop(request, assessment_id, workshop_type):
     workshop_name = (
         workshop_obj.get_workshop_type_display() if workshop_obj else workshop_type
     )
+
+    # Create notifications for all participants in this assessment
+    participants = WorkshopParticipantAccount.objects.filter(assessment=assessment)
+    for participant in participants:
+        WorkshopNotification.objects.create(
+            participant=participant,
+            notification_type="workshop_advanced",
+            title=f"🎉 New Workshop Available: {workshop_name}",
+            message=f"The facilitator has unlocked {workshop_name}. You can now proceed to complete this workshop.",
+            workshop=workshop_obj,
+        )
 
     messages.success(request, f"Advanced {moved} participants to {workshop_name}.")
 
@@ -663,7 +691,7 @@ def _export_as_csv(responses: List[WorkshopResponse]) -> HttpResponse:
         writer.writerow(
             [
                 participant.user.get_full_name() or participant.user.email,
-                participant.organization,
+                participant.office_business_name,
                 participant.province.name if participant.province else "",
                 participant.get_stakeholder_type_display(),
                 response.status,
@@ -703,7 +731,7 @@ def _export_as_xlsx(responses: List[WorkshopResponse]) -> HttpResponse:
         ws.append(
             [
                 participant.user.get_full_name() or participant.user.email,
-                participant.organization,
+                participant.office_business_name,
                 participant.province.name if participant.province else "",
                 participant.get_stakeholder_type_display(),
                 response.status,
@@ -743,7 +771,7 @@ def _export_as_pdf(responses: List[WorkshopResponse]) -> HttpResponse:
         participant = response.participant
         text = (
             f"Participant: {participant.user.get_full_name() or participant.user.email}\n"
-            f"Organization: {participant.organization}\n"
+            f"Organization: {participant.office_business_name}\n"
             f"Province: {participant.province.name if participant.province else ''}\n"
             f"Stakeholder: {participant.get_stakeholder_type_display()}\n"
             f"Question: {response.question_id}\n"
@@ -794,3 +822,185 @@ def export_workshop_responses(request, assessment_id, workshop_type, format_type
         )
 
     return HttpResponseBadRequest("Unsupported export format")
+
+
+@login_required
+def create_account(request):
+    """Create MANA Facilitator or Participant accounts."""
+    # Import here to avoid circular imports
+    from common.models import Province
+    from .forms import AccountCreationForm
+
+    # Check if user is staff or superuser
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "You don't have permission to create accounts.")
+        return redirect("common:dashboard")
+
+    if request.method == "POST":
+        form = AccountCreationForm(request.POST)
+        if form.is_valid():
+            try:
+                account_type = form.cleaned_data["account_type"]
+                username = form.cleaned_data["username"]
+                email = form.cleaned_data["email"]
+                first_name = form.cleaned_data["first_name"]
+                last_name = form.cleaned_data["last_name"]
+                password = form.cleaned_data["password"]
+
+                # Create User
+                User = get_user_model()
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name,
+                    password=password,
+                )
+
+                if account_type == "facilitator":
+                    # Grant facilitator permissions
+                    # Facilitators need all three permissions to:
+                    # 1. Facilitate workshops (can_facilitate_workshop)
+                    # 2. View regional MANA content that participants see (can_access_regional_mana)
+                    # 3. View provincial OBC data for context (can_view_provincial_obc)
+                    facilitator_permissions = [
+                        "can_facilitate_workshop",
+                        "can_access_regional_mana",
+                        "can_view_provincial_obc",
+                    ]
+                    for perm_codename in facilitator_permissions:
+                        try:
+                            permission = Permission.objects.get(codename=perm_codename)
+                            user.user_permissions.add(permission)
+                        except Permission.DoesNotExist:
+                            pass  # Skip if permission doesn't exist
+
+                    # Assign facilitator to selected assessments
+                    facilitator_assessments = form.cleaned_data["facilitator_assessments"]
+                    for assessment in facilitator_assessments:
+                        FacilitatorAssessmentAssignment.objects.create(
+                            facilitator=user,
+                            assessment=assessment,
+                            assigned_by=request.user,
+                        )
+
+                    assessment_count = len(facilitator_assessments)
+                    messages.success(
+                        request,
+                        f"Facilitator account '{username}' created and assigned to {assessment_count} assessment(s)!",
+                    )
+
+                elif account_type == "participant":
+                    # Create WorkshopParticipantAccount
+                    assessment = form.cleaned_data["assessment"]
+                    province = form.cleaned_data["province"]
+                    stakeholder_type = form.cleaned_data["stakeholder_type"]
+                    office_business_name = form.cleaned_data.get("office_business_name", "")
+                    municipality = form.cleaned_data.get("municipality")
+                    barangay = form.cleaned_data.get("barangay")
+
+                    # Determine region from province
+                    region = province.region if province else None
+
+                    WorkshopParticipantAccount.objects.create(
+                        user=user,
+                        assessment=assessment,
+                        region=region,
+                        province=province,
+                        municipality=municipality,
+                        barangay=barangay,
+                        stakeholder_type=stakeholder_type,
+                        office_business_name=office_business_name,
+                        created_by=request.user,
+                        current_workshop="workshop_1",
+                        facilitator_advanced_to="workshop_1",
+                    )
+
+                    # Grant participant permission
+                    permission = Permission.objects.get(
+                        codename="can_access_regional_mana"
+                    )
+                    user.user_permissions.add(permission)
+
+                    messages.success(
+                        request,
+                        f"Participant account '{username}' created and enrolled in assessment!",
+                    )
+
+                return redirect("mana:create_account")
+
+            except Exception as e:
+                messages.error(request, f"Error creating account: {str(e)}")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = AccountCreationForm()
+
+    context = {
+        "form": form,
+    }
+    return render(request, "mana/create_account.html", context)
+
+
+@login_required
+@facilitator_required
+def facilitator_assessments_list(request):
+    """List assessments assigned to this facilitator."""
+    # Get assessments assigned to this facilitator
+    assigned_assessment_ids = FacilitatorAssessmentAssignment.objects.filter(
+        facilitator=request.user
+    ).values_list('assessment_id', flat=True)
+
+    assessments = Assessment.objects.filter(
+        id__in=assigned_assessment_ids
+    ).select_related('province').order_by('-planned_start_date')
+
+    assessments_data = []
+    for assessment in assessments:
+        # Get participant count
+        total_participants = WorkshopParticipantAccount.objects.filter(
+            assessment=assessment
+        ).count()
+
+        # Get workshop activities
+        workshops = WorkshopActivity.objects.filter(
+            assessment=assessment
+        ).order_by('workshop_type')
+
+        # Calculate overall progress
+        total_workshops = workshops.count()
+        if total_workshops > 0 and total_participants > 0:
+            total_possible_submissions = total_workshops * total_participants
+            total_actual_submissions = 0
+
+            for workshop in workshops:
+                submitted_count = WorkshopResponse.objects.filter(
+                    workshop=workshop,
+                    status="submitted"
+                ).values('participant').distinct().count()
+                total_actual_submissions += submitted_count
+
+            overall_progress = (total_actual_submissions / total_possible_submissions * 100) if total_possible_submissions > 0 else 0
+        else:
+            overall_progress = 0
+
+        # Determine status
+        if overall_progress == 100:
+            status = "completed"
+        elif overall_progress > 0:
+            status = "active"
+        else:
+            status = "not_started"
+
+        assessments_data.append({
+            'assessment': assessment,
+            'total_participants': total_participants,
+            'total_workshops': total_workshops,
+            'overall_progress': overall_progress,
+            'status': status,
+        })
+
+    context = {
+        'assessments': assessments_data,
+    }
+    return render(request, 'mana/facilitator/assessments_list.html', context)

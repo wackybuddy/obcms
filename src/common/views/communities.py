@@ -781,6 +781,32 @@ def communities_manage_provincial(request):
     if show_archived:
         coverages = coverages.filter(is_deleted=True)
 
+    # MANA Participant access control
+    is_mana_participant = (
+        request.user.has_perm("mana.can_access_regional_mana")
+        and not request.user.is_staff
+        and not request.user.is_superuser
+    )
+
+    participant_region = None
+    if is_mana_participant:
+        # Get the participant's account and region
+        try:
+            from mana.models import WorkshopParticipantAccount
+            participant_account = WorkshopParticipantAccount.objects.select_related(
+                "province__region"
+            ).get(user=request.user)
+            participant_region = participant_account.province.region
+
+            # Filter to only show Provincial OBCs created by this participant
+            coverages = coverages.filter(created_by=request.user)
+
+            # Also filter by their region
+            coverages = coverages.filter(province__region=participant_region)
+        except WorkshopParticipantAccount.DoesNotExist:
+            # If no participant account, show nothing
+            coverages = coverages.none()
+
     region_filter = request.GET.get("region")
     province_filter = request.GET.get("province")
     search_query = request.GET.get("search")
@@ -801,9 +827,18 @@ def communities_manage_provincial(request):
 
     regions = Region.objects.all().order_by("name")
 
+    # For MANA participants, only show their region
+    if is_mana_participant and participant_region:
+        regions = regions.filter(id=participant_region.id)
+
     base_provinces_qs = Province.objects.select_related("region").order_by(
         "region__name", "name"
     )
+
+    # For MANA participants, only show provinces in their region
+    if is_mana_participant and participant_region:
+        base_provinces_qs = base_provinces_qs.filter(region=participant_region)
+
     provinces = base_provinces_qs
     if region_filter:
         provinces = provinces.filter(region__id=region_filter)
@@ -1018,10 +1053,34 @@ def communities_view_municipal(request, coverage_id):
 def communities_view_provincial(request, coverage_id):
     """Display a read-only view of a province-level OBC coverage."""
     from communities.models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
+    from django.core.exceptions import PermissionDenied
 
     coverage = get_object_or_404(
-        ProvinceCoverage.all_objects.select_related("province__region"),
+        ProvinceCoverage.all_objects.select_related("province__region", "created_by"),
         pk=coverage_id,
+    )
+
+    # MANA Participant access control - can only view what they created
+    is_mana_participant = (
+        request.user.has_perm("mana.can_access_regional_mana")
+        and not request.user.is_staff
+        and not request.user.is_superuser
+    )
+
+    if is_mana_participant:
+        if coverage.created_by != request.user:
+            raise PermissionDenied("You can only view Provincial OBCs that you created.")
+
+    can_edit = not coverage.is_submitted and (
+        request.user.is_staff or
+        request.user.is_superuser or
+        (is_mana_participant and coverage.created_by == request.user)
+    )
+
+    can_submit = (
+        is_mana_participant and
+        coverage.created_by == request.user and
+        not coverage.is_submitted
     )
 
     delete_review_mode = (
@@ -1058,6 +1117,9 @@ def communities_view_provincial(request, coverage_id):
         "delete_review_mode": delete_review_mode,
         "is_archived": coverage.is_deleted,
         "redirect_after_action": redirect_after_action,
+        "can_edit": can_edit,
+        "can_submit": can_submit,
+        "is_mana_participant": is_mana_participant,
         "map_payload": _resolve_map_payload(
             primary_lat=coverage.latitude,
             primary_lng=coverage.longitude,
@@ -1328,16 +1390,39 @@ def communities_edit_municipal(request, coverage_id):
 def communities_edit_provincial(request, coverage_id):
     """Edit an existing province-level coverage record."""
     from communities.models import ProvinceCoverage
+    from django.core.exceptions import PermissionDenied
 
     coverage = get_object_or_404(
-        ProvinceCoverage.objects.select_related("province__region"),
+        ProvinceCoverage.objects.select_related("province__region", "created_by"),
         pk=coverage_id,
     )
+
+    # MANA Participant access control - can only edit what they created
+    is_mana_participant = (
+        request.user.has_perm("mana.can_access_regional_mana")
+        and not request.user.is_staff
+        and not request.user.is_superuser
+    )
+
+    if is_mana_participant:
+        if coverage.created_by != request.user:
+            raise PermissionDenied("You can only edit Provincial OBCs that you created.")
+
+        # Cannot edit submitted records
+        if coverage.is_submitted:
+            messages.error(
+                request,
+                "This Provincial OBC has been submitted and can no longer be edited. "
+                "Contact OOBC staff if you need to make changes."
+            )
+            return redirect("common:communities_view_provincial", coverage_id=coverage.id)
 
     if request.method == "POST":
         form = ProvinceCoverageForm(request.POST, instance=coverage)
         if form.is_valid():
-            coverage = form.save()
+            coverage = form.save(commit=False)
+            coverage.updated_by = request.user
+            coverage.save()
             coverage.refresh_from_municipalities()
             messages.success(
                 request,
@@ -1420,11 +1505,33 @@ def communities_restore_municipal(request, coverage_id):
 def communities_delete_provincial(request, coverage_id):
     """Delete a province coverage record."""
     from communities.models import ProvinceCoverage
+    from django.core.exceptions import PermissionDenied
 
     coverage = get_object_or_404(
-        ProvinceCoverage.objects.select_related("province__region"),
+        ProvinceCoverage.objects.select_related("province__region", "created_by"),
         pk=coverage_id,
     )
+
+    # MANA Participant access control - can only delete what they created
+    is_mana_participant = (
+        request.user.has_perm("mana.can_access_regional_mana")
+        and not request.user.is_staff
+        and not request.user.is_superuser
+    )
+
+    if is_mana_participant:
+        if coverage.created_by != request.user:
+            raise PermissionDenied("You can only delete Provincial OBCs that you created.")
+
+        # Cannot delete submitted records
+        if coverage.is_submitted:
+            messages.error(
+                request,
+                "This Provincial OBC has been submitted and can no longer be deleted. "
+                "Contact OOBC staff if you need to remove it."
+            )
+            return redirect("common:communities_view_provincial", coverage_id=coverage.id)
+
     province_name = coverage.province.name
     coverage.soft_delete(user=request.user)
 
@@ -1440,15 +1547,74 @@ def communities_delete_provincial(request, coverage_id):
 
 @login_required
 @require_POST
+def communities_submit_provincial(request, coverage_id):
+    """Submit a Provincial OBC record (makes it read-only for MANA participants)."""
+    from communities.models import ProvinceCoverage
+    from django.core.exceptions import PermissionDenied
+    from django.utils import timezone
+
+    coverage = get_object_or_404(
+        ProvinceCoverage.objects.select_related("province__region", "created_by"),
+        pk=coverage_id,
+    )
+
+    # Only MANA participants can submit their own records
+    is_mana_participant = (
+        request.user.has_perm("mana.can_access_regional_mana")
+        and not request.user.is_staff
+        and not request.user.is_superuser
+    )
+
+    if not is_mana_participant:
+        raise PermissionDenied("Only MANA participants can submit Provincial OBC records.")
+
+    if coverage.created_by != request.user:
+        raise PermissionDenied("You can only submit Provincial OBCs that you created.")
+
+    if coverage.is_submitted:
+        messages.warning(
+            request,
+            f"Provincial OBC for {coverage.province.name} has already been submitted."
+        )
+        return redirect("common:communities_view_provincial", coverage_id=coverage.id)
+
+    # Mark as submitted
+    coverage.is_submitted = True
+    coverage.submitted_at = timezone.now()
+    coverage.submitted_by = request.user
+    coverage.save()
+
+    messages.success(
+        request,
+        f"Provincial OBC for {coverage.province.name} has been submitted successfully. "
+        "This record is now read-only. Contact OOBC staff if you need to make changes."
+    )
+    return redirect("common:communities_view_provincial", coverage_id=coverage.id)
+
+
+@login_required
+@require_POST
 def communities_restore_provincial(request, coverage_id):
     """Restore a previously archived province coverage record."""
     from communities.models import ProvinceCoverage
+    from django.core.exceptions import PermissionDenied
 
     coverage = get_object_or_404(
-        ProvinceCoverage.all_objects.select_related("province__region"),
+        ProvinceCoverage.all_objects.select_related("province__region", "created_by"),
         pk=coverage_id,
         is_deleted=True,
     )
+
+    # MANA Participant access control - can only restore what they created
+    is_mana_participant = (
+        request.user.has_perm("mana.can_access_regional_mana")
+        and not request.user.is_staff
+        and not request.user.is_superuser
+    )
+
+    if is_mana_participant:
+        if coverage.created_by != request.user:
+            raise PermissionDenied("You can only restore Provincial OBCs that you created.")
     coverage.restore()
     coverage.refresh_from_municipalities()
 
@@ -1478,6 +1644,7 @@ __all__ = [
     "communities_restore_municipal",
     "communities_edit_provincial",
     "communities_delete_provincial",
+    "communities_submit_provincial",
     "communities_restore_provincial",
     "communities_stakeholders",
     "location_centroid",

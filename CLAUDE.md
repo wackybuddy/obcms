@@ -23,10 +23,21 @@ cd src
 ## Common Development Commands
 
 ### Database Operations
+
+**⚠️ CRITICAL WARNING: NEVER DELETE THE DATABASE ⚠️**
+
+**NEVER run `rm db.sqlite3` or delete the database file.** This database contains valuable development data, user accounts, and test data that are essential for ongoing development. Always apply migrations to the existing database using `./manage.py migrate`.
+
+If you encounter migration issues:
+1. **DO NOT delete the database**
+2. Fix migration conflicts properly using Django migration tools
+3. Use `./manage.py migrate --fake` if needed
+4. Ask the user before taking any destructive action
+
 ```bash
 cd src
 ./manage.py makemigrations
-./manage.py migrate
+./manage.py migrate  # Apply migrations to EXISTING database
 ./manage.py createsuperuser
 ```
 
@@ -146,6 +157,30 @@ EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 - Reusable form partials are under `src/templates/components/` (`form_field.html`, `form_field_input.html`, `form_field_select.html`).
 - Include them in templates instead of duplicating markup, e.g. `{% include "components/form_field_select.html" with field=form.municipality placeholder="Select municipality..." %}` to match the Barangay OBC dropdown styling.
 - Widget classes are centralised via `_apply_form_field_styles` (see `src/common/forms/staff.py`); extend there when new input patterns are needed.
+
+### Form Design Standards
+**IMPORTANT**: When designing or modifying forms, ALWAYS reference existing templates for UI/UX consistency:
+- **Review similar forms** in `src/templates/` to understand established patterns
+- **Use component templates** (`src/templates/components/`) for standard form elements
+- **Follow dropdown styling**: Use `rounded-xl`, `border-gray-200`, emerald focus rings, chevron icons
+- **Standard dropdown pattern**:
+  ```html
+  <div class="space-y-1">
+      <label for="field-id" class="block text-sm font-medium text-gray-700 mb-2">
+          Field Label<span class="text-red-500">*</span>
+      </label>
+      <div class="relative">
+          <select id="field-id" name="field_name" class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+              <option value="">Select...</option>
+          </select>
+          <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+              <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+          </span>
+      </div>
+  </div>
+  ```
+- **Check reference templates**: `src/templates/communities/provincial_manage.html`, `src/templates/components/form_field_select.html`
+- **Maintain consistency** in spacing, colors, borders, and interactive states across all forms
 
 ### Data Table Cards
 - Directory/list pages should extend `components/data_table_card.html` so Barangay and Municipal OBC lists stay visually aligned.

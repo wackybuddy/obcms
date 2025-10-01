@@ -7,6 +7,15 @@ Guidance for the Gemini coding agent when contributing to this repository.
 - **Dependencies**: Install all necessary development dependencies using `pip install -r requirements/development.txt`.
 - **Local Development**: Run all Django `manage.py` commands from the `src/` directory. Use `./manage.py migrate` to apply database migrations and `./manage.py runserver` to start the local development server.
 
+### ⚠️ CRITICAL: Database Protection Policy ⚠️
+**NEVER delete `src/db.sqlite3` or any database file under ANY circumstances.** The database contains essential development data, user accounts, test data, and ongoing work that are critical for development continuity. Always apply migrations to the existing database using `./manage.py migrate`.
+
+**If you encounter migration conflicts or errors:**
+1. **DO NOT delete the database** - this is absolutely forbidden
+2. Resolve conflicts using Django migration tools: `--fake`, `--fake-initial`, or `squashmigrations`
+3. Always ask the user before taking any action that could affect the database
+4. Remember: Deleting the database destroys all development progress and is completely unacceptable
+
 ## Quality, Linting, and Testing
 - **Formatting**: Adhere to Black's defaults (88-character line width) and four-space indentation. Run `black src` and `isort src` to format the code.
 - **Linting**: Check for style issues with `flake8 src`.
@@ -21,6 +30,49 @@ Guidance for the Gemini coding agent when contributing to this repository.
   - `form_field.html`: For general-purpose inputs like textareas.
   - **Usage**: Include them with `{% include "components/form_field_select.html" with field=form.barangay placeholder="Select barangay..." %}`. This handles labels, errors, and styling automatically.
 - **List Pages**: For list or directory screens, use `components/data_table_card.html`. Provide `headers` and `rows` in the context. Each row object should include `view_url`, `edit_url`, and `delete_preview_url` to enable the standard View, Edit, and Delete actions.
+
+### Form Design Standards (MANDATORY)
+**When designing or modifying forms, ALWAYS reference existing templates to ensure UI/UX consistency:**
+
+1. **Review existing forms** in `src/templates/` before creating new form markup
+2. **Use component templates** from `src/templates/components/` whenever possible
+3. **Follow the standard dropdown pattern**:
+   - Rounded corners: `rounded-xl`
+   - Border style: `border border-gray-200`
+   - Focus states: `focus:ring-emerald-500 focus:border-emerald-500`
+   - Minimum height: `min-h-[48px]` for accessibility
+   - Chevron icon: Right-aligned with `fas fa-chevron-down`
+   - Smooth transitions: `transition-all duration-200`
+
+4. **Standard dropdown HTML structure**:
+   ```html
+   <div class="space-y-1">
+       <label for="field-id" class="block text-sm font-medium text-gray-700 mb-2">
+           Field Label<span class="text-red-500">*</span>
+       </label>
+       <div class="relative">
+           <select id="field-id" name="field_name"
+                   class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200">
+               <option value="">Select...</option>
+           </select>
+           <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+               <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+           </span>
+       </div>
+   </div>
+   ```
+
+5. **Reference templates for consistency**:
+   - Check `src/templates/communities/provincial_manage.html` for filter dropdowns
+   - Check `src/templates/components/form_field_select.html` for reusable component
+   - Check `src/templates/mana/mana_new_assessment.html` for complex form layouts
+
+6. **Maintain consistency** across all forms in:
+   - Spacing and padding
+   - Color palette (grays, emerald accents)
+   - Border styles and radii
+   - Interactive states (hover, focus, disabled)
+   - Typography hierarchy
 
 ## Architecture & Code Organization
 - **Core Application**: The main Django project is in `src/`. `obc_management` contains the primary settings and URL configurations.

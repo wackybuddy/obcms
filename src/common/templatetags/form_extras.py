@@ -9,6 +9,8 @@ register = template.Library()
 def widget_kind(bound_field):
     """Return the lower-cased widget class name for a bound field."""
 
+    if not hasattr(bound_field, "field"):
+        return ""
     widget = getattr(bound_field.field, "widget", None)
     if not widget:
         return ""
