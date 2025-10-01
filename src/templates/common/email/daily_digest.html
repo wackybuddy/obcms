@@ -1,0 +1,78 @@
+{% extends "common/email/base_email.html" %}
+
+{% block title %}Daily Calendar Digest - {{ date|date:"F d, Y" }}{% endblock %}
+
+{% block header_title %}Daily Calendar Digest{% endblock %}
+
+{% block content %}
+<h2>Your Schedule for {{ date|date:"l, F d, Y" }}</h2>
+
+<p>Good morning {{ user.get_full_name }},</p>
+
+<p>Here's what's on your calendar today:</p>
+
+{% if today_events %}
+<h3 style="color: #1f2937; margin-top: 25px;">📅 Today's Events ({{ today_events|length }})</h3>
+{% for event in today_events %}
+<div class="event-details">
+    <h4 style="margin: 0 0 8px 0;">{{ event.title }}</h4>
+    <p><strong>⏰ Time:</strong> {{ event.start_datetime|time:"g:i A" }}{% if event.end_datetime %} - {{ event.end_datetime|time:"g:i A" }}{% endif %}</p>
+    {% if event.venue %}
+    <p><strong>📍 Location:</strong> {{ event.venue }}</p>
+    {% endif %}
+    <p><a href="{{ event.url }}" style="color: #10b981;">View Details →</a></p>
+</div>
+{% endfor %}
+{% else %}
+<div class="alert alert-info">
+    <strong>No events scheduled for today.</strong> You have a clear day ahead!
+</div>
+{% endif %}
+
+{% if upcoming_events %}
+<h3 style="color: #1f2937; margin-top: 25px;">📆 Coming Up This Week</h3>
+{% for event in upcoming_events|slice:":5" %}
+<div class="event-details">
+    <h4 style="margin: 0 0 8px 0;">{{ event.title }}</h4>
+    <p><strong>📅 Date:</strong> {{ event.start_datetime|date:"l, F d" }} at {{ event.start_datetime|time:"g:i A" }}</p>
+    {% if event.venue %}
+    <p><strong>📍 Location:</strong> {{ event.venue }}</p>
+    {% endif %}
+</div>
+{% endfor %}
+{% if upcoming_events|length > 5 %}
+<p style="text-align: center; color: #6b7280;">... and {{ upcoming_events|length|add:"-5" }} more</p>
+{% endif %}
+{% endif %}
+
+{% if pending_tasks %}
+<h3 style="color: #1f2937; margin-top: 25px;">✅ Tasks Due Today ({{ pending_tasks|length }})</h3>
+<ul class="attendee-list">
+    {% for task in pending_tasks %}
+    <li>
+        <strong>{{ task.title }}</strong>
+        {% if task.due_time %}<span style="color: #6b7280;"> - Due by {{ task.due_time|time:"g:i A" }}</span>{% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if action_required %}
+<div class="alert alert-warning">
+    <strong>⚠️ Action Required:</strong>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+        {% for action in action_required %}
+        <li>{{ action.description }} - <a href="{{ action.url }}" style="color: #92400e;">Take Action</a></li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<div style="text-align: center; margin: 30px 0;">
+    <a href="{{ calendar_url }}" class="button">View Full Calendar</a>
+</div>
+
+<p>Have a productive day!</p>
+
+<p>Best regards,<br>OOBC Management Team</p>
+{% endblock %}

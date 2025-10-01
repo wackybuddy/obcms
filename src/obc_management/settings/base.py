@@ -55,6 +55,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "django.contrib.humanize",
 ]
 
 THIRD_PARTY_APPS = [
@@ -79,6 +80,7 @@ LOCAL_APPS = [
     'recommendations.policy_tracking',
     'data_imports',
     'services',  # Phase 3: Service catalog and applications
+    'project_central',  # Integrated project management system
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -264,6 +266,52 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Celery Beat Schedule (automated task scheduling)
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    # Daily alert generation at 6:00 AM
+    'generate-daily-alerts': {
+        'task': 'project_central.generate_daily_alerts',
+        'schedule': crontab(hour=6, minute=0),
+    },
+    # Deactivate resolved alerts daily at 6:30 AM
+    'deactivate-resolved-alerts': {
+        'task': 'project_central.deactivate_resolved_alerts',
+        'schedule': crontab(hour=6, minute=30),
+    },
+    # Update budget ceiling allocations daily at 7:00 AM
+    'update-budget-ceiling-allocations': {
+        'task': 'project_central.update_budget_ceiling_allocations',
+        'schedule': crontab(hour=7, minute=0),
+    },
+    # Check workflow deadlines daily at 8:00 AM
+    'check-workflow-deadlines': {
+        'task': 'project_central.check_workflow_deadlines',
+        'schedule': crontab(hour=8, minute=0),
+    },
+    # Sync workflow-PPA status daily at 9:00 AM
+    'sync-workflow-ppa-status': {
+        'task': 'project_central.sync_workflow_ppa_status',
+        'schedule': crontab(hour=9, minute=0),
+    },
+    # Weekly workflow report every Monday at 9:00 AM
+    'generate-weekly-workflow-report': {
+        'task': 'project_central.generate_weekly_workflow_report',
+        'schedule': crontab(hour=9, minute=0, day_of_week=1),
+    },
+    # Monthly budget report on 1st of month at 10:00 AM
+    'generate-monthly-budget-report': {
+        'task': 'project_central.generate_monthly_budget_report',
+        'schedule': crontab(hour=10, minute=0, day_of_month=1),
+    },
+    # Weekly cleanup of expired alerts every Sunday at 2:00 AM
+    'cleanup-expired-alerts': {
+        'task': 'project_central.cleanup_expired_alerts',
+        'schedule': crontab(hour=2, minute=0, day_of_week=0),
+    },
+}
 
 # Logging
 LOGGING = {

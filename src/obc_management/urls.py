@@ -47,6 +47,7 @@ urlpatterns = [
     path('', include('common.urls')),
     path('communities/', include('communities.urls')),
     path('monitoring/', include('monitoring.urls')),
+    path('project-central/', include('project_central.urls')),
     path('documents/', include(('recommendations.documents.urls', 'documents'), namespace='documents')),
     path('mana/workshops/', include(('mana.urls', 'mana'), namespace='mana')),
     

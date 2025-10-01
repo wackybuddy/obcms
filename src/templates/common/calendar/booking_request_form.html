@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title|default:"Request Resource Booking" }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_calendar' %}" class="text-neutral-500 hover:text-neutral-700">Calendar</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:calendar_resource_list' %}" class="text-neutral-500 hover:text-neutral-700">Resources</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ page_heading|default:"Request Booking" }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-calendar-plus text-emerald-600 mr-4"></i>
+                {{ page_heading|default:"Request Resource Booking" }}
+            </h1>
+            <p class="mt-2 text-gray-600">
+                Reserve a calendar resource for your activity or event
+            </p>
+        </div>
+        <a href="{% url 'common:calendar_resource_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Resources
+        </a>
+    </div>
+
+    <form method="post" class="space-y-6" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {{ form.non_field_errors|join:' ' }}
+        </div>
+        {% endif %}
+
+        <!-- Resource Selection -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-cube mr-3"></i>
+                    Resource Selection
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 gap-6">
+                    {% include "components/form_field.html" with field=form.resource %}
+
+                    {% if selected_resource %}
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-3"></i>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-semibold mb-1">Resource Details</p>
+                                <ul class="space-y-1">
+                                    <li><strong>Type:</strong> {{ selected_resource.get_resource_type_display }}</li>
+                                    <li><strong>Location:</strong> {{ selected_resource.location|default:"Not specified" }}</li>
+                                    {% if selected_resource.capacity %}
+                                    <li><strong>Capacity:</strong> {{ selected_resource.capacity }}</li>
+                                    {% endif %}
+                                    {% if selected_resource.requires_approval %}
+                                    <li class="text-amber-700"><i class="fas fa-exclamation-triangle mr-1"></i> <strong>Requires approval</strong> - Your booking will need admin approval</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Date & Time -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-clock mr-3"></i>
+                    Date & Time
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% include "components/form_field.html" with field=form.start_datetime %}
+                    {% include "components/form_field.html" with field=form.end_datetime %}
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-amber-600 mt-0.5 mr-3"></i>
+                        <div class="text-sm text-amber-800">
+                            <p class="font-semibold mb-1">Tips for Booking</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Choose dates and times carefully - overlapping bookings will be rejected</li>
+                                <li>Include setup and cleanup time in your booking duration</li>
+                                <li>Check the resource calendar for availability before booking</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Booking Details -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-file-alt mr-3"></i>
+                    Booking Details
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 gap-6">
+                    {% include "components/form_field.html" with field=form.purpose %}
+                    {% include "components/form_field.html" with field=form.notes %}
+                    {% if form.linked_event %}
+                    {% include "components/form_field.html" with field=form.linked_event %}
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end space-x-3">
+            <a href="{% url 'common:calendar_resource_list' %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" class="px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-emerald-600 hover:bg-emerald-700">
+                <i class="fas fa-paper-plane mr-2"></i>
+                {{ submit_label|default:"Submit Booking Request" }}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resourceField = document.querySelector('[name="resource"]');
+    const startDatetimeField = document.querySelector('[name="start_datetime"]');
+    const endDatetimeField = document.querySelector('[name="end_datetime"]');
+
+    // Auto-set end time to 1 hour after start time if not set
+    if (startDatetimeField && endDatetimeField) {
+        startDatetimeField.addEventListener('change', function() {
+            if (!endDatetimeField.value && startDatetimeField.value) {
+                const startDate = new Date(startDatetimeField.value);
+                startDate.setHours(startDate.getHours() + 1);
+
+                // Format as datetime-local input format
+                const year = startDate.getFullYear();
+                const month = String(startDate.getMonth() + 1).padStart(2, '0');
+                const day = String(startDate.getDate()).padStart(2, '0');
+                const hours = String(startDate.getHours()).padStart(2, '0');
+                const minutes = String(startDate.getMinutes()).padStart(2, '0');
+
+                endDatetimeField.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            }
+        });
+    }
+
+    // Validate start before end
+    if (startDatetimeField && endDatetimeField) {
+        function validateDates() {
+            const start = new Date(startDatetimeField.value);
+            const end = new Date(endDatetimeField.value);
+
+            if (startDatetimeField.value && endDatetimeField.value && start >= end) {
+                endDatetimeField.setCustomValidity('End time must be after start time');
+            } else {
+                endDatetimeField.setCustomValidity('');
+            }
+        }
+
+        startDatetimeField.addEventListener('change', validateDates);
+        endDatetimeField.addEventListener('change', validateDates);
+    }
+});
+</script>
+{% endblock %}

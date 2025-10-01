@@ -1,17 +1,26 @@
 # OBCMS Comprehensive Testing Strategy
 
-**Status:** Draft
-**Last Updated:** 2025-10-01
+**Status:** Implementation in progress
+**Last Updated:** 2025-10-02
 **Owner:** OOBC Development Team
 
 ## Executive Summary
 
 This document defines the comprehensive testing strategy for the Other Bangsamoro Communities Management System (OBCMS). It maps modern testing practices to OBCMS-specific requirements, tools, and workflows, ensuring quality, security, and reliability for a government system serving Bangsamoro communities.
 
+## Implementation Roadmap
+
+1. **Stabilise the baseline** – keep the Django 4.2 LTS upgrade path validated by running the full suite (`../venv/bin/python -m pytest --ds=obc_management.settings`) on every feature branch and capturing coverage deltas.
+2. **Codify fast feedback** – enforce `black`, `isort`, `flake8`, and the `-m unit` subset in pre-commit; wire the same linters into CI to prevent regressions slipping past local hooks.
+3. **Harden service boundaries** – expand integration fixtures for Celery, file storage, and HTMX flows so shared behaviours are covered by contract tests instead of view-only assertions.
+4. **Regressions & performance** – maintain the new calendar regression harness (`src/tests/test_calendar_performance.py`) alongside the targeted performance checkpoints in `src/tests/performance/` to guard caching, query counts, and ICS generation.
+5. **Reporting & observability** – publish the latest `pytest`, `flake8`, and coverage artefacts with each release and log gaps in `docs/testing/TEST_RESULTS_REPORT.md` to inform upcoming sprints.
+   - Pre-release dry runs follow the [Staging Rehearsal Checklist](staging_rehearsal_checklist.md) to validate migrations, smoke tests, Celery queues, and performance baselines.
+
 ## Stack Overview
 
 **Backend:**
-- Django 5.x + Django REST Framework
+- Django 4.2 LTS + Django REST Framework
 - PostgreSQL (production) / SQLite (development)
 - Celery + Redis (background tasks)
 - JWT authentication (SimpleJWT)
@@ -260,7 +269,7 @@ line_length = 100
 skip = ["migrations", ".venv", "venv"]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "obc_management.settings.testing"
+DJANGO_SETTINGS_MODULE = "obc_management.settings"
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -448,6 +457,64 @@ pip-audit --requirement requirements/base.txt --format json --output audit-repor
        assert entry.title == need.title
        assert entry.budget == need.estimated_budget
        assert entry.source_need_id == need.id
+   ```
+
+5. **Project Central HTMX Dashboards & Task Automation**
+   ```python
+   # src/project_central/tests/test_views.py
+   class MyTasksWithProjectsViewTests(TestCase):
+       def test_htmx_request_renders_partial(self):
+           """Ensure the project task table responds via HTMX with filters."""
+           response = self.client.get(
+               reverse("project_central:my_tasks_with_projects"),
+               {"status": StaffTask.STATUS_COMPLETED},
+               HTTP_HX_REQUEST="true",
+           )
+           self.assertEqual(response.status_code, 200)
+           self.assertTemplateUsed(response, "project_central/partials/project_task_table.html")
+           self.assertIn("Compile field report", response.content.decode())
+
+   class GenerateWorkflowTasksViewTests(TestCase):
+       def test_generate_workflow_tasks_is_idempotent(self):
+           """Idempotency filter prevents duplicate workflow task batches."""
+           url = reverse("project_central:generate_workflow_tasks", args=[self.workflow.id])
+           self.client.post(url)
+           first_count = StaffTask.objects.filter(linked_workflow=self.workflow).count()
+           self.client.post(url)
+           self.assertEqual(
+               StaffTask.objects.filter(linked_workflow=self.workflow).count(),
+               first_count,
+           )
+
+   # src/common/tests/test_task_automation.py
+   def test_create_tasks_with_resource_bookings():
+       """Task templates provision CalendarResourceBooking records when specified."""
+       tasks = create_tasks_from_template(
+           "test_template",
+           created_by=admin_user,
+           resource_bookings={'default': [{'resource_id': resource.id, 'duration_hours': 3}]},
+       )
+       booking = CalendarResourceBooking.objects.get(object_id=tasks[0].pk)
+       assert booking.resource == resource
+   ```
+   See [Task Template Automation Service Guide](../development/task_template_automation.md) for the full contract, idempotency guarantees, and booking spec reference.
+
+6. **Celery Notification Batching**
+   ```python
+   # src/common/tests/test_tasks_notifications.py
+   @patch("common.tasks.group")
+   def test_batch_dispatches_group(mock_group):
+       """Pending CalendarNotification records dispatch via Celery groups."""
+       send_calendar_notifications_batch(batch_size=10)
+       mock_group.assert_called_once()
+
+   @patch("common.tasks.send_mail", side_effect=RuntimeError("Mail error"))
+   def test_send_single_records_failure(mock_send_mail):
+       """Retries mark CalendarNotification as failed with error message."""
+       with pytest.raises(RuntimeError):
+           send_single_calendar_notification(notification.id)
+       notification.refresh_from_db()
+       assert notification.status == CalendarNotification.STATUS_FAILED
    ```
 
 **Command:**
@@ -920,6 +987,42 @@ pa11y-ci --config pa11y-config.json
 
 **Purpose:** Validate system handles expected load.
 
+**Approach:**
+- **Pytest instrumentation (default)** – lightweight checks in `src/tests/performance/` and `src/tests/test_calendar_performance.py` track query counts, cache hits, and response payloads for the integrated calendar. The harness uses `CaptureQueriesContext` plus helper utilities to keep budgets explicit and fast (sub‑minute runtime).
+- **Locust (optional stress testing)** – synthetic load for scaling exercises and pre-deployment rehearsals when we need concurrency modelling beyond pytest’s scope.
+
+**Pytest Performance Guardrails:**
+
+```python
+# src/tests/performance/test_calendar_feed.py
+@pytest.mark.django_db
+@pytest.mark.performance
+def test_calendar_feed_performance(perf_calendar_dataset, perf_http_runner):
+    result = perf_http_runner.get(
+        "common:oobc_calendar_feed_json",
+        user=perf_calendar_dataset["user"],
+        params={"modules": "coordination,staff"},
+    )
+
+    assert result.status_code == 200
+    assert result.query_count <= 14
+    assert result.duration_ms < 750
+
+
+# src/tests/test_calendar_performance.py
+class CalendarPerformanceRegressionTests(TestCase):
+    def test_calendar_feed_json_reuses_cached_payload(self) -> None:
+        create_event(self.user, title="JSON Feed Event")
+
+        with CaptureQueriesContext(connection) as cold_queries:
+            self.client.get(feed_url)
+
+        with CaptureQueriesContext(connection) as warm_queries:
+            self.client.get(feed_url)
+
+        assert len(warm_queries) < len(cold_queries)
+```
+
 **Tool:** **Locust** (Python-based load testing)
 
 **Installation:**
@@ -976,14 +1079,19 @@ pip install locust
        def complex_report_query(self):
            """Generate complex monitoring report."""
            self.client.post("/monitoring/reports/generate/", {
-               "report_type": "comprehensive",
-               "region": "IX",
-               "date_from": "2025-01-01",
-               "date_to": "2025-12-31"
-           })
+                "report_type": "comprehensive",
+                "region": "IX",
+                "date_from": "2025-01-01",
+                "date_to": "2025-12-31"
+            })
    ```
 
 **Run Performance Tests:**
+```bash
+# Pytest guardrails (run with default Django settings module)
+../venv/bin/python -m pytest --ds=obc_management.settings -m performance
+```
+
 ```bash
 # Run with Web UI
 locust -f src/tests/performance/locustfile.py --host=http://localhost:8000
@@ -1019,29 +1127,45 @@ locust -f src/tests/performance/locustfile.py \
 
 3. **Database Query Performance**
    ```python
-   # src/tests/performance/test_query_performance.py
-   import pytest
-   from django.test import TestCase
-   from django.test.utils import override_settings
-   from django.db import connection
-   from django.test.utils import CaptureQueriesContext
-
+   # src/tests/performance/test_booking_conflicts.py
+   @pytest.mark.django_db
    @pytest.mark.performance
-   def test_barangay_list_query_count(client, admin_user):
-       """Test barangay list doesn't cause N+1 queries."""
-       # Create test data
-       BarangayOBCFactory.create_batch(50)
+   def test_booking_conflict_validation(perf_booking_dataset):
+       resource = perf_booking_dataset["resource"]
+       base_start = perf_booking_dataset["base_start"]
+       overlap_start = base_start + timedelta(minutes=45)
+       overlap_end = overlap_start + timedelta(hours=2)
 
-       client.force_login(admin_user)
+       def conflict_lookup() -> bool:
+           return CalendarResourceBooking.objects.filter(
+               resource=resource,
+               start_datetime__lt=overlap_end,
+               end_datetime__gt=overlap_start,
+               status__in=[
+                   CalendarResourceBooking.STATUS_PENDING,
+                   CalendarResourceBooking.STATUS_APPROVED,
+               ],
+           ).exists()
 
-       with CaptureQueriesContext(connection) as context:
-           response = client.get('/communities/barangays/')
+       result = measure_callable(conflict_lookup)
 
-       # Should use select_related/prefetch_related
-       # Acceptable: 1 barangay query + 1 profile query + auth queries
-       assert len(context.captured_queries) < 10, \
-           f"Too many queries: {len(context.captured_queries)}"
+       assert result.value is True
+       assert result.query_count <= 2
+       assert result.duration_ms < 120
    ```
+
+##### 4.1.1 Calendar Regression Benchmarks
+
+- **Tooling:** pytest + Django test client instrumentation (`tests/perf_utils/`).
+- **Entry Point:** `scripts/run_calendar_perf.sh` (wraps `pytest -m performance`).
+- **Primary Scenarios:** consolidated calendar feed, resource booking conflict lookup (see `docs/testing/calendar_performance_plan.md`).
+- **Execution Modes:**
+  - Local smoke: `scripts/run_calendar_perf.sh -k calendar_feed`
+  - Nightly CI: schedule the same script and persist `var/perf_reports/` artifacts
+- **Thresholds:** Enforced directly in the tests; updates require sign-off from the calendar module owners.
+- **Maintenance:** QA maintains the shared utilities and CI wiring; the calendar team owns dataset/threshold changes; quarterly reviews keep scenarios aligned with production patterns.
+- **Recommended environment:** run on a workstation with ≥4 CPU cores and 16 GB RAM; close CPU-bound background tasks before capturing metrics.
+- **JSON output:** the run script writes metrics to `var/perf_reports/*.json`; each entry includes scenario name, dataset label, duration (ms), and query count (plus payload size for feed/HTMX/ICS).
 
 #### 4.2 Security Testing
 
@@ -1803,20 +1927,18 @@ obcms/
 │       │   └── test_owasp_top10.py
 │       │
 │       ├── performance/               # Performance tests
-│       │   ├── locustfile.py
-│       │   └── test_query_performance.py
+│       │   ├── conftest.py
+│       │   ├── test_booking_conflicts.py
+│       │   └── test_calendar_feed.py
 │       │
-│       ├── smoke/                     # Smoke tests
-│       │   └── test_smoke.py
+│       ├── perf_utils/                # Shared performance helpers
+│       │   ├── __init__.py
+│       │   ├── factories.py
+│       │   └── runner.py
 │       │
-│       ├── oat/                       # Operational Acceptance
-│       │   └── test_operations.py
-│       │
-│       ├── migrations/                # Migration tests
-│       │   └── test_migrations.py
-│       │
-│       └── synthetic/                 # Production synthetic tests
-│           └── test_critical_paths.py
+│       ├── test_calendar_integration.py
+│       ├── test_calendar_performance.py
+│       └── test_calendar_system.py
 │
 ├── docs/testing/                      # Test documentation
 │   ├── README.md

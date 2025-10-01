@@ -1,0 +1,101 @@
+<div id="project-task-results" class="space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+            <h3 class="text-xs uppercase tracking-wide text-gray-500">Total tasks</h3>
+            <p class="mt-2 text-2xl font-semibold text-gray-900">{{ summary.total }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+            <h3 class="text-xs uppercase tracking-wide text-gray-500">In progress</h3>
+            <p class="mt-2 text-2xl font-semibold text-blue-600">{{ summary.in_progress }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+            <h3 class="text-xs uppercase tracking-wide text-gray-500">Completed</h3>
+            <p class="mt-2 text-2xl font-semibold text-emerald-600">{{ summary.completed }}</p>
+        </div>
+        <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+            <h3 class="text-xs uppercase tracking-wide text-gray-500">Overdue</h3>
+            <p class="mt-2 text-2xl font-semibold {% if summary.overdue %}text-red-600{% else %}text-gray-700{% endif %}">{{ summary.overdue }}</p>
+        </div>
+    </div>
+
+    {% if tasks %}
+        <div class="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Task</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Project / PPA</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Stage / Status</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Module</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Due</th>
+                        <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Assignees</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 bg-white">
+                    {% for task in tasks %}
+                        <tr data-task-id="{{ task.id }}"
+                            data-task-status="{{ task.status }}"
+                            class="hover:bg-emerald-50 transition-colors">
+                            <td class="px-4 py-3 align-top">
+                                <div class="flex flex-col">
+                                    <span class="font-semibold text-gray-900">{{ task.title }}</span>
+                                    <span class="text-xs text-gray-500">{{ task.get_status_display }}</span>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 align-top">
+                                {% if task.linked_workflow %}
+                                    <div class="flex flex-col">
+                                        <a href="{% url 'project_central:project_workflow_detail' task.linked_workflow.id %}"
+                                           class="text-sm font-medium text-emerald-700 hover:text-emerald-900 transition">
+                                            {{ task.linked_workflow.primary_need.title|default:task.linked_workflow.ppa.title }}
+                                        </a>
+                                        {% if task.linked_workflow.ppa %}
+                                            <span class="text-xs text-gray-500">PPA: {{ task.linked_workflow.ppa.title }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% elif task.related_ppa %}
+                                    <span class="text-sm font-medium text-gray-900">{{ task.related_ppa.title }}</span>
+                                {% else %}
+                                    <span class="text-sm text-gray-500">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 align-top">
+                                {% if task.linked_workflow %}
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">{{ task.linked_workflow.get_current_stage_display }}</span>
+                                {% elif task.related_ppa %}
+                                    <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">{{ task.related_ppa.get_status_display }}</span>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 align-top text-sm text-gray-600">
+                                {{ task.get_domain_display|default:task.domain }}
+                            </td>
+                            <td class="px-4 py-3 align-top text-sm">
+                                {% if task.due_date %}
+                                    <span class="font-medium {% if task.is_overdue %}text-red-600{% endif %}">{{ task.due_date|date:"M j, Y" }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">Not set</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 align-top text-sm text-gray-600">
+                                {% with assignees=task.assignees.all %}
+                                    {% if assignees %}
+                                        {{ assignees|join:", " }}
+                                    {% else %}
+                                        <span class="text-gray-400">Unassigned</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="bg-white border border-dashed border-gray-200 rounded-xl p-10 text-center text-gray-500">
+            <p class="font-medium">No tasks match the current filters.</p>
+            <p class="text-sm mt-2">Adjust your filters or create a new task in the staff task board.</p>
+        </div>
+    {% endif %}
+</div>

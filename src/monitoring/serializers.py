@@ -2,12 +2,13 @@
 
 from rest_framework import serializers
 
+from common.models import StaffTask
+
 from .models import (
     MonitoringEntry,
     MonitoringEntryFunding,
     MonitoringEntryWorkflowStage,
     MonitoringEntryWorkflowDocument,
-    MonitoringEntryTaskAssignment,
     MonitoringUpdate,
 )
 
@@ -133,64 +134,59 @@ class MonitoringEntryWorkflowStageSerializer(serializers.ModelSerializer):
         ]
 
 
-class MonitoringEntryTaskAssignmentSerializer(serializers.ModelSerializer):
-    """Serialize task assignments with assignee details."""
+class MonitoringEntryStaffTaskSerializer(serializers.ModelSerializer):
+    """Serialize StaffTask records linked to monitoring entries."""
 
-    assigned_to_name = serializers.CharField(
-        source="assigned_to.get_full_name", read_only=True
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    priority_display = serializers.CharField(source="get_priority_display", read_only=True)
+    created_by_name = serializers.CharField(
+        source="created_by.get_full_name", read_only=True
     )
-    assigned_by_name = serializers.CharField(
-        source="assigned_by.get_full_name", read_only=True
-    )
-    role_display = serializers.CharField(
-        source="get_role_display", read_only=True
-    )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
-    priority_display = serializers.CharField(
-        source="get_priority_display", read_only=True
-    )
+    assignees_detail = serializers.SerializerMethodField()
     is_overdue = serializers.BooleanField(read_only=True)
-    days_until_due = serializers.IntegerField(read_only=True)
 
     class Meta:
-        model = MonitoringEntryTaskAssignment
+        model = StaffTask
         fields = [
             "id",
-            "task_title",
-            "task_description",
-            "assigned_to",
-            "assigned_to_name",
-            "assigned_by",
-            "assigned_by_name",
-            "role",
-            "role_display",
+            "title",
+            "description",
             "status",
             "status_display",
             "priority",
             "priority_display",
+            "task_role",
             "due_date",
             "completed_at",
             "estimated_hours",
             "actual_hours",
             "notes",
+            "assignees_detail",
+            "created_by",
+            "created_by_name",
             "is_overdue",
-            "days_until_due",
+            "auto_generated",
             "created_at",
             "updated_at",
         ]
         read_only_fields = [
-            "assigned_to_name",
-            "assigned_by_name",
-            "role_display",
             "status_display",
             "priority_display",
+            "assignees_detail",
+            "created_by_name",
             "is_overdue",
-            "days_until_due",
-            "completed_at",
             "created_at",
             "updated_at",
+        ]
+
+    def get_assignees_detail(self, obj):
+        return [
+            {
+                "id": assignee.id,
+                "name": assignee.get_full_name() or assignee.username,
+                "email": assignee.email,
+            }
+            for assignee in obj.assignees.all()
         ]
 
 
@@ -276,7 +272,7 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
     updates = MonitoringUpdateSerializer(many=True, read_only=True)
     funding_flows = MonitoringEntryFundingSerializer(many=True, read_only=True)
     workflow_stages = MonitoringEntryWorkflowStageSerializer(many=True, read_only=True)
-    task_assignments = MonitoringEntryTaskAssignmentSerializer(many=True, read_only=True)
+    task_assignments = serializers.SerializerMethodField()
     sector_display = serializers.CharField(source="get_sector_display", read_only=True)
     appropriation_class_display = serializers.CharField(
         source="get_appropriation_class_display",
@@ -336,6 +332,7 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
             "target_end_date",
             "actual_end_date",
             "next_milestone_date",
+            "milestone_dates",
             "budget_allocation",
             "budget_currency",
             "budget_obc_allocation",
@@ -374,3 +371,8 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
             "appropriation_class_display",
             "funding_source_display",
         ]
+
+    def get_task_assignments(self, obj):
+        tasks = obj.tasks.filter(domain=StaffTask.DOMAIN_MONITORING).order_by("due_date", "title")
+        serializer = MonitoringEntryStaffTaskSerializer(tasks, many=True, context=self.context)
+        return serializer.data

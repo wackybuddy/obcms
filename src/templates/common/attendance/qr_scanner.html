@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Event QR{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_calendar' %}" class="text-neutral-500 hover:text-neutral-700">Calendar</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">QR Check-in</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div class="bg-white shadow-sm rounded-2xl border border-gray-200">
+        <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ event.title }}</h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    Scan QR codes to mark attendance for this event.
+                </p>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">
+                {{ event.start_date|date:"M d, Y" }}
+            </span>
+        </div>
+        <div class="px-6 py-6 space-y-4">
+            <p class="text-gray-700 text-sm">
+                Use your device camera to scan attendee QR codes. Scans automatically register participants as present.
+            </p>
+            <div class="border border-dashed border-gray-300 rounded-xl p-6 text-center text-gray-400">
+                <i class="fas fa-qrcode text-5xl mb-3"></i>
+                <p class="text-sm">QR scanning interface is optimized for mobile devices.</p>
+            </div>
+            <a href="{% url 'common:event_check_in' event.id %}" class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg shadow-sm hover:bg-emerald-700">
+                <i class="fas fa-user-check mr-2"></i>Manual Check-in
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "common/email/base_email.html" %}
+
+{% block title %}New Event: {{ event.title }}{% endblock %}
+
+{% block header_title %}New Event Notification{% endblock %}
+
+{% block content %}
+<h2>You've been invited to an event</h2>
+
+<p>Hello {{ user.get_full_name }},</p>
+
+<p>You have been added to the following event:</p>
+
+<div class="event-details">
+    <h3>{{ event.title }}</h3>
+    <p><strong>📅 When:</strong> {{ event.start_datetime|date:"F d, Y" }} at {{ event.start_datetime|time:"g:i A" }}</p>
+    {% if event.end_datetime %}
+    <p><strong>⏰ Until:</strong> {{ event.end_datetime|date:"F d, Y" }} at {{ event.end_datetime|time:"g:i A" }}</p>
+    {% endif %}
+    {% if event.venue %}
+    <p><strong>📍 Where:</strong> {{ event.venue }}</p>
+    {% endif %}
+    {% if event.description %}
+    <p><strong>ℹ️ Description:</strong></p>
+    <p>{{ event.description|linebreaks }}</p>
+    {% endif %}
+    {% if event.organized_by %}
+    <p><strong>👤 Organized by:</strong> {{ event.organized_by.get_full_name }}</p>
+    {% endif %}
+</div>
+
+{% if event.event_type %}
+<div class="alert alert-info">
+    <strong>Event Type:</strong> {{ event.get_event_type_display }}
+</div>
+{% endif %}
+
+<a href="{{ event_url }}" class="button">View Event Details</a>
+
+{% if calendar_url %}
+<a href="{{ calendar_url }}" class="button button-secondary">Add to Calendar</a>
+{% endif %}
+
+<p>If you have any questions about this event, please contact the organizer or your coordinator.</p>
+
+<p>Best regards,<br>OOBC Management Team</p>
+{% endblock %}

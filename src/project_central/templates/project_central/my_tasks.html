@@ -1,0 +1,101 @@
+{% extends "project_central/base.html" %}
+{% load static %}
+
+{% block title %}My Project Tasks · Project Central{% endblock %}
+
+{% block project_central_content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="flex items-center justify-between flex-wrap gap-4 mb-6">
+        <h1 class="text-3xl font-semibold text-gray-900">My Project Tasks</h1>
+        <p class="text-sm text-gray-500">Track tasks linked to project workflows and PPAs you own or support.</p>
+    </div>
+
+    <form id="project-task-filter"
+          class="bg-white shadow-sm rounded-xl border border-gray-100 p-4 mb-4"
+          hx-get="{% url 'project_central:my_tasks_with_projects' %}"
+          hx-target="#project-task-results"
+          hx-swap="outerHTML swap:300ms">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+                <label for="filter-status" class="block text-sm font-medium text-gray-600 mb-1">Status</label>
+                <select id="filter-status" name="status" class="w-full rounded-lg border-gray-200 focus:ring-emerald-500 focus:border-emerald-500"
+                        hx-get="{% url 'project_central:my_tasks_with_projects' %}"
+                        hx-target="#project-task-results"
+                        hx-trigger="change"
+                        hx-include="#project-task-filter"
+                        hx-push-url="true">
+                    <option value="">All statuses</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if current_filters.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="filter-stage" class="block text-sm font-medium text-gray-600 mb-1">Workflow stage</label>
+                <select id="filter-stage" name="stage" class="w-full rounded-lg border-gray-200 focus:ring-emerald-500 focus:border-emerald-500"
+                        hx-get="{% url 'project_central:my_tasks_with_projects' %}"
+                        hx-target="#project-task-results"
+                        hx-trigger="change"
+                        hx-include="#project-task-filter"
+                        hx-push-url="true">
+                    <option value="">All stages</option>
+                    {% for value, label in stage_choices %}
+                        <option value="{{ value }}" {% if current_filters.stage == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="filter-domain" class="block text-sm font-medium text-gray-600 mb-1">Module</label>
+                <select id="filter-domain" name="domain" class="w-full rounded-lg border-gray-200 focus:ring-emerald-500 focus:border-emerald-500"
+                        hx-get="{% url 'project_central:my_tasks_with_projects' %}"
+                        hx-target="#project-task-results"
+                        hx-trigger="change"
+                        hx-include="#project-task-filter"
+                        hx-push-url="true">
+                    <option value="">All modules</option>
+                    {% for value, label in domain_choices %}
+                        <option value="{{ value }}" {% if current_filters.domain == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex flex-col gap-2">
+                <div>
+                    <label for="filter-search" class="block text-sm font-medium text-gray-600 mb-1">Search</label>
+                    <input id="filter-search" name="q" type="search"
+                           value="{{ current_filters.q }}"
+                           placeholder="Search tasks, projects, or PPAs"
+                           class="w-full rounded-lg border-gray-200 focus:ring-emerald-500 focus:border-emerald-500"
+                           hx-get="{% url 'project_central:my_tasks_with_projects' %}"
+                           hx-target="#project-task-results"
+                           hx-trigger="keyup changed delay:400ms"
+                           hx-include="#project-task-filter"
+                           hx-push-url="true">
+                </div>
+                <label class="inline-flex items-center text-sm text-gray-600">
+                    <input type="checkbox" name="overdue" value="1" {% if current_filters.overdue == '1' %}checked{% endif %}
+                           class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                           hx-get="{% url 'project_central:my_tasks_with_projects' %}"
+                           hx-target="#project-task-results"
+                           hx-trigger="change"
+                           hx-include="#project-task-filter"
+                           hx-push-url="true">
+                    <span class="ml-2">Show only overdue tasks</span>
+                </label>
+            </div>
+        </div>
+        <div class="flex justify-end mt-4 gap-3">
+            <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition">
+                Apply filters
+            </button>
+            <a href="{% url 'project_central:my_tasks_with_projects' %}"
+               class="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:text-gray-800 hover:border-gray-300 transition">
+                Reset
+            </a>
+        </div>
+    </form>
+
+    <div id="project-task-results">
+        {% include "project_central/partials/project_task_table.html" %}
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,12 @@
 """Public form interfaces for the common app."""
 
 from .auth import CustomLoginForm, UserProfileForm, UserRegistrationForm
+from .calendar import (
+    CalendarResourceBookingForm,
+    CalendarResourceForm,
+    StaffLeaveForm,
+    # UserCalendarPreferencesForm,  # TODO: Model not yet implemented
+)
 from .community import (
     COMMUNITY_PROFILE_FIELDS,
     COMMUNITY_PROFILE_LABELS,
@@ -26,6 +32,10 @@ __all__ = [
     "CustomLoginForm",
     "UserProfileForm",
     "UserRegistrationForm",
+    "CalendarResourceForm",
+    "CalendarResourceBookingForm",
+    "StaffLeaveForm",
+    # "UserCalendarPreferencesForm",  # TODO: Model not yet implemented
     "COMMUNITY_PROFILE_FIELDS",
     "COMMUNITY_PROFILE_LABELS",
     "COMMUNITY_PROFILE_WIDGETS",

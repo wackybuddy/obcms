@@ -50,6 +50,27 @@ app.conf.beat_schedule = {
         'options': {'expires': 3600}
     },
 
+    # Calendar: Process event reminders every 15 minutes
+    'process-event-reminders': {
+        'task': 'common.tasks.process_scheduled_reminders',
+        'schedule': crontab(minute='*/15'),  # Every 15 minutes
+        'options': {'expires': 900}  # 15 minutes
+    },
+
+    # Calendar: Send daily digest at 7:00 AM
+    'send-daily-calendar-digest': {
+        'task': 'common.tasks.send_daily_digest',
+        'schedule': crontab(hour=7, minute=0),  # 7:00 AM daily
+        'options': {'expires': 3600}
+    },
+
+    # Calendar: Clean expired share links daily at 2:00 AM
+    'clean-expired-calendar-shares': {
+        'task': 'common.tasks.clean_expired_calendar_shares',
+        'schedule': crontab(hour=2, minute=0),  # 2:00 AM daily
+        'options': {'expires': 3600}
+    },
+
     # Example: Send daily summary reports at 8 AM
     # 'send-daily-reports': {
     #     'task': 'monitoring.tasks.send_daily_reports',

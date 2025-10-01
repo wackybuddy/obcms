@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from communities import data_utils
+from coordination import views as coordination_views
 
 app_name = 'common'
 
@@ -67,6 +68,8 @@ urlpatterns = [
     path('coordination/partnerships/<uuid:partnership_id>/edit/', views.partnership_update, name='coordination_partnership_edit'),
     path('coordination/partnerships/<uuid:partnership_id>/delete/', views.partnership_delete, name='coordination_partnership_delete'),
     path('coordination/events/add/', views.event_create, name='coordination_event_add'),
+    path('coordination/events/recurring/add/', coordination_views.event_create_recurring, name='coordination_event_recurring_add'),
+    path('coordination/events/<uuid:event_id>/edit-instance/', coordination_views.event_edit_instance, name='coordination_event_edit_instance'),
     path('coordination/events/', views.coordination_events, name='coordination_events'),
     path('coordination/calendar/', views.coordination_calendar, name='coordination_calendar'),
     path('coordination/activities/add/', views.coordination_activity_create, name='coordination_activity_add'),
@@ -80,6 +83,41 @@ urlpatterns = [
     path('oobc-management/calendar/feed/json/', views.oobc_calendar_feed_json, name='oobc_calendar_feed_json'),
     path('oobc-management/calendar/feed/ics/', views.oobc_calendar_feed_ics, name='oobc_calendar_feed_ics'),
     path('oobc-management/calendar/brief/', views.oobc_calendar_brief, name='oobc_calendar_brief'),
+    path('oobc-management/calendar/preferences/', views.calendar_preferences, name='calendar_preferences'),
+
+    # Calendar Resource Management
+    path('oobc-management/calendar/resources/', views.resource_list, name='calendar_resource_list'),
+    path('oobc-management/calendar/resources/add/', views.resource_create, name='calendar_resource_create'),
+    path('oobc-management/calendar/resources/<int:resource_id>/', views.resource_detail, name='calendar_resource_detail'),
+    path('oobc-management/calendar/resources/<int:resource_id>/edit/', views.resource_edit, name='calendar_resource_edit'),
+    path('oobc-management/calendar/resources/<int:resource_id>/delete/', views.resource_delete, name='calendar_resource_delete'),
+    path('oobc-management/calendar/resources/<int:resource_id>/calendar/', views.resource_calendar, name='calendar_resource_calendar'),
+    path('oobc-management/calendar/resources/<int:resource_id>/book/', views.booking_request, name='calendar_booking_request'),
+    path('oobc-management/calendar/bookings/', views.booking_list, name='calendar_booking_list'),
+    path('oobc-management/calendar/bookings/request/', views.booking_request, name='calendar_booking_request_general'),
+    path('oobc-management/calendar/bookings/<int:booking_id>/approve/', views.booking_approve, name='calendar_booking_approve'),
+
+    # Staff Leave Management
+    path('oobc-management/staff/leave/', views.staff_leave_list, name='staff_leave_list'),
+    path('oobc-management/staff/leave/request/', views.staff_leave_request, name='staff_leave_request'),
+    path('oobc-management/staff/leave/<int:leave_id>/approve/', views.staff_leave_approve, name='staff_leave_approve'),
+
+    # Calendar Sharing
+    path('oobc-management/calendar/share/', views.calendar_share_create, name='calendar_share_create'),
+    path('oobc-management/calendar/share/manage/', views.calendar_share_manage, name='calendar_share_manage'),
+    path('calendar/shared/<str:token>/', views.calendar_share_view, name='calendar_share_view'),
+    path('oobc-management/calendar/share/<int:share_id>/toggle/', views.calendar_share_toggle, name='calendar_share_toggle'),
+    path('oobc-management/calendar/share/<int:share_id>/delete/', views.calendar_share_delete, name='calendar_share_delete'),
+
+    # Event Attendance
+    path('coordination/events/<uuid:event_id>/check-in/', views.event_check_in, name='event_check_in'),
+    path('coordination/events/<uuid:event_id>/qr-code/', views.event_generate_qr, name='event_generate_qr'),
+    path('coordination/events/<uuid:event_id>/qr-scan/', views.event_scan_qr, name='event_scan_qr'),
+    path('coordination/events/<uuid:event_id>/attendance-report/', views.event_attendance_report, name='event_attendance_report'),
+
+    # Calendar API (drag-and-drop, interactive features)
+    path('api/calendar/event/update/', views.calendar_event_update, name='calendar_event_update'),
+
     path('oobc-management/staff/', views.staff_management, name='staff_management'),
     path('oobc-management/staff/tasks/', views.staff_task_board, name='staff_task_board'),
     path('oobc-management/staff/tasks/modal/new/', views.staff_task_modal_create, name='staff_task_modal_create'),
@@ -91,6 +129,28 @@ urlpatterns = [
     path('oobc-management/staff/api/assignees/', views.staff_api_assignees, name='staff_api_assignees'),
     path('oobc-management/staff/api/teams/', views.staff_api_teams, name='staff_api_teams'),
     path('oobc-management/staff/tasks/new/', views.staff_task_create, name='staff_task_create'),
+
+    # Enhanced Task Management URLs
+    path('oobc-management/staff/tasks/dashboard/', views.enhanced_task_dashboard, name='enhanced_task_dashboard'),
+    path('oobc-management/staff/tasks/domain/<str:domain>/', views.tasks_by_domain, name='tasks_by_domain'),
+    path('oobc-management/staff/tasks/assessment/<uuid:assessment_id>/', views.assessment_tasks, name='assessment_tasks'),
+    path('oobc-management/staff/tasks/event/<uuid:event_id>/', views.event_tasks, name='event_tasks'),
+    path('oobc-management/staff/tasks/policy/<uuid:policy_id>/', views.policy_tasks, name='policy_tasks'),
+    path('oobc-management/staff/tasks/ppa/<uuid:ppa_id>/', views.ppa_tasks, name='ppa_tasks'),
+    path('oobc-management/staff/tasks/service/<uuid:service_id>/', views.service_tasks, name='service_tasks'),
+    path('oobc-management/staff/tasks/<int:task_id>/complete/', views.task_complete, name='task_complete'),
+    path('oobc-management/staff/tasks/<int:task_id>/start/', views.task_start, name='task_start'),
+    path('oobc-management/staff/tasks/<int:task_id>/assign/', views.task_assign, name='task_assign'),
+
+    # Task Analytics URLs
+    path('oobc-management/staff/tasks/analytics/', views.task_analytics, name='task_analytics'),
+    path('oobc-management/staff/tasks/analytics/<str:domain>/', views.domain_task_analytics, name='domain_task_analytics'),
+
+    # Task Template URLs
+    path('oobc-management/staff/task-templates/', views.task_template_list, name='task_template_list'),
+    path('oobc-management/staff/task-templates/<int:template_id>/', views.task_template_detail, name='task_template_detail'),
+    path('oobc-management/staff/task-templates/<int:template_id>/instantiate/', views.instantiate_template, name='instantiate_template'),
+
     path('oobc-management/staff/teams/assign/', views.staff_team_assign, name='staff_team_assign'),
     path('oobc-management/staff/teams/manage/', views.staff_team_manage, name='staff_team_manage'),
     path('oobc-management/staff/profiles/', views.staff_profiles_list, name='staff_profiles_list'),

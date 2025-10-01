@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}M&E Analytics Dashboard - Project Central{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 1rem;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Budget by Sector Pie Chart
+    const sectorCtx = document.getElementById('sectorChart').getContext('2d');
+    new Chart(sectorCtx, {
+        type: 'pie',
+        data: {
+            labels: [{% for sector in budget_by_sector.sectors %}'{{ sector.sector }}',{% endfor %}],
+            datasets: [{
+                data: [{% for sector in budget_by_sector.sectors %}{{ sector.total_budget }},{% endfor %}],
+                backgroundColor: [
+                    '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444',
+                    '#06b6d4', '#ec4899', '#14b8a6', '#f97316', '#6366f1'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right' },
+                title: { display: true, text: 'Budget Allocation by Sector' }
+            }
+        }
+    });
+
+    // Budget by Source Bar Chart
+    const sourceCtx = document.getElementById('sourceChart').getContext('2d');
+    new Chart(sourceCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for source in budget_by_source.sources %}'{{ source.funding_source }}',{% endfor %}],
+            datasets: [{
+                label: 'Budget Allocation',
+                data: [{% for source in budget_by_source.sources %}{{ source.total_budget }},{% endfor %}],
+                backgroundColor: '#10b981'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Budget by Funding Source' }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Utilization Gauge
+    const utilCtx = document.getElementById('utilizationChart').getContext('2d');
+    new Chart(utilCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Disbursed', 'Remaining'],
+            datasets: [{
+                data: [
+                    {{ utilization_rates.ppa_utilization.disbursement_rate }},
+                    {{ 100|add:utilization_rates.ppa_utilization.disbursement_rate|floatformat:2|cut:"-" }}
+                ],
+                backgroundColor: ['#10b981', '#e5e7eb']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                title: { display: true, text: 'Budget Utilization Rate' },
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Workflow Performance
+    const workflowCtx = document.getElementById('workflowChart').getContext('2d');
+    new Chart(workflowCtx, {
+        type: 'bar',
+        data: {
+            labels: ['On Track', 'Blocked', 'Total'],
+            datasets: [{
+                label: 'Workflows',
+                data: [
+                    {{ workflow_performance.on_track }},
+                    {{ workflow_performance.blocked }},
+                    {{ workflow_performance.total_workflows }}
+                ],
+                backgroundColor: ['#10b981', '#ef4444', '#3b82f6']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Workflow Performance' }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1"><i class="fas fa-chart-line text-emerald-600"></i> M&E Analytics Dashboard</h1>
+            <p class="text-muted mb-0">Comprehensive monitoring and evaluation metrics</p>
+        </div>
+        <div>
+            <form method="get" class="d-inline-block">
+                <select name="fiscal_year" class="form-select" onchange="this.form.submit()">
+                    {% for year in "2023,2024,2025,2026"|split:"," %}
+                    <option value="{{ year }}" {% if year|add:"0" == fiscal_year %}selected{% endif %}>
+                        FY {{ year }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="text-white-50 small">Total Budget</div>
+                <div class="stat-value">₱{{ budget_by_sector.totals.total_budget|floatformat:0|intcomma }}</div>
+                <div class="small mt-1">{{ budget_by_sector.totals.project_count }} projects</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="text-white-50 small">Disbursement Rate</div>
+                <div class="stat-value">{{ utilization_rates.ppa_utilization.disbursement_rate|floatformat:1 }}%</div>
+                <div class="small mt-1">₱{{ utilization_rates.ppa_utilization.total_disbursed|floatformat:0|intcomma }} disbursed</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="text-white-50 small">Active Workflows</div>
+                <div class="stat-value">{{ workflow_performance.total_workflows }}</div>
+                <div class="small mt-1">{{ workflow_performance.on_track_pct|floatformat:1 }}% on track</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="text-white-50 small">Cost Effectiveness</div>
+                <div class="stat-value">₱{{ cost_effectiveness.overall.overall_cost_per_beneficiary|floatformat:0|intcomma }}</div>
+                <div class="small mt-1">per beneficiary</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="sectorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="sourceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="utilizationChart"></canvas>
+                    </div>
+                    <div class="text-center mt-3">
+                        <h3 class="text-emerald-600 mb-0">{{ utilization_rates.ppa_utilization.disbursement_rate|floatformat:1 }}%</h3>
+                        <small class="text-muted">Disbursement Rate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="workflowChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Tables -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Budget by Sector</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Sector</th>
+                                    <th class="text-end">Budget</th>
+                                    <th class="text-end">Projects</th>
+                                    <th class="text-end">Utilization</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sector in budget_by_sector.sectors %}
+                                <tr>
+                                    <td>{{ sector.sector }}</td>
+                                    <td class="text-end">₱{{ sector.total_budget|floatformat:0|intcomma }}</td>
+                                    <td class="text-end">{{ sector.project_count }}</td>
+                                    <td class="text-end">{{ sector.utilization_pct|floatformat:1 }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Budget Ceiling Utilization</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Ceiling</th>
+                                    <th class="text-end">Limit</th>
+                                    <th class="text-end">Allocated</th>
+                                    <th class="text-end">Utilization</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ceiling in utilization_rates.ceiling_utilization %}
+                                <tr>
+                                    <td>{{ ceiling.name }}</td>
+                                    <td class="text-end">₱{{ ceiling.ceiling_amount|floatformat:0|intcomma }}</td>
+                                    <td class="text-end">₱{{ ceiling.allocated_amount|floatformat:0|intcomma }}</td>
+                                    <td class="text-end">
+                                        <span class="badge {% if ceiling.utilization_pct >= 90 %}bg-danger{% elif ceiling.utilization_pct >= 75 %}bg-warning{% else %}bg-success{% endif %}">
+                                            {{ ceiling.utilization_pct|floatformat:1 }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

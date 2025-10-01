@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from typing import Dict, List, Optional, Sequence, Tuple
 
+from django.core.cache import cache
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
 from common.constants import CALENDAR_MODULE_ORDER
-from common.models import StaffTask, TrainingEnrollment
+from common.models import (
+    CalendarResourceBooking,
+    StaffLeave,
+    StaffTask,
+    TrainingEnrollment,
+)
+from communities.models import CommunityEvent, OBCCommunity
 from coordination.models import (
     Communication,
     Event,
@@ -20,6 +29,16 @@ from coordination.models import (
 from mana.models import BaselineDataCollection
 from monitoring.models import MonitoringEntry, MonitoringEntryWorkflowStage
 from recommendations.policy_tracking.models import PolicyRecommendation
+
+
+CALENDAR_CACHE_INDEX_KEY = "calendar:payload:index"
+CALENDAR_CACHE_TTL = 300  # seconds
+
+
+def invalidate_calendar_cache() -> None:
+    """Clear cached calendar payloads and per-view responses."""
+
+    cache.clear()
 
 
 @dataclass
@@ -96,6 +115,15 @@ def build_calendar_payload(
 
     now = timezone.now()
     due_soon_cutoff = now + timedelta(days=2)
+
+    normalized_modules = ("__all__",)
+    if allowed_modules_set is not None:
+        normalized_modules = tuple(sorted(allowed_modules_set)) or ("__all__",)
+
+    cache_key = f"calendar:payload:{'|'.join(normalized_modules)}"
+    cached_payload = cache.get(cache_key)
+    if cached_payload is not None:
+        return deepcopy(cached_payload)
 
     entries: List[Dict] = []
     stats: Dict[str, CalendarStats] = {}
@@ -839,6 +867,8 @@ def build_calendar_payload(
         tasks = StaffTask.objects.prefetch_related("teams", "assignees")
 
         for task in tasks:
+            if task.linked_event_id:
+                continue
             start_dt = _combine(task.start_date) if task.start_date else None
             due_dt = _combine(task.due_date, default_time=time.max) if task.due_date else None
             start_for_sorting = start_dt or due_dt
@@ -1214,6 +1244,152 @@ def build_calendar_payload(
                         notes=notes,
                     )
 
+            # Custom milestone timeline populated via JSON metadata
+            raw_milestones = entry.milestone_dates or []
+            if isinstance(raw_milestones, dict):
+                raw_milestones = [raw_milestones]
+            elif not isinstance(raw_milestones, (list, tuple)):
+                raw_milestones = []
+
+            status_color_map = {
+                "completed": ("#22c55e", "#16a34a"),  # emerald
+                "done": ("#22c55e", "#16a34a"),
+                "closed": ("#22c55e", "#16a34a"),
+                "delayed": ("#f97316", "#ea580c"),  # amber
+                "at_risk": ("#f97316", "#ea580c"),
+                "blocked": ("#f43f5e", "#e11d48"),  # rose
+                "overdue": ("#f43f5e", "#e11d48"),
+                "cancelled": ("#94a3b8", "#64748b"),  # slate
+            }
+
+            for milestone_index, milestone in enumerate(raw_milestones):
+                if not isinstance(milestone, dict):
+                    continue
+
+                milestone_date_value = milestone.get("date")
+                parsed_date = None
+
+                if isinstance(milestone_date_value, datetime):
+                    parsed_date = milestone_date_value.date()
+                elif hasattr(milestone_date_value, "isoformat") and not isinstance(
+                    milestone_date_value, (str, bytes)
+                ):
+                    parsed_date = milestone_date_value
+                elif isinstance(milestone_date_value, str):
+                    parsed_date = parse_date(milestone_date_value)
+                    if parsed_date is None:
+                        try:
+                            parsed_date = datetime.fromisoformat(milestone_date_value).date()
+                        except ValueError:
+                            parsed_date = None
+
+                if parsed_date is None:
+                    continue
+
+                start_dt = _combine(parsed_date)
+                aware_start = _ensure_aware(start_dt)
+
+                milestone_status = str(milestone.get("status") or "").lower() or entry.status
+                milestone_title = milestone.get("title") or milestone.get("label") or "Milestone"
+                milestone_notes = (
+                    milestone.get("notes")
+                    or milestone.get("description")
+                    or milestone.get("summary")
+                    or ""
+                )
+
+                background_color, border_color = status_color_map.get(
+                    milestone_status,
+                    ("#14b8a6", "#0f766e"),
+                )
+
+                completed_flag = milestone_status in {"completed", "done", "closed"}
+                upcoming_flag = bool(aware_start and aware_start >= now and not completed_flag)
+
+                payload = {
+                    "id": f"planning-entry-{entry.pk}-milestone-{milestone_index}",
+                    "title": f"{entry.title} – {milestone_title}",
+                    "start": _isoformat(start_dt),
+                    "end": _isoformat(start_dt + timedelta(days=1)),
+                    "allDay": True,
+                    "backgroundColor": background_color,
+                    "borderColor": border_color,
+                    "textColor": "#0f172a",
+                    "extendedProps": {
+                        "module": "planning",
+                        "category": "planning_milestone_custom",
+                        "status": milestone_status,
+                        "priority": entry.priority,
+                        "location": None,
+                        "sector": entry.sector,
+                        "milestoneTitle": milestone_title,
+                        "milestoneStatus": milestone_status,
+                        "milestoneIndex": milestone_index,
+                        "relatedEntryId": str(entry.pk),
+                    },
+                }
+
+                entries.append(payload)
+                workflow_actions_entry: List[Dict] = []
+                payload["extendedProps"]["workflowActions"] = workflow_actions_entry
+
+                module_name = payload["extendedProps"].get("module", "planning")
+                module_set.add(module_name)
+
+                status_value = payload["extendedProps"].get("status") or "unspecified"
+                status_counts.setdefault(module_name, {})
+                status_counts[module_name][status_value] = (
+                    status_counts[module_name].get(status_value, 0) + 1
+                )
+
+                if aware_start:
+                    upcoming_items.append((aware_start, {
+                        "module": module_name,
+                        "title": payload["title"],
+                        "start": aware_start,
+                        "status": milestone_status,
+                    }))
+                    timed_entries.append({
+                        "module": module_name,
+                        "title": payload["title"],
+                        "start": aware_start,
+                        "end": aware_start + timedelta(hours=1),
+                        "location": None,
+                    })
+
+                    if aware_start.date() in heatmap_days:
+                        idx = heatmap_days.index(aware_start.date())
+                        heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
+                        heatmap_counts[module_name][idx] += 1
+
+                _increment(stats, "planning", upcoming=upcoming_flag, completed=completed_flag)
+
+                risk_statuses = {"delayed", "at_risk", "blocked", "overdue"}
+                severity = None
+                action_type = "workflow"
+
+                if completed_flag:
+                    action_type = "workflow"
+                elif milestone_status in risk_statuses or (
+                    aware_start and aware_start < now
+                ):
+                    action_type = "escalation"
+                    severity = "critical"
+                elif upcoming_flag:
+                    action_type = "follow_up"
+
+                append_workflow_action(
+                    workflow_actions_entry,
+                    module_name,
+                    payload["id"],
+                    action_type=action_type,
+                    label=milestone_title,
+                    due=aware_start,
+                    status=milestone_status,
+                    notes=milestone_notes,
+                    severity=severity,
+                )
+
         if include_module("planning"):
             stages = (
                 MonitoringEntryWorkflowStage.objects.select_related("entry")
@@ -1293,6 +1469,229 @@ def build_calendar_payload(
                     status=stage.status,
                     notes=stage.notes or stage.entry.support_required or "",
                     severity="critical" if is_escalated else None,
+                )
+
+    # Community Events ------------------------------------------------------
+    if include_module("communities"):
+        community_events = CommunityEvent.objects.select_related("community").filter(
+            is_public=True
+        )
+
+        for ce in community_events:
+            start_dt = _combine(ce.start_date, ce.start_time if not ce.all_day else None)
+            end_dt = _combine(ce.end_date, ce.end_time if not ce.all_day else None) if ce.end_date else start_dt
+
+            if ce.all_day and end_dt:
+                end_dt = end_dt + timedelta(days=1)
+
+            aware_start = _ensure_aware(start_dt)
+            upcoming_flag = bool(aware_start and aware_start >= now)
+
+            # Color based on event type
+            if ce.event_type == 'cultural':
+                bg_color = "#f59e0b"  # amber
+                border_color = "#d97706"
+            elif ce.event_type == 'religious':
+                bg_color = "#8b5cf6"  # purple
+                border_color = "#7c3aed"
+            elif ce.event_type == 'disaster':
+                bg_color = "#ef4444"  # red
+                border_color = "#dc2626"
+            else:
+                bg_color = "#10b981"  # green
+                border_color = "#059669"
+
+            payload = {
+                "id": f"communities-event-{ce.pk}",
+                "title": f"[{ce.community.name}] {ce.title}",
+                "start": _isoformat(start_dt),
+                "end": _isoformat(end_dt),
+                "allDay": ce.all_day,
+                "backgroundColor": bg_color,
+                "borderColor": border_color,
+                "extendedProps": {
+                    "module": "communities",
+                    "category": "community_event",
+                    "event_type": ce.event_type,
+                    "community": ce.community.name,
+                    "is_recurring": ce.is_recurring,
+                },
+            }
+
+            entries.append(payload)
+            module_name = "communities"
+            module_set.add(module_name)
+
+            if start_dt and aware_start.date() in heatmap_days:
+                idx = heatmap_days.index(aware_start.date())
+                heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
+                heatmap_counts[module_name][idx] += 1
+
+            _increment(stats, module_name, upcoming=upcoming_flag, completed=False)
+
+            if upcoming_flag:
+                upcoming_items.append((aware_start, {
+                    "module": module_name,
+                    "title": f"[{ce.community.name}] {ce.title}",
+                    "start": aware_start,
+                    "status": "scheduled",
+                }))
+
+    # Staff Leave -----------------------------------------------------------
+    if include_module("staff"):
+        staff_leaves = StaffLeave.objects.select_related("staff").filter(
+            status__in=['pending', 'approved']
+        )
+
+        for leave in staff_leaves:
+            start_dt = _combine(leave.start_date)
+            end_dt = _combine(leave.end_date)
+            if end_dt:
+                end_dt = end_dt + timedelta(days=1)  # Include end date
+
+            aware_start = _ensure_aware(start_dt)
+            upcoming_flag = bool(aware_start and aware_start >= now)
+
+            # Color based on leave status
+            if leave.status == 'approved':
+                bg_color = "#6366f1"  # indigo
+                border_color = "#4f46e5"
+            else:  # pending
+                bg_color = "#f59e0b"  # amber
+                border_color = "#d97706"
+
+            staff_name = leave.staff.get_full_name().strip()
+            username = (leave.staff.username or "").strip()
+            title_prefix = username or staff_name or "OOBC Staff"
+
+            payload = {
+                "id": f"staff-leave-{leave.pk}",
+                "title": f"{title_prefix} - {leave.get_leave_type_display()}",
+                "start": _isoformat(start_dt),
+                "end": _isoformat(end_dt),
+                "allDay": True,
+                "backgroundColor": bg_color,
+                "borderColor": border_color,
+                "extendedProps": {
+                    "module": "staff",
+                    "category": "leave",
+                    "leave_type": leave.leave_type,
+                    "status": leave.status,
+                    "staff_member": staff_name or username,
+                },
+            }
+
+            entries.append(payload)
+            workflow_actions_entry: List[Dict] = []
+            payload["extendedProps"]["workflowActions"] = workflow_actions_entry
+
+            module_name = "staff"
+            module_set.add(module_name)
+
+            if start_dt and aware_start.date() in heatmap_days:
+                idx = heatmap_days.index(aware_start.date())
+                heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
+                heatmap_counts[module_name][idx] += 1
+
+            _increment(stats, module_name, upcoming=upcoming_flag, completed=leave.status == 'completed')
+
+            # Add approval workflow if pending
+            if leave.status == 'pending':
+                append_workflow_action(
+                    workflow_actions_entry,
+                    module_name,
+                    payload["id"],
+                    action_type="approval",
+                    label="Pending Leave Approval",
+                    due=aware_start,
+                    status=leave.status,
+                    notes=f"{leave.get_leave_type_display()} - {leave.reason[:100]}",
+                )
+
+    # Resource Bookings -----------------------------------------------------
+    if include_module("resources"):
+        bookings = CalendarResourceBooking.objects.select_related(
+            "resource", "booked_by"
+        ).filter(
+            status__in=['pending', 'approved']
+        )
+
+        for booking in bookings:
+            aware_start = _ensure_aware(booking.start_datetime)
+            aware_end = _ensure_aware(booking.end_datetime)
+            upcoming_flag = bool(aware_start and aware_start >= now)
+
+            # Get description from notes or linked event
+            description = booking.notes[:50] if booking.notes else "Resource Booking"
+
+            # Color based on status
+            if booking.status == 'approved':
+                bg_color = "#059669"  # emerald
+                border_color = "#047857"
+            else:  # pending
+                bg_color = "#f59e0b"  # amber
+                border_color = "#d97706"
+
+            payload = {
+                "id": f"resources-booking-{booking.pk}",
+                "title": booking.resource.name,
+                "start": _isoformat(booking.start_datetime),
+                "end": _isoformat(booking.end_datetime),
+                "allDay": False,
+                "backgroundColor": bg_color,
+                "borderColor": border_color,
+                "extendedProps": {
+                    "module": "resources",
+                    "category": "booking",
+                    "resource": booking.resource.name,
+                    "resource_type": booking.resource.resource_type,
+                    "status": booking.status,
+                    "booked_by": booking.booked_by.get_full_name(),
+                    "notes": description,
+                },
+            }
+
+            entries.append(payload)
+            workflow_actions_entry: List[Dict] = []
+            payload["extendedProps"]["workflowActions"] = workflow_actions_entry
+
+            module_name = "resources"
+            module_set.add(module_name)
+
+            if aware_start.date() in heatmap_days:
+                idx = heatmap_days.index(aware_start.date())
+                heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
+                heatmap_counts[module_name][idx] += 1
+
+            _increment(stats, module_name, upcoming=upcoming_flag, completed=booking.status == 'completed')
+
+            if upcoming_flag:
+                upcoming_items.append((aware_start, {
+                    "module": module_name,
+                    "title": f"[{booking.resource.name}] {description[:30]}",
+                    "start": aware_start,
+                    "status": booking.status,
+                }))
+
+            timed_entries.append({
+                "module": module_name,
+                "title": f"[{booking.resource.name}] {description[:30]}",
+                "start": aware_start,
+                "end": aware_end,
+                "location": booking.resource.location,
+            })
+
+            # Add approval workflow if pending
+            if booking.status == 'pending':
+                append_workflow_action(
+                    workflow_actions_entry,
+                    module_name,
+                    payload["id"],
+                    action_type="approval",
+                    label="Pending Booking Approval",
+                    due=aware_start,
+                    status=booking.status,
+                    notes=f"{booking.resource.name} - {description[:100]}",
                 )
 
     # Sort upcoming highlights ---------------------------------------------
@@ -1436,7 +1835,7 @@ def build_calendar_payload(
         "totals": compliance_totals,
     }
 
-    return {
+    payload = {
         "entries": entries,
         "module_stats": module_stats,
         "upcoming_highlights": upcoming_highlights,
@@ -1445,3 +1844,10 @@ def build_calendar_payload(
         "workflow_actions": workflow_actions_global,
         "analytics": analytics,
     }
+
+    cache.set(cache_key, payload, timeout=CALENDAR_CACHE_TTL)
+    cache_index = set(cache.get(CALENDAR_CACHE_INDEX_KEY, []))
+    cache_index.add(cache_key)
+    cache.set(CALENDAR_CACHE_INDEX_KEY, list(cache_index), timeout=CALENDAR_CACHE_TTL)
+
+    return deepcopy(payload)

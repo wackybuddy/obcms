@@ -41,6 +41,32 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 SECURE_BROWSER_XSS_FILTER = True
 
+# SECURITY: Content Security Policy (CSP)
+# Restricts resource loading to prevent XSS and data injection attacks
+# Customizable via environment variable for flexibility
+CSP_DEFAULT = (
+    "default-src 'self'; "
+    "script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; "
+    "style-src 'self' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com 'unsafe-inline'; "
+    "font-src 'self' https://cdnjs.cloudflare.com data:; "
+    "img-src 'self' data: https:; "
+    "connect-src 'self'; "
+    "frame-ancestors 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self';"
+)
+CONTENT_SECURITY_POLICY = env.str('CONTENT_SECURITY_POLICY', default=CSP_DEFAULT)
+
+# Add CSP middleware to inject headers
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "common.middleware.ContentSecurityPolicyMiddleware",  # CSP headers (production)
+] + [m for m in MIDDLEWARE if m not in [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware"
+]]
+
 # SECURITY: Proxy SSL header (for Coolify/Traefik/Nginx)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True

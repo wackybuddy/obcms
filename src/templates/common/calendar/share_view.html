@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title|default:"Shared Calendar" }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Public Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-calendar-alt text-emerald-600 text-2xl mr-3"></i>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">OOBC Shared Calendar</h1>
+                        <p class="text-sm text-gray-500">Office for Other Bangsamoro Communities</p>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-500">
+                    <i class="fas fa-eye mr-1"></i>
+                    View {{ share_link.view_count }}
+                    {% if share_link.max_views %}/ {{ share_link.max_views }}{% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Info Banner -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-3"></i>
+                <div class="text-sm text-blue-800">
+                    <p class="font-semibold mb-1">Viewing Shared Calendar</p>
+                    <p>This is a read-only view of the OOBC calendar.
+                       {% if share_link.filter_modules %}
+                       Showing: {{ share_link.filter_modules|join:", " }}
+                       {% else %}
+                       Showing all calendar modules.
+                       {% endif %}
+                    </p>
+                    <p class="mt-1 text-xs">Expires: {{ share_link.expires_at|date:"F d, Y g:i A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-emerald-100 rounded-lg p-3">
+                        <i class="fas fa-calendar text-emerald-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Total Events</p>
+                        <p class="text-2xl font-bold text-gray-900" id="total-events">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+                        <i class="fas fa-clock text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Upcoming</p>
+                        <p class="text-2xl font-bold text-gray-900" id="upcoming-events">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+                        <i class="fas fa-layer-group text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">Modules</p>
+                        <p class="text-2xl font-bold text-gray-900" id="module-count">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-amber-100 rounded-lg p-3">
+                        <i class="fas fa-calendar-week text-amber-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">This Week</p>
+                        <p class="text-2xl font-bold text-gray-900" id="week-events">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+            <div id="calendar"></div>
+        </div>
+
+        <!-- Legend -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4 mt-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Module Legend</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="legend">
+                <!-- Legend items will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-gray-500">
+            <p>© {{ now.year }} Office for Other Bangsamoro Communities. All rights reserved.</p>
+            <p class="mt-1">This is a shared calendar view. For full access, please contact the OOBC team.</p>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarData = {{ calendar_data|safe }};
+        const entries = calendarData.entries || [];
+        const calendarEl = document.getElementById('calendar');
+
+        // Calculate statistics
+        const now = new Date();
+        const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        const upcomingEvents = entries.filter(e => {
+            const start = new Date(e.start);
+            return start > now;
+        }).length;
+
+        const weekEvents = entries.filter(e => {
+            const start = new Date(e.start);
+            return start > now && start < weekFromNow;
+        }).length;
+
+        const modules = new Set(entries.map(e => e.extendedProps?.module).filter(Boolean));
+
+        // Update stats
+        document.getElementById('total-events').textContent = entries.length;
+        document.getElementById('upcoming-events').textContent = upcomingEvents;
+        document.getElementById('module-count').textContent = modules.size;
+        document.getElementById('week-events').textContent = weekEvents;
+
+        // Populate legend
+        const legendEl = document.getElementById('legend');
+        const moduleColors = {
+            'coordination': '#10b981',
+            'mana': '#3b82f6',
+            'staff': '#8b5cf6',
+            'policy': '#f59e0b',
+            'planning': '#06b6d4',
+            'resources': '#059669',
+            'communities': '#f97316',
+        };
+
+        modules.forEach(module => {
+            const color = moduleColors[module] || '#6b7280';
+            const item = document.createElement('div');
+            item.className = 'flex items-center';
+            item.innerHTML = `
+                <div class="w-4 h-4 rounded" style="background-color: ${color}"></div>
+                <span class="ml-2 text-xs text-gray-600 capitalize">${module}</span>
+            `;
+            legendEl.appendChild(item);
+        });
+
+        // Initialize FullCalendar
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            },
+            events: entries,
+            eventClick: function(info) {
+                alert(
+                    'Event: ' + info.event.title + '\n' +
+                    'Start: ' + info.event.start.toLocaleString() + '\n' +
+                    (info.event.end ? 'End: ' + info.event.end.toLocaleString() + '\n' : '') +
+                    (info.event.extendedProps.module ? 'Module: ' + info.event.extendedProps.module : '')
+                );
+            },
+            height: 'auto',
+            eventDisplay: 'block',
+            displayEventTime: true,
+            displayEventEnd: true,
+        });
+
+        calendar.render();
+    });
+    </script>
+</body>
+</html>

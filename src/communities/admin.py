@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from .models import (CommunityInfrastructure, CommunityLivelihood,
+from .models import (CommunityEvent, CommunityInfrastructure, CommunityLivelihood,
                      GeographicDataLayer, MapVisualization, MunicipalityCoverage,
                      OBCCommunity, ProvinceCoverage, SpatialDataPoint, Stakeholder,
                      StakeholderEngagement)
@@ -1447,4 +1447,31 @@ class ProvinceCoverageAdmin(admin.ModelAdmin):
                 )
             },
         ),
+    )
+
+
+@admin.register(CommunityEvent)
+class CommunityEventAdmin(admin.ModelAdmin):
+    """Admin interface for Community Events."""
+
+    list_display = ("title", "community", "event_type", "start_date", "end_date", "is_public", "is_recurring", "created_by")
+    list_filter = ("event_type", "is_public", "is_recurring", "start_date")
+    search_fields = ("title", "description", "community__name", "location", "organizer")
+    readonly_fields = ("created_at", "updated_at")
+    date_hierarchy = "start_date"
+
+    fieldsets = (
+        ("Community", {"fields": ("community",)}),
+        ("Event Details", {"fields": ("title", "description", "event_type")}),
+        ("Schedule", {"fields": ("start_date", "end_date", "all_day", "start_time", "end_time")}),
+        ("Location & Organizer", {"fields": ("location", "organizer")}),
+        ("Visibility", {"fields": ("is_public",)}),
+        (
+            "Recurrence",
+            {
+                "fields": ("is_recurring", "recurrence_pattern", "recurrence_parent", "is_recurrence_exception"),
+                "classes": ("collapse",),
+            },
+        ),
+        ("Metadata", {"fields": ("created_by", "created_at", "updated_at"), "classes": ("collapse",)}),
     )

@@ -7,6 +7,8 @@ from django.forms import BaseInlineFormSet, inlineformset_factory
 from communities.models import OBCCommunity
 from mana.models import Assessment
 
+from common.models import RecurringEventPattern
+
 from .models import (
     Event,
     Organization,
@@ -297,7 +299,8 @@ class EventForm(forms.ModelForm):
             "follow_up_notes",
             "is_recurring",
             "recurrence_pattern",
-            "recurrence_end_date",
+            "recurrence_parent",
+            "is_recurrence_exception",
             "parent_event",
         ]
         widgets = {
@@ -317,7 +320,6 @@ class EventForm(forms.ModelForm):
             "start_date": DATE_WIDGET,
             "end_date": DATE_WIDGET,
             "follow_up_date": DATE_WIDGET,
-            "recurrence_end_date": DATE_WIDGET,
             "start_time": TIME_WIDGET,
             "end_time": TIME_WIDGET,
         }
@@ -424,3 +426,87 @@ class StakeholderEngagementForm(forms.ModelForm):
                 field.widget.attrs.setdefault("min", "0")
         if "duration_minutes" in self.fields:
             self.fields["duration_minutes"].widget.attrs.setdefault("step", "15")
+
+
+class RecurringEventPatternForm(forms.ModelForm):
+    """Form for creating and editing recurring event patterns (RFC 5545 compliant)."""
+
+    class Meta:
+        model = RecurringEventPattern
+        fields = [
+            "recurrence_type",
+            "interval",
+            "by_weekday",
+            "by_monthday",
+            "by_setpos",
+            "count",
+            "until_date",
+            "exception_dates",
+        ]
+        widgets = {
+            "until_date": DATE_WIDGET,
+            "by_weekday": forms.CheckboxSelectMultiple,
+        }
+        help_texts = {
+            "recurrence_type": "How often should this event repeat?",
+            "interval": "Repeat every X days/weeks/months/years (e.g., '2' for every 2 weeks)",
+            "by_weekday": "For weekly recurrence, select which days of the week",
+            "by_monthday": "For monthly recurrence, specify day of month (1-31)",
+            "by_setpos": "Relative position (1=first, -1=last)",
+            "count": "Number of occurrences (leave empty for until_date or forever)",
+            "until_date": "End date for recurrence (leave empty if using count)",
+            "exception_dates": "Dates to exclude from recurrence",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _apply_field_styles(self.fields)
+
+        # Make interval default to 1
+        if not self.instance.pk:
+            self.fields["interval"].initial = 1
+
+        # Set min value for interval
+        if "interval" in self.fields and isinstance(
+            self.fields["interval"].widget, forms.NumberInput
+        ):
+            self.fields["interval"].widget.attrs.setdefault("min", "1")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        recurrence_type = cleaned_data.get("recurrence_type")
+        by_weekday = cleaned_data.get("by_weekday")
+        by_monthday = cleaned_data.get("by_monthday")
+        count = cleaned_data.get("count")
+        until_date = cleaned_data.get("until_date")
+
+        # Validate that weekly recurrence has weekdays selected
+        if recurrence_type == RecurringEventPattern.RECURRENCE_WEEKLY and not by_weekday:
+            self.add_error(
+                "by_weekday",
+                "Please select at least one day of the week for weekly recurrence.",
+            )
+
+        # Validate that monthly recurrence has monthday if not using weekday
+        if (
+            recurrence_type == RecurringEventPattern.RECURRENCE_MONTHLY
+            and not by_monthday
+            and not by_weekday
+        ):
+            self.add_error(
+                "by_monthday",
+                "Please specify a day of the month for monthly recurrence.",
+            )
+
+        # Validate that either count or until_date is provided, but not both
+        if count and until_date:
+            self.add_error(
+                "count",
+                "Please specify either a count or an end date, not both.",
+            )
+            self.add_error(
+                "until_date",
+                "Please specify either a count or an end date, not both.",
+            )
+
+        return cleaned_data

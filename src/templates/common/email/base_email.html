@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}OOBC Notification{% endblock %}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .email-header .logo {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        .email-body {
+            padding: 30px 20px;
+        }
+        .email-body h2 {
+            color: #1f2937;
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .email-body p {
+            margin: 15px 0;
+            color: #4b5563;
+        }
+        .event-details {
+            background-color: #f9fafb;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .event-details h3 {
+            margin: 0 0 10px 0;
+            color: #1f2937;
+            font-size: 18px;
+        }
+        .event-details p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .event-details strong {
+            color: #374151;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #10b981;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        .button:hover {
+            background-color: #059669;
+        }
+        .button-secondary {
+            background-color: #6b7280;
+        }
+        .button-secondary:hover {
+            background-color: #4b5563;
+        }
+        .email-footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+        .email-footer a {
+            color: #10b981;
+            text-decoration: none;
+        }
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .alert-warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+        .alert-info {
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+        .alert-success {
+            background-color: #d1fae5;
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+        .attendee-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        .attendee-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .attendee-list li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>{% block header_title %}OOBC Calendar{% endblock %}</h1>
+            <div class="logo">Office for Other Bangsamoro Communities</div>
+        </div>
+
+        <div class="email-body">
+            {% block content %}
+            <!-- Email content goes here -->
+            {% endblock %}
+        </div>
+
+        <div class="email-footer">
+            <p>
+                This is an automated message from the OOBC Management System.<br>
+                <a href="{{ base_url }}/oobc-management/calendar/preferences/">Manage your notification preferences</a>
+            </p>
+            <p>
+                © {{ current_year }} Office for Other Bangsamoro Communities. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

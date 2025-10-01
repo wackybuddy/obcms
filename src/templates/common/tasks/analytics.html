@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Task Analytics - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-gray-600 hover:text-gray-900">OOBC Management</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:enhanced_task_dashboard' %}" class="text-gray-600 hover:text-gray-900">Tasks</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">Analytics</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-chart-line text-emerald-600"></i>
+                <span>Task Analytics</span>
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                Comprehensive insights into task performance across all domains.
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'common:enhanced_task_dashboard' %}"
+               class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Tasks
+            </a>
+            <a href="{% url 'common:staff_task_board' %}"
+               class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-th mr-2"></i>
+                Kanban Board
+            </a>
+        </div>
+    </div>
+
+    <!-- Overall Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-6">
+            <p class="text-sm font-medium text-blue-100 uppercase">Total Tasks</p>
+            <p class="mt-2 text-4xl font-bold">{{ total_tasks }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl shadow-lg p-6">
+            <p class="text-sm font-medium text-emerald-100 uppercase">Completed</p>
+            <p class="mt-2 text-4xl font-bold">{{ status_breakdown.completed|default:0 }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-xl shadow-lg p-6">
+            <p class="text-sm font-medium text-amber-100 uppercase">In Progress</p>
+            <p class="mt-2 text-4xl font-bold">{{ status_breakdown.in_progress|default:0 }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-xl shadow-lg p-6">
+            <p class="text-sm font-medium text-rose-100 uppercase">Recent (30d)</p>
+            <p class="mt-2 text-4xl font-bold">{{ recent_completed }}</p>
+        </div>
+    </div>
+
+    <!-- Domain Breakdown -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-gray-800 to-gray-700 text-white">
+            <h2 class="text-xl font-semibold flex items-center">
+                <i class="fas fa-layer-group mr-3"></i>
+                Tasks by Domain
+            </h2>
+        </div>
+        {% if domain_breakdown %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Domain</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Completed</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">In Progress</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Overdue</th>
+                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in domain_breakdown %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="text-sm font-medium text-gray-900">{{ item.domain|upper }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm text-gray-600">{{ item.count }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm text-emerald-600 font-medium">{{ item.completed }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm text-blue-600 font-medium">{{ item.in_progress }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm {% if item.overdue > 0 %}text-rose-600 font-semibold{% else %}text-gray-400{% endif %}">
+                                {{ item.overdue }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{% url 'common:tasks_by_domain' item.domain %}" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                                View <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500">
+            No domain data available.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Completion Rates -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-percentage mr-3 text-emerald-600"></i>
+                Completion Rates by Domain
+            </h2>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                {% for item in completion_rates %}
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">{{ item.domain }}</span>
+                        <span class="text-sm font-semibold text-gray-900">{{ item.rate }}%</span>
+                    </div>
+                    <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div class="h-full {% if item.rate >= 80 %}bg-emerald-500{% elif item.rate >= 50 %}bg-amber-500{% else %}bg-rose-500{% endif %} transition-all"
+                             style="width: {{ item.rate }}%"></div>
+                    </div>
+                    <div class="mt-1 flex items-center justify-between text-xs text-gray-500">
+                        <span>{{ item.completed }} of {{ item.total }} tasks</span>
+                        {% if item.rate < 50 %}
+                        <span class="text-rose-600 font-medium">
+                            <i class="fas fa-exclamation-triangle"></i> Needs attention
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-gray-500 py-6">No completion data available.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Distribution -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-flag mr-3 text-amber-600"></i>
+                    Priority Distribution
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-3">
+                    {% for item in priority_breakdown %}
+                    <div class="flex items-center justify-between">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium
+                            {% if item.priority == 'critical' %}bg-rose-50 text-rose-700
+                            {% elif item.priority == 'high' %}bg-amber-50 text-amber-700
+                            {% elif item.priority == 'medium' %}bg-blue-50 text-blue-700
+                            {% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {{ item.priority|upper }}
+                        </span>
+                        <span class="text-lg font-semibold text-gray-900">{{ item.count }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-gray-500 py-4">No priority data.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-clock mr-3 text-blue-600"></i>
+                    Effort Tracking
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <p class="text-sm font-medium text-blue-700 mb-1">Total Estimated Hours</p>
+                        <p class="text-3xl font-bold text-blue-900">{{ effort_stats.total_estimated|default:0|floatformat:1 }}</p>
+                    </div>
+                    <div class="bg-emerald-50 rounded-lg p-4">
+                        <p class="text-sm font-medium text-emerald-700 mb-1">Total Actual Hours</p>
+                        <p class="text-3xl font-bold text-emerald-900">{{ effort_stats.total_actual|default:0|floatformat:1 }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm font-medium text-gray-700 mb-1">Avg Hours per Task</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 text-sm">Estimated:</span>
+                            <span class="text-lg font-semibold text-gray-900">{{ effort_stats.avg_estimated|default:0|floatformat:1 }}h</span>
+                        </div>
+                        <div class="flex items-center justify-between mt-1">
+                            <span class="text-gray-600 text-sm">Actual:</span>
+                            <span class="text-lg font-semibold text-gray-900">{{ effort_stats.avg_actual|default:0|floatformat:1 }}h</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'common/js/task_modal_enhancements.js' %}"></script>
+{% endblock %}

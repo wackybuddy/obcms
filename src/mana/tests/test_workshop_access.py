@@ -19,8 +19,7 @@ User = get_user_model()
 
 
 @pytest.fixture
-@pytest.mark.django_db
-def setup_workshop_environment():
+def setup_workshop_environment(db):
     """Create complete workshop environment for testing."""
     facilitator = User.objects.create_user(
         username="facilitator@test.com",

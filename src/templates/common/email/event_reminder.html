@@ -1,0 +1,51 @@
+{% extends "common/email/base_email.html" %}
+
+{% block title %}Reminder: {{ event.title }}{% endblock %}
+
+{% block header_title %}Event Reminder{% endblock %}
+
+{% block content %}
+<h2>Upcoming Event Reminder</h2>
+
+<p>Hello {{ user.get_full_name }},</p>
+
+<div class="alert alert-warning">
+    <strong>⏰ Reminder:</strong> This event is coming up {% if hours_until %}in {{ hours_until }} hours{% elif minutes_until %}in {{ minutes_until }} minutes{% else %}soon{% endif %}!
+</div>
+
+<div class="event-details">
+    <h3>{{ event.title }}</h3>
+    <p><strong>📅 When:</strong> {{ event.start_datetime|date:"F d, Y" }} at {{ event.start_datetime|time:"g:i A" }}</p>
+    {% if event.end_datetime %}
+    <p><strong>⏰ Until:</strong> {{ event.end_datetime|time:"g:i A" }}</p>
+    {% endif %}
+    {% if event.venue %}
+    <p><strong>📍 Where:</strong> {{ event.venue }}</p>
+    {% endif %}
+    {% if event.description %}
+    <p><strong>ℹ️ What to expect:</strong></p>
+    <p>{{ event.description|truncatewords:50|linebreaks }}</p>
+    {% endif %}
+</div>
+
+{% if preparation_items %}
+<div class="alert alert-info">
+    <strong>📋 Preparation Checklist:</strong>
+    <ul>
+        {% for item in preparation_items %}
+        <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<a href="{{ event_url }}" class="button">View Full Details</a>
+
+{% if can_check_in %}
+<a href="{{ check_in_url }}" class="button button-secondary">Check-In Now</a>
+{% endif %}
+
+<p>See you there!</p>
+
+<p>Best regards,<br>OOBC Management Team</p>
+{% endblock %}

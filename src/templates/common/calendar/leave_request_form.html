@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title|default:"Request Leave" }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:staff_leave_list' %}" class="text-neutral-500 hover:text-neutral-700">Staff Leave</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ page_heading|default:"Request Leave" }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-umbrella-beach text-emerald-600 mr-4"></i>
+                {{ page_heading|default:"Request Staff Leave" }}
+            </h1>
+            <p class="mt-2 text-gray-600">
+                Submit a leave request for approval by your supervisor
+            </p>
+        </div>
+        <a href="{% url 'common:staff_leave_list' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Leave List
+        </a>
+    </div>
+
+    <form method="post" class="space-y-6" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {{ form.non_field_errors|join:' ' }}
+        </div>
+        {% endif %}
+
+        <!-- Leave Type & Dates -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-calendar-alt mr-3"></i>
+                    Leave Type & Dates
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% include "components/form_field.html" with field=form.leave_type wrapper_class="md:col-span-2" %}
+                    {% include "components/form_field.html" with field=form.start_date %}
+                    {% include "components/form_field.html" with field=form.end_date %}
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-3"></i>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-semibold mb-1">Leave Types</p>
+                            <ul class="space-y-1">
+                                <li><strong>Vacation:</strong> Regular time off for rest and recreation</li>
+                                <li><strong>Sick Leave:</strong> Time off due to illness or medical appointments</li>
+                                <li><strong>Emergency:</strong> Urgent unforeseen circumstances</li>
+                                <li><strong>Bereavement:</strong> Time off following death of a family member</li>
+                                <li><strong>Maternity/Paternity:</strong> Leave for childbirth or adoption</li>
+                                <li><strong>Official Business:</strong> Work-related travel or assignments</li>
+                                <li><strong>Other:</strong> Other approved leave types (specify in reason)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Leave Details -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-file-alt mr-3"></i>
+                    Leave Details
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 gap-6">
+                    {% include "components/form_field.html" with field=form.reason %}
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-amber-600 mt-0.5 mr-3"></i>
+                        <div class="text-sm text-amber-800">
+                            <p class="font-semibold mb-1">Tips for Leave Requests</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Submit leave requests as early as possible to ensure proper planning</li>
+                                <li>Provide clear and specific reasons for your leave</li>
+                                <li>For sick leave, medical documentation may be required</li>
+                                <li>Emergency leave should be followed up with proper documentation</li>
+                                <li>Check with your supervisor about any ongoing projects before submitting</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Coverage Information -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-user-friends mr-3"></i>
+                    Coverage Information (Optional)
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% include "components/form_field.html" with field=form.backup_staff wrapper_class="md:col-span-2" %}
+                    {% include "components/form_field.html" with field=form.handover_notes wrapper_class="md:col-span-2" %}
+                </div>
+
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-question-circle text-gray-600 mt-0.5 mr-3"></i>
+                        <div class="text-sm text-gray-700">
+                            <p class="font-semibold mb-1">About Coverage</p>
+                            <p>
+                                If you have ongoing tasks or responsibilities, you may designate a backup staff member
+                                to handle your duties while you're away. Provide clear handover notes to ensure
+                                smooth operations during your absence.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Status Info (for edit mode) -->
+        {% if leave %}
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-gray-500 to-gray-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-info mr-3"></i>
+                    Current Status
+                </h2>
+            </header>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Status</p>
+                        <p class="text-base font-semibold text-gray-900">
+                            {% if leave.status == 'pending' %}
+                            <span class="text-amber-600"><i class="fas fa-clock mr-1"></i> Pending Review</span>
+                            {% elif leave.status == 'approved' %}
+                            <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i> Approved</span>
+                            {% elif leave.status == 'rejected' %}
+                            <span class="text-red-600"><i class="fas fa-times-circle mr-1"></i> Rejected</span>
+                            {% elif leave.status == 'cancelled' %}
+                            <span class="text-gray-600"><i class="fas fa-ban mr-1"></i> Cancelled</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% if leave.approved_by %}
+                    <div>
+                        <p class="text-sm text-gray-600">Reviewed By</p>
+                        <p class="text-base font-semibold text-gray-900">{{ leave.approved_by.get_full_name }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if leave.admin_notes %}
+                <div class="mt-4">
+                    <p class="text-sm text-gray-600">Admin Notes</p>
+                    <p class="text-base text-gray-900">{{ leave.admin_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end space-x-3">
+            <a href="{% url 'common:staff_leave_list' %}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancel
+            </a>
+            {% if not leave or leave.status == 'pending' %}
+            <button type="submit" class="px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-emerald-600 hover:bg-emerald-700">
+                <i class="fas fa-paper-plane mr-2"></i>
+                {{ submit_label|default:"Submit Leave Request" }}
+            </button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateField = document.querySelector('[name="start_date"]');
+    const endDateField = document.querySelector('[name="end_date"]');
+    const leaveTypeField = document.querySelector('[name="leave_type"]');
+
+    // Auto-set end date to same as start date if not set
+    if (startDateField && endDateField) {
+        startDateField.addEventListener('change', function() {
+            if (!endDateField.value && startDateField.value) {
+                endDateField.value = startDateField.value;
+            }
+        });
+    }
+
+    // Validate start before or equal to end
+    if (startDateField && endDateField) {
+        function validateDates() {
+            const start = new Date(startDateField.value);
+            const end = new Date(endDateField.value);
+
+            if (startDateField.value && endDateField.value && start > end) {
+                endDateField.setCustomValidity('End date must be on or after start date');
+            } else {
+                endDateField.setCustomValidity('');
+            }
+        }
+
+        startDateField.addEventListener('change', validateDates);
+        endDateField.addEventListener('change', validateDates);
+    }
+
+    // Show contextual help based on leave type
+    if (leaveTypeField) {
+        leaveTypeField.addEventListener('change', function() {
+            const leaveType = leaveTypeField.value;
+            const reasonField = document.querySelector('[name="reason"]');
+
+            if (reasonField && !reasonField.value) {
+                let placeholder = 'Please provide a detailed reason for your leave request';
+
+                if (leaveType === 'sick') {
+                    placeholder = 'e.g., Medical consultation, flu symptoms, recovery from illness...';
+                } else if (leaveType === 'vacation') {
+                    placeholder = 'e.g., Family vacation, personal time off, rest and relaxation...';
+                } else if (leaveType === 'emergency') {
+                    placeholder = 'e.g., Family emergency, urgent personal matter...';
+                } else if (leaveType === 'bereavement') {
+                    placeholder = 'e.g., Death of immediate family member...';
+                } else if (leaveType === 'maternity' || leaveType === 'paternity') {
+                    placeholder = 'e.g., Expected delivery date, adoption process...';
+                } else if (leaveType === 'official') {
+                    placeholder = 'e.g., Training seminar, official travel, field work...';
+                }
+
+                reasonField.setAttribute('placeholder', placeholder);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

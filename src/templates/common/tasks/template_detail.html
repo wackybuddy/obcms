@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ template.name }} - Task Template Detail{% endblock %}
+
+{% block breadcrumb %}
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-gray-600 hover:text-gray-900">OOBC Management</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <a href="{% url 'common:task_template_list' %}" class="text-gray-600 hover:text-gray-900">Templates</a>
+</li>
+<li class="flex items-center space-x-2">
+    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+    <span class="text-gray-500 font-medium">{{ template.name|truncatewords:5 }}</span>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3 mb-2">
+                <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium
+                    {% if template.domain == 'mana' %}bg-emerald-50 text-emerald-700
+                    {% elif template.domain == 'coordination' %}bg-blue-50 text-blue-700
+                    {% elif template.domain == 'policy' %}bg-purple-50 text-purple-700
+                    {% elif template.domain == 'monitoring' %}bg-amber-50 text-amber-700
+                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                    {{ template.get_domain_display }}
+                </span>
+                {% if template.is_active %}
+                <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-emerald-50 text-emerald-700">
+                    <i class="fas fa-check mr-1"></i> Active
+                </span>
+                {% else %}
+                <span class="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-600">
+                    Inactive
+                </span>
+                {% endif %}
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <i class="fas fa-clone text-emerald-600"></i>
+                <span>{{ template.name }}</span>
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                {{ template.description }}
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'common:task_template_list' %}"
+               class="inline-flex items-center bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Templates
+            </a>
+            {% if template.is_active %}
+            <button
+                onclick="instantiateTemplate()"
+                class="inline-flex items-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-magic mr-2"></i>
+                Use This Template
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Template Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-gray-500 uppercase">Total Tasks</p>
+            <p class="mt-2 text-3xl font-bold text-gray-900">{{ items.count }}</p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-emerald-600 uppercase">Est. Duration</p>
+            <p class="mt-2 text-3xl font-bold text-emerald-600">
+                {% if items %}{{ items.last.days_from_start|default:0 }}{% else %}0{% endif %} days
+            </p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-blue-600 uppercase">Total Hours</p>
+            <p class="mt-2 text-3xl font-bold text-blue-600">
+                {% widthratio items|length 1 8 %}h
+            </p>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-5">
+            <p class="text-sm font-semibold text-purple-600 uppercase">Created</p>
+            <p class="mt-2 text-lg font-bold text-purple-600">{{ template.created_at|date:"M d, Y" }}</p>
+        </div>
+    </div>
+
+    <!-- Task Items Timeline -->
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-emerald-500 to-green-600 text-white">
+            <h2 class="text-xl font-semibold flex items-center">
+                <i class="fas fa-list-ol mr-3"></i>
+                Template Tasks
+            </h2>
+            <p class="text-sm text-emerald-100 mt-1">
+                Tasks will be created in this sequence with specified day offsets
+            </p>
+        </div>
+        {% if items %}
+        <div class="divide-y divide-gray-200">
+            {% for item in items %}
+            <div class="px-6 py-5 hover:bg-gray-50 transition-colors">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start gap-4 flex-1">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-full {% if item.priority == 'critical' %}bg-rose-100 text-rose-700
+                            {% elif item.priority == 'high' %}bg-amber-100 text-amber-700
+                            {% elif item.priority == 'medium' %}bg-blue-100 text-blue-700
+                            {% else %}bg-gray-100 text-gray-600{% endif %} flex items-center justify-center font-bold">
+                            {{ forloop.counter }}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-base font-semibold text-gray-900">{{ item.title }}</h3>
+                                    <p class="text-sm text-gray-600 mt-1">{{ item.description }}</p>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ml-4
+                                    {% if item.priority == 'critical' %}bg-rose-50 text-rose-700
+                                    {% elif item.priority == 'high' %}bg-amber-50 text-amber-700
+                                    {% elif item.priority == 'medium' %}bg-blue-50 text-blue-700
+                                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                    {{ item.get_priority_display }}
+                                </span>
+                            </div>
+                            <div class="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                                <span class="flex items-center">
+                                    <i class="far fa-calendar text-emerald-600 mr-1"></i>
+                                    Day {{ item.days_from_start }}
+                                </span>
+                                {% if item.estimated_hours %}
+                                <span class="flex items-center">
+                                    <i class="far fa-clock text-blue-600 mr-1"></i>
+                                    {{ item.estimated_hours }}h estimated
+                                </span>
+                                {% endif %}
+                                {% if item.assessment_phase %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-emerald-50 text-emerald-700">
+                                    Phase: {{ item.get_assessment_phase_display }}
+                                </span>
+                                {% elif item.policy_phase %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-purple-50 text-purple-700">
+                                    Phase: {{ item.get_policy_phase_display }}
+                                </span>
+                                {% elif item.service_phase %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-blue-50 text-blue-700">
+                                    Phase: {{ item.get_service_phase_display }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+            <p class="text-gray-500 text-lg">No tasks defined in this template.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Usage Instructions -->
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <i class="fas fa-lightbulb text-blue-600 text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">How to Use This Template</h3>
+                <ol class="text-blue-800 text-sm space-y-2 list-decimal list-inside">
+                    <li>Click "Use This Template" button above</li>
+                    <li>Select a start date for the task set</li>
+                    <li>All {{ items.count }} tasks will be created with due dates calculated from the start date</li>
+                    <li>Tasks will be automatically linked to the relevant domain object (assessment, event, policy, etc.)</li>
+                    <li>You can customize individual tasks after creation</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Instantiate Modal -->
+<div id="instantiateModal" class="fixed inset-0 hidden z-50 flex items-center justify-center px-4" role="dialog">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="closeModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Instantiate Template</h3>
+        <p class="text-gray-600 mb-6">
+            This will create {{ items.count }} tasks from this template. Tasks will be scheduled starting from your chosen date.
+        </p>
+        <form id="instantiateForm" method="post">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                    <input type="date" name="start_date" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500" required>
+                    <p class="text-xs text-gray-500 mt-1">All task due dates will be calculated from this start date</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 mt-6">
+                <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">
+                    <i class="fas fa-magic mr-2"></i>
+                    Create Tasks
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function instantiateTemplate() {
+    document.getElementById('instantiateModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeModal() {
+    document.getElementById('instantiateModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+document.getElementById('instantiateForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('{% url "common:instantiate_template" template.id %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            start_date: formData.get('start_date')
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`Successfully created ${data.tasks_created} tasks!`);
+            closeModal();
+            window.location.href = '/oobc-management/staff/tasks/';
+        } else {
+            alert('Error creating tasks. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating tasks. Please try again.');
+    });
+});
+</script>
+{% endblock %}

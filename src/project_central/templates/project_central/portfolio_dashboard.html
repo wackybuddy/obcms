@@ -1,0 +1,101 @@
+{% extends "project_central/base.html" %}
+{% load static %}
+
+{% block title %}Portfolio Dashboard - Project Central{% endblock %}
+
+{% block project_central_content %}
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Portfolio Dashboard</h1>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-500">Total Budget (FY {{ current_year }})</h3>
+            <p class="text-3xl font-bold text-emerald-600">₱{{ total_budget|floatformat:0|default:"0" }}</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-500">Active Projects</h3>
+            <p class="text-3xl font-bold text-blue-600">{{ active_projects }}</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-500">Unfunded High-Priority Needs</h3>
+            <p class="text-3xl font-bold text-red-600">{{ unfunded_needs }}</p>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-500">OBC Beneficiaries</h3>
+            <p class="text-3xl font-bold text-purple-600">{{ total_beneficiaries|default:"0" }}</p>
+        </div>
+    </div>
+
+    <!-- Project Pipeline -->
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+        <h2 class="text-xl font-bold mb-4">Project Pipeline</h2>
+        <div class="flex items-center justify-between">
+            <div class="text-center">
+                <div class="text-2xl font-bold">{{ needs_identified }}</div>
+                <div class="text-sm text-gray-600">Needs Identified</div>
+            </div>
+            <div class="text-gray-400">→</div>
+            <div class="text-center">
+                <div class="text-2xl font-bold">{{ ppas_planning }}</div>
+                <div class="text-sm text-gray-600">Planning</div>
+            </div>
+            <div class="text-gray-400">→</div>
+            <div class="text-center">
+                <div class="text-2xl font-bold">{{ ppas_ongoing }}</div>
+                <div class="text-sm text-gray-600">Ongoing</div>
+            </div>
+            <div class="text-gray-400">→</div>
+            <div class="text-center">
+                <div class="text-2xl font-bold">{{ ppas_completed }}</div>
+                <div class="text-sm text-gray-600">Completed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Alerts -->
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+        <h2 class="text-xl font-bold mb-4">Recent Alerts</h2>
+        {% if recent_alerts %}
+            <div class="space-y-2">
+                {% for alert in recent_alerts %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div>
+                        <span class="font-medium">{{ alert.title }}</span>
+                        <span class="ml-2 px-2 py-1 text-xs rounded {% if alert.severity == 'critical' %}bg-red-100 text-red-800{% elif alert.severity == 'high' %}bg-orange-100 text-orange-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ alert.get_severity_display }}
+                        </span>
+                    </div>
+                    <a href="{% url 'project_central:alert_detail' alert.id %}" class="text-blue-600 hover:text-blue-800">View →</a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500">No active alerts</p>
+        {% endif %}
+    </div>
+
+    <!-- Recent Workflows -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-bold mb-4">Recent Project Workflows</h2>
+        {% if recent_workflows %}
+            <div class="space-y-2">
+                {% for workflow in recent_workflows %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div>
+                        <span class="font-medium">{{ workflow.primary_need.title }}</span>
+                        <span class="ml-2 text-sm text-gray-600">{{ workflow.get_current_stage_display }}</span>
+                    </div>
+                    <a href="{% url 'project_central:project_workflow_detail' workflow.id %}" class="text-blue-600 hover:text-blue-800">View →</a>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500">No workflows yet. <a href="{% url 'project_central:create_project_workflow' %}" class="text-blue-600 hover:text-blue-800">Create one</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

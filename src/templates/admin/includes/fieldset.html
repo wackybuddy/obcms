@@ -13,15 +13,15 @@
 
     <div class="obc-fieldset__content">
         {% for line in fieldset %}
-            {% with is_single=line.fields|length == 1 %}
-            <div class="form-row obc-form-row{% if is_single and line.errors %} errors{% endif %}{% if not line.has_visible_field %} hidden{% endif %}{% for field in line %}{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% endfor %}">
-                {% if is_single and line.errors %}
+            {% with field_count=line.fields|length %}
+            <div class="form-row obc-form-row{% if field_count == 1 and line.errors %} errors{% endif %}{% if not line.has_visible_field %} hidden{% endif %}{% for field in line %}{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% endfor %}">
+                {% if field_count == 1 and line.errors %}
                     <div class="obc-form-row__errors">{{ line.errors }}</div>
                 {% endif %}
-                <div class="obc-form-row__grid{% if not is_single %} obc-form-row__grid--multi{% endif %}">
+                <div class="obc-form-row__grid{% if field_count != 1 %} obc-form-row__grid--multi{% endif %}">
                     {% for field in line %}
                         <div class="obc-form-field{% if field.field.is_hidden %} hidden{% endif %}{% if field.is_checkbox %} obc-form-field--checkbox{% endif %}{% if not field.is_readonly and field.errors %} has-error{% endif %}">
-                            {% if not is_single and not field.is_readonly and field.errors %}
+                            {% if field_count != 1 and not field.is_readonly and field.errors %}
                                 <div class="obc-form-field__errors">{{ field.errors }}</div>
                             {% endif %}
                             {% if field.is_checkbox %}

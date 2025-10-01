@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Portfolio Dashboard - Project Central{% endblock %}
+
+{% block extra_css %}
+<style>
+    .metric-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #047857;
+    }
+    .metric-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .pipeline-stage {
+        background: #f3f4f6;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+    .pipeline-count {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    .pipeline-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+    .alert-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .alert-critical { background: #fee2e2; color: #991b1b; }
+    .alert-high { background: #fed7aa; color: #9a3412; }
+    .alert-medium { background: #fef3c7; color: #92400e; }
+    .alert-low { background: #dbeafe; color: #1e40af; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-project-diagram text-emerald-600"></i>
+                Portfolio Dashboard
+            </h1>
+            <p class="text-muted mb-0">Integrated project lifecycle and budget monitoring</p>
+        </div>
+        <div>
+            <span class="badge bg-emerald-100 text-emerald-800 px-3 py-2">
+                <i class="far fa-calendar"></i> FY {{ current_year }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">Total Budget (FY {{ current_year }})</div>
+                <div class="metric-value">₱{{ total_budget|floatformat:0|intcomma }}</div>
+                <div class="text-muted small mt-1">
+                    <i class="fas fa-wallet"></i> Budget Allocation
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">Active Projects</div>
+                <div class="metric-value">{{ active_projects }}</div>
+                <div class="text-muted small mt-1">
+                    <i class="fas fa-tasks"></i> Ongoing Implementation
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">Unfunded Needs</div>
+                <div class="metric-value text-warning">{{ unfunded_needs }}</div>
+                <div class="text-muted small mt-1">
+                    <i class="fas fa-exclamation-triangle"></i> High Priority
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-label">Total Beneficiaries</div>
+                <div class="metric-value text-emerald-600">{{ total_beneficiaries|intcomma }}</div>
+                <div class="text-muted small mt-1">
+                    <i class="fas fa-users"></i> OBC Slots
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Pipeline -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-stream"></i> Project Pipeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="pipeline-stage" style="border-left: 4px solid #3b82f6;">
+                                <div class="pipeline-count">{{ needs_identified }}</div>
+                                <div class="pipeline-label">Needs Identified</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pipeline-stage" style="border-left: 4px solid #8b5cf6;">
+                                <div class="pipeline-count">{{ ppas_planning }}</div>
+                                <div class="pipeline-label">Planning</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pipeline-stage" style="border-left: 4px solid #10b981;">
+                                <div class="pipeline-count">{{ ppas_ongoing }}</div>
+                                <div class="pipeline-label">Ongoing</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="pipeline-stage" style="border-left: 4px solid #059669;">
+                                <div class="pipeline-count">{{ ppas_completed }}</div>
+                                <div class="pipeline-label">Completed</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts & Recent Workflows -->
+    <div class="row">
+        <!-- Active Alerts -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell text-warning"></i> Active Alerts
+                    </h5>
+                    <a href="{% url 'project_central:alert_list' %}" class="btn btn-sm btn-outline-emerald-600">
+                        View All <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_alerts %}
+                        <div class="list-group list-group-flush">
+                            {% for alert in recent_alerts %}
+                            <a href="{% url 'project_central:alert_detail' alert.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <span class="alert-badge alert-{{ alert.severity }}">
+                                            {{ alert.get_severity_display|upper }}
+                                        </span>
+                                        <p class="mb-1 mt-2">
+                                            <strong>{{ alert.title }}</strong>
+                                        </p>
+                                        <p class="mb-1 text-muted small">
+                                            {{ alert.description|truncatewords:20 }}
+                                        </p>
+                                        <small class="text-muted">
+                                            <i class="far fa-clock"></i> {{ alert.created_at|timesince }} ago
+                                        </small>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                            <p>No active alerts</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Workflows -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-project-diagram"></i> Recent Workflows
+                    </h5>
+                    <a href="{% url 'project_central:project_list' %}" class="btn btn-sm btn-outline-emerald-600">
+                        View All <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    {% if recent_workflows %}
+                        <div class="list-group list-group-flush">
+                            {% for workflow in recent_workflows %}
+                            <a href="{% url 'project_central:project_workflow_detail' workflow.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <p class="mb-1">
+                                            <strong>{{ workflow.primary_need.title }}</strong>
+                                        </p>
+                                        <div class="d-flex gap-2 align-items-center mb-1">
+                                            <span class="badge bg-primary">{{ workflow.get_current_stage_display }}</span>
+                                            <span class="badge bg-{{ workflow.get_priority_level_display|lower }}">
+                                                {{ workflow.get_priority_level_display }}
+                                            </span>
+                                            {% if workflow.is_on_track %}
+                                                <span class="badge bg-success">On Track</span>
+                                            {% elif workflow.is_blocked %}
+                                                <span class="badge bg-danger">Blocked</span>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">
+                                            Initiated {{ workflow.initiated_date|date:"M d, Y" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-4 text-center text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <p>No workflows yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-rocket"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{% url 'project_central:me_analytics_dashboard' %}" class="btn btn-outline-emerald-600 w-100 py-3">
+                                <i class="fas fa-chart-line d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Analytics Dashboard
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'project_central:budget_planning_dashboard' %}" class="btn btn-outline-emerald-600 w-100 py-3">
+                                <i class="fas fa-calculator d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Budget Planning
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'project_central:budget_approval_dashboard' %}" class="btn btn-outline-emerald-600 w-100 py-3">
+                                <i class="fas fa-check-double d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Budget Approvals
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'project_central:report_list' %}" class="btn btn-outline-emerald-600 w-100 py-3">
+                                <i class="fas fa-file-alt d-block mb-2" style="font-size: 1.5rem;"></i>
+                                Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

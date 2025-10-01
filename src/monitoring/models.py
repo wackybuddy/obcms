@@ -301,6 +301,14 @@ class MonitoringEntry(models.Model):
     target_end_date = models.DateField(null=True, blank=True)
     actual_end_date = models.DateField(null=True, blank=True)
     next_milestone_date = models.DateField(null=True, blank=True)
+    milestone_dates = models.JSONField(
+        default=list,
+        blank=True,
+        help_text=(
+            "Structured milestone entries: "
+            "[{""date"": ""2025-10-15"", ""title"": ""Technical hearing"", ""status"": ""upcoming""}]"
+        ),
+    )
     budget_allocation = models.DecimalField(
         max_digits=14,
         decimal_places=2,
@@ -427,6 +435,77 @@ class MonitoringEntry(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # ========== BUDGET APPROVAL WORKFLOW (Project Central Integration) ==========
+    APPROVAL_STATUS_DRAFT = 'draft'
+    APPROVAL_STATUS_TECHNICAL_REVIEW = 'technical_review'
+    APPROVAL_STATUS_BUDGET_REVIEW = 'budget_review'
+    APPROVAL_STATUS_STAKEHOLDER_CONSULTATION = 'stakeholder_consultation'
+    APPROVAL_STATUS_EXECUTIVE_APPROVAL = 'executive_approval'
+    APPROVAL_STATUS_APPROVED = 'approved'
+    APPROVAL_STATUS_ENACTED = 'enacted'
+    APPROVAL_STATUS_REJECTED = 'rejected'
+
+    APPROVAL_STATUS_CHOICES = [
+        (APPROVAL_STATUS_DRAFT, 'Draft'),
+        (APPROVAL_STATUS_TECHNICAL_REVIEW, 'Technical Review'),
+        (APPROVAL_STATUS_BUDGET_REVIEW, 'Budget Review'),
+        (APPROVAL_STATUS_STAKEHOLDER_CONSULTATION, 'Stakeholder Consultation'),
+        (APPROVAL_STATUS_EXECUTIVE_APPROVAL, 'Executive Approval'),
+        (APPROVAL_STATUS_APPROVED, 'Approved'),
+        (APPROVAL_STATUS_ENACTED, 'Enacted'),
+        (APPROVAL_STATUS_REJECTED, 'Rejected'),
+    ]
+
+    approval_status = models.CharField(
+        max_length=30,
+        choices=APPROVAL_STATUS_CHOICES,
+        default=APPROVAL_STATUS_DRAFT,
+        help_text="Current status in the budget approval workflow",
+        db_index=True,
+    )
+
+    approval_history = models.JSONField(
+        default=list,
+        help_text="Complete history of approval stages with timestamps, reviewers, and comments",
+    )
+
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="technically_reviewed_ppas",
+        help_text="User who completed technical review",
+    )
+
+    budget_approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="budget_approved_ppas",
+        help_text="User who approved the budget allocation",
+    )
+
+    executive_approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="executive_approved_ppas",
+        help_text="Executive who gave final approval",
+    )
+
+    approval_notes = models.TextField(
+        blank=True,
+        help_text="General notes about the approval process",
+    )
+
+    rejection_reason = models.TextField(
+        blank=True,
+        help_text="Reason for rejection (if approval_status is 'rejected')",
+    )
 
     class Meta:
         ordering = ["-updated_at", "-created_at"]
@@ -870,144 +949,6 @@ class MonitoringEntryWorkflowDocument(models.Model):
         if self.file and hasattr(self.file, 'size'):
             self.file_size = self.file.size
         super().save(*args, **kwargs)
-
-
-class MonitoringEntryTaskAssignment(models.Model):
-    """Track task assignments for collaborative PPA management."""
-
-    ROLE_LEAD = "lead"
-    ROLE_CONTRIBUTOR = "contributor"
-    ROLE_REVIEWER = "reviewer"
-    ROLE_APPROVER = "approver"
-    ROLE_MONITOR = "monitor"
-    ROLE_CHOICES = [
-        (ROLE_LEAD, "Lead / Primary Responsible"),
-        (ROLE_CONTRIBUTOR, "Contributor / Supporting"),
-        (ROLE_REVIEWER, "Reviewer / Quality Check"),
-        (ROLE_APPROVER, "Approver / Decision Maker"),
-        (ROLE_MONITOR, "Monitor / Observer"),
-    ]
-
-    STATUS_PENDING = "pending"
-    STATUS_IN_PROGRESS = "in_progress"
-    STATUS_COMPLETED = "completed"
-    STATUS_BLOCKED = "blocked"
-    STATUS_CANCELLED = "cancelled"
-    STATUS_CHOICES = [
-        (STATUS_PENDING, "Pending / Not Started"),
-        (STATUS_IN_PROGRESS, "In Progress"),
-        (STATUS_COMPLETED, "Completed"),
-        (STATUS_BLOCKED, "Blocked / Needs Input"),
-        (STATUS_CANCELLED, "Cancelled"),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    entry = models.ForeignKey(
-        MonitoringEntry,
-        related_name="task_assignments",
-        on_delete=models.CASCADE,
-        help_text="Parent monitoring entry / PPA",
-    )
-    assigned_to = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="monitoring_task_assignments",
-        on_delete=models.CASCADE,
-        help_text="Staff member assigned to this task",
-    )
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default=ROLE_CONTRIBUTOR,
-        help_text="Role in this assignment",
-    )
-    task_title = models.CharField(
-        max_length=255,
-        help_text="Specific task or responsibility",
-    )
-    task_description = models.TextField(
-        blank=True,
-        help_text="Detailed instructions or context",
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default=STATUS_PENDING,
-        help_text="Current status of this assignment",
-    )
-    due_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Expected completion date",
-    )
-    completed_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Actual completion timestamp",
-    )
-    priority = models.CharField(
-        max_length=10,
-        choices=MonitoringEntry.PRIORITY_CHOICES,
-        default="medium",
-        help_text="Priority level for this task",
-    )
-    estimated_hours = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Estimated effort in hours",
-    )
-    actual_hours = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
-        null=True,
-        blank=True,
-        help_text="Actual effort expended",
-    )
-    notes = models.TextField(
-        blank=True,
-        help_text="Progress notes or blockers",
-    )
-    assigned_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="assigned_monitoring_tasks",
-        help_text="Who created this assignment",
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["due_date", "-priority", "-created_at"]
-        verbose_name = "Task Assignment"
-        verbose_name_plural = "Task Assignments"
-        indexes = [
-            models.Index(fields=["assigned_to", "status"]),
-            models.Index(fields=["entry", "role"]),
-            models.Index(fields=["due_date"]),
-        ]
-
-    def __str__(self):
-        return f"{self.task_title} → {self.assigned_to.get_full_name() or self.assigned_to.username}"
-
-    @property
-    def is_overdue(self) -> bool:
-        """Check if task is past due date and not completed."""
-        if not self.due_date or self.status == self.STATUS_COMPLETED:
-            return False
-        from django.utils import timezone
-        return timezone.now().date() > self.due_date
-
-    @property
-    def days_until_due(self) -> int:
-        """Days until due date (negative if overdue)."""
-        if not self.due_date:
-            return 999
-        from django.utils import timezone
-        delta = self.due_date - timezone.now().date()
-        return delta.days
 
 
 # Import strategic planning models

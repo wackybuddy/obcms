@@ -20,8 +20,7 @@ User = get_user_model()
 
 
 @pytest.fixture
-@pytest.mark.django_db
-def synthesis_setup():
+def synthesis_setup(db):
     """Create environment for synthesis testing."""
     facilitator = User.objects.create_user(
         username="facilitator@test.com",

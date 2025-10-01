@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Link Expired</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-md w-full">
+            <!-- Icon -->
+            <div class="flex justify-center mb-6">
+                <div class="bg-red-100 rounded-full p-6">
+                    <i class="fas fa-calendar-times text-red-600 text-5xl"></i>
+                </div>
+            </div>
+
+            <!-- Message Card -->
+            <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+                <h1 class="text-2xl font-bold text-gray-900 mb-3">
+                    Share Link Expired
+                </h1>
+
+                <p class="text-gray-600 mb-6">
+                    This calendar share link has expired and is no longer accessible.
+                </p>
+
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
+                    <div class="flex">
+                        <i class="fas fa-info-circle text-red-600 mt-0.5 mr-3"></i>
+                        <div class="text-sm text-red-800">
+                            <p class="font-semibold mb-1">Link Details</p>
+                            <ul class="space-y-1">
+                                <li><strong>Expired on:</strong> {{ share_link.expires_at|date:"F d, Y g:i A" }}</li>
+                                <li><strong>Total views:</strong> {{ share_link.view_count }}</li>
+                                <li><strong>Created by:</strong> {{ share_link.created_by.get_full_name }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-sm text-gray-600">
+                        <i class="fas fa-lightbulb mr-1 text-yellow-500"></i>
+                        To access this calendar, please contact the person who shared it with you to request a new link.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="mt-6 text-center">
+                <p class="text-sm text-gray-500">
+                    For assistance, contact OOBC at:<br>
+                    <a href="mailto:info@oobc.gov.ph" class="text-emerald-600 hover:text-emerald-700">
+                        info@oobc.gov.ph
+                    </a>
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-8 text-center text-xs text-gray-400">
+                © {{ now.year }} Office for Other Bangsamoro Communities
+            </div>
+        </div>
+    </div>
+</body>
+</html>

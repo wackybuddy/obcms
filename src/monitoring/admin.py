@@ -3,12 +3,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
+from common.models import StaffTask
+
 from .models import (
     MonitoringEntry,
     MonitoringEntryFunding,
     MonitoringEntryWorkflowStage,
     MonitoringEntryWorkflowDocument,
-    MonitoringEntryTaskAssignment,
     MonitoringUpdate,
     StrategicGoal,
     AnnualPlanningCycle,
@@ -88,22 +89,33 @@ class MonitoringEntryWorkflowDocumentInline(admin.TabularInline):
         super().save_model(request, obj, form, change)
 
 
-class MonitoringEntryTaskAssignmentInline(admin.TabularInline):
-    """Inline task assignments for collaborative PPA management."""
+class MonitoringEntryStaffTaskInline(admin.TabularInline):
+    """Inline view of monitoring staff tasks."""
 
-    model = MonitoringEntryTaskAssignment
+    model = StaffTask
+    fk_name = "related_ppa"
     extra = 0
     fields = (
-        "task_title",
-        "assigned_to",
-        "role",
+        "title",
+        "assignee_list",
+        "task_role",
         "status",
         "priority",
         "due_date",
         "completed_at",
     )
-    readonly_fields = ("completed_at",)
-    autocomplete_fields = ("assigned_to",)
+    readonly_fields = ("assignee_list", "completed_at")
+    autocomplete_fields = ("assignees",)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(domain=StaffTask.DOMAIN_MONITORING)
+
+    def assignee_list(self, obj):
+        names = [user.get_full_name() or user.username for user in obj.assignees.all()]
+        return ", ".join(filter(None, names)) or "—"
+
+    assignee_list.short_description = "Assignees"
 
 
 @admin.register(MonitoringEntry)
@@ -174,7 +186,7 @@ class MonitoringEntryAdmin(admin.ModelAdmin):
     inlines = [
         MonitoringEntryFundingInline,
         MonitoringEntryWorkflowStageInline,
-        MonitoringEntryTaskAssignmentInline,
+        MonitoringEntryStaffTaskInline,
         MonitoringUpdateInline,
     ]
     date_hierarchy = "created_at"
@@ -262,6 +274,7 @@ class MonitoringEntryAdmin(admin.ModelAdmin):
                 "fields": (
                     ("start_date", "target_end_date", "actual_end_date"),
                     "next_milestone_date",
+                    "milestone_dates",
                 ),
                 "classes": ("collapse",),
             },
@@ -432,92 +445,6 @@ class MonitoringEntryWorkflowDocumentAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not obj.uploaded_by:
             obj.uploaded_by = request.user
-        super().save_model(request, obj, form, change)
-
-
-@admin.register(MonitoringEntryTaskAssignment)
-class MonitoringEntryTaskAssignmentAdmin(admin.ModelAdmin):
-    """Admin configuration for task assignments."""
-
-    list_display = (
-        "task_title",
-        "entry",
-        "assigned_to",
-        "role",
-        "status",
-        "priority",
-        "due_date",
-        "is_overdue",
-        "updated_at",
-    )
-    list_filter = (
-        "role",
-        "status",
-        "priority",
-        "due_date",
-        "created_at",
-    )
-    search_fields = (
-        "task_title",
-        "task_description",
-        "entry__title",
-        "assigned_to__username",
-        "assigned_to__first_name",
-        "assigned_to__last_name",
-        "notes",
-    )
-    autocomplete_fields = (
-        "entry",
-        "assigned_to",
-        "assigned_by",
-    )
-    readonly_fields = ("completed_at", "created_at", "updated_at")
-    date_hierarchy = "due_date"
-
-    fieldsets = (
-        ("Assignment Details", {
-            "fields": (
-                "entry",
-                "assigned_to",
-                "assigned_by",
-                "role",
-                "priority",
-            )
-        }),
-        ("Task Information", {
-            "fields": (
-                "task_title",
-                "task_description",
-                "status",
-                "notes",
-            )
-        }),
-        ("Effort Tracking", {
-            "fields": (
-                "estimated_hours",
-                "actual_hours",
-            )
-        }),
-        ("Timeline", {
-            "fields": (
-                "due_date",
-                "completed_at",
-                "created_at",
-                "updated_at",
-            )
-        }),
-    )
-
-    def is_overdue(self, obj):
-        """Display overdue status."""
-        if obj.is_overdue:
-            return "⚠️ Overdue"
-        return "—"
-    is_overdue.short_description = "Overdue Status"
-
-    def save_model(self, request, obj, form, change):
-        if not obj.assigned_by:
-            obj.assigned_by = request.user
         super().save_model(request, obj, form, change)
 
 

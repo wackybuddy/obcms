@@ -40,6 +40,8 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
     - Implementation guides with code examples
     - CI/CD pipeline integration
     - Tools and frameworks reference
+  - [Staging Rehearsal Checklist](testing/staging_rehearsal_checklist.md) ⭐ **NEW - Pre-release Dry Run Guide**
+  - [Calendar Performance Test Plan](testing/calendar_performance_plan.md) ⭐ **NEW - Scope & Metrics**
 - **Test Reports:**
   - [Full Suite Test Report](testing/FULL_SUITE_TEST_REPORT.md) - Comprehensive system test results
   - [MANA Test Verification](testing/MANA_TEST_VERIFICATION.md)
@@ -54,6 +56,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Claude Configuration](../CLAUDE.md) ⚙️
   - [Gemini Configuration](../GEMINI.md)
 - [Development README](development/README.md) - Setup guide
+- [Task Template Automation Service Guide](development/task_template_automation.md) ⭐ **NEW - Automation Contract & Examples**
 
 ### 📚 Program Guidelines
 - [Assistance Program Guidelines](guidelines/OBC_guidelines_assistance.md)
@@ -94,6 +97,14 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Staff Profile Tabs Plan](improvements/staff_profile_tabs_plan.md)
   - [Coordination Calendar Improvement Plan](improvements/coordination-calendar-improvement-plan.md)
   - [Instant UI Improvements Plan](improvements/instant_ui_improvements_plan.md)
+
+- **Task Management System:** ⭐ **NEW - 100% COMPLETE** ✅
+  - [Integrated Task Management Evaluation Plan](improvements/integrated_staff_task_management_evaluation_plan.md) - Original plan
+  - [Implementation Status](improvements/TASK_MANAGEMENT_IMPLEMENTATION_STATUS.md) - Initial progress
+  - [Final Status (85%)](improvements/TASK_MANAGEMENT_FINAL_STATUS.md) - Backend complete
+  - [Frontend Completion](improvements/TASK_MANAGEMENT_FRONTEND_COMPLETION.md) - UI implementation
+  - [Complete Summary](improvements/TASK_MANAGEMENT_COMPLETE_SUMMARY.md) - Full documentation
+  - [Final Verification](improvements/FINAL_VERIFICATION_REPORT.md) - ✅ **100% Verified**
 
 - **MANA Program:**
   - [MANA Improvements Overview](improvements/mana/README.md)

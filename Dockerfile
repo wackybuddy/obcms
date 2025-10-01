@@ -7,12 +7,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies including curl for healthchecks
+# Install system dependencies including curl for healthchecks and libmagic for MIME validation
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     gettext \
     curl \
+    libmagic1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app user

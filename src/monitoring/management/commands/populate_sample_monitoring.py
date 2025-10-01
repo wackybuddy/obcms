@@ -97,6 +97,18 @@ class Command(BaseCommand):
                     "oobc_unit": "Program Coordination",
                     "start_date": date.today() - timedelta(days=30),
                     "target_end_date": date.today() + timedelta(days=45),
+                    "milestone_dates": [
+                        {
+                            "date": (date.today() - timedelta(days=28)).isoformat(),
+                            "title": "Initial outreach",
+                            "status": "completed",
+                        },
+                        {
+                            "date": (date.today() + timedelta(days=14)).isoformat(),
+                            "title": "Mid-cycle evaluation",
+                            "status": "upcoming",
+                        },
+                    ],
                     "budget_allocation": 1250000,
                     "created_by": user,
                     "updated_by": user,
@@ -118,6 +130,18 @@ class Command(BaseCommand):
                     "oobc_unit": "Capacity Development Unit",
                     "start_date": date.today() + timedelta(days=15),
                     "target_end_date": date.today() + timedelta(days=120),
+                    "milestone_dates": [
+                        {
+                            "date": (date.today() + timedelta(days=30)).isoformat(),
+                            "title": "Cohort onboarding",
+                            "status": "upcoming",
+                        },
+                        {
+                            "date": (date.today() + timedelta(days=110)).isoformat(),
+                            "title": "Capstone summit",
+                            "status": "planned",
+                        },
+                    ],
                     "budget_allocation": 450000,
                     "created_by": user,
                     "updated_by": user,
@@ -141,6 +165,18 @@ class Command(BaseCommand):
                     "lead_organization": oobc_support_org,
                     "start_date": date.today(),
                     "next_milestone_date": date.today() + timedelta(days=21),
+                    "milestone_dates": [
+                        {
+                            "date": (date.today() + timedelta(days=7)).isoformat(),
+                            "title": "Document validation",
+                            "status": "upcoming",
+                        },
+                        {
+                            "date": (date.today() + timedelta(days=21)).isoformat(),
+                            "title": "OOBC review panel",
+                            "status": "upcoming",
+                        },
+                    ],
                     "support_required": "OOBC endorsement and initial funding release.",
                     "created_by": user,
                     "updated_by": user,

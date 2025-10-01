@@ -2308,3 +2308,99 @@ class SpatialDataPoint(models.Model):
     def coordinates(self):
         """Return coordinates as [longitude, latitude] for GeoJSON."""
         return [self.longitude, self.latitude]
+
+
+class CommunityEvent(models.Model):
+    """
+    Community-level events and observances for calendar integration.
+    Tracks cultural celebrations, meetings, trainings, and emergencies.
+    """
+
+    EVENT_CULTURAL = "cultural"
+    EVENT_RELIGIOUS = "religious"
+    EVENT_MEETING = "meeting"
+    EVENT_TRAINING = "training"
+    EVENT_DISASTER = "disaster"
+    EVENT_OTHER = "other"
+    EVENT_TYPE_CHOICES = [
+        (EVENT_CULTURAL, "Cultural Celebration"),
+        (EVENT_RELIGIOUS, "Religious Observance"),
+        (EVENT_MEETING, "Community Meeting"),
+        (EVENT_TRAINING, "Community Training"),
+        (EVENT_DISASTER, "Disaster/Emergency"),
+        (EVENT_OTHER, "Other"),
+    ]
+
+    community = models.ForeignKey(
+        "OBCCommunity",
+        on_delete=models.CASCADE,
+        related_name="community_events",
+    )
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    event_type = models.CharField(
+        max_length=30,
+        choices=EVENT_TYPE_CHOICES,
+    )
+
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    all_day = models.BooleanField(default=True)
+
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+
+    location = models.CharField(max_length=255, blank=True)
+    organizer = models.CharField(max_length=255, blank=True)
+
+    is_public = models.BooleanField(
+        default=True,
+        help_text="Show on public calendar",
+    )
+
+    # Recurrence support
+    is_recurring = models.BooleanField(
+        default=False, help_text="Whether this is a recurring event"
+    )
+
+    recurrence_pattern = models.ForeignKey(
+        "common.RecurringEventPattern",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="recurring_community_events",
+        help_text="Recurrence pattern configuration",
+    )
+
+    recurrence_parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="recurrence_instances",
+        help_text="Parent event if this is a recurrence instance",
+    )
+
+    is_recurrence_exception = models.BooleanField(
+        default=False,
+        help_text="True if this instance was edited separately",
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_community_events",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "communities_community_event"
+        ordering = ["-start_date"]
+        verbose_name = "Community Event"
+        verbose_name_plural = "Community Events"
+
+    def __str__(self):
+        return f"{self.title} - {self.community.name}"

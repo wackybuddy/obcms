@@ -1,0 +1,81 @@
+{% extends "common/email/base_email.html" %}
+
+{% block title %}Booking {{ status_display }}: {{ booking.resource.name }}{% endblock %}
+
+{% block header_title %}Booking Status Update{% endblock %}
+
+{% block content %}
+<h2>Resource Booking {{ status_display }}</h2>
+
+<p>Hello {{ booking.booked_by.get_full_name }},</p>
+
+{% if booking.status == 'approved' %}
+<div class="alert alert-success">
+    <strong>✅ Good news!</strong> Your booking request has been approved.
+</div>
+{% elif booking.status == 'rejected' %}
+<div class="alert alert-warning">
+    <strong>❌ Booking Not Approved</strong> Your booking request has been rejected.
+</div>
+{% elif booking.status == 'cancelled' %}
+<div class="alert alert-info">
+    <strong>🚫 Booking Cancelled</strong> Your booking has been cancelled.
+</div>
+{% endif %}
+
+<div class="event-details">
+    <h3>{{ booking.resource.name }}</h3>
+    <p><strong>🏢 Resource Type:</strong> {{ booking.resource.get_resource_type_display }}</p>
+    <p><strong>📅 Date:</strong> {{ booking.start_datetime|date:"F d, Y" }}</p>
+    <p><strong>⏰ Time:</strong> {{ booking.start_datetime|time:"g:i A" }} - {{ booking.end_datetime|time:"g:i A" }}</p>
+    {% if booking.resource.location %}
+    <p><strong>📍 Location:</strong> {{ booking.resource.location }}</p>
+    {% endif %}
+    {% if booking.notes %}
+    <p><strong>📝 Your Notes:</strong></p>
+    <p>{{ booking.notes|linebreaks }}</p>
+    {% endif %}
+</div>
+
+{% if booking.approved_by %}
+<p><strong>Reviewed by:</strong> {{ booking.approved_by.get_full_name }}</p>
+{% endif %}
+
+{% if admin_notes %}
+<div class="alert alert-info">
+    <strong>📋 Administrator Notes:</strong>
+    <p>{{ admin_notes|linebreaks }}</p>
+</div>
+{% endif %}
+
+{% if booking.status == 'approved' %}
+<p>Your booking is confirmed. Please arrive on time and follow any resource-specific guidelines.</p>
+
+{% if calendar_invite_url %}
+<a href="{{ calendar_invite_url }}" class="button">Add to Your Calendar</a>
+{% endif %}
+
+{% if resource_guidelines %}
+<div class="alert alert-info">
+    <strong>📜 Resource Guidelines:</strong>
+    <p>{{ resource_guidelines|linebreaks }}</p>
+</div>
+{% endif %}
+
+{% elif booking.status == 'rejected' %}
+<p>Unfortunately, your booking could not be approved at this time. You may submit a new request for different dates or times.</p>
+
+<a href="{{ new_booking_url }}" class="button">Request Different Time</a>
+
+{% endif %}
+
+<a href="{{ booking_url }}" class="button button-secondary">View Booking Details</a>
+
+{% if booking.status == 'approved' %}
+<p>If you need to cancel or modify this booking, please contact the resource administrator as soon as possible.</p>
+{% else %}
+<p>If you have questions about this decision, please contact the resource administrator.</p>
+{% endif %}
+
+<p>Best regards,<br>OOBC Management Team</p>
+{% endblock %}

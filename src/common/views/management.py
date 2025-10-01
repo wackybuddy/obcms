@@ -3,7 +3,7 @@
 import json
 import re
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone as datetime_timezone
 
 from django import forms
 from django.contrib import messages
@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import formats, timezone
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_POST
 
 from common.constants import (
@@ -55,7 +56,7 @@ from common.services.staff import (
     ensure_membership,
     ensure_staff_profiles_for_users,
 )
-from common.services.calendar import build_calendar_payload
+from common.services.calendar import CALENDAR_CACHE_TTL, build_calendar_payload
 from monitoring.models import (
     MonitoringEntry,
     MonitoringEntryFunding,
@@ -147,7 +148,7 @@ def _format_ics_datetime(dt_value: datetime, *, all_day: bool) -> str:
 
     if all_day:
         return dt_value.date().strftime("%Y%m%d")
-    return dt_value.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return dt_value.astimezone(datetime_timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
 def staff_queryset():
@@ -390,6 +391,7 @@ def oobc_calendar(request):
 
 
 @login_required
+@cache_page(CALENDAR_CACHE_TTL)
 def oobc_calendar_feed_json(request):
     """Return calendar events as JSON for integrations."""
 
@@ -438,6 +440,7 @@ def oobc_calendar_feed_json(request):
 
 
 @login_required
+@cache_page(CALENDAR_CACHE_TTL)
 def oobc_calendar_feed_ics(request):
     """Provide an ICS feed of calendar events."""
 
@@ -513,6 +516,10 @@ def oobc_calendar_feed_ics(request):
                 if all_day
                 else "DTEND:" + _format_ics_datetime(end_dt, all_day=False)
             )
+
+        location_value = extended.get("location") or entry.get("location")
+        if location_value:
+            lines.append(f"LOCATION:{ics_escape(str(location_value))}")
 
         if description:
             lines.append(f"DESCRIPTION:{ics_escape(description)}")
@@ -3192,7 +3199,7 @@ def gap_analysis_dashboard(request):
         Q(linked_ppa__isnull=True),  # Not linked to any PPA
         status__in=['validated', 'prioritized'],  # Only validated needs
     ).select_related(
-        'barangay__municipality',
+        'community__barangay__municipality__province__region',
         'submitted_by_user',
         'forwarded_to_mao',
     )
@@ -3200,7 +3207,7 @@ def gap_analysis_dashboard(request):
     # Apply filters
     if region_id:
         unfunded_needs = unfunded_needs.filter(
-            barangay__municipality__province__region_id=region_id
+            community__barangay__municipality__province__region_id=region_id
         )
     if category:
         unfunded_needs = unfunded_needs.filter(category=category)
@@ -3508,7 +3515,7 @@ def community_voting_browse(request):
     needs = Need.objects.filter(
         status__in=['validated', 'prioritized']
     ).select_related(
-        'barangay__municipality__province__region',
+        'community__barangay__municipality__province__region',
         'submitted_by_user',
     ).prefetch_related(
         'votes'
@@ -3517,7 +3524,7 @@ def community_voting_browse(request):
     # Apply filters
     if region_id:
         needs = needs.filter(
-            barangay__municipality__province__region_id=region_id
+            community__barangay__municipality__province__region_id=region_id
         )
     if category:
         needs = needs.filter(category=category)
@@ -3640,13 +3647,14 @@ def community_voting_results(request):
         total_weight=Sum('votes__vote_weight'),
         avg_weight=Avg('votes__vote_weight'),
     ).select_related(
-        'barangay__municipality__province__region',
+        'community__barangay__municipality__province__region',
+        'category',
     )
 
     # Apply filters
     if region_id:
         needs = needs.filter(
-            barangay__municipality__province__region_id=region_id
+            community__barangay__municipality__province__region_id=region_id
         )
     if category:
         needs = needs.filter(category=category)
@@ -3659,7 +3667,7 @@ def community_voting_results(request):
 
     # Recent votes
     recent_votes = NeedVote.objects.select_related(
-        'need',
+        'need__community__barangay__municipality__province__region',
         'user',
     ).order_by('-voted_at')[:20]
 
@@ -3706,7 +3714,8 @@ def budget_feedback_dashboard(request):
     Shows community satisfaction with implemented programs and services.
     """
     from services.models import ServiceApplication
-    from monitoring.models import MonitoringEntry, MonitoringEntryTaskAssignment
+    from monitoring.models import MonitoringEntry, MonitoringEntryFunding
+    from common.models import StaffTask
     from django.db.models import Avg, Count, Prefetch, Q
 
     # Service delivery feedback
@@ -3745,22 +3754,26 @@ def budget_feedback_dashboard(request):
     ).order_by('-service_completion_date')[:10]
 
     # PPA completion feedback
-    task_assignment_prefetch = Prefetch(
-        'task_assignments',
-        queryset=MonitoringEntryTaskAssignment.objects.select_related('assigned_to').order_by('created_at'),
-        to_attr='prefetched_task_assignments',
+    task_prefetch = Prefetch(
+        'tasks',
+        queryset=StaffTask.objects.filter(domain=StaffTask.DOMAIN_MONITORING)
+        .prefetch_related('assignees')
+        .order_by('created_at'),
+        to_attr='prefetched_monitoring_tasks',
     )
 
     completed_ppas_qs = MonitoringEntry.objects.filter(
         status__in=['completed', 'evaluated']
-    ).prefetch_related(task_assignment_prefetch)[:10]
+    ).prefetch_related(task_prefetch)[:10]
 
     completed_ppas = list(completed_ppas_qs)
     for entry in completed_ppas:
-        entry.assigned_to = next(
-            (assignment.assigned_to for assignment in getattr(entry, 'prefetched_task_assignments', []) if assignment.assigned_to_id),
-            None,
-        )
+        tasks = getattr(entry, 'prefetched_monitoring_tasks', [])
+        first_task = tasks[0] if tasks else None
+        entry.assigned_to = None
+        if first_task:
+            first_assignee = next(iter(first_task.assignees.all()), None)
+            entry.assigned_to = first_assignee
 
     context = {
         'total_completed': completed_applications.count(),
@@ -3827,18 +3840,21 @@ def transparency_dashboard(request):
     Part of Phase 4: Transparency Features.
     Shows how community funds are being used and results achieved.
     """
-    from monitoring.models import MonitoringEntry, MonitoringEntryTaskAssignment
+    from monitoring.models import MonitoringEntry
+    from common.models import StaffTask
     from mana.models import Need
     from services.models import ServiceApplication, ServiceOffering
-    from django.db.models import Sum, Count, Avg, Prefetch, Q
+    from django.db.models import Sum, Count, Avg, Prefetch, Q, F
 
     # Budget allocation summary
     total_allocated = MonitoringEntry.objects.aggregate(
         total=Sum('budget_allocation')
     )['total'] or 0
 
-    total_disbursed = MonitoringEntry.objects.aggregate(
-        total=Sum('amount_disbursed')
+    total_disbursed = MonitoringEntryFunding.objects.filter(
+        tranche_type=MonitoringEntryFunding.TRANCHE_DISBURSEMENT
+    ).aggregate(
+        total=Sum('amount')
     )['total'] or 0
 
     # Funding status
@@ -3857,13 +3873,18 @@ def transparency_dashboard(request):
     ).order_by('-count')
 
     # Regional distribution
-    regional_distribution = MonitoringEntry.objects.values(
-        'implementing_office'
-    ).annotate(
-        ppas=Count('id'),
-        budget=Sum('budget_allocation'),
-        beneficiaries=Sum('target_beneficiaries')
-    ).order_by('-budget')[:10]
+    regional_distribution = (
+        MonitoringEntry.objects.annotate(
+            implementing_office=F('lead_organization__name')
+        )
+        .values('implementing_office')
+        .annotate(
+            ppas=Count('id'),
+            budget=Sum('budget_allocation'),
+            beneficiaries=Sum('total_slots')
+        )
+        .order_by('-budget')[:10]
+    )
 
     # Service delivery stats
     active_services = ServiceOffering.objects.filter(status='active').count()
@@ -3872,23 +3893,28 @@ def transparency_dashboard(request):
         status__in=['approved', 'in_progress', 'completed']
     ).count()
 
-    task_assignment_prefetch = Prefetch(
-        'task_assignments',
-        queryset=MonitoringEntryTaskAssignment.objects.select_related('assigned_to').order_by('created_at'),
-        to_attr='prefetched_task_assignments',
+    task_prefetch = Prefetch(
+        'tasks',
+        queryset=StaffTask.objects.filter(domain=StaffTask.DOMAIN_MONITORING)
+        .prefetch_related('assignees')
+        .order_by('created_at'),
+        to_attr='prefetched_monitoring_tasks',
     )
 
     # Recent completions
     recent_completion_qs = MonitoringEntry.objects.filter(
         status='completed'
-    ).prefetch_related(task_assignment_prefetch).order_by('-updated_at')[:5]
+    ).prefetch_related(task_prefetch).order_by('-updated_at')[:5]
 
     recent_completions = list(recent_completion_qs)
     for entry in recent_completions:
-        entry.assigned_to = next(
-            (assignment.assigned_to for assignment in getattr(entry, 'prefetched_task_assignments', []) if assignment.assigned_to_id),
-            None,
-        )
+        tasks = getattr(entry, 'prefetched_monitoring_tasks', [])
+        entry.assigned_to = [
+            assignee
+            for task in tasks
+            for assignee in task.assignees.all()
+            if assignee
+        ]
 
     context = {
         'total_allocated': total_allocated,
@@ -4664,7 +4690,7 @@ def trend_analysis(request):
     Detailed trend analysis across multiple dimensions.
     """
     from monitoring.analytics import calculate_budget_trends, analyze_sector_performance
-    from monitoring.models import MonitoringEntry, MonitoringEntryTaskAssignment
+    from monitoring.models import MonitoringEntry
     from mana.models import Need
     from django.db.models import Count, Sum
     from django.db.models.functions import TruncMonth, TruncYear
@@ -4715,7 +4741,7 @@ def impact_assessment(request):
     Impact assessment dashboard measuring outcomes and effectiveness.
     """
     from monitoring.analytics import calculate_impact_metrics, analyze_sector_performance
-    from monitoring.models import MonitoringEntry, MonitoringEntryTaskAssignment
+    from monitoring.models import MonitoringEntry
     from mana.models import Need
     from django.db.models import Count, Q, Sum, Avg, F
 

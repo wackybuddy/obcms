@@ -1,13 +1,15 @@
 """Celery tasks for Monitoring & Evaluation background jobs."""
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils import timezone
 
-from .models import MonitoringEntryTaskAssignment, MonitoringEntryWorkflowStage
+from common.models import StaffTask
+
+from .models import MonitoringEntryWorkflowStage
 
 
 @shared_task(name="monitoring.send_workflow_deadline_reminders")
@@ -103,32 +105,36 @@ def send_task_assignment_reminders():
     two_days = today + timedelta(days=2)
     five_days = today + timedelta(days=5)
 
-    # Find tasks approaching deadline
-    upcoming_2_days = MonitoringEntryTaskAssignment.objects.filter(
+    monitoring_statuses = [
+        StaffTask.STATUS_NOT_STARTED,
+        StaffTask.STATUS_IN_PROGRESS,
+        StaffTask.STATUS_AT_RISK,
+    ]
+
+    base_queryset = (
+        StaffTask.objects.filter(
+            domain=StaffTask.DOMAIN_MONITORING,
+            related_ppa__isnull=False,
+            due_date__isnull=False,
+        )
+        .select_related("related_ppa", "created_by")
+        .prefetch_related("assignees")
+    )
+
+    upcoming_2_days = base_queryset.filter(
         due_date=two_days,
-        status__in=[
-            MonitoringEntryTaskAssignment.STATUS_PENDING,
-            MonitoringEntryTaskAssignment.STATUS_IN_PROGRESS,
-        ],
-    ).select_related("entry", "assigned_to", "assigned_by")
+        status__in=monitoring_statuses,
+    )
 
-    upcoming_5_days = MonitoringEntryTaskAssignment.objects.filter(
+    upcoming_5_days = base_queryset.filter(
         due_date=five_days,
-        status__in=[
-            MonitoringEntryTaskAssignment.STATUS_PENDING,
-            MonitoringEntryTaskAssignment.STATUS_IN_PROGRESS,
-        ],
-    ).select_related("entry", "assigned_to", "assigned_by")
+        status__in=monitoring_statuses,
+    )
 
-    # Find overdue tasks
-    overdue_tasks = MonitoringEntryTaskAssignment.objects.filter(
+    overdue_tasks = base_queryset.filter(
         due_date__lt=today,
-        status__in=[
-            MonitoringEntryTaskAssignment.STATUS_PENDING,
-            MonitoringEntryTaskAssignment.STATUS_IN_PROGRESS,
-            MonitoringEntryTaskAssignment.STATUS_BLOCKED,
-        ],
-    ).select_related("entry", "assigned_to", "assigned_by")
+        status__in=monitoring_statuses,
+    )
 
     reminder_count = 0
 
@@ -137,7 +143,7 @@ def send_task_assignment_reminders():
         _send_task_reminder(
             task,
             urgency="high",
-            message=f"Deadline in 2 days: {task.task_title} for {task.entry.title}",
+            message=f"Deadline in 2 days: {task.title} for {getattr(task.related_ppa, 'title', 'Unlinked PPA')}",
         )
         reminder_count += 1
 
@@ -146,7 +152,7 @@ def send_task_assignment_reminders():
         _send_task_reminder(
             task,
             urgency="medium",
-            message=f"Deadline in 5 days: {task.task_title} for {task.entry.title}",
+            message=f"Deadline in 5 days: {task.title} for {getattr(task.related_ppa, 'title', 'Unlinked PPA')}",
         )
         reminder_count += 1
 
@@ -156,7 +162,7 @@ def send_task_assignment_reminders():
         _send_task_reminder(
             task,
             urgency="critical",
-            message=f"OVERDUE ({days_overdue} days): {task.task_title} for {task.entry.title}",
+            message=f"OVERDUE ({days_overdue} days): {task.title} for {getattr(task.related_ppa, 'title', 'Unlinked PPA')}",
         )
         reminder_count += 1
 
@@ -234,35 +240,31 @@ Planning & Budgeting System
 
 
 def _send_task_reminder(task, urgency, message):
-    """
-    Send email reminder for task assignment deadline.
+    """Send email reminder for monitoring StaffTask deadlines."""
 
-    Args:
-        task: MonitoringEntryTaskAssignment instance
-        urgency: str - "critical", "high", "medium"
-        message: str - notification message
-    """
-    # Get assignee email
-    recipient = task.assigned_to.email
+    recipients = [user.email for user in task.assignees.all() if user.email]
 
-    if not recipient:
-        print(f"[TASK REMINDER] No email for user {task.assigned_to.username}: {message}")
+    if not recipients and task.created_by and task.created_by.email:
+        recipients.append(task.created_by.email)
+
+    if not recipients:
+        print(f"[TASK REMINDER] No recipients for task {task.pk}: {message}")
         return
 
-    # Construct email
     subject = f"[{urgency.upper()}] Task Deadline Reminder"
+    entry_title = getattr(task.related_ppa, "title", "Unlinked PPA")
     email_message = f"""
 {message}
 
-PPA: {task.entry.title}
-Task: {task.task_title}
-Role: {task.get_role_display()}
+PPA: {entry_title}
+Task: {task.title}
+Role: {task.task_role or 'Not specified'}
 Status: {task.get_status_display()}
 Priority: {task.get_priority_display()}
 Due Date: {task.due_date}
 
 Description:
-{task.task_description or "No description"}
+{task.description or "No description"}
 
 Notes:
 {task.notes or "No notes"}
@@ -279,9 +281,9 @@ Planning & Budgeting System
             subject=subject,
             message=email_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[recipient],
+            recipient_list=recipients,
             fail_silently=False,
         )
-        print(f"[TASK REMINDER] Sent to {recipient}: {message}")
+        print(f"[TASK REMINDER] Sent to {', '.join(recipients)}: {message}")
     except Exception as e:
         print(f"[TASK REMINDER] Failed to send email: {e}")

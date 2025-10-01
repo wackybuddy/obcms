@@ -1,0 +1,56 @@
+{% extends "common/email/base_email.html" %}
+
+{% block title %}Resource Booking Request: {{ booking.resource.name }}{% endblock %}
+
+{% block header_title %}Resource Booking Request{% endblock %}
+
+{% block content %}
+<h2>New Resource Booking Request</h2>
+
+<p>Hello {{ recipient.get_full_name }},</p>
+
+<p>A new booking request has been submitted for your review:</p>
+
+<div class="event-details">
+    <h3>{{ booking.resource.name }}</h3>
+    <p><strong>🏢 Resource Type:</strong> {{ booking.resource.get_resource_type_display }}</p>
+    <p><strong>📅 Date:</strong> {{ booking.start_datetime|date:"F d, Y" }}</p>
+    <p><strong>⏰ Time:</strong> {{ booking.start_datetime|time:"g:i A" }} - {{ booking.end_datetime|time:"g:i A" }}</p>
+    {% if booking.resource.location %}
+    <p><strong>📍 Location:</strong> {{ booking.resource.location }}</p>
+    {% endif %}
+    <p><strong>👤 Requested by:</strong> {{ booking.booked_by.get_full_name }}</p>
+    {% if booking.notes %}
+    <p><strong>📝 Notes:</strong></p>
+    <p>{{ booking.notes|linebreaks }}</p>
+    {% endif %}
+</div>
+
+<div class="alert alert-info">
+    <strong>ℹ️ Booking Status:</strong> {{ booking.get_status_display }}
+</div>
+
+{% if booking.status == 'pending' %}
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ approve_url }}" class="button" style="background-color: #10b981; margin-right: 10px;">✅ Approve Booking</a>
+    <a href="{{ reject_url }}" class="button" style="background-color: #ef4444;">❌ Reject Booking</a>
+</div>
+{% endif %}
+
+<a href="{{ booking_url }}" class="button button-secondary">View Full Details</a>
+
+{% if conflicts %}
+<div class="alert alert-warning">
+    <strong>⚠️ Potential Conflicts:</strong>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+        {% for conflict in conflicts %}
+        <li>{{ conflict.title }} ({{ conflict.start_datetime|date:"g:i A" }} - {{ conflict.end_datetime|date:"g:i A" }})</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<p>Please review and take action on this booking request at your earliest convenience.</p>
+
+<p>Best regards,<br>OOBC Management Team</p>
+{% endblock %}

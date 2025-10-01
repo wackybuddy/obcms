@@ -7,3 +7,4 @@ class CommonConfig(AppConfig):
 
     def ready(self):
         import common.signals
+        import common.services.task_automation  # Load task automation signal handlers

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title|default:"Manage Shared Calendars" }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_calendar' %}" class="text-neutral-500 hover:text-neutral-700">Calendar</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Manage Shares</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-share-alt text-emerald-600 mr-4"></i>
+                {{ page_heading|default:"Your Shared Calendar Links" }}
+            </h1>
+            <p class="mt-2 text-gray-600">
+                Manage and monitor your shareable calendar links
+            </p>
+        </div>
+        <a href="{% url 'common:calendar_share_create' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg shadow-sm hover:bg-emerald-700">
+            <i class="fas fa-plus mr-2"></i>
+            Create New Share
+        </a>
+    </div>
+
+    {% if shares %}
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Share Details
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Access Info
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Modules
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for share in shares %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-link text-emerald-600 mt-1"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        Share Link #{{ share.id }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        Created {{ share.created_at|date:"M d, Y" }}
+                                    </div>
+                                    <div class="mt-2">
+                                        <button type="button" onclick="copyToClipboard('{{ share.full_url }}', this)"
+                                                class="text-xs text-emerald-600 hover:text-emerald-700 flex items-center">
+                                            <i class="fas fa-copy mr-1"></i>
+                                            Copy Link
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-900">
+                                <div class="flex items-center">
+                                    <i class="fas fa-eye text-gray-400 mr-2"></i>
+                                    {{ share.view_count }} view{{ share.view_count|pluralize }}
+                                </div>
+                                {% if share.max_views %}
+                                <div class="flex items-center mt-1 text-xs text-gray-500">
+                                    <i class="fas fa-limit text-gray-400 mr-2"></i>
+                                    Max: {{ share.max_views }}
+                                </div>
+                                {% endif %}
+                                <div class="flex items-center mt-1">
+                                    <i class="fas fa-clock text-gray-400 mr-2"></i>
+                                    <span class="text-xs {% if share.expires_at < now %}text-red-600{% else %}text-gray-500{% endif %}">
+                                        {% if share.expires_at < now %}
+                                            Expired {{ share.expires_at|date:"M d" }}
+                                        {% else %}
+                                            Expires {{ share.expires_at|date:"M d, Y" }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if share.filter_modules %}
+                            <div class="flex flex-wrap gap-1">
+                                {% for module in share.filter_modules %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ module }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span class="text-xs text-gray-500">All modules</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if share.expires_at < now %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-times-circle mr-1"></i>
+                                Expired
+                            </span>
+                            {% elif share.max_views and share.view_count >= share.max_views %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-ban mr-1"></i>
+                                Limit Reached
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Active
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
+                            <a href="{{ share.full_url }}" target="_blank"
+                               class="text-emerald-600 hover:text-emerald-900">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                            <form action="{% url 'common:calendar_share_delete' share.id %}" method="post" class="inline"
+                                  onsubmit="return confirm('Are you sure you want to delete this share link? It will no longer be accessible.')">
+                                {% csrf_token %}
+                                <button type="submit" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-3"></i>
+            <div class="text-sm text-blue-800">
+                <p class="font-semibold mb-1">Managing Shared Links</p>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>Expired links are automatically deactivated and cannot be accessed</li>
+                    <li>Delete links you no longer need to revoke access immediately</li>
+                    <li>Share links are read-only - recipients cannot modify calendar data</li>
+                    <li>Sensitive workflow information is hidden from shared views</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-12 text-center">
+        <i class="fas fa-share-alt text-gray-400 text-5xl mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Shared Links Yet</h3>
+        <p class="text-gray-600 mb-6">Create your first shareable calendar link to collaborate with external stakeholders.</p>
+        <a href="{% url 'common:calendar_share_create' %}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg shadow-sm hover:bg-emerald-700">
+            <i class="fas fa-plus mr-2"></i>
+            Create Share Link
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(function() {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!';
+        button.classList.add('text-green-600');
+
+        setTimeout(function() {
+            button.innerHTML = originalHTML;
+            button.classList.remove('text-green-600');
+        }, 2000);
+    }).catch(function(err) {
+        alert('Failed to copy: ' + err);
+    });
+}
+
+// Add current time for expiration checks
+const now = new Date('{{ now|date:"Y-m-d H:i:s" }}');
+</script>
+{% endblock %}

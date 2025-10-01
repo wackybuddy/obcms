@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, time
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -10,6 +11,12 @@ from django.utils import timezone
 from communities.models import OBCCommunity
 from mana.models import Assessment
 from common.models import Region
+
+
+def _invalidate_calendar_cache() -> None:
+    from common.services import calendar as calendar_service
+
+    calendar_service.invalidate_calendar_cache()
 
 User = get_user_model()
 
@@ -272,6 +279,34 @@ class StakeholderEngagement(models.Model):
 
     attendance_list = models.JSONField(
         null=True, blank=True, help_text="List of attendees (JSON format)"
+    )
+
+    # Recurrence (Enhanced with RecurringEventPattern)
+    is_recurring = models.BooleanField(
+        default=False, help_text="Whether this is a recurring engagement"
+    )
+
+    recurrence_pattern = models.ForeignKey(
+        "common.RecurringEventPattern",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="recurring_engagements",
+        help_text="Recurrence pattern configuration (RFC 5545 compatible)",
+    )
+
+    recurrence_parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="recurrence_instances",
+        help_text="Parent engagement if this is a recurrence instance",
+    )
+
+    is_recurrence_exception = models.BooleanField(
+        default=False,
+        help_text="True if this instance was edited separately from the recurrence pattern",
     )
 
     # Metadata
@@ -1547,6 +1582,29 @@ class CommunicationSchedule(models.Model):
 class Event(models.Model):
     """Model for managing meetings, consultations, and other events."""
 
+    def __init__(self, *args, **kwargs):
+        start_dt = kwargs.pop("start_datetime", None)
+        end_dt = kwargs.pop("end_datetime", None)
+        organizer = kwargs.pop("organized_by", None)
+
+        if start_dt and not kwargs.get("start_date"):
+            kwargs["start_date"] = start_dt.date()
+            kwargs.setdefault("start_time", start_dt.time())
+
+        if end_dt:
+            kwargs.setdefault("end_time", end_dt.time())
+            if not kwargs.get("end_date") and start_dt and end_dt.date() != start_dt.date():
+                kwargs["end_date"] = end_dt.date()
+            if start_dt and not kwargs.get("duration_hours"):
+                duration_seconds = (end_dt - start_dt).total_seconds()
+                if duration_seconds > 0:
+                    kwargs["duration_hours"] = duration_seconds / 3600
+
+        if organizer and not kwargs.get("organizer"):
+            kwargs["organizer"] = organizer
+
+        super().__init__(*args, **kwargs)
+
     EVENT_TYPES = [
         ("meeting", "Coordination Meeting"),
         ("consultation", "Public Consultation"),
@@ -1803,36 +1861,42 @@ class Event(models.Model):
         blank=True, help_text="Follow-up notes and actions"
     )
 
-    # Recurrence
+    # Recurrence (Enhanced with RecurringEventPattern)
     is_recurring = models.BooleanField(
         default=False, help_text="Whether this is a recurring event"
     )
 
-    recurrence_pattern = models.CharField(
-        max_length=20,
-        choices=[
-            ("daily", "Daily"),
-            ("weekly", "Weekly"),
-            ("bi_weekly", "Bi-weekly"),
-            ("monthly", "Monthly"),
-            ("quarterly", "Quarterly"),
-            ("annually", "Annually"),
-        ],
+    recurrence_pattern = models.ForeignKey(
+        "common.RecurringEventPattern",
+        null=True,
         blank=True,
-        help_text="Recurrence pattern (if recurring)",
+        on_delete=models.SET_NULL,
+        related_name="recurring_events",
+        help_text="Recurrence pattern configuration (RFC 5545 compatible)",
     )
 
-    recurrence_end_date = models.DateField(
-        null=True, blank=True, help_text="End date for recurring events"
+    recurrence_parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="recurrence_instances",
+        help_text="Parent event if this is a recurrence instance",
     )
 
+    is_recurrence_exception = models.BooleanField(
+        default=False,
+        help_text="True if this instance was edited separately from the recurrence pattern",
+    )
+
+    # Legacy field for backwards compatibility
     parent_event = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name="recurring_instances",
-        help_text="Parent event (for recurring event instances)",
+        related_name="recurring_instances_legacy",
+        help_text="[DEPRECATED] Use recurrence_parent instead",
     )
 
     # ==========================================
@@ -1900,9 +1964,23 @@ class Event(models.Model):
             if self.end_date < self.start_date:
                 raise ValidationError("End date cannot be before start date")
 
+    def save(self, *args, **kwargs):
+        """Ensure organizer defaults to creator and invalidate calendar cache."""
+
         if self.end_time and self.start_time and not self.end_date:
             if self.end_time <= self.start_time:
                 raise ValidationError("End time must be after start time")
+
+        if not self.organizer_id and self.created_by_id:
+            self.organizer_id = self.created_by_id
+
+        super().save(*args, **kwargs)
+        _invalidate_calendar_cache()
+
+    def delete(self, *args, **kwargs):
+        result = super().delete(*args, **kwargs)
+        _invalidate_calendar_cache()
+        return result
 
     @property
     def is_multiday(self):
@@ -2170,7 +2248,32 @@ class EventParticipant(models.Model):
         blank=True, help_text="Additional notes from response"
     )
 
-    # Attendance
+    # RSVP Status (Enhanced)
+    rsvp_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("invited", "Invited"),
+            ("going", "Going"),
+            ("maybe", "Maybe"),
+            ("declined", "Declined"),
+        ],
+        default="invited",
+        help_text="RSVP status for the event",
+    )
+
+    # Attendance Tracking (Enhanced)
+    attendance_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("not_checked_in", "Not Checked In"),
+            ("checked_in", "Checked In"),
+            ("checked_out", "Checked Out"),
+            ("absent", "Absent"),
+        ],
+        default="not_checked_in",
+        help_text="Current attendance status",
+    )
+
     attended = models.BooleanField(
         default=False, help_text="Whether participant attended the event"
     )
@@ -2181,6 +2284,17 @@ class EventParticipant(models.Model):
 
     check_out_time = models.DateTimeField(
         null=True, blank=True, help_text="Time participant checked out"
+    )
+
+    check_in_method = models.CharField(
+        max_length=20,
+        choices=[
+            ("manual", "Manual"),
+            ("qr_code", "QR Code"),
+            ("nfc", "NFC"),
+        ],
+        blank=True,
+        help_text="Method used for check-in",
     )
 
     attendance_notes = models.TextField(blank=True, help_text="Notes about attendance")

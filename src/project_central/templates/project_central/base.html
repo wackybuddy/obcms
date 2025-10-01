@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Project Central - OBCMS{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'project_central/css/project_central.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="project-central-wrapper">
+    {% block project_central_content %}
+    {% endblock %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'project_central/js/project_central.js' %}"></script>
+{% endblock %}

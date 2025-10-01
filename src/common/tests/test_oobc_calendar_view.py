@@ -4,10 +4,11 @@ import pytest
 from datetime import timedelta
 from django.urls import reverse
 from django.utils import timezone
+from django.core.cache import cache
 
 from common.models import StaffTeam, StaffTask, User
 from common.services.calendar import build_calendar_payload
-from coordination.models import Communication, Organization, Partnership, PartnershipMilestone
+from coordination.models import Communication, Event, Organization, Partnership, PartnershipMilestone
 from monitoring.models import MonitoringEntry
 from recommendations.policy_tracking.models import PolicyRecommendation
 
@@ -113,6 +114,13 @@ def test_build_calendar_payload_includes_policy_and_planning():
         summary="Skills training for fisherfolk",
         start_date=timezone.now().date() + timedelta(days=3),
         next_milestone_date=timezone.now().date() + timedelta(days=5),
+        milestone_dates=[
+            {
+                "date": (timezone.now().date() + timedelta(days=7)).isoformat(),
+                "title": "Procurement window",
+                "status": "upcoming",
+            }
+        ],
         lead_organization=org,
         created_by=user,
     )
@@ -127,6 +135,101 @@ def test_build_calendar_payload_includes_policy_and_planning():
     workflow_types = {action["type"] for action in payload.get("workflow_actions", [])}
     assert "approval" in workflow_types
     assert "follow_up" in workflow_types
+
+    planning_milestones = [
+        entry
+        for entry in payload["entries"]
+        if entry["extendedProps"].get("module") == "planning"
+        and entry["extendedProps"].get("category") == "planning_milestone_custom"
+    ]
+    assert planning_milestones, "Custom planning milestones should appear in calendar payload"
+    assert any(
+        milestone["extendedProps"].get("milestoneTitle") == "Procurement window"
+        for milestone in planning_milestones
+    )
+
+
+@pytest.mark.django_db
+def test_build_calendar_payload_skips_tasks_linked_to_events():
+    cache.clear()
+
+    user = User.objects.create_user(
+        username="eventer",
+        password="secret",
+        user_type="oobc_staff",
+        is_approved=True,
+    )
+
+    event = Event.objects.create(
+        title="Coordination Meeting",
+        start_date=timezone.now().date() + timedelta(days=1),
+        status="scheduled",
+        created_by=user,
+        organizer=user,
+    )
+
+    StaffTask.objects.create(
+        title="Prepare agenda",
+        linked_event=event,
+        due_date=timezone.now().date() + timedelta(days=1),
+        created_by=user,
+    )
+
+    payload = build_calendar_payload(filter_modules=["coordination", "staff"])
+
+    staff_entries = [
+        entry
+        for entry in payload["entries"]
+        if entry["extendedProps"].get("module") == "staff"
+    ]
+    coordination_entries = [
+        entry
+        for entry in payload["entries"]
+        if entry["extendedProps"].get("module") == "coordination"
+    ]
+
+    assert coordination_entries, "Event should appear in coordination module"
+    assert not any(
+        entry["title"].startswith("Prepare agenda") for entry in staff_entries
+    ), "Linked task should not duplicate calendar entries"
+
+
+@pytest.mark.django_db
+def test_calendar_payload_cache_invalidation_on_task_save():
+    cache.clear()
+
+    user = User.objects.create_user(
+        username="cache_test",
+        password="secret",
+        user_type="oobc_staff",
+        is_approved=True,
+    )
+
+    StaffTask.objects.create(
+        title="Initial task",
+        due_date=timezone.now().date() + timedelta(days=2),
+        status=StaffTask.STATUS_IN_PROGRESS,
+        created_by=user,
+    )
+
+    first_payload = build_calendar_payload(filter_modules=["staff"])
+    first_staff_entries = [
+        entry for entry in first_payload["entries"] if entry["extendedProps"].get("module") == "staff"
+    ]
+    assert len(first_staff_entries) == 1
+
+    StaffTask.objects.create(
+        title="Newly added task",
+        due_date=timezone.now().date() + timedelta(days=3),
+        status=StaffTask.STATUS_NOT_STARTED,
+        created_by=user,
+    )
+
+    second_payload = build_calendar_payload(filter_modules=["staff"])
+    second_staff_entries = [
+        entry for entry in second_payload["entries"] if entry["extendedProps"].get("module") == "staff"
+    ]
+    assert len(second_staff_entries) == 2, "Calendar cache should refresh after task changes"
 
 
 @pytest.mark.django_db

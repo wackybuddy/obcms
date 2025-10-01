@@ -1,0 +1,86 @@
+{% extends "common/email/base_email.html" %}
+
+{% block title %}Leave Request {{ status_display }}: {{ leave.get_leave_type_display }}{% endblock %}
+
+{% block header_title %}Leave Request Status Update{% endblock %}
+
+{% block content %}
+<h2>Leave Request {{ status_display }}</h2>
+
+<p>Hello {{ leave.staff.get_full_name }},</p>
+
+{% if leave.status == 'approved' %}
+<div class="alert alert-success">
+    <strong>✅ Leave Approved!</strong> Your leave request has been approved.
+</div>
+{% elif leave.status == 'rejected' %}
+<div class="alert alert-warning">
+    <strong>❌ Leave Not Approved</strong> Your leave request has been rejected.
+</div>
+{% elif leave.status == 'cancelled' %}
+<div class="alert alert-info">
+    <strong>🚫 Leave Cancelled</strong> Your leave request has been cancelled.
+</div>
+{% endif %}
+
+<div class="event-details">
+    <h3>{{ leave.get_leave_type_display }}</h3>
+    <p><strong>📅 Start Date:</strong> {{ leave.start_date|date:"F d, Y" }}</p>
+    <p><strong>📅 End Date:</strong> {{ leave.end_date|date:"F d, Y" }}</p>
+    <p><strong>📊 Duration:</strong> {{ duration_days }} day{{ duration_days|pluralize }}</p>
+    {% if leave.reason %}
+    <p><strong>📝 Reason:</strong></p>
+    <p>{{ leave.reason|linebreaks }}</p>
+    {% endif %}
+</div>
+
+{% if leave.approved_by %}
+<p><strong>Approved/Reviewed by:</strong> {{ leave.approved_by.get_full_name }}</p>
+{% endif %}
+
+{% if leave.admin_notes %}
+<div class="alert alert-info">
+    <strong>📋 Administrator Notes:</strong>
+    <p>{{ leave.admin_notes|linebreaks }}</p>
+</div>
+{% endif %}
+
+{% if leave.status == 'approved' %}
+<p>Your leave has been approved. Please ensure all work handover procedures are completed before your leave begins.</p>
+
+{% if leave.backup_staff %}
+<div class="alert alert-info">
+    <strong>👥 Backup Staff:</strong> {{ leave.backup_staff.get_full_name }}<br>
+    {% if leave.handover_notes %}
+    <strong>Handover Notes:</strong> {{ leave.handover_notes|linebreaks }}
+    {% endif %}
+</div>
+{% endif %}
+
+<div style="text-align: center; margin: 25px 0;">
+    <a href="{{ calendar_url }}" class="button">View Calendar</a>
+</div>
+
+{% elif leave.status == 'rejected' %}
+<p>Unfortunately, your leave request could not be approved at this time. You may submit a new request for different dates.</p>
+
+<a href="{{ new_request_url }}" class="button">Submit New Request</a>
+
+{% endif %}
+
+<a href="{{ leave_url }}" class="button button-secondary">View Leave Details</a>
+
+{% if leave.status == 'approved' %}
+<p><strong>Important Reminders:</strong></p>
+<ul style="color: #4b5563;">
+    <li>Complete all pending tasks before your leave</li>
+    <li>Set up out-of-office auto-reply</li>
+    <li>Brief your backup staff on ongoing projects</li>
+    <li>Ensure all required handover documentation is complete</li>
+</ul>
+{% else %}
+<p>If you have questions about this decision, please discuss with your supervisor.</p>
+{% endif %}
+
+<p>Best regards,<br>OOBC Management Team</p>
+{% endblock %}

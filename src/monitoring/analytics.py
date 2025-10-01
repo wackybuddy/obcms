@@ -188,8 +188,8 @@ def calculate_impact_metrics():
     active_ppas = MonitoringEntry.objects.filter(status='ongoing').count()
 
     total_beneficiaries = MonitoringEntry.objects.aggregate(
-        Sum('target_beneficiaries')
-    )['target_beneficiaries__sum'] or 0
+        Sum('total_slots')
+    )['total_slots__sum'] or 0
 
     total_budget = MonitoringEntry.objects.aggregate(
         Sum('budget_allocation')
@@ -198,17 +198,17 @@ def calculate_impact_metrics():
     # Needs addressed
     total_needs = Need.objects.count()
     addressed_needs = Need.objects.filter(
-        addressing_ppas__isnull=False
+        implementing_ppas__isnull=False
     ).distinct().count()
 
     # Geographic coverage
-    covered_municipalities = MonitoringEntry.objects.values(
-        'municipality_coverage'
-    ).distinct().count()
+    covered_municipalities = MonitoringEntry.objects.filter(
+        coverage_municipality__isnull=False
+    ).values('coverage_municipality').distinct().count()
 
-    covered_provinces = MonitoringEntry.objects.values(
-        'province_coverage'
-    ).distinct().count()
+    covered_provinces = MonitoringEntry.objects.filter(
+        coverage_province__isnull=False
+    ).values('coverage_province').distinct().count()
 
     # Cost efficiency
     cost_per_beneficiary = 0

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title|default:"Add Resource" }}{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_calendar' %}" class="text-neutral-500 hover:text-neutral-700">Calendar</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:calendar_resource_list' %}" class="text-neutral-500 hover:text-neutral-700">Resources</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">{{ page_heading|default:"Add Resource" }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-{% if resource %}edit{% else %}plus{% endif %} text-emerald-600 mr-4"></i>
+                {{ page_heading|default:"Add Calendar Resource" }}
+            </h1>
+            <p class="mt-2 text-gray-600">
+                Configure a bookable resource for calendar management
+            </p>
+        </div>
+        <a href="{{ return_url }}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back
+        </a>
+    </div>
+
+    <form method="post" class="space-y-6" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            {{ form.non_field_errors|join:' ' }}
+        </div>
+        {% endif %}
+
+        <!-- Basic Information -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-info-circle mr-3"></i>
+                    Basic Information
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% include "components/form_field.html" with field=form.name %}
+                    {% include "components/form_field.html" with field=form.resource_type %}
+                    {% include "components/form_field.html" with field=form.status %}
+                    {% include "components/form_field.html" with field=form.location %}
+                    {% include "components/form_field.html" with field=form.capacity %}
+                    {% include "components/form_field.html" with field=form.linked_user %}
+                    {% include "components/form_field.html" with field=form.description wrapper_class="md:col-span-2" %}
+                </div>
+            </div>
+        </section>
+
+        <!-- Booking Configuration -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-calendar-check mr-3"></i>
+                    Booking Configuration
+                </h2>
+            </header>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-3">
+                        {% include "components/form_field.html" with field=form.requires_approval %}
+                    </div>
+                    {% include "components/form_field.html" with field=form.allow_booking_advance_days %}
+                    {% include "components/form_field.html" with field=form.max_booking_duration_hours %}
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex">
+                        <i class="fas fa-info-circle text-blue-600 mt-0.5 mr-3"></i>
+                        <div class="text-sm text-blue-800">
+                            <p class="font-semibold mb-1">Booking Constraints</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li><strong>Advance Days (0 = no limit):</strong> Maximum days in advance bookings can be made</li>
+                                <li><strong>Max Duration (0 = no limit):</strong> Maximum hours for a single booking</li>
+                                <li><strong>Requires Approval:</strong> If checked, bookings need admin approval before confirmation</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Additional Notes -->
+        <section class="bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <header class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 rounded-t-2xl text-white">
+                <h2 class="text-xl font-semibold flex items-center">
+                    <i class="fas fa-sticky-note mr-3"></i>
+                    Additional Notes
+                </h2>
+            </header>
+            <div class="p-6">
+                {% include "components/form_field.html" with field=form.notes %}
+            </div>
+        </section>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end space-x-3">
+            <a href="{{ return_url }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                Cancel
+            </a>
+            <button type="submit" class="px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-emerald-600 hover:bg-emerald-700">
+                <i class="fas fa-save mr-2"></i>
+                {{ submit_label|default:"Save Resource" }}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resourceTypeField = document.querySelector('[name="resource_type"]');
+    const linkedUserField = document.querySelector('[name="linked_user"]');
+    const linkedUserWrapper = linkedUserField.closest('.space-y-1, .mb-4');
+
+    function toggleLinkedUser() {
+        if (resourceTypeField.value === 'facilitator') {
+            linkedUserWrapper.style.display = 'block';
+            linkedUserField.required = true;
+        } else {
+            linkedUserWrapper.style.display = 'none';
+            linkedUserField.required = false;
+        }
+    }
+
+    if (resourceTypeField && linkedUserField) {
+        resourceTypeField.addEventListener('change', toggleLinkedUser);
+        toggleLinkedUser(); // Initial state
+    }
+});
+</script>
+{% endblock %}

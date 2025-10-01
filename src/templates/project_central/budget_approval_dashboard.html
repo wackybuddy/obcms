@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Budget Approval Dashboard - Project Central{% endblock %}
+
+{% block extra_css %}
+<style>
+    .approval-stage {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        height: 100%;
+    }
+    .stage-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .stage-count {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #047857;
+    }
+    .ppa-item {
+        padding: 0.75rem;
+        border-radius: 6px;
+        background: #f9fafb;
+        margin-bottom: 0.5rem;
+        transition: all 0.2s;
+    }
+    .ppa-item:hover {
+        background: #f3f4f6;
+        transform: translateX(4px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <h1 class="h3 mb-1"><i class="fas fa-check-double text-emerald-600"></i> Budget Approval Dashboard</h1>
+        <p class="text-muted mb-0">5-stage budget approval workflow management</p>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted small">Total Pending Approvals</div>
+                    <div class="h3 mb-0 mt-2 text-warning">{{ total_pending }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-muted small">Recently Approved</div>
+                    <div class="h3 mb-0 mt-2 text-success">{{ recently_approved|length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approval Pipeline -->
+    <div class="row g-4 mb-4">
+        <!-- Technical Review -->
+        <div class="col-md-3">
+            <div class="approval-stage" style="border-top: 4px solid #3b82f6;">
+                <div class="stage-header">
+                    <div>
+                        <h6 class="mb-0">Technical Review</h6>
+                        <small class="text-muted">Stage 1</small>
+                    </div>
+                    <div class="stage-count">{{ technical_review.count }}</div>
+                </div>
+                <div class="stage-body">
+                    {% for ppa in technical_review|slice:":5" %}
+                    <div class="ppa-item">
+                        <a href="{% url 'project_central:review_budget_approval' ppa.id %}" class="text-decoration-none text-dark">
+                            <div class="fw-bold small">{{ ppa.title|truncatewords:5 }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                ₱{{ ppa.budget_allocation|floatformat:0|intcomma }}
+                            </div>
+                        </a>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center small mb-0">No PPAs in this stage</p>
+                    {% endfor %}
+                    {% if technical_review.count > 5 %}
+                    <div class="text-center mt-2">
+                        <small class="text-muted">+{{ technical_review.count|add:"-5" }} more</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Review -->
+        <div class="col-md-3">
+            <div class="approval-stage" style="border-top: 4px solid #8b5cf6;">
+                <div class="stage-header">
+                    <div>
+                        <h6 class="mb-0">Budget Review</h6>
+                        <small class="text-muted">Stage 2</small>
+                    </div>
+                    <div class="stage-count">{{ budget_review.count }}</div>
+                </div>
+                <div class="stage-body">
+                    {% for ppa in budget_review|slice:":5" %}
+                    <div class="ppa-item">
+                        <a href="{% url 'project_central:review_budget_approval' ppa.id %}" class="text-decoration-none text-dark">
+                            <div class="fw-bold small">{{ ppa.title|truncatewords:5 }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                ₱{{ ppa.budget_allocation|floatformat:0|intcomma }}
+                            </div>
+                        </a>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center small mb-0">No PPAs in this stage</p>
+                    {% endfor %}
+                    {% if budget_review.count > 5 %}
+                    <div class="text-center mt-2">
+                        <small class="text-muted">+{{ budget_review.count|add:"-5" }} more</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Stakeholder Consultation -->
+        <div class="col-md-3">
+            <div class="approval-stage" style="border-top: 4px solid #f59e0b;">
+                <div class="stage-header">
+                    <div>
+                        <h6 class="mb-0">Stakeholder Consultation</h6>
+                        <small class="text-muted">Stage 3</small>
+                    </div>
+                    <div class="stage-count">{{ stakeholder_consultation.count }}</div>
+                </div>
+                <div class="stage-body">
+                    {% for ppa in stakeholder_consultation|slice:":5" %}
+                    <div class="ppa-item">
+                        <a href="{% url 'project_central:review_budget_approval' ppa.id %}" class="text-decoration-none text-dark">
+                            <div class="fw-bold small">{{ ppa.title|truncatewords:5 }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                ₱{{ ppa.budget_allocation|floatformat:0|intcomma }}
+                            </div>
+                        </a>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center small mb-0">No PPAs in this stage</p>
+                    {% endfor %}
+                    {% if stakeholder_consultation.count > 5 %}
+                    <div class="text-center mt-2">
+                        <small class="text-muted">+{{ stakeholder_consultation.count|add:"-5" }} more</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Approval -->
+        <div class="col-md-3">
+            <div class="approval-stage" style="border-top: 4px solid #10b981;">
+                <div class="stage-header">
+                    <div>
+                        <h6 class="mb-0">Executive Approval</h6>
+                        <small class="text-muted">Stage 4</small>
+                    </div>
+                    <div class="stage-count">{{ executive_approval.count }}</div>
+                </div>
+                <div class="stage-body">
+                    {% for ppa in executive_approval|slice:":5" %}
+                    <div class="ppa-item">
+                        <a href="{% url 'project_central:review_budget_approval' ppa.id %}" class="text-decoration-none text-dark">
+                            <div class="fw-bold small">{{ ppa.title|truncatewords:5 }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">
+                                ₱{{ ppa.budget_allocation|floatformat:0|intcomma }}
+                            </div>
+                        </a>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center small mb-0">No PPAs in this stage</p>
+                    {% endfor %}
+                    {% if executive_approval.count > 5 %}
+                    <div class="text-center mt-2">
+                        <small class="text-muted">+{{ executive_approval.count|add:"-5" }} more</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recently Approved -->
+    <div class="card">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-check-circle text-success"></i> Recently Approved PPAs</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if recently_approved %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Budget</th>
+                            <th>Sector</th>
+                            <th>Approved By</th>
+                            <th>Approved Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ppa in recently_approved %}
+                        <tr>
+                            <td>{{ ppa.title }}</td>
+                            <td>₱{{ ppa.budget_allocation|floatformat:0|intcomma }}</td>
+                            <td>{{ ppa.get_sector_display }}</td>
+                            <td>
+                                {% if ppa.executive_approved_by %}
+                                    {{ ppa.executive_approved_by.get_full_name }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if ppa.executive_approved_at %}
+                                    {{ ppa.executive_approved_at|date:"M d, Y" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-success">{{ ppa.get_approval_status_display }}</span>
+                            </td>
+                            <td>
+                                <a href="{% url 'monitoring:ppa_detail' ppa.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="p-4 text-center text-muted mb-0">No recently approved PPAs</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

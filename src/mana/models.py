@@ -1147,6 +1147,41 @@ class Need(models.Model):
 
         return round(final_score, 2)
 
+    @property
+    def barangay(self):
+        """Legacy accessor exposing the linked barangay."""
+
+        if self.community_id and hasattr(self.community, "barangay"):
+            return self.community.barangay
+        return None
+
+    @property
+    def municipality(self):
+        """Return municipality for compatibility with legacy templates."""
+
+        barangay = self.barangay
+        if barangay:
+            return barangay.municipality
+        return None
+
+    @property
+    def province(self):
+        """Return province derived from the related barangay."""
+
+        municipality = self.municipality
+        if municipality:
+            return municipality.province
+        return None
+
+    @property
+    def region(self):
+        """Return region derived from the related barangay."""
+
+        province = self.province
+        if province:
+            return province.region
+        return None
+
 
 class NeedVote(models.Model):
     """

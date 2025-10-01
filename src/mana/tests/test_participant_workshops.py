@@ -21,8 +21,7 @@ User = get_user_model()
 
 
 @pytest.fixture
-@pytest.mark.django_db
-def assessment_setup():
+def assessment_setup(db):
     facilitator = User.objects.create_user(
         username="facilitator@example.com",
         email="facilitator@example.com",
@@ -85,8 +84,7 @@ def assessment_setup():
 
 
 @pytest.fixture
-@pytest.mark.django_db
-def participant_account(assessment_setup):
+def participant_account(db, assessment_setup):
     user = User.objects.create_user(
         username="participant@example.com",
         email="participant@example.com",

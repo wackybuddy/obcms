@@ -7,6 +7,35 @@ from .auth import (
     page_restricted,
     profile,
 )
+from .calendar_resources import (
+    resource_list,
+    resource_create,
+    resource_detail,
+    resource_edit,
+    resource_delete,
+    resource_calendar,
+    booking_request,
+    booking_approve,
+    booking_list,
+    staff_leave_request,
+    staff_leave_list,
+    staff_leave_approve,
+)
+from .calendar_preferences import calendar_preferences
+from .calendar_sharing import (
+    calendar_share_create,
+    calendar_share_manage,
+    calendar_share_view,
+    calendar_share_toggle,
+    calendar_share_delete,
+)
+from .attendance import (
+    event_check_in,
+    event_generate_qr,
+    event_scan_qr,
+    event_attendance_report,
+)
+from .calendar_api import calendar_event_update
 from .communities import (
     communities_add,
     communities_add_municipality,
@@ -104,6 +133,23 @@ from .management import (
     user_approvals,
     user_approval_action,
 )
+from .tasks import (
+    tasks_by_domain,
+    assessment_tasks,
+    event_tasks,
+    policy_tasks,
+    ppa_tasks,
+    service_tasks,
+    enhanced_task_dashboard,
+    task_analytics,
+    domain_task_analytics,
+    task_template_list,
+    task_template_detail,
+    instantiate_template,
+    task_complete,
+    task_start,
+    task_assign,
+)
 from .mana import (
     mana_assessment_delete,
     mana_assessment_detail,
@@ -139,6 +185,18 @@ __all__ = [
     "profile",
     "page_restricted",
     "dashboard",
+    "resource_list",
+    "resource_create",
+    "resource_detail",
+    "resource_edit",
+    "resource_delete",
+    "resource_calendar",
+    "booking_request",
+    "booking_approve",
+    "booking_list",
+    "staff_leave_request",
+    "staff_leave_list",
+    "staff_leave_approve",
     "oobc_management_home",
     "oobc_calendar",
     "oobc_calendar_feed_json",

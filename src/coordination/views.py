@@ -14,6 +14,8 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 
+from common.models import RecurringEventPattern
+
 from .forms import (
     EventForm,
     OrganizationContactFormSet,
@@ -22,6 +24,7 @@ from .forms import (
     PartnershipForm,
     PartnershipMilestoneFormSet,
     PartnershipSignatoryFormSet,
+    RecurringEventPatternForm,
     StakeholderEngagementForm,
 )
 from .models import Event, Organization, Partnership, StakeholderEngagement
@@ -619,3 +622,189 @@ def calendar_overview(request):
         "upcoming_engagements": upcoming_engagement_list,
     }
     return render(request, "coordination/calendar.html", context)
+
+
+@login_required
+def event_create_recurring(request):
+    """Create a recurring event with recurrence pattern configuration."""
+
+    if not request.user.has_perm("coordination.add_event"):
+        raise PermissionDenied
+
+    initial = {
+        "organizer": request.user.pk,
+        "status": "planned",
+        "priority": "medium",
+        "start_date": timezone.now().date(),
+        "is_recurring": True,
+    }
+
+    if request.method == "POST":
+        event_form = EventForm(request.POST)
+        pattern_form = RecurringEventPatternForm(request.POST)
+
+        if event_form.is_valid() and pattern_form.is_valid():
+            with transaction.atomic():
+                # Save the recurrence pattern first
+                pattern = pattern_form.save()
+
+                # Save the event with the pattern
+                event = event_form.save(commit=False)
+                if not event.organizer_id:
+                    event.organizer = request.user
+                event.created_by = request.user
+                event.is_recurring = True
+                event.recurrence_pattern = pattern
+                event.save()
+
+                if hasattr(event_form, "save_m2m"):
+                    event_form.save_m2m()
+
+            messages.success(
+                request,
+                f"Recurring event '{event.title}' successfully created. "
+                f"Instances will be generated automatically.",
+            )
+            return redirect("common:coordination_events")
+
+        messages.error(
+            request, "Please correct the highlighted errors before submitting."
+        )
+        if event_form.errors:
+            logger.warning("Event form errors: %s", event_form.errors)
+        if pattern_form.errors:
+            logger.warning("Recurrence pattern form errors: %s", pattern_form.errors)
+    else:
+        event_form = EventForm(initial=initial)
+        pattern_form = RecurringEventPatternForm()
+
+    context = {
+        "event_form": event_form,
+        "pattern_form": pattern_form,
+        "return_url": reverse("common:coordination_events"),
+        "page_title": "Schedule Recurring Event",
+        "page_heading": "Schedule New Recurring Event",
+        "submit_label": "Create Recurring Event",
+    }
+    return render(request, "coordination/event_recurring_form.html", context)
+
+
+@login_required
+def event_edit_instance(request, event_id):
+    """Edit a specific instance of a recurring event with 'this' vs 'all future' logic."""
+
+    if not request.user.has_perm("coordination.change_event"):
+        raise PermissionDenied
+
+    event = get_object_or_404(Event, pk=event_id)
+    is_recurring_instance = event.recurrence_parent_id is not None
+    is_recurring_parent = event.is_recurring and not is_recurring_instance
+
+    edit_scope = request.POST.get("edit_scope", "this")  # 'this', 'future', or 'all'
+
+    if request.method == "POST" and "confirm_scope" in request.POST:
+        form = EventForm(request.POST, instance=event)
+
+        if form.is_valid():
+            with transaction.atomic():
+                if edit_scope == "this":
+                    # Edit only this instance - mark as exception
+                    updated_event = form.save(commit=False)
+                    updated_event.is_recurrence_exception = True
+                    updated_event.save()
+                    if hasattr(form, "save_m2m"):
+                        form.save_m2m()
+                    messages.success(
+                        request, "This event instance has been updated successfully."
+                    )
+
+                elif edit_scope == "future" and is_recurring_instance:
+                    # Edit this and all future instances
+                    parent = event.recurrence_parent
+                    future_instances = Event.objects.filter(
+                        recurrence_parent=parent,
+                        start_date__gte=event.start_date,
+                    )
+
+                    # Update all future instances
+                    for instance in future_instances:
+                        for field in form.changed_data:
+                            setattr(instance, field, form.cleaned_data[field])
+                        instance.save()
+
+                    messages.success(
+                        request,
+                        f"This and {future_instances.count() - 1} future instances updated.",
+                    )
+
+                elif edit_scope == "all" or (
+                    edit_scope == "future" and is_recurring_parent
+                ):
+                    # Edit parent event and all instances
+                    parent = event if is_recurring_parent else event.recurrence_parent
+
+                    # Update parent
+                    for field in form.changed_data:
+                        setattr(parent, field, form.cleaned_data[field])
+                    parent.save()
+
+                    # Update all instances
+                    instances = Event.objects.filter(recurrence_parent=parent)
+                    for instance in instances:
+                        for field in form.changed_data:
+                            setattr(instance, field, form.cleaned_data[field])
+                        instance.save()
+
+                    messages.success(
+                        request,
+                        f"Parent event and all {instances.count()} instances updated.",
+                    )
+
+            return redirect("common:coordination_events")
+
+        messages.error(
+            request, "Please correct the highlighted errors before submitting."
+        )
+        if form.errors:
+            logger.warning("Event form errors: %s", form.errors)
+    else:
+        form = EventForm(instance=event)
+
+    # Provide scope options in context
+    scope_options = []
+    if is_recurring_instance or is_recurring_parent:
+        scope_options.append(
+            {"value": "this", "label": "Only this event", "description": ""}
+        )
+        if is_recurring_instance:
+            parent = event.recurrence_parent
+            future_count = Event.objects.filter(
+                recurrence_parent=parent, start_date__gte=event.start_date
+            ).count()
+            scope_options.append(
+                {
+                    "value": "future",
+                    "label": "This and future events",
+                    "description": f"Will update {future_count} events",
+                }
+            )
+        scope_options.append(
+            {
+                "value": "all",
+                "label": "All events in series",
+                "description": "Will update the entire recurring series",
+            }
+        )
+
+    context = {
+        "form": form,
+        "event": event,
+        "is_recurring_instance": is_recurring_instance,
+        "is_recurring_parent": is_recurring_parent,
+        "scope_options": scope_options,
+        "return_url": reverse("common:coordination_events"),
+        "page_title": "Edit Event Instance",
+        "page_heading": f"Edit {event.title}",
+        "submit_label": "Save Changes",
+    }
+    return render(request, "coordination/event_edit_instance.html", context)

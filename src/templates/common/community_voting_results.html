@@ -94,8 +94,8 @@
                             <div class="text-sm font-medium text-gray-900">{{ need.title }}</div>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">
-                            {% if need.barangay %}
-                            {{ need.barangay.name }}, {{ need.barangay.municipality.name }}
+                            {% if need.community and need.community.barangay %}
+                            {{ need.community.barangay.name }}, {{ need.community.barangay.municipality.name }}
                             {% else %}
                             Region-wide
                             {% endif %}

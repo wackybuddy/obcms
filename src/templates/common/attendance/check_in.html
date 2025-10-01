@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:coordination_events' %}" class="text-neutral-500 hover:text-neutral-700">Events</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Check-In</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-clipboard-check text-emerald-600 mr-4"></i>
+                {{ page_heading }}
+            </h1>
+            <p class="mt-2 text-gray-600">
+                {{ event.start_date|date:"F d, Y" }}
+                {% if event.start_time %}
+                    {{ event.start_time|time:"g:i A" }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'common:event_generate_qr' event.id %}" target="_blank"
+               class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                <i class="fas fa-qrcode mr-2"></i>
+                Show QR Code
+            </a>
+            <a href="{% url 'common:event_attendance_report' event.id %}"
+               class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                <i class="fas fa-chart-bar mr-2"></i>
+                View Report
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Total Participants</p>
+                    <p class="text-3xl font-bold text-gray-900">{{ total_participants }}</p>
+                </div>
+                <i class="fas fa-users text-gray-400 text-3xl"></i>
+            </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Checked In</p>
+                    <p class="text-3xl font-bold text-emerald-600">{{ checked_in }}</p>
+                </div>
+                <i class="fas fa-check-circle text-emerald-400 text-3xl"></i>
+            </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Not Checked In</p>
+                    <p class="text-3xl font-bold text-amber-600">{{ not_checked_in }}</p>
+                </div>
+                <i class="fas fa-clock text-amber-400 text-3xl"></i>
+            </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Attendance Rate</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ attendance_rate }}%</p>
+                </div>
+                <i class="fas fa-percentage text-blue-400 text-3xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-4">
+        <div class="flex gap-4">
+            <div class="flex-1">
+                <input type="text" id="searchInput" placeholder="Search by name..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+            </div>
+            <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500">
+                <option value="all">All Status</option>
+                <option value="checked-in">Checked In</option>
+                <option value="checked-out">Checked Out</option>
+                <option value="not-checked-in">Not Checked In</option>
+                <option value="absent">Absent</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Participant</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-In Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check-Out Time</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    {% for participant in participant_rows %}
+                    <tr class="participant-row" data-name="{{ participant.display_name|lower }}" data-status="{{ participant.filter_value }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ participant.display_name }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ participant.badge_class }}">
+                                {{ participant.status_label }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if participant.check_in_time %}
+                                {{ participant.check_in_time|time:"g:i A" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if participant.check_out_time %}
+                                {{ participant.check_out_time|time:"g:i A" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <form method="post" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="participant_id" value="{{ participant.id }}">
+                                {% if participant.can_check_in %}
+                                <button type="submit" name="action" value="check_in"
+                                        class="text-emerald-600 hover:text-emerald-900 mr-3">
+                                    <i class="fas fa-sign-in-alt"></i> Check In
+                                </button>
+                                {% elif participant.can_check_out %}
+                                <button type="submit" name="action" value="check_out"
+                                        class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-sign-out-alt"></i> Check Out
+                                </button>
+                                {% else %}
+                                <span class="text-gray-400">Completed</span>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const rows = document.querySelectorAll('.participant-row');
+
+    function filterTable() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+
+        rows.forEach(row => {
+            const name = row.dataset.name;
+            const status = row.dataset.status;
+
+            const matchesSearch = name.includes(searchTerm);
+            const matchesStatus = statusValue === 'all' || status === statusValue;
+
+            row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+        });
+    }
+
+    searchInput.addEventListener('input', filterTable);
+    statusFilter.addEventListener('change', filterTable);
+});
+</script>
+{% endblock %}
