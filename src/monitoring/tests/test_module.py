@@ -22,6 +22,7 @@ from ..models import (
     MonitoringEntryFunding,
     MonitoringEntryWorkflowStage,
     MonitoringUpdate,
+    OutcomeIndicator,
 )
 
 User = get_user_model()
@@ -130,6 +131,44 @@ class MonitoringModelTests(MonitoringBaseTestCase):
         self.assertEqual(update.entry, entry)
         self.assertEqual(update.get_update_type_display(), "Status Update")
         self.assertEqual(entry.updates.count(), 1)
+
+    def test_outcome_framework_and_standard_indicators(self):
+        indicator = OutcomeIndicator.objects.create(
+            category="livelihood",
+            indicator_name="Households with restored livelihood",
+            definition="Number of OBC households reporting livelihood recovery",
+            unit_of_measure="households",
+            frequency="Quarterly",
+        )
+
+        entry = MonitoringEntry.objects.create(
+            title="Community Livelihood Recovery",
+            category="moa_ppa",
+            status="planning",
+            lead_organization=self.primary_org,
+            created_by=self.user,
+            updated_by=self.user,
+            cost_per_beneficiary=Decimal("1250.50"),
+            cost_effectiveness_rating="high",
+            outcome_framework={
+                "outputs": [
+                    {
+                        "indicator": "Households supported",
+                        "target": 120,
+                        "actual": 45,
+                        "unit": "households",
+                    }
+                ]
+            },
+        )
+
+        entry.standard_outcome_indicators.add(indicator)
+        entry.refresh_from_db()
+
+        self.assertEqual(entry.standard_outcome_indicators.count(), 1)
+        self.assertEqual(entry.cost_effectiveness_rating, "high")
+        self.assertEqual(entry.cost_per_beneficiary, Decimal("1250.50"))
+        self.assertIn("outputs", entry.outcome_framework)
 
     def test_backfill_command_populates_defaults(self):
         entry = MonitoringEntry.objects.create(

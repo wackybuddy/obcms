@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Budget Scenario - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:scenario_list' %}" class="text-neutral-500 hover:text-neutral-700">Scenarios</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Create Scenario</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Create New Budget Scenario</h1>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="space-y-1">
+                <label for="name" class="block text-sm font-medium text-gray-700">Scenario Name<span class="text-red-500">*</span></label>
+                <input type="text" name="name" id="name" required class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+            </div>
+
+            <div class="space-y-1">
+                <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" id="description" rows="3" class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-1">
+                    <label for="scenario_type" class="block text-sm font-medium text-gray-700">Scenario Type<span class="text-red-500">*</span></label>
+                    <select name="scenario_type" id="scenario_type" required class="block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                        {% for value, label in scenario_types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label for="planning_cycle" class="block text-sm font-medium text-gray-700">Planning Cycle</label>
+                    <select name="planning_cycle" id="planning_cycle" class="block w-full py-3 px-4 rounded-xl border border-gray-200 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">None</option>
+                        {% for cycle in planning_cycles %}
+                        <option value="{{ cycle.id }}">FY {{ cycle.fiscal_year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label for="total_budget" class="block text-sm font-medium text-gray-700">Total Budget (₱)<span class="text-red-500">*</span></label>
+                <input type="number" name="total_budget" id="total_budget" step="0.01" required class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+            </div>
+
+            <div class="border-t border-gray-200 pt-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Optimization Weights</h2>
+                <p class="text-sm text-gray-600 mb-4">Configure how the optimization algorithm prioritizes different factors (should sum to 1.00)</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-1">
+                        <label for="weight_needs_coverage" class="block text-sm font-medium text-gray-700">Needs Coverage</label>
+                        <input type="number" name="weight_needs_coverage" id="weight_needs_coverage" step="0.01" min="0" max="1" value="0.40" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="weight_equity" class="block text-sm font-medium text-gray-700">Equity</label>
+                        <input type="number" name="weight_equity" id="weight_equity" step="0.01" min="0" max="1" value="0.30" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="weight_strategic_alignment" class="block text-sm font-medium text-gray-700">Strategic Alignment</label>
+                        <input type="number" name="weight_strategic_alignment" id="weight_strategic_alignment" step="0.01" min="0" max="1" value="0.30" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <input type="checkbox" name="is_baseline" id="is_baseline" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded">
+                <label for="is_baseline" class="text-sm font-medium text-gray-700">Mark as baseline scenario</label>
+            </div>
+
+            <div class="flex gap-3 pt-6">
+                <a href="{% url 'common:scenario_list' %}" class="flex-1 inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</a>
+                <button type="submit" class="flex-1 inline-flex items-center justify-center rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700">
+                    <i class="fas fa-plus mr-2"></i> Create Scenario
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

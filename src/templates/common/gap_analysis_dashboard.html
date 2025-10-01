@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}Gap Analysis Dashboard - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Gap Analysis</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Gap Analysis Dashboard</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">
+                Identify unfunded community needs that require budget allocation and MAO coordination.
+            </p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Unfunded Needs</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ total_unfunded }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Critical Priority</p>
+                    <p class="mt-2 text-3xl font-bold text-red-600">{{ critical_count }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                    <i class="fas fa-fire"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">High Priority</p>
+                    <p class="mt-2 text-3xl font-bold text-orange-600">{{ high_count }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                    <i class="fas fa-arrow-up"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="space-y-1">
+                <label for="urgency" class="block text-sm font-medium text-gray-700">Urgency Level</label>
+                <select name="urgency" id="urgency" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Levels</option>
+                    <option value="critical" {% if request.GET.urgency == 'critical' %}selected{% endif %}>Critical</option>
+                    <option value="high" {% if request.GET.urgency == 'high' %}selected{% endif %}>High</option>
+                    <option value="medium" {% if request.GET.urgency == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="low" {% if request.GET.urgency == 'low' %}selected{% endif %}>Low</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                <select name="category" id="category" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Categories</option>
+                    <option value="education" {% if request.GET.category == 'education' %}selected{% endif %}>Education</option>
+                    <option value="health" {% if request.GET.category == 'health' %}selected{% endif %}>Health</option>
+                    <option value="livelihood" {% if request.GET.category == 'livelihood' %}selected{% endif %}>Livelihood</option>
+                    <option value="infrastructure" {% if request.GET.category == 'infrastructure' %}selected{% endif %}>Infrastructure</option>
+                    <option value="social_protection" {% if request.GET.category == 'social_protection' %}selected{% endif %}>Social Protection</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="region" class="block text-sm font-medium text-gray-700">Region</label>
+                <select name="region" id="region" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Regions</option>
+                    {% for region in regions %}
+                    <option value="{{ region.id }}" {% if request.GET.region == region.id|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <i class="fas fa-filter"></i>
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Unfunded Needs Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Unfunded Community Needs</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Community / Need
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Urgency
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Est. Cost
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for need in unfunded_needs %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ need.title }}</div>
+                            <div class="text-sm text-gray-500">
+                                {% if need.barangay %}
+                                    {{ need.barangay.name }}, {{ need.barangay.municipality.name }}
+                                {% else %}
+                                    Region-wide
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ need.get_category_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if need.urgency_level == 'critical' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-exclamation-circle mr-1"></i> Critical
+                            </span>
+                            {% elif need.urgency_level == 'high' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                <i class="fas fa-arrow-up mr-1"></i> High
+                            </span>
+                            {% elif need.urgency_level == 'medium' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Medium
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                Low
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if need.estimated_cost %}
+                                ₱{{ need.estimated_cost|floatformat:2|intcomma }}
+                            {% else %}
+                                <span class="text-gray-400">Not estimated</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if need.forwarded_to_mao %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-paper-plane mr-1"></i> Forwarded
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                Not forwarded
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{% url 'admin:mana_need_change' need.id %}" class="text-emerald-600 hover:text-emerald-900 text-sm font-medium">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-600">
+                                    <i class="fas fa-check-circle text-xl"></i>
+                                </div>
+                                <p class="text-lg font-semibold text-gray-900">All needs have budget support</p>
+                                <p class="text-sm text-gray-500">No unfunded community needs found matching your filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Category Breakdown -->
+    {% if category_breakdown %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Unfunded Needs by Category</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for item in category_breakdown %}
+            <div class="border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">{{ item.category__display }}</span>
+                    <span class="text-xl font-bold text-gray-900">{{ item.count }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

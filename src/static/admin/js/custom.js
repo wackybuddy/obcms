@@ -168,6 +168,48 @@
           }
         }
       });
+
     });
+
+  const inlineQuickAddButtons = document.querySelectorAll('.obc-inline-card__add');
+  inlineQuickAddButtons.forEach(function (button) {
+    button.addEventListener('click', function (event) {
+      event.preventDefault();
+      const inlineGroup = button.closest('.obc-inline-group');
+      if (!inlineGroup) {
+        return;
+      }
+      const addRowLink = inlineGroup.querySelector('.add-row a');
+      if (addRowLink) {
+        addRowLink.click();
+        return;
+      }
+      if (window.django && window.django.jQuery) {
+        const $ = window.django.jQuery;
+        const selector = '#' + button.dataset.inlinePrefix + '-group .add-row a';
+        const $link = $(selector);
+        if ($link.length) {
+          $link.trigger('click');
+        }
+      }
+    });
+  });
+
+  document.addEventListener('formset:added', function (event) {
+    const element = event.target;
+    if (!element || !element.classList) {
+      return;
+    }
+    if (element.classList.contains('obc-inline-related')) {
+      element.classList.add('obc-inline-related--new');
+    } else if (element.tagName === 'TR') {
+      element.classList.add('obc-inline-table__row--new');
+    }
+    setTimeout(function () {
+      element.classList.remove('obc-inline-related--new');
+      element.classList.remove('obc-inline-table__row--new');
+    }, 600);
+  });
+
   });
 })();

@@ -741,3 +741,133 @@ class PolicyDocument(models.Model):
         if self.file:
             self.file_size = self.file.size
         super().save(*args, **kwargs)
+
+
+class PolicyImplementationMilestone(models.Model):
+    """
+    Model for tracking implementation milestones for policy recommendations.
+
+    Part of Phase 1 implementation for policy-to-budget integration.
+    Allows tracking of structured implementation phases with target dates,
+    responsible parties, and completion status.
+    """
+
+    STATUS_CHOICES = [
+        ("not_started", "Not Started"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+        ("delayed", "Delayed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    # Basic Information
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    policy = models.ForeignKey(
+        PolicyRecommendation,
+        on_delete=models.CASCADE,
+        related_name="milestones",
+        help_text="Policy recommendation this milestone belongs to",
+    )
+
+    title = models.CharField(max_length=255, help_text="Title of the milestone")
+
+    description = models.TextField(
+        help_text="Detailed description of what needs to be accomplished"
+    )
+
+    order = models.PositiveIntegerField(
+        default=1, help_text="Order/sequence of this milestone"
+    )
+
+    # Schedule
+    target_date = models.DateField(help_text="Target completion date")
+
+    actual_completion_date = models.DateField(
+        null=True, blank=True, help_text="Actual date when milestone was completed"
+    )
+
+    # Status and Responsibility
+    status = models.CharField(
+        max_length=15,
+        choices=STATUS_CHOICES,
+        default="not_started",
+        help_text="Current status of this milestone",
+    )
+
+    responsible_party = models.CharField(
+        max_length=255,
+        help_text="Organization or unit responsible for this milestone",
+    )
+
+    assigned_to = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_policy_milestones",
+        help_text="User assigned to oversee this milestone",
+    )
+
+    # Progress Tracking
+    progress_percentage = models.PositiveIntegerField(
+        default=0,
+        validators=[MaxValueValidator(100)],
+        help_text="Progress percentage (0-100)",
+    )
+
+    deliverables = models.TextField(
+        blank=True, help_text="Expected deliverables for this milestone"
+    )
+
+    actual_outputs = models.TextField(
+        blank=True, help_text="Actual outputs/deliverables achieved"
+    )
+
+    # Issues and Notes
+    challenges = models.TextField(
+        blank=True, help_text="Challenges encountered during implementation"
+    )
+
+    notes = models.TextField(blank=True, help_text="Additional notes and updates")
+
+    # Metadata
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name="created_policy_milestones",
+        help_text="User who created this milestone",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["policy", "order", "target_date"]
+        verbose_name = "Policy Implementation Milestone"
+        verbose_name_plural = "Policy Implementation Milestones"
+        indexes = [
+            models.Index(fields=["policy", "status"]),
+            models.Index(fields=["target_date", "status"]),
+            models.Index(fields=["assigned_to", "status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.policy.title} - Milestone {self.order}: {self.title}"
+
+    @property
+    def is_overdue(self):
+        """Check if milestone is overdue."""
+        if self.status in ["completed", "cancelled"]:
+            return False
+        from django.utils import timezone
+
+        return self.target_date < timezone.now().date()
+
+    @property
+    def days_until_due(self):
+        """Calculate days until target date."""
+        from django.utils import timezone
+
+        delta = self.target_date - timezone.now().date()
+        return delta.days

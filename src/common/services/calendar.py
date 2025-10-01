@@ -1190,6 +1190,19 @@ def build_calendar_payload(
                         notes=entry.follow_up_actions or entry.support_required or "",
                     )
                 elif category == "planning_target_end":
+                    # Prefer structured outcome framework when available for calendar notes
+                    notes = ""
+                    if isinstance(entry.outcome_framework, dict):
+                        outputs = entry.outcome_framework.get("outputs") or []
+                        if outputs:
+                            first_output = outputs[0]
+                            indicator = first_output.get("indicator") or ""
+                            target = first_output.get("target")
+                            actual = first_output.get("actual")
+                            notes = f"{indicator}: {actual or 0}/{target or 0}" if indicator else ""
+                    if not notes and entry.outcome_indicators:
+                        notes = entry.outcome_indicators[:280]
+
                     append_workflow_action(
                         workflow_actions_entry,
                         module_name,
@@ -1198,7 +1211,7 @@ def build_calendar_payload(
                         label=f"{label}",
                         due=aware_start,
                         status=entry.status,
-                        notes=entry.outcome_indicators[:280] if entry.outcome_indicators else "",
+                        notes=notes,
                     )
 
         if include_module("planning"):

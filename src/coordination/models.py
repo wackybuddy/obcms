@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from communities.models import OBCCommunity
 from mana.models import Assessment
+from common.models import Region
 
 User = get_user_model()
 
@@ -220,6 +221,32 @@ class StakeholderEngagement(models.Model):
         help_text="Actual cost incurred",
     )
 
+    # Participatory Budgeting Extension
+    is_participatory_budgeting = models.BooleanField(
+        default=False,
+        help_text="Whether this engagement facilitates participatory budgeting",
+    )
+
+    budget_amount_to_allocate = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total amount to be allocated during the participatory budgeting session",
+    )
+
+    voting_open_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="When community voting opens for participatory budgeting",
+    )
+
+    voting_close_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="When community voting closes for participatory budgeting",
+    )
+
     # Results and Follow-up
     key_outcomes = models.TextField(blank=True, help_text="Key outcomes and results")
 
@@ -264,6 +291,7 @@ class StakeholderEngagement(models.Model):
             models.Index(fields=["community", "status"]),
             models.Index(fields=["engagement_type", "planned_date"]),
             models.Index(fields=["status", "priority"]),
+            models.Index(fields=["is_participatory_budgeting", "planned_date"]),
         ]
 
     def __str__(self):
@@ -789,6 +817,99 @@ class Organization(models.Model):
         if self.acronym:
             return f"{self.acronym} - {self.name}"
         return self.name
+
+
+class MAOFocalPerson(models.Model):
+    """
+    Model for tracking MAO (Ministry/Agency/Office) focal persons.
+
+    Part of Phase 1 implementation for MAO coordination and quarterly
+    meeting workflows. Replaces the simple text fields in Organization
+    with a proper relational model supporting primary/alternate contacts.
+    """
+
+    ROLE_CHOICES = [
+        ("primary", "Primary Focal Person"),
+        ("alternate", "Alternate Focal Person"),
+    ]
+
+    # Basic Information
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    mao = models.ForeignKey(
+        Organization,
+        on_delete=models.CASCADE,
+        related_name="focal_persons",
+        limit_choices_to={"organization_type": "bmoa"},
+        help_text="MAO that this focal person represents",
+    )
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="mao_focal_roles",
+        help_text="User account for this focal person",
+    )
+
+    role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES,
+        default="primary",
+        help_text="Role: primary or alternate focal person",
+    )
+
+    # Contact Information
+    designation = models.CharField(
+        max_length=255, help_text="Official title/position within the MAO"
+    )
+
+    contact_email = models.EmailField(help_text="Official email address")
+
+    contact_phone = models.CharField(
+        max_length=50, blank=True, help_text="Primary phone number"
+    )
+
+    contact_mobile = models.CharField(
+        max_length=50, blank=True, help_text="Mobile phone number"
+    )
+
+    # Status
+    is_active = models.BooleanField(
+        default=True, help_text="Whether this focal person is currently active"
+    )
+
+    appointed_date = models.DateField(
+        help_text="Date when appointed as focal person"
+    )
+
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when focal person role ended (if applicable)",
+    )
+
+    # Notes
+    notes = models.TextField(
+        blank=True, help_text="Additional notes about this focal person"
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["mao__name", "role", "-appointed_date"]
+        verbose_name = "MAO Focal Person"
+        verbose_name_plural = "MAO Focal Persons"
+        unique_together = [["mao", "user", "role"]]
+        indexes = [
+            models.Index(fields=["mao", "is_active"]),
+            models.Index(fields=["user", "is_active"]),
+            models.Index(fields=["role", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - {self.mao.name} ({self.get_role_display()})"
 
 
 class OrganizationContact(models.Model):
@@ -1714,6 +1835,43 @@ class Event(models.Model):
         help_text="Parent event (for recurring event instances)",
     )
 
+    # ==========================================
+    # QUARTERLY COORDINATION MEETING FIELDS
+    # (Added for Phase 1 MAO coordination workflow)
+    # ==========================================
+
+    QUARTER_CHOICES = [
+        ("Q1", "Q1 (January - March)"),
+        ("Q2", "Q2 (April - June)"),
+        ("Q3", "Q3 (July - September)"),
+        ("Q4", "Q4 (October - December)"),
+    ]
+
+    is_quarterly_coordination = models.BooleanField(
+        default=False,
+        help_text="Whether this is an OCM quarterly coordination meeting",
+    )
+
+    quarter = models.CharField(
+        max_length=2,
+        choices=QUARTER_CHOICES,
+        blank=True,
+        help_text="Quarter for quarterly coordination meetings",
+    )
+
+    fiscal_year = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(2000), MaxValueValidator(2100)],
+        help_text="Fiscal year for quarterly coordination meetings",
+    )
+
+    pre_meeting_reports_due = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Deadline for MAOs to submit pre-meeting reports",
+    )
+
     # Metadata
     created_by = models.ForeignKey(
         User,
@@ -1772,6 +1930,98 @@ class Event(models.Model):
     def is_upcoming(self):
         """Check if event is upcoming."""
         return self.start_date > timezone.now().date()
+
+
+class MAOQuarterlyReport(models.Model):
+    """Quarterly coordination report submissions from MAOs."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    meeting = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="quarterly_reports",
+        limit_choices_to={"is_quarterly_coordination": True},
+        help_text="Quarterly coordination meeting where the report was submitted",
+    )
+
+    mao = models.ForeignKey(
+        "coordination.Organization",
+        on_delete=models.CASCADE,
+        related_name="quarterly_reports",
+        limit_choices_to={"organization_type": "bmoa"},
+        help_text="MAO submitting the quarterly report",
+    )
+
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="submitted_mao_reports",
+        help_text="User who uploaded the report",
+    )
+
+    ppas_implemented = models.ManyToManyField(
+        "monitoring.MonitoringEntry",
+        blank=True,
+        related_name="mao_quarterly_reports",
+        help_text="PPAs implemented during the quarter",
+    )
+
+    regions_covered = models.ManyToManyField(
+        Region,
+        blank=True,
+        related_name="mao_quarterly_reports",
+        help_text="Regions reached by the reported interventions",
+    )
+
+    total_budget_allocated = models.DecimalField(
+        max_digits=14,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total budget allocated to reported PPAs",
+    )
+
+    total_obc_beneficiaries = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Estimated number of OBC beneficiaries",
+    )
+
+    accomplishments = models.TextField(
+        help_text="Key accomplishments during the quarter",
+    )
+
+    challenges = models.TextField(
+        blank=True,
+        help_text="Challenges encountered",
+    )
+
+    plans_next_quarter = models.TextField(
+        blank=True,
+        help_text="Action plans for the next quarter",
+    )
+
+    coordination_needs = models.TextField(
+        blank=True,
+        help_text="Support requested from OOBC or other partners",
+    )
+
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-submitted_at"]
+        indexes = [
+            models.Index(fields=["mao", "submitted_at"]),
+            models.Index(fields=["meeting", "submitted_at"]),
+        ]
+
+    def __str__(self):
+        meeting_title = self.meeting.title if self.meeting_id else "Quarterly Meeting"
+        return f"{self.mao.name} – {meeting_title}"
 
 
 class EventParticipant(models.Model):

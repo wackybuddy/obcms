@@ -133,6 +133,16 @@ EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 - **JWT**: 1-hour access tokens, 7-day refresh tokens
 - **Pagination**: 20 items per page default
 
+### Static Files Configuration
+- **Location**: All static files are in `src/static/` (centralized approach)
+- **Configuration**: `STATICFILES_DIRS = [BASE_DIR.parent / "static"]` points to `src/static/`
+- **Structure**:
+  - `src/static/common/` - Common app assets (CSS, JS, vendor/fullcalendar)
+  - `src/static/vendor/` - Shared vendor libraries (Leaflet, localforage, idb)
+  - `src/static/admin/` - Admin interface customizations
+- **Important**: Server restart required after modifying `STATICFILES_DIRS`
+- **See**: [docs/development/README.md](docs/development/README.md#static-files-architecture) for complete documentation
+
 ## Development Guidelines
 
 ### Model Relationships
@@ -232,3 +242,86 @@ def task_operation_view(request, task_id):
 **Known Bug**: Task deletion in kanban view (`/oobc-management/staff/tasks/`) doesn't remove cards instantly. The modal targets `[data-task-row]` but kanban uses `[data-task-id]`. This must be fixed to ensure instant UI updates.
 
 For detailed implementation guidance, refer to `docs/improvements/instant_ui_improvements_plan.md`.
+
+## Documentation Guidelines
+
+### Where to Write Documentation
+
+**CRITICAL: All documentation files MUST be placed under the `docs/` directory.**
+
+#### Documentation Organization Structure
+```
+docs/
+├── deployment/          # Deployment guides, production setup
+├── development/         # Development guidelines (NOT AI config)
+├── testing/            # Testing guides, verification reports
+├── reference/          # Technical reference (coordinates, standards)
+├── improvements/       # Implementation tracking, improvement plans
+├── guidelines/         # Program guidelines (MANA, policies)
+├── product/           # Product roadmap, architecture
+├── reports/           # Research, analysis reports
+├── env/               # Environment-specific configs
+├── admin-guide/       # Admin operations
+└── ui/                # UI/UX documentation
+```
+
+#### Documentation Rules
+
+1. **NEVER create documentation in project root**
+   - ❌ Wrong: `NEW_FEATURE_GUIDE.md` in root
+   - ✅ Correct: `docs/development/NEW_FEATURE_GUIDE.md`
+
+2. **Choose the appropriate category:**
+   - Implementation tracking → `docs/improvements/`
+   - Deployment instructions → `docs/deployment/`
+   - Testing procedures → `docs/testing/`
+   - User guides → `docs/guidelines/`
+   - Technical specs → `docs/reference/`
+
+3. **Update the main index:**
+   - After creating new docs, add them to `docs/README.md`
+   - Include in the appropriate category section
+
+4. **Use relative links:**
+   - Within docs/: `[link](../other-category/file.md)`
+   - From root to docs: `[link](docs/category/file.md)`
+
+#### Configuration Files vs Documentation
+
+**Configuration files stay in ROOT:**
+- ✅ `CLAUDE.md` - AI configuration (ROOT)
+- ✅ `GEMINI.md` - AI configuration (ROOT)
+- ✅ `AGENTS.md` - AI configuration (ROOT)
+- ✅ `README.md` - Project overview (ROOT)
+- ✅ `.env.example` - Environment template (ROOT)
+
+**Documentation files go in docs/:**
+- ✅ `docs/development/README.md` - Development guide
+- ✅ `docs/deployment/production-guide.md` - Deployment docs
+- ✅ `docs/improvements/feature-plan.md` - Implementation plans
+
+#### Example: Creating New Documentation
+
+When implementing a new feature:
+
+```bash
+# ❌ WRONG - Don't create in root
+echo "# New Feature" > AWESOME_FEATURE.md
+
+# ✅ CORRECT - Create in appropriate docs/ subdirectory
+echo "# New Feature" > docs/improvements/awesome_feature_implementation.md
+
+# Update the index
+# Add entry to docs/README.md under appropriate section
+```
+
+### Documentation Checklist
+
+When creating or updating documentation:
+- [ ] File is in appropriate `docs/` subdirectory
+- [ ] Added to `docs/README.md` index
+- [ ] Uses relative links correctly
+- [ ] Follows naming convention (lowercase, underscores)
+- [ ] Includes metadata (date, status, author if applicable)
+
+**Reference:** See [docs/DOCUMENTATION_ORGANIZATION.md](docs/DOCUMENTATION_ORGANIZATION.md) for organization details.

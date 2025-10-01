@@ -1250,3 +1250,403 @@ def recommendations_by_area(request, area_slug):
         'current_filter': status_filter,
     }
     return render(request, 'common/recommendations_by_area.html', context)
+
+
+# ========================================
+# PHASE 2: PLANNING & BUDGETING DASHBOARDS
+# ========================================
+
+@login_required
+def gap_analysis_dashboard(request):
+    """
+    Gap Analysis Dashboard - Show unfunded community needs.
+    
+    Part of Phase 2 implementation for evidence-based budgeting.
+    Displays high-priority needs that don't have budget linkage.
+    """
+    from mana.models import Need
+    from django.db.models import Q, Count, Sum
+    
+    # Get filter parameters
+    region_id = request.GET.get('region')
+    category_id = request.GET.get('category')
+    urgency = request.GET.get('urgency')
+    submission_type = request.GET.get('submission_type')
+    
+    # Base query: needs that are validated/prioritized but not linked to budget
+    unfunded_needs = Need.objects.filter(
+        Q(linked_ppa__isnull=True),  # Not linked to any PPA
+        status__in=['validated', 'prioritized'],  # Only validated needs
+    ).select_related(
+        'community__barangay__municipality__province__region',
+        'category',
+        'submitted_by_user',
+        'forwarded_to_mao',
+    )
+    
+    # Apply filters
+    if region_id:
+        unfunded_needs = unfunded_needs.filter(
+            community__barangay__municipality__province__region_id=region_id
+        )
+    if category_id:
+        unfunded_needs = unfunded_needs.filter(category_id=category_id)
+    if urgency:
+        unfunded_needs = unfunded_needs.filter(urgency_level=urgency)
+    if submission_type:
+        unfunded_needs = unfunded_needs.filter(submission_type=submission_type)
+    
+    # Calculate statistics
+    total_unfunded = unfunded_needs.count()
+    total_estimated_cost = unfunded_needs.aggregate(
+        total=Sum('estimated_cost')
+    )['total'] or 0
+    total_affected_population = unfunded_needs.aggregate(
+        total=Sum('affected_population')
+    )['total'] or 0
+    
+    # Breakdown by urgency
+    urgency_breakdown = unfunded_needs.values('urgency_level').annotate(
+        count=Count('id'),
+        total_cost=Sum('estimated_cost'),
+    ).order_by('-count')
+    
+    # Breakdown by category
+    category_breakdown = unfunded_needs.values(
+        'category__name', 'category__category_type'
+    ).annotate(
+        count=Count('id'),
+        total_cost=Sum('estimated_cost'),
+    ).order_by('-count')[:10]
+    
+    # Breakdown by region
+    region_breakdown = unfunded_needs.values(
+        'community__barangay__municipality__province__region__name'
+    ).annotate(
+        count=Count('id'),
+        total_cost=Sum('estimated_cost'),
+    ).order_by('-count')
+    
+    # Top priority unfunded needs
+    top_unfunded = unfunded_needs.order_by(
+        '-priority_score', '-impact_severity'
+    )[:20]
+    
+    # Get forwarded but unfunded (in MAO pipeline)
+    forwarded_unfunded = unfunded_needs.filter(
+        forwarded_to_mao__isnull=False
+    ).values(
+        'forwarded_to_mao__name', 'forwarded_to_mao__acronym'
+    ).annotate(
+        count=Count('id'),
+        total_cost=Sum('estimated_cost'),
+    ).order_by('-count')
+    
+    context = {
+        'total_unfunded': total_unfunded,
+        'total_estimated_cost': total_estimated_cost,
+        'total_affected_population': total_affected_population,
+        'urgency_breakdown': urgency_breakdown,
+        'category_breakdown': category_breakdown,
+        'region_breakdown': region_breakdown,
+        'top_unfunded': top_unfunded,
+        'forwarded_unfunded': forwarded_unfunded,
+        'current_filters': {
+            'region': region_id,
+            'category': category_id,
+            'urgency': urgency,
+            'submission_type': submission_type,
+        },
+    }
+    
+    return render(request, 'common/gap_analysis_dashboard.html', context)
+
+
+@login_required
+def policy_budget_matrix(request):
+    """
+    Policy-Budget Matrix - Show which policies are funded and which aren't.
+    
+    Part of Phase 2 implementation for policy-to-budget integration.
+    """
+    from recommendations.policy_tracking.models import PolicyRecommendation
+    from monitoring.models import MonitoringEntry
+    from django.db.models import Count, Sum, Q
+    
+    # Get all approved policies
+    policies = PolicyRecommendation.objects.filter(
+        status__in=['approved', 'in_implementation', 'implemented']
+    ).select_related(
+        'proposed_by',
+        'lead_author',
+    ).prefetch_related(
+        'implementing_ppas',
+        'related_needs',
+        'milestones',
+    )
+    
+    # Build matrix data
+    matrix_data = []
+    for policy in policies:
+        # Get implementing PPAs
+        ppas = policy.implementing_ppas.all()
+        total_budget = ppas.aggregate(Sum('budget_allocation'))['total_budget__sum'] or 0
+        
+        # Get needs addressed through this policy
+        needs_count = policy.related_needs.count()
+        
+        # Get implementation progress from milestones
+        milestones = policy.milestones.all()
+        if milestones.exists():
+            avg_progress = milestones.aggregate(
+                avg=Sum('progress_percentage')
+            )['avg'] / milestones.count() if milestones.count() > 0 else 0
+        else:
+            avg_progress = 0
+        
+        # Determine funding status
+        if ppas.exists():
+            funding_status = 'funded'
+        elif needs_count > 0:
+            funding_status = 'needs_identified'
+        else:
+            funding_status = 'not_funded'
+        
+        matrix_data.append({
+            'policy': policy,
+            'ppa_count': ppas.count(),
+            'total_budget': total_budget,
+            'needs_count': needs_count,
+            'milestone_count': milestones.count(),
+            'avg_progress': avg_progress,
+            'funding_status': funding_status,
+        })
+    
+    # Calculate summary statistics
+    total_policies = len(matrix_data)
+    funded_policies = sum(1 for p in matrix_data if p['funding_status'] == 'funded')
+    total_policy_budget = sum(p['total_budget'] for p in matrix_data)
+    
+    # Breakdown by category
+    category_breakdown = {}
+    for item in matrix_data:
+        cat = item['policy'].category
+        if cat not in category_breakdown:
+            category_breakdown[cat] = {
+                'count': 0,
+                'funded': 0,
+                'total_budget': 0,
+            }
+        category_breakdown[cat]['count'] += 1
+        if item['funding_status'] == 'funded':
+            category_breakdown[cat]['funded'] += 1
+        category_breakdown[cat]['total_budget'] += item['total_budget']
+    
+    context = {
+        'matrix_data': matrix_data,
+        'total_policies': total_policies,
+        'funded_policies': funded_policies,
+        'funding_rate': (funded_policies / total_policies * 100) if total_policies > 0 else 0,
+        'total_policy_budget': total_policy_budget,
+        'category_breakdown': category_breakdown,
+    }
+    
+    return render(request, 'common/policy_budget_matrix.html', context)
+
+
+@login_required
+def mao_focal_persons_registry(request):
+    """
+    MAO Focal Persons Registry - Directory of all MAO focal persons.
+    
+    Part of Phase 2 implementation for MAO coordination.
+    """
+    from coordination.models import MAOFocalPerson, Organization
+    from django.db.models import Q, Count
+    
+    # Get filter parameters
+    mao_id = request.GET.get('mao')
+    role = request.GET.get('role')
+    is_active = request.GET.get('is_active')
+    search = request.GET.get('search')
+    
+    # Base query
+    focal_persons = MAOFocalPerson.objects.select_related(
+        'mao',
+        'user',
+    ).prefetch_related(
+        'managed_services',
+    )
+    
+    # Apply filters
+    if mao_id:
+        focal_persons = focal_persons.filter(mao_id=mao_id)
+    if role:
+        focal_persons = focal_persons.filter(role=role)
+    if is_active == 'true':
+        focal_persons = focal_persons.filter(is_active=True)
+    elif is_active == 'false':
+        focal_persons = focal_persons.filter(is_active=False)
+    if search:
+        focal_persons = focal_persons.filter(
+            Q(user__first_name__icontains=search) |
+            Q(user__last_name__icontains=search) |
+            Q(user__username__icontains=search) |
+            Q(designation__icontains=search) |
+            Q(mao__name__icontains=search) |
+            Q(mao__acronym__icontains=search)
+        )
+    
+    # Order by MAO, role, and appointment date
+    focal_persons = focal_persons.order_by('mao__name', 'role', '-appointed_date')
+    
+    # Get statistics
+    total_focal_persons = focal_persons.count()
+    active_count = focal_persons.filter(is_active=True).count()
+    primary_count = focal_persons.filter(role='primary', is_active=True).count()
+    
+    # MAO coverage
+    maos_with_focal_persons = focal_persons.values('mao').distinct().count()
+    total_maos = Organization.objects.filter(organization_type='bmoa').count()
+    
+    # Group by MAO
+    maos_grouped = {}
+    for fp in focal_persons:
+        mao_name = fp.mao.name
+        if mao_name not in maos_grouped:
+            maos_grouped[mao_name] = {
+                'mao': fp.mao,
+                'focal_persons': []
+            }
+        maos_grouped[mao_name]['focal_persons'].append(fp)
+    
+    context = {
+        'focal_persons': focal_persons,
+        'maos_grouped': maos_grouped,
+        'total_focal_persons': total_focal_persons,
+        'active_count': active_count,
+        'primary_count': primary_count,
+        'maos_with_focal_persons': maos_with_focal_persons,
+        'total_maos': total_maos,
+        'coverage_rate': (maos_with_focal_persons / total_maos * 100) if total_maos > 0 else 0,
+        'current_filters': {
+            'mao': mao_id,
+            'role': role,
+            'is_active': is_active,
+            'search': search,
+        },
+    }
+    
+    return render(request, 'common/mao_focal_persons_registry.html', context)
+
+def community_needs_summary(request):
+    """
+    Community Needs Summary - Overview of all community needs.
+    
+    Part of Phase 2 implementation for community participation tracking.
+    """
+    from mana.models import Need
+    from django.db.models import Count, Sum, Q, Avg
+    
+    # Get filter parameters
+    status = request.GET.get('status')
+    submission_type = request.GET.get('submission_type')
+    community_id = request.GET.get('community')
+    
+    # Base query
+    needs = Need.objects.select_related(
+        'community__barangay__municipality__province__region',
+        'category',
+        'submitted_by_user',
+        'forwarded_to_mao',
+        'linked_ppa',
+    )
+    
+    # Apply filters
+    if status:
+        needs = needs.filter(status=status)
+    if submission_type:
+        needs = needs.filter(submission_type=submission_type)
+    if community_id:
+        needs = needs.filter(community_id=community_id)
+    
+    # Calculate statistics
+    total_needs = needs.count()
+    
+    # By submission type
+    assessment_driven = needs.filter(submission_type='assessment_driven').count()
+    community_submitted = needs.filter(submission_type='community_submitted').count()
+    
+    # By funding status
+    funded = needs.filter(linked_ppa__isnull=False).count()
+    forwarded = needs.filter(
+        forwarded_to_mao__isnull=False,
+        linked_ppa__isnull=True
+    ).count()
+    unfunded = needs.filter(
+        linked_ppa__isnull=True,
+        forwarded_to_mao__isnull=True,
+        status__in=['validated', 'prioritized']
+    ).count()
+    
+    # Financial summary
+    total_estimated_cost = needs.aggregate(Sum('estimated_cost'))['estimated_cost__sum'] or 0
+    funded_cost = needs.filter(
+        linked_ppa__isnull=False
+    ).aggregate(Sum('estimated_cost'))['estimated_cost__sum'] or 0
+    gap_cost = total_estimated_cost - funded_cost
+    
+    # Impact summary
+    total_affected_population = needs.aggregate(
+        Sum('affected_population')
+    )['affected_population__sum'] or 0
+    avg_priority_score = needs.aggregate(Avg('priority_score'))['priority_score__avg'] or 0
+    
+    # Community votes (participatory budgeting)
+    total_votes = needs.aggregate(Sum('community_votes'))['community_votes__sum'] or 0
+    
+    # Breakdown by status
+    status_breakdown = needs.values('status').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Breakdown by urgency
+    urgency_breakdown = needs.values('urgency_level').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Recent needs
+    recent_needs = needs.order_by('-created_at')[:15]
+    
+    # Top priority unfunded
+    top_priority_unfunded = needs.filter(
+        linked_ppa__isnull=True,
+        status__in=['validated', 'prioritized']
+    ).order_by('-priority_score', '-impact_severity')[:10]
+    
+    context = {
+        'total_needs': total_needs,
+        'assessment_driven': assessment_driven,
+        'community_submitted': community_submitted,
+        'funded': funded,
+        'forwarded': forwarded,
+        'unfunded': unfunded,
+        'total_estimated_cost': total_estimated_cost,
+        'funded_cost': funded_cost,
+        'gap_cost': gap_cost,
+        'funding_rate': (funded / total_needs * 100) if total_needs > 0 else 0,
+        'total_affected_population': total_affected_population,
+        'avg_priority_score': avg_priority_score,
+        'total_votes': total_votes,
+        'status_breakdown': status_breakdown,
+        'urgency_breakdown': urgency_breakdown,
+        'recent_needs': recent_needs,
+        'top_priority_unfunded': top_priority_unfunded,
+        'current_filters': {
+            'status': status,
+            'submission_type': submission_type,
+            'community': community_id,
+        },
+    }
+    
+    return render(request, 'common/community_needs_summary.html', context)

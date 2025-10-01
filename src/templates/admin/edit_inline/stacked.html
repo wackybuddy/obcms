@@ -1,0 +1,81 @@
+{% load i18n admin_urls %}
+<div class="js-inline-admin-formset inline-group obc-inline-group"
+     id="{{ inline_admin_formset.formset.prefix }}-group"
+     data-inline-type="stacked"
+     data-inline-formset="{{ inline_admin_formset.inline_formset_data }}">
+    <div class="obc-admin-card obc-inline-card">
+        <div class="obc-admin-card__header">
+            <div class="obc-space-between w-full">
+                <div class="obc-inline-card__heading">
+                    <span class="obc-admin-card__icon"><i class="fas fa-layer-group"></i></span>
+                    <div class="obc-inline-card__meta">
+                        {% if inline_admin_formset.formset.max_num == 1 %}
+                            <h2 class="obc-inline-card__title">{{ inline_admin_formset.opts.verbose_name|capfirst }}</h2>
+                        {% else %}
+                            <h2 class="obc-inline-card__title">{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
+                        {% endif %}
+                        <p class="obc-inline-card__hint">{% translate "Manage related entries directly from this page." %}</p>
+                    </div>
+                </div>
+                {% if inline_admin_formset.has_add_permission %}
+                    <button type="button" class="obc-admin-button obc-admin-button--secondary obc-inline-card__add"
+                            data-inline-prefix="{{ inline_admin_formset.formset.prefix }}">
+                        <i class="fas fa-plus"></i>
+                        {% blocktranslate with name=inline_admin_formset.opts.verbose_name %}Add {{ name }}{% endblocktranslate %}
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="obc-admin-card__body">
+            <fieldset class="module aligned obc-inline-fieldset {{ inline_admin_formset.classes }}">
+                {{ inline_admin_formset.formset.management_form }}
+                {{ inline_admin_formset.formset.non_form_errors }}
+
+                <div class="obc-inline-items">
+                    {% for inline_admin_form in inline_admin_formset %}
+                        <div class="inline-related obc-inline-related{% if inline_admin_form.original or inline_admin_form.show_url %} has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form last-related{% endif %}"
+                             id="{{ inline_admin_formset.formset.prefix }}-{% if forloop.last and inline_admin_formset.has_add_permission %}empty{% else %}{{ forloop.counter0 }}{% endif %}">
+                            <div class="obc-inline-related__header">
+                                <div class="obc-inline-related__title">
+                                    <span class="obc-inline-related__badge">{% if inline_admin_form.original %}{{ inline_admin_form.original|truncatechars:45 }}{% else %}#{{ forloop.counter }}{% endif %}</span>
+                                    {% if inline_admin_form.show_url %}
+                                        <a href="{{ inline_admin_form.absolute_url }}" class="obc-inline-related__link">
+                                            <i class="fas fa-arrow-up-right-from-square"></i>
+                                            {% translate "View on site" %}
+                                        </a>
+                                    {% endif %}
+                                    {% if inline_admin_form.original and inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %}
+                                        <a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}"
+                                           class="obc-inline-related__link">
+                                            <i class="fas fa-pen"></i>
+                                            {% if inline_admin_formset.has_change_permission %}{% translate "Change" %}{% else %}{% translate "View" %}{% endif %}
+                                        </a>
+                                    {% endif %}
+                                </div>
+                                {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission and inline_admin_form.original %}
+                                    <label class="obc-inline-related__delete">
+                                        {{ inline_admin_form.deletion_field.field }}
+                                        <span>{% translate "Delete" %}</span>
+                                    </label>
+                                {% endif %}
+                            </div>
+
+                            {% if inline_admin_form.form.non_field_errors %}
+                                <div class="obc-form-row__errors">{{ inline_admin_form.form.non_field_errors }}</div>
+                            {% endif %}
+
+                            <div class="obc-inline-related__body">
+                                {% for fieldset in inline_admin_form %}
+                                    {% include "admin/includes/fieldset.html" %}
+                                {% endfor %}
+                            </div>
+
+                            {% if inline_admin_form.needs_explicit_pk_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
+                            {% if inline_admin_form.fk_field %}{{ inline_admin_form.fk_field.field }}{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>

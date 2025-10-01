@@ -910,7 +910,9 @@ class Need(models.Model):
         Assessment,
         on_delete=models.CASCADE,
         related_name="identified_needs",
-        help_text="Assessment that identified this need",
+        null=True,
+        blank=True,
+        help_text="Assessment that identified this need (optional for community-submitted needs)",
     )
 
     community = models.ForeignKey(
@@ -999,6 +1001,83 @@ class Need(models.Model):
         null=True, blank=True, help_text="Date when need was validated"
     )
 
+    # ==========================================
+    # COMMUNITY PARTICIPATION & BUDGET LINKAGE
+    # (Added as per Phase 1 implementation plan)
+    # ==========================================
+
+    # PATHWAY TRACKING
+    SUBMISSION_TYPE_CHOICES = [
+        ("assessment_driven", "Identified During Assessment"),
+        ("community_submitted", "Community-Submitted"),
+    ]
+
+    submission_type = models.CharField(
+        max_length=20,
+        choices=SUBMISSION_TYPE_CHOICES,
+        default="assessment_driven",
+        help_text="How this need was identified",
+    )
+
+    # COMMUNITY SUBMISSION FIELDS
+    submitted_by_user = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="community_submitted_needs",
+        help_text="Community leader who submitted (if community-initiated)",
+    )
+
+    submission_date = models.DateField(
+        null=True, blank=True, help_text="Date when community submitted this need"
+    )
+
+    # PARTICIPATORY BUDGETING
+    community_votes = models.PositiveIntegerField(
+        default=0,
+        help_text="Votes received during participatory budgeting sessions",
+    )
+
+    # MAO COORDINATION WORKFLOW
+    forwarded_to_mao = models.ForeignKey(
+        "coordination.Organization",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="forwarded_needs",
+        help_text="MAO that this need was forwarded to",
+    )
+
+    forwarded_date = models.DateField(
+        null=True, blank=True, help_text="Date when forwarded to MAO"
+    )
+
+    forwarded_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="forwarded_needs",
+        help_text="OOBC staff who forwarded this need",
+    )
+
+    # BUDGET LINKAGE (enables needs-to-budget integration)
+    linked_ppa = models.ForeignKey(
+        "monitoring.MonitoringEntry",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="addressing_needs",
+        help_text="PPA (MonitoringEntry) that addresses this need",
+    )
+
+    budget_inclusion_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date when this need was included in budget/PPA",
+    )
+
     # Metadata
     identified_by = models.ForeignKey(
         User,
@@ -1016,6 +1095,12 @@ class Need(models.Model):
             models.Index(fields=["community", "category"]),
             models.Index(fields=["status", "priority_score"]),
             models.Index(fields=["urgency_level", "impact_severity"]),
+            # New indexes for Phase 1 integration (community participation & budget linkage)
+            models.Index(fields=["submission_type", "status"]),
+            models.Index(fields=["submitted_by_user", "status"]),
+            models.Index(fields=["forwarded_to_mao", "status"]),
+            models.Index(fields=["linked_ppa"]),  # For gap analysis queries
+            models.Index(fields=["community_votes"]),  # For participatory budgeting
         ]
 
     def __str__(self):
@@ -1062,10 +1147,109 @@ class Need(models.Model):
 
         return round(final_score, 2)
 
+
+class NeedVote(models.Model):
+    """
+    Individual vote record for participatory budgeting.
+
+    Tracks who voted for which need, when, and with what weight.
+    Prevents double-voting and provides audit trail.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # What need was voted for
+    need = models.ForeignKey(
+        Need,
+        on_delete=models.CASCADE,
+        related_name='votes',
+        help_text="The community need being voted for"
+    )
+
+    # Who voted
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='need_votes',
+        help_text="The user who cast this vote"
+    )
+
+    # Vote details
+    vote_weight = models.PositiveIntegerField(
+        default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Vote weight (1-5 stars). Default is 1 for simple upvote."
+    )
+
+    comment = models.TextField(
+        blank=True,
+        help_text="Optional comment explaining why this need is important"
+    )
+
+    # Voter context (optional)
+    voter_community = models.ForeignKey(
+        'communities.OBCCommunity',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='community_votes',
+        help_text="Community the voter belongs to (if applicable)"
+    )
+
+    # Metadata
+    voted_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text="IP address for fraud detection"
+    )
+
+    class Meta:
+        verbose_name = "Need Vote"
+        verbose_name_plural = "Need Votes"
+        unique_together = [['need', 'user']]  # One vote per user per need
+        ordering = ['-voted_at']
+        indexes = [
+            models.Index(fields=['need', '-voted_at']),
+            models.Index(fields=['user', '-voted_at']),
+            models.Index(fields=['-voted_at']),
+        ]
+
+    def __str__(self):
+        weight_stars = '⭐' * self.vote_weight
+        return f"{self.user.username} → {self.need.title} ({weight_stars})"
+
     def save(self, *args, **kwargs):
-        """Override save to calculate priority score."""
-        self.priority_score = self.calculate_priority_score()
+        """Update need's community_votes counter on save."""
+        is_new = self.pk is None
+        old_weight = 0
+
+        if not is_new:
+            # Get old weight before update
+            old_vote = NeedVote.objects.filter(pk=self.pk).first()
+            if old_vote:
+                old_weight = old_vote.vote_weight
+
         super().save(*args, **kwargs)
+
+        # Update need's vote count
+        if is_new:
+            # New vote: add weight
+            self.need.community_votes = models.F('community_votes') + self.vote_weight
+            self.need.save(update_fields=['community_votes'])
+        elif old_weight != self.vote_weight:
+            # Vote weight changed: adjust difference
+            weight_diff = self.vote_weight - old_weight
+            self.need.community_votes = models.F('community_votes') + weight_diff
+            self.need.save(update_fields=['community_votes'])
+
+    def delete(self, *args, **kwargs):
+        """Update need's community_votes counter on delete."""
+        # Subtract vote weight from need
+        self.need.community_votes = models.F('community_votes') - self.vote_weight
+        self.need.save(update_fields=['community_votes'])
+        super().delete(*args, **kwargs)
 
 
 class NeedsPrioritization(models.Model):

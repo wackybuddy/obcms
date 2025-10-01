@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Submit Community Need - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Submit Community Need</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div class="space-y-3">
+        <h1 class="text-3xl font-bold text-gray-900">Submit a Community Need</h1>
+        <p class="text-lg text-gray-600 max-w-3xl">
+            Share priority needs directly from your community. Submissions flow into the MANA pipeline with full audit trails so OOBC teams can validate, forward to MAOs, and match with budget programs.
+        </p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">Need Details</h2>
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field_input.html" with field=form.title label="Need Title" placeholder="e.g., Skills training for displaced fisherfolk" %}
+                {% include "components/form_field_select.html" with field=form.category label="Need Category" placeholder="Choose category" %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field_select.html" with field=form.community label="Community" placeholder="Select community" %}
+                {% include "components/form_field_select.html" with field=form.urgency_level label="Urgency" placeholder="Select urgency" %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field_input.html" with field=form.affected_population label="Affected Population" placeholder="e.g., 250" %}
+                {% include "components/form_field_input.html" with field=form.affected_households label="Affected Households" placeholder="Optional" %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field_select.html" with field=form.impact_severity label="Impact Severity" placeholder="Select impact" %}
+                {% include "components/form_field_select.html" with field=form.feasibility label="Feasibility" placeholder="Select feasibility" %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include "components/form_field_input.html" with field=form.estimated_cost label="Estimated Cost" placeholder="₱" %}
+                {% include "components/form_field.html" with field=form.geographic_scope label="Geographic Scope" placeholder="Barangays, sitio, or coverage notes" %}
+            </div>
+
+            <div class="space-y-4">
+                {% include "components/form_field.html" with field=form.description label="Need Description" placeholder="Describe the situation, urgency, and desired support" %}
+                {% include "components/form_field.html" with field=form.evidence_sources label="Evidence & References" placeholder="Reference consultations, assessments, or documents" %}
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p class="text-sm text-gray-500">
+                    Submissions are tagged as <strong>community-submitted</strong> and queued for OOBC validation. You can track progress from the Community Needs Summary.
+                </p>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'common:community_needs_summary' %}"
+                       class="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all duration-200">
+                        <i class="fas fa-arrow-left"></i>
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-200">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit Need
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900">Recent Submissions</h2>
+            <a href="{% url 'common:community_needs_summary' %}" class="text-sm font-semibold text-emerald-600 hover:text-emerald-500">
+                View full dashboard
+            </a>
+        </div>
+        <div class="bg-white rounded-2xl shadow border border-gray-200">
+            {% if submitted_needs %}
+            <div class="divide-y divide-gray-100">
+                {% for need in submitted_needs %}
+                <div class="px-6 py-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div class="space-y-1">
+                        <p class="text-base font-semibold text-gray-900">{{ need.title }}</p>
+                        <p class="text-sm text-gray-600">
+                            {{ need.community.barangay.name }}, {{ need.community.barangay.municipality.name }}, {{ need.community.barangay.municipality.province.name }} ·
+                            Submitted {{ need.created_at|timesince }} ago
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600">
+                                {{ need.get_status_display }}
+                            </span>
+                            <span class="inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full bg-blue-50 text-blue-600">
+                                {{ need.get_urgency_level_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                        <div class="text-right">
+                            <p class="font-semibold">₱{{ need.estimated_cost|default:"0"|floatformat:2 }}</p>
+                            <p class="text-xs text-gray-500">Estimated Cost</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold">{{ need.community_votes }}</p>
+                            <p class="text-xs text-gray-500">Community Votes</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="px-6 py-12 text-center text-gray-500 text-sm">
+                You have no community-submitted needs yet. Submit your first entry using the form above.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

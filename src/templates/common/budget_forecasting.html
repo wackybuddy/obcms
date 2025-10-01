@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Budget Forecasting - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Budget Forecasting</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Budget Forecasting</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">Predict future budget needs based on historical trends and growth patterns.</p>
+        </div>
+        <a href="{% url 'common:analytics_dashboard' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+            <i class="fas fa-chart-bar"></i> Analytics Dashboard
+        </a>
+    </div>
+
+    <!-- Forecast Overview -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-8 text-white">
+        <h2 class="text-2xl font-bold mb-6">Budget Forecast (Next 3 Years)</h2>
+        {% if forecast.forecast_years %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for year, budget in forecast.forecast_years|zip:forecast.projected_budget %}
+            <div class="bg-white bg-opacity-20 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-lg opacity-90">Fiscal Year {{ year }}</p>
+                    <i class="fas fa-calendar-alt text-2xl opacity-75"></i>
+                </div>
+                <p class="text-4xl font-bold">₱{{ budget|floatformat:0 }}</p>
+                <p class="text-sm opacity-80 mt-2">Projected budget allocation</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="mt-6 pt-6 border-t border-white border-opacity-20">
+            <p class="text-sm opacity-90">
+                <i class="fas fa-chart-line mr-2"></i>
+                Average Annual Growth Rate: <strong>{{ forecast.avg_growth_rate|floatformat:1 }}%</strong>
+            </p>
+        </div>
+        {% else %}
+        <p class="text-sm opacity-80">Insufficient historical data for forecasting. Need at least 2 years of budget data.</p>
+        {% endif %}
+    </div>
+
+    <!-- Forecast Methodology -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-info-circle text-2xl text-blue-600 mt-1"></i>
+            <div>
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">Forecast Methodology</h3>
+                <p class="text-sm text-blue-800 mb-2">
+                    Budget forecasts are calculated using linear trend analysis based on historical budget allocation data from the past 5 years.
+                    The system computes the average year-over-year growth rate and projects future budgets using this growth factor.
+                </p>
+                <p class="text-xs text-blue-700">
+                    <strong>Formula:</strong> Projected Budget(year N) = Last Budget × (1 + Growth Rate)^N
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Recommendations -->
+    {% if recommendations %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Recommended Budget Allocation (Next Year)</h2>
+        <div class="space-y-3">
+            {% for rec in recommendations %}
+            <div class="border-l-4 border-emerald-500 pl-4 py-3 bg-gray-50 rounded-r-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-semibold text-gray-900 capitalize">{{ rec.sector|title }}</h3>
+                        <p class="text-xs text-gray-600 mt-1">Weight: {{ rec.weight|floatformat:2 }} • Priority: {{ rec.priority|title }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-emerald-600">₱{{ rec.recommended_amount|floatformat:0 }}</p>
+                        <p class="text-xs text-gray-500">{{ rec.percentage|floatformat:1 }}% of total</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Historical Performance -->
+    {% if forecast.historical_budgets %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Historical Budget Performance</h2>
+        <div class="space-y-3">
+            {% for year, budget in forecast.historical_years|zip:forecast.historical_budgets %}
+            <div class="flex items-center gap-3">
+                <div class="w-20 text-sm font-medium text-gray-700">FY {{ year }}</div>
+                <div class="flex-1">
+                    <div class="w-full bg-gray-200 rounded-full h-6">
+                        {% if forecast.max_historical > 0 %}
+                        {% widthratio budget forecast.max_historical 100 as percentage %}
+                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-6 rounded-full flex items-center justify-end pr-2" style="width: {{ percentage }}%">
+                            <span class="text-xs font-semibold text-white">₱{{ budget|floatformat:0 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

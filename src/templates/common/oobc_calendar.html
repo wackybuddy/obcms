@@ -17,7 +17,12 @@
 
 {% block extra_css %}
 {{ block.super }}
-<link rel="stylesheet" href="{% static 'common/vendor/fullcalendar/main.min.css' %}">
+<style>
+/* FullCalendar v6 includes CSS in the JS bundle, but add minimal layout styles */
+#oobc-calendar {
+    min-height: 600px;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -41,7 +46,7 @@
                 <i class="fas fa-people-arrows mr-2"></i>
                 Log Engagement
             </a>
-            <a href="{% url 'common:staff_task_create' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-violet-600 hover:bg-violet-700">
+            <a href="{% url 'common:staff_task_create' %}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white rounded-lg shadow bg-teal-600 hover:bg-teal-700">
                 <i class="fas fa-list-check mr-2"></i>
                 Assign Staff Task
             </a>
@@ -83,7 +88,9 @@
                     </div>
                 </div>
 
-                {% include "components/calendar_widget.html" with widget_id="oobc-calendar" events_json=calendar_events_json options_json=calendar_options_json wrapper_class="bg-slate-50 rounded-xl border border-slate-200" calendar_class="p-4" %}
+                <div class="bg-slate-50 rounded-xl border border-slate-200">
+                    <div id="oobc-calendar" class="p-4"></div>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -158,7 +165,7 @@
 
             <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-4">
                 <h2 class="text-lg font-semibold text-gray-900 flex items-center">
-                    <i class="fas fa-sitemap text-indigo-500 mr-2"></i>
+                    <i class="fas fa-sitemap text-ocean-500 mr-2"></i>
                     Workflow Alerts
                 </h2>
                 <div class="grid grid-cols-1 gap-4">
@@ -166,7 +173,7 @@
                         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Approvals</h3>
                         <div class="mt-2 space-y-3">
                             {% for action in workflow_approvals %}
-                            <div class="border border-indigo-100 rounded-xl p-3 bg-indigo-50">
+                            <div class="border border-ocean-100 rounded-xl p-3 bg-ocean-50">
                                 <p class="text-sm font-semibold text-gray-900">{{ action.title }}</p>
                                 <p class="text-xs text-gray-600 mt-1">{{ action.module_label }} • {{ action.due|date:"M d, Y" }}</p>
                                 <p class="text-xs text-gray-500 mt-1">{{ action.status|default:"Pending"|capfirst }}</p>
@@ -324,12 +331,25 @@
 <script src="{% static 'common/js/calendar.js' %}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var events = JSON.parse('{{ calendar_events_json|escapejs }}');
-        var options = JSON.parse('{{ calendar_options_json|escapejs }}');
-        var calendar = renderCalendar('oobc-calendar', events, options);
+        console.log('Calendar initialization started');
+        console.log('FullCalendar available:', typeof FullCalendar !== 'undefined');
+        console.log('renderCalendar available:', typeof renderCalendar !== 'undefined');
 
-        if (!calendar) {
-            return;
+        try {
+            var events = JSON.parse('{{ calendar_events_json|escapejs }}');
+            var options = JSON.parse('{{ calendar_options_json|escapejs }}');
+            console.log('Parsed events:', events.length, 'events');
+            console.log('Parsed options:', options);
+
+            var calendar = renderCalendar('oobc-calendar', events, options);
+            console.log('Calendar instance:', calendar);
+
+            if (!calendar) {
+                console.error('Calendar failed to render');
+                return;
+            }
+        } catch (error) {
+            console.error('Calendar initialization error:', error);
         }
 
         function applyModuleFilters() {

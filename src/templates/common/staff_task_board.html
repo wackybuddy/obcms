@@ -216,8 +216,13 @@
     </div>
 </div>
 
-<div id="taskModal" class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6">
-    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" data-modal-backdrop></div>
+<div id="taskModal"
+     class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="modal-title"
+     aria-describedby="modal-description">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" data-modal-backdrop aria-hidden="true"></div>
     <div class="relative max-h-[90vh] w-full sm:w-auto overflow-y-auto" id="taskModalContent" hx-target="this" hx-swap="innerHTML"></div>
 </div>
 
@@ -357,7 +362,7 @@ if (!window.htmx) {
             tableElement = document.querySelector('[data-notion-table]');
         } else if (context.matches && context.matches('[data-notion-table]')) {
             tableElement = context;
-        } else if (context.matches && context.matches('[data-task-row]')) {
+        } else if (context.matches && context.matches('[data-task-id]')) {
             tableElement = context.closest('[data-notion-table]');
         } else if (context.querySelector) {
             tableElement = context.querySelector('[data-notion-table]');
@@ -1438,7 +1443,7 @@ if (!window.htmx) {
         }
         if (
             event.target
-            && (event.target.matches('[data-task-row]')
+            && (event.target.matches('[data-task-id]')
                 || event.target.matches('[data-notion-table-container]'))
         ) {
             initializeNotionTable(event.target);

@@ -73,7 +73,7 @@ CALENDAR_MODULE_COLORS = {
     "mana": "bg-amber-500",
     "planning": "bg-teal-500",
     "policy": "bg-pink-500",
-    "staff": "bg-violet-500",
+    "staff": "bg-teal-600",
 }
 
 STAFF_TEAM_DEFINITIONS = [

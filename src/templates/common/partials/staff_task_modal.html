@@ -2,7 +2,7 @@
     <div class="flex items-start justify-between px-6 py-5 border-b border-gray-200">
         <div class="space-y-1">
             <p class="text-xs uppercase font-semibold tracking-wide text-gray-400">{{ task.get_status_display }}</p>
-            <h2 class="text-2xl font-bold text-gray-900">{{ task.title }}</h2>
+            <h2 id="modal-title" class="text-2xl font-bold text-gray-900">{{ task.title }}</h2>
             <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                 <span class="inline-flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                     <i class="fas fa-users"></i>
@@ -39,9 +39,11 @@
 
     <div class="px-6 py-5 space-y-6" id="taskModalBody">
         {% if task.impact %}
-        <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
+        <div id="modal-description" class="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-600">
             {{ task.impact }}
         </div>
+        {% else %}
+        <div id="modal-description" class="sr-only">Task details and editing form</div>
         {% endif %}
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">

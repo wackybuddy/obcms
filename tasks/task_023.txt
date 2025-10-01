@@ -1,0 +1,20 @@
+# Task ID: 23
+# Title: Stabilize Planning Dashboards Routing
+# Status: done
+# Dependencies: 19, 21
+# Priority: medium
+# Description: Ensure newly added planning, budgeting, and strategic dashboards are exported through the common.views package so URL inclusion no longer crashes runserver.
+# Details:
+1. Re-export Phase 2-5 management dashboard views (gap analysis, policy-budget matrix, MAO focal registry, community voting, transparency) via `common.views.__init__`
+2. Add strategic planning dashboards (strategic goals, annual planning, regional development alignment) to the exported list
+3. Include scenario planning views to keep budgeting routes consistent
+4. Verify Django startup succeeds after changes
+
+# Test Strategy:
+1. Run `./manage.py check` to confirm import resolution
+2. Start `./manage.py runserver` and ensure no AttributeError appears
+3. Load `/admin/` and `/oobc-management/gap-analysis/` to confirm the views resolve
+
+# Notes:
+- Regression surfaced when new dashboards were added without updating the common views export module
+- Documented fix in tasks log so future route additions remember to update exports

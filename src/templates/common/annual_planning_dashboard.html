@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}Annual Planning Dashboard - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Annual Planning</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Annual Planning Dashboard</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">
+                Track annual planning cycles, budget envelopes, and fiscal year execution timelines.
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'common:strategic_goals_dashboard' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+                <i class="fas fa-bullseye"></i>
+                Strategic Goals
+            </a>
+            <a href="{% url 'common:scenario_list' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+                <i class="fas fa-project-diagram"></i>
+                Scenarios
+            </a>
+        </div>
+    </div>
+
+    <!-- Total Budget Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90 mb-1">Total Budget Envelope (All Years)</p>
+                    <p class="text-4xl font-bold">₱{{ total_budget_all_years|floatformat:0 }}</p>
+                </div>
+                <div class="h-16 w-16 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                    <i class="fas fa-wallet text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90 mb-1">Total Allocated Budget (All Years)</p>
+                    <p class="text-4xl font-bold">₱{{ total_allocated_all_years|floatformat:0 }}</p>
+                    <p class="text-xs opacity-80 mt-2">
+                        {% if total_budget_all_years > 0 %}
+                        {% widthratio total_allocated_all_years total_budget_all_years 100 %}% utilization rate
+                        {% else %}
+                        No budget data
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="h-16 w-16 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                    <i class="fas fa-chart-pie text-3xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Fiscal Year -->
+    {% if current_cycle %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Fiscal Year {{ current_cycle.fiscal_year }}</h2>
+                <p class="text-sm text-gray-600 mt-1">Current Planning Cycle</p>
+            </div>
+            <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium
+                {% if current_cycle.status == 'active' %}bg-blue-100 text-blue-800
+                {% elif current_cycle.status == 'completed' %}bg-emerald-100 text-emerald-800
+                {% elif current_cycle.status == 'planning' %}bg-yellow-100 text-yellow-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ current_cycle.status|title }}
+            </span>
+        </div>
+
+        <!-- Budget Progress -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between text-sm mb-2">
+                <span class="font-medium text-gray-700">Budget Allocation Progress</span>
+                <span class="font-semibold text-gray-900">
+                    ₱{{ current_cycle.allocated_budget|floatformat:0 }} / ₱{{ current_cycle.total_budget_envelope|floatformat:0 }}
+                </span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-6">
+                {% if current_cycle.total_budget_envelope > 0 %}
+                {% widthratio current_cycle.allocated_budget current_cycle.total_budget_envelope 100 as utilization %}
+                <div class="{% if utilization >= 80 %}bg-emerald-500{% elif utilization >= 50 %}bg-blue-500{% else %}bg-yellow-500{% endif %} h-6 rounded-full flex items-center justify-center" style="width: {{ utilization }}%">
+                    <span class="text-xs font-semibold text-white">{{ utilization }}%</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Planning Milestones -->
+        {% if milestones %}
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Planning Milestones</h3>
+            <div class="relative">
+                <!-- Timeline Line -->
+                <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-300"></div>
+
+                <!-- Milestone Items -->
+                <div class="space-y-6">
+                    {% for milestone in milestones %}
+                    <div class="relative flex items-start gap-4">
+                        <!-- Milestone Icon -->
+                        <div class="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-4 border-white
+                            {% if milestone.status == 'completed' %}bg-emerald-500
+                            {% elif milestone.status == 'current' %}bg-blue-500
+                            {% else %}bg-gray-300{% endif %}">
+                            <i class="fas {% if milestone.status == 'completed' %}fa-check{% elif milestone.status == 'current' %}fa-circle{% else %}fa-clock{% endif %} text-white"></i>
+                        </div>
+
+                        <!-- Milestone Content -->
+                        <div class="flex-1 bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-semibold text-gray-900">{{ milestone.name }}</h4>
+                                <span class="text-sm font-medium
+                                    {% if milestone.status == 'completed' %}text-emerald-600
+                                    {% elif milestone.status == 'current' %}text-blue-600
+                                    {% else %}text-gray-600{% endif %}">
+                                    {{ milestone.status|title }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">
+                                <i class="fas fa-calendar-alt text-gray-400"></i>
+                                {{ milestone.date|date:"F d, Y" }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Current Cycle Details -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+            <div class="text-center">
+                <p class="text-sm text-gray-600">Planning Start</p>
+                <p class="text-lg font-semibold text-gray-900 mt-1">{{ current_cycle.planning_start_date|date:"M d, Y" }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-sm text-gray-600">Budget Submission</p>
+                <p class="text-lg font-semibold text-gray-900 mt-1">{{ current_cycle.budget_submission_date|date:"M d, Y" }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-sm text-gray-600">Execution Start</p>
+                <p class="text-lg font-semibold text-gray-900 mt-1">{{ current_cycle.execution_start_date|date:"M d, Y" }}</p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-6">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-triangle text-2xl text-yellow-600 mt-1"></i>
+            <div>
+                <h3 class="text-lg font-semibold text-yellow-900 mb-1">No Current Planning Cycle</h3>
+                <p class="text-sm text-yellow-800">Create an annual planning cycle for the current fiscal year to begin tracking budget allocations.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Upcoming Fiscal Year -->
+    {% if upcoming_cycle %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Fiscal Year {{ upcoming_cycle.fiscal_year }}</h2>
+                <p class="text-sm text-gray-600 mt-1">Upcoming Planning Cycle</p>
+            </div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                {{ upcoming_cycle.status|title }}
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <p class="text-sm text-gray-600">Total Budget Envelope</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">₱{{ upcoming_cycle.total_budget_envelope|floatformat:0 }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600">Planning Starts</p>
+                <p class="text-2xl font-bold text-gray-900 mt-1">{{ upcoming_cycle.planning_start_date|date:"M d, Y" }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Planning Cycles Status Distribution -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Status Distribution -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Planning Cycles by Status</h2>
+            <div class="space-y-3">
+                {% for status_data in status_distribution %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="h-10 w-10 rounded-full flex items-center justify-center
+                            {% if status_data.status == 'active' %}bg-blue-100 text-blue-600
+                            {% elif status_data.status == 'completed' %}bg-emerald-100 text-emerald-600
+                            {% elif status_data.status == 'planning' %}bg-yellow-100 text-yellow-600
+                            {% else %}bg-gray-100 text-gray-600{% endif %}">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                        <span class="font-semibold text-gray-900 capitalize">{{ status_data.status|title }}</span>
+                    </div>
+                    <span class="text-2xl font-bold text-gray-900">{{ status_data.count }}</span>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 text-center py-4">No planning cycle data available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- All Planning Cycles -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Planning Cycles Timeline</h2>
+            <div class="space-y-3 max-h-80 overflow-y-auto">
+                {% for cycle in all_cycles %}
+                <div class="border-l-4
+                    {% if cycle.status == 'active' %}border-blue-500
+                    {% elif cycle.status == 'completed' %}border-emerald-500
+                    {% elif cycle.status == 'planning' %}border-yellow-500
+                    {% else %}border-gray-500{% endif %}
+                    pl-4 py-2 hover:bg-gray-50 rounded transition">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">FY {{ cycle.fiscal_year }}</h3>
+                            <p class="text-xs text-gray-600 mt-1">
+                                {{ cycle.planning_start_date|date:"M Y" }} - {{ cycle.execution_start_date|date:"M Y" }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-gray-900">₱{{ cycle.total_budget_envelope|floatformat:0 }}</p>
+                            {% if cycle.total_budget_envelope > 0 %}
+                            {% widthratio cycle.allocated_budget cycle.total_budget_envelope 100 as util %}
+                            <p class="text-xs text-gray-500">{{ util }}% allocated</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 text-center py-4">No planning cycles created yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-info-circle text-2xl text-blue-600 mt-1"></i>
+            <div>
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">About Annual Planning Cycles</h3>
+                <p class="text-sm text-blue-800">
+                    Annual planning cycles help organize budget allocation and execution on a fiscal year basis.
+                    Track planning milestones, budget envelopes, and allocation progress to ensure timely and efficient resource deployment.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

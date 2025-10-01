@@ -3,7 +3,8 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import (PolicyDocument, PolicyEvidence, PolicyImpact,
+from .models import (PolicyDocument, PolicyEvidence,
+                     PolicyImplementationMilestone, PolicyImpact,
                      PolicyRecommendation)
 
 
@@ -450,3 +451,169 @@ class PolicyDocumentAdmin(admin.ModelAdmin):
             )
 
     access_level_display.short_description = "Access Level"
+
+
+@admin.register(PolicyImplementationMilestone)
+class PolicyImplementationMilestoneAdmin(admin.ModelAdmin):
+    """
+    Admin interface for Policy Implementation Milestones.
+
+    Part of Phase 1 implementation for policy-to-budget integration.
+    """
+
+    list_display = (
+        "policy_link",
+        "milestone_title",
+        "order",
+        "target_date",
+        "status_badge",
+        "progress_bar",
+        "responsible_party",
+        "overdue_indicator",
+    )
+    list_filter = (
+        "status",
+        "target_date",
+        "policy__category",
+        "policy__status",
+    )
+    search_fields = (
+        "title",
+        "description",
+        "policy__title",
+        "responsible_party",
+        "deliverables",
+    )
+    autocomplete_fields = ("policy", "assigned_to", "created_by")
+    date_hierarchy = "target_date"
+    ordering = ("policy", "order", "target_date")
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "policy",
+                    "title",
+                    "description",
+                    "order",
+                )
+            },
+        ),
+        (
+            "Schedule",
+            {
+                "fields": (
+                    "target_date",
+                    "actual_completion_date",
+                )
+            },
+        ),
+        (
+            "Responsibility",
+            {
+                "fields": (
+                    "responsible_party",
+                    "assigned_to",
+                )
+            },
+        ),
+        (
+            "Progress Tracking",
+            {
+                "fields": (
+                    "status",
+                    "progress_percentage",
+                    ("deliverables", "actual_outputs"),
+                )
+            },
+        ),
+        (
+            "Issues & Notes",
+            {
+                "fields": ("challenges", "notes"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    readonly_fields = ("created_at", "updated_at")
+
+    def policy_link(self, obj):
+        """Link to policy page."""
+        url = reverse(
+            "admin:policy_tracking_policyrecommendation_change", args=[obj.policy.pk]
+        )
+        return format_html('<a href="{}">{}</a>', url, obj.policy.title[:50])
+
+    policy_link.short_description = "Policy"
+    policy_link.admin_order_field = "policy__title"
+
+    def milestone_title(self, obj):
+        """Display milestone title with truncation."""
+        return obj.title[:60] if len(obj.title) > 60 else obj.title
+
+    milestone_title.short_description = "Milestone"
+    milestone_title.admin_order_field = "title"
+
+    def status_badge(self, obj):
+        """Status with color coding."""
+        colors = {
+            "not_started": "#6c757d",  # gray
+            "in_progress": "#17a2b8",  # blue
+            "completed": "#28a745",  # green
+            "delayed": "#ffc107",  # yellow
+            "cancelled": "#dc3545",  # red
+        }
+        color = colors.get(obj.status, "#6c757d")
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_status_display(),
+        )
+
+    status_badge.short_description = "Status"
+    status_badge.admin_order_field = "status"
+
+    def progress_bar(self, obj):
+        """Visual progress bar."""
+        percentage = obj.progress_percentage
+        color = "#28a745" if percentage >= 100 else "#17a2b8" if percentage >= 50 else "#ffc107"
+        return format_html(
+            '<div style="width: 100px; background-color: #e9ecef; border-radius: 3px;">'
+            '<div style="width: {}%; background-color: {}; height: 15px; border-radius: 3px; '
+            'text-align: center; color: white; font-size: 10px; line-height: 15px;">{}%</div>'
+            '</div>',
+            min(percentage, 100),
+            color,
+            percentage,
+        )
+
+    progress_bar.short_description = "Progress"
+    progress_bar.admin_order_field = "progress_percentage"
+
+    def overdue_indicator(self, obj):
+        """Show if milestone is overdue."""
+        if obj.is_overdue:
+            return format_html(
+                '<span style="color: red; font-weight: bold;">⚠ {} days overdue</span>',
+                abs(obj.days_until_due),
+            )
+        elif obj.status == "completed":
+            return format_html('<span style="color: green;">✓ Completed</span>')
+        elif obj.days_until_due <= 7 and obj.days_until_due >= 0:
+            return format_html(
+                '<span style="color: orange;">⏰ {} days left</span>',
+                obj.days_until_due,
+            )
+        return format_html('<span style="color: gray;">{} days left</span>', obj.days_until_due)
+
+    overdue_indicator.short_description = "Due Status"

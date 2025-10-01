@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+
+{% block title %}Impact Assessment - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Impact Assessment</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Impact Assessment</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">Measure outcomes, effectiveness, and social impact of budget allocations.</p>
+        </div>
+        <a href="{% url 'common:analytics_dashboard' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+            <i class="fas fa-chart-bar"></i> Analytics Dashboard
+        </a>
+    </div>
+
+    <!-- Overall Impact Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Budget</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-2">₱{{ impact.total_budget|floatformat:0 }}</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <i class="fas fa-wallet text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Beneficiaries Reached</p>
+                    <p class="text-2xl font-bold text-emerald-600 mt-2">{{ impact.total_beneficiaries|floatformat:0 }}</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <i class="fas fa-users text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Cost Efficiency</p>
+                    <p class="text-2xl font-bold text-purple-600 mt-2">₱{{ efficiency.cost_per_beneficiary|floatformat:2 }}</p>
+                    <p class="text-xs text-gray-500 mt-1">per beneficiary</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <i class="fas fa-coins text-2xl text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Active PPAs</p>
+                    <p class="text-2xl font-bold text-blue-600 mt-2">{{ impact.total_ppas }}</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <i class="fas fa-project-diagram text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Needs Fulfillment -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Community Needs Fulfillment</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="text-center p-6 bg-gray-50 rounded-lg">
+                <p class="text-sm text-gray-600 mb-2">Total Community Needs</p>
+                <p class="text-4xl font-bold text-gray-900">{{ needs_fulfillment.total_needs }}</p>
+            </div>
+            <div class="text-center p-6 bg-emerald-50 rounded-lg">
+                <p class="text-sm text-emerald-700 mb-2">Needs Addressed</p>
+                <p class="text-4xl font-bold text-emerald-600">{{ needs_fulfillment.addressed }}</p>
+            </div>
+            <div class="text-center p-6 bg-blue-50 rounded-lg">
+                <p class="text-sm text-blue-700 mb-2">Fulfillment Rate</p>
+                <p class="text-4xl font-bold text-blue-600">{{ needs_fulfillment.fulfillment_rate }}%</p>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <div class="flex items-center justify-between text-sm mb-2">
+                <span class="text-gray-700 font-medium">Overall Fulfillment Progress</span>
+                <span class="text-gray-900 font-bold">{{ needs_fulfillment.fulfillment_rate }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-6">
+                <div class="bg-gradient-to-r from-emerald-500 to-blue-500 h-6 rounded-full flex items-center justify-center" style="width: {{ needs_fulfillment.fulfillment_rate }}%">
+                    <span class="text-xs font-semibold text-white">{{ needs_fulfillment.addressed }}/{{ needs_fulfillment.total_needs }} needs addressed</span>
+                </div>
+            </div>
+        </div>
+
+        {% if needs_fulfillment.critical_unaddressed > 0 or needs_fulfillment.high_priority_unaddressed > 0 %}
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg p-4 mt-4">
+            <h3 class="text-sm font-semibold text-yellow-900 mb-2">Unaddressed Priority Needs</h3>
+            <div class="flex gap-6 text-sm text-yellow-800">
+                <span><strong>{{ needs_fulfillment.critical_unaddressed }}</strong> Critical Priority</span>
+                <span><strong>{{ needs_fulfillment.high_priority_unaddressed }}</strong> High Priority</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sector Impact -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Impact by Sector</h2>
+        <div class="space-y-3">
+            {% for sector in sector_impact %}
+            <div class="border-l-4 border-emerald-500 pl-4 py-3 bg-gray-50 rounded-r-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 capitalize">{{ sector.sector|title }}</h3>
+                        <div class="flex items-center gap-4 mt-1 text-xs text-gray-600">
+                            <span><i class="fas fa-project-diagram text-blue-600"></i> {{ sector.total_ppas }} PPAs</span>
+                            <span><i class="fas fa-users text-purple-600"></i> {{ sector.beneficiaries|floatformat:0 }} people reached</span>
+                            <span><i class="fas fa-coins text-yellow-600"></i> ₱{{ sector.cost_efficiency|floatformat:2 }}/person</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-emerald-600">₱{{ sector.budget|floatformat:0 }}</p>
+                        <p class="text-xs text-gray-500">Total investment</p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-4">No sector impact data available</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Geographic Impact -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Geographic Impact Distribution</h2>
+        <div class="space-y-3">
+            {% for geo in geographic_impact %}
+            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">{{ geo.name }}</h3>
+                        <p class="text-xs text-gray-600">{{ geo.type }} • {{ geo.ppas }} PPAs</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-lg font-bold text-gray-900">₱{{ geo.budget|floatformat:0 }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-8">No geographic impact data available</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Efficiency Insights -->
+    <div class="bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <h2 class="text-2xl font-bold mb-4">Program Efficiency Insights</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <p class="text-sm opacity-90 mb-2">Cost per Beneficiary</p>
+                <p class="text-3xl font-bold">₱{{ efficiency.cost_per_beneficiary|floatformat:2 }}</p>
+                <p class="text-xs opacity-80 mt-2">Average investment per person reached</p>
+            </div>
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <p class="text-sm opacity-90 mb-2">Average PPA Duration</p>
+                <p class="text-3xl font-bold">
+                    {% if efficiency.avg_ppa_duration %}
+                    {{ efficiency.avg_ppa_duration.days }} days
+                    {% else %}
+                    N/A
+                    {% endif %}
+                </p>
+                <p class="text-xs opacity-80 mt-2">Average time to complete projects</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

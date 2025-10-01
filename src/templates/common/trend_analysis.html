@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Trend Analysis - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Trend Analysis</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Trend Analysis</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">Analyze trends across budgets, sectors, community needs, and PPAs.</p>
+        </div>
+        <a href="{% url 'common:analytics_dashboard' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+            <i class="fas fa-chart-bar"></i> Analytics Dashboard
+        </a>
+    </div>
+
+    <!-- Budget Trends -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Budget Allocation Trends (5-Year History)</h2>
+        {% if budget_trends.years %}
+        <div class="space-y-3">
+            {% for year, budget in budget_trends.by_year.items %}
+            <div class="flex items-center gap-3">
+                <div class="w-24 text-sm font-medium text-gray-700">FY {{ year }}</div>
+                <div class="flex-1">
+                    <div class="w-full bg-gray-200 rounded-full h-8">
+                        {% if budget_trends.max_budget > 0 %}
+                        {% widthratio budget budget_trends.max_budget 100 as percentage %}
+                        <div class="bg-gradient-to-r from-blue-500 to-emerald-500 h-8 rounded-full flex items-center justify-between px-3" style="width: {{ percentage }}%">
+                            <span class="text-sm font-semibold text-white">{{ percentage }}%</span>
+                            <span class="text-sm font-semibold text-white">₱{{ budget|floatformat:0 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="text-sm text-gray-600 mt-4">
+            <strong>Average Annual Budget:</strong> ₱{{ budget_trends.avg_budget|floatformat:0 }}
+        </p>
+        {% else %}
+        <p class="text-sm text-gray-500 text-center py-8">No budget trend data available</p>
+        {% endif %}
+    </div>
+
+    <!-- Sector Performance Trends -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Sector Performance Overview</h2>
+        <div class="space-y-3">
+            {% for sector in sector_performance %}
+            <div class="border-l-4 border-blue-500 pl-4 py-3 bg-gray-50 rounded-r-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 capitalize">{{ sector.sector|title }}</h3>
+                        <div class="flex items-center gap-4 mt-1 text-xs text-gray-600">
+                            <span><i class="fas fa-project-diagram text-blue-600"></i> {{ sector.total_ppas }} PPAs</span>
+                            <span><i class="fas fa-users text-purple-600"></i> {{ sector.beneficiaries|floatformat:0 }} people</span>
+                            <span><i class="fas fa-coins text-yellow-600"></i> ₱{{ sector.cost_efficiency|floatformat:2 }}/person</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-emerald-600">₱{{ sector.budget|floatformat:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-4">No sector data available</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Community Needs Trends -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Community Needs Trends (Last 12 Months)</h2>
+        {% if needs_trend %}
+        <div class="space-y-3">
+            {% for month_data in needs_trend %}
+            <div class="flex items-center gap-3">
+                <div class="w-28 text-sm font-medium text-gray-700">{{ month_data.month|date:"M Y" }}</div>
+                <div class="flex-1 grid grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex items-center justify-between text-xs text-gray-600 mb-1">
+                            <span>Needs Submitted</span>
+                            <span class="font-semibold">{{ month_data.count }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: {% widthratio month_data.count 50 100 %}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between text-xs text-gray-600 mb-1">
+                            <span>Community Votes</span>
+                            <span class="font-semibold">{{ month_data.votes|default:0 }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-emerald-500 h-2 rounded-full" style="width: {% widthratio month_data.votes|default:0 100 100 %}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500 text-center py-8">No community needs trend data available</p>
+        {% endif %}
+    </div>
+
+    <!-- PPAs Status Trends -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">PPAs Status Distribution (Recent Years)</h2>
+        {% if ppas_trend %}
+        <div class="space-y-4">
+            {% regroup ppas_trend by year as ppas_by_year %}
+            {% for year_group in ppas_by_year %}
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h3 class="font-semibold text-gray-900 mb-3">{{ year_group.grouper|date:"Y" }}</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {% for ppa_status in year_group.list %}
+                    <div class="text-center p-3 bg-gray-50 rounded-lg">
+                        <p class="text-xs text-gray-600 capitalize">{{ ppa_status.status }}</p>
+                        <p class="text-2xl font-bold text-gray-900 mt-1">{{ ppa_status.count }}</p>
+                        <p class="text-xs text-gray-500">₱{{ ppa_status.budget|floatformat:0 }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500 text-center py-8">No PPAs trend data available</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

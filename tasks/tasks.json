@@ -444,6 +444,20 @@
       ],
       "status": "done",
       "subtasks": []
+    },
+    {
+      "id": 23,
+      "title": "Stabilize Planning Dashboards Routing",
+      "description": "Ensure newly added planning, budgeting, and strategic dashboards are exported through the common.views package so URL inclusion no longer crashes runserver.",
+      "status": "done",
+      "dependencies": [
+        19,
+        21
+      ],
+      "priority": "medium",
+      "details": "1. Re-export Phase 2-5 management dashboard views (gap analysis, policy-budget matrix, community voting, transparency, strategic planning) in common.views.__init__\n2. Align __all__ exports so include() lookups succeed\n3. Verify Django check and runserver start without AttributeError\n4. Document fix for regression in tasks tracker",
+      "testStrategy": "1. Run ./manage.py check to confirm imports succeed\n2. Hit /admin/ and landing routes to ensure 200 responses\n3. Spot-check new dashboards render without server errors",
+      "subtasks": []
     }
   ]
 }

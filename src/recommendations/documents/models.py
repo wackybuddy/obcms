@@ -1,4 +1,5 @@
 import os
+import logging
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -18,6 +19,91 @@ def validate_file_size(value):
     file_size = value.size
     if file_size > 50 * 1024 * 1024:  # 50 MB
         raise ValidationError("File size cannot exceed 50 MB.")
+
+
+def validate_file_mime_type(value):
+    """
+    Validate file MIME type to ensure it matches allowed types.
+
+    This provides defense-in-depth against malicious files disguised
+    with safe extensions. Checks actual file content, not just extension.
+
+    Note: Requires libmagic to be installed on the system.
+    Gracefully degrades if libmagic is not available.
+    """
+    # Try to import magic - gracefully handle if not available
+    try:
+        import magic
+    except ImportError:
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            "python-magic not available. Install libmagic for enhanced file validation. "
+            "Ubuntu/Debian: apt-get install libmagic1  |  "
+            "macOS: brew install libmagic  |  "
+            "Production: Add to Dockerfile"
+        )
+        return  # Skip MIME validation if magic not available
+
+    # Define allowed MIME types matching our FileExtensionValidator
+    ALLOWED_MIME_TYPES = {
+        # Documents
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        'application/rtf',
+        'application/vnd.oasis.opendocument.text',
+        # Spreadsheets
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.oasis.opendocument.spreadsheet',
+        # Presentations
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/vnd.oasis.opendocument.presentation',
+        # Images
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/bmp',
+        'image/svg+xml',
+        # Videos
+        'video/mp4',
+        'video/x-msvideo',
+        'video/quicktime',
+        'video/x-ms-wmv',
+        'video/x-flv',
+        # Audio
+        'audio/mpeg',
+        'audio/wav',
+        'audio/ogg',
+        # Archives (Note: These can contain malware - scan recommended)
+        'application/zip',
+        'application/x-rar-compressed',
+        'application/x-7z-compressed',
+        'application/x-rar',
+    }
+
+    try:
+        # Read first 2KB of file for MIME detection
+        file_start = value.read(2048)
+        value.seek(0)  # Reset file pointer to beginning
+
+        # Detect MIME type from file content
+        mime_type = magic.from_buffer(file_start, mime=True)
+
+        if mime_type not in ALLOWED_MIME_TYPES:
+            raise ValidationError(
+                f"File type '{mime_type}' is not allowed. "
+                f"The file content does not match any accepted file type."
+            )
+    except Exception as e:
+        if isinstance(e, ValidationError):
+            raise
+        # If MIME detection fails, log but don't block
+        # (FileExtensionValidator will still provide basic protection)
+        logger = logging.getLogger(__name__)
+        logger.warning(f"MIME type validation failed: {e}")
 
 
 def document_upload_path(instance, filename):
@@ -138,6 +224,7 @@ class Document(models.Model):
         upload_to=document_upload_path,
         validators=[
             validate_file_size,
+            validate_file_mime_type,  # MIME type validation for security
             FileExtensionValidator(
                 allowed_extensions=[
                     "pdf",

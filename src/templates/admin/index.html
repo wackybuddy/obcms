@@ -3,6 +3,8 @@
 
 {% block title %}{% trans 'Site administration' %} | {{ site_title|default:_('Django site admin') }}{% endblock %}
 
+{% block bodyclass %}{{ block.super }} dashboard-home{% endblock %}
+
 {% block content_title %}{% endblock %}
 {% block content_subtitle %}{% endblock %}
 {% block object-tools %}{% endblock %}
@@ -14,221 +16,224 @@
 {% block nav-global %}{% endblock %}
 
 {% block content %}
-<div class="dashboard-wrapper space-y-8 pt-8">
-    <!-- Welcome Header -->
-    <div class="obc-admin-card">
-        <div class="obc-admin-card__header">
-            <div class="obc-space-between w-full">
-                <div>
-                    <div class="obc-admin-card__title">
-                        <span class="obc-admin-card__icon">
-                            <i class="fas fa-tools"></i>
-                        </span>
-                        <span>{% trans "Administration Dashboard" %}</span>
-                    </div>
-                    <p class="mt-3 text-sm text-slate-500">
-                        {% blocktrans %}Welcome, <strong>{{ user.get_full_name|default:user.username }}</strong>. Manage your OBC Management System.{% endblocktrans %}
+{% with managed_count=app_list|length %}
+<div class="obc-dashboard-shell">
+    <section class="obc-dashboard__hero">
+        <header class="obc-dashboard__hero-mast">
+            <div class="obc-dashboard__hero-mast-primary">
+                <span class="obc-dashboard__hero-mast-icon"><i class="fas fa-compass"></i></span>
+                <div class="obc-dashboard__hero-mast-copy">
+                    <span class="obc-dashboard__badge">{% trans "Admin HQ" %}</span>
+                    <h1 class="obc-dashboard__title">{% trans "Keep Barangay OBC momentum going" %}</h1>
+                    <p class="obc-dashboard__lead">
+                        {% blocktrans with name=user.get_full_name|default:user.username %}
+                        Coordinate ministries, documents, and frontline reports from a single command center tailored for Barangay OBC operations.
+                        {% endblocktrans %}
                     </p>
-                    <div class="mt-4 flex flex-wrap items-center gap-3">
-                        <span class="obc-admin-card__title-badge text-xs">
-                            <i class="fas fa-check-circle"></i>
-                            {% trans "Administrator Access" %}
-                        </span>
-                        <span class="text-xs uppercase tracking-wide text-slate-400">
-                            {% trans "Last login:" %} {{ user.last_login|date:"M d, Y H:i" }}
-                        </span>
-                    </div>
-                </div>
-                <div class="hidden md:flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-500 text-white text-2xl">
-                    <i class="fas fa-mosque"></i>
                 </div>
             </div>
+            <div class="obc-dashboard__hero-actions">
+                <a class="obc-hero-button obc-hero-button--primary" href="#quick-actions">
+                    <i class="fas fa-bolt"></i>
+                    {% trans "Jump to quick actions" %}
+                </a>
+                {% if user.is_staff %}
+                <a class="obc-hero-button obc-hero-button--ghost" href="{% url 'common:dashboard' %}">
+                    <i class="fas fa-chart-line"></i>
+                    {% trans "View frontline dashboard" %}
+                </a>
+                {% endif %}
+            </div>
+        </header>
+        <div class="obc-dashboard__hero-highlights">
+            <article class="obc-dashboard-highlight obc-dashboard-highlight--indigo">
+                <span class="obc-dashboard-highlight__icon"><i class="fas fa-wand-magic-sparkles"></i></span>
+                <div>
+                    <h3 class="obc-dashboard-highlight__title">{% trans "Instant UI" %}</h3>
+                    <p class="obc-dashboard-highlight__meta">{% trans "HTMX ready responses" %}</p>
+                </div>
+            </article>
+            <article class="obc-dashboard-highlight obc-dashboard-highlight--emerald">
+                <span class="obc-dashboard-highlight__icon"><i class="fas fa-users"></i></span>
+                <div>
+                    <h3 class="obc-dashboard-highlight__title">{% trans "Community focus" %}</h3>
+                    <p class="obc-dashboard-highlight__meta">{% trans "Provincial to barangay coverage" %}</p>
+                </div>
+            </article>
+            <article class="obc-dashboard-highlight obc-dashboard-highlight--sky">
+                <span class="obc-dashboard-highlight__icon"><i class="fas fa-shield-halved"></i></span>
+                <div>
+                    <h3 class="obc-dashboard-highlight__title">{% trans "Safeguarded data" %}</h3>
+                    <p class="obc-dashboard-highlight__meta">{% trans "Policy tracking & audits" %}</p>
+                </div>
+            </article>
         </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <section class="space-y-6">
-        <div class="flex items-center gap-3">
-            <span class="obc-admin-card__icon text-lg">
-                <i class="fas fa-bolt"></i>
-            </span>
-            <h2 class="text-xl font-semibold text-slate-700">{% trans "Quick Actions" %}</h2>
+        <div class="obc-dashboard-metrics">
+            <div class="obc-dashboard-metric">
+                <span class="obc-dashboard-metric__label">{% trans "Managed apps" %}</span>
+                <strong class="obc-dashboard-metric__value">{{ managed_count }}</strong>
+                <span class="obc-dashboard-metric__hint">{% trans "Modules connected to admin" %}</span>
+            </div>
+            <div class="obc-dashboard-metric">
+                <span class="obc-dashboard-metric__label">{% trans "Signed in as" %}</span>
+                <strong class="obc-dashboard-metric__value">{{ user.get_full_name|default:user.username }}</strong>
+                <span class="obc-dashboard-metric__hint">{% trans "Authorized staff account" %}</span>
+            </div>
+            <div class="obc-dashboard-metric">
+                <span class="obc-dashboard-metric__label">{% trans "Last login" %}</span>
+                <strong class="obc-dashboard-metric__value">
+                    {% if user.last_login %}{{ user.last_login|timesince }}{% else %}{% trans "First session" %}{% endif %}
+                </strong>
+                <span class="obc-dashboard-metric__hint">{% now "M d, Y H:i" %}</span>
+            </div>
         </div>
-        <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <a href="/admin/common/user/add/" class="obc-quick-action">
-                <div class="obc-quick-action__icon bg-gradient-to-br from-blue-500 to-blue-600">
-                    <i class="fas fa-user-plus"></i>
-                </div>
-                <h3 class="obc-quick-action__title">{% trans "Add User" %}</h3>
-                <p class="obc-quick-action__meta">{% trans "Create a new user account for the system." %}</p>
-                <span class="obc-quick-action__cta">
-                    {% trans "Create User" %}
-                    <i class="fas fa-arrow-right"></i>
-                </span>
-            </a>
+    </section>
 
-            <a href="/admin/" class="obc-quick-action">
-                <div class="obc-quick-action__icon bg-gradient-to-br from-emerald-500 to-emerald-600">
-                    <i class="fas fa-external-link-alt"></i>
-                </div>
-                <h3 class="obc-quick-action__title">{% trans "Return to Site" %}</h3>
-                <p class="obc-quick-action__meta">{% trans "Go back to the main application dashboard." %}</p>
-                <span class="obc-quick-action__cta">
-                    {% trans "Visit Site" %}
-                    <i class="fas fa-arrow-right"></i>
-                </span>
+    <section id="quick-actions" class="obc-dashboard-section">
+        <header class="obc-dashboard-section__header">
+            <div>
+                <h2 class="obc-dashboard-section__title">
+                    <i class="fas fa-bolt"></i>
+                    {% trans "Quick Actions" %}
+                </h2>
+                <p class="obc-dashboard-section__subtitle">{% trans "Fast lanes for the tasks you reach for every day." %}</p>
+            </div>
+        </header>
+        <div class="obc-quick-grid">
+            <a href="/admin/common/user/add/" class="obc-quick-card obc-quick-card--indigo">
+                <span class="obc-quick-card__icon"><i class="fas fa-user-plus"></i></span>
+                <h3 class="obc-quick-card__title">{% trans "Invite a staff user" %}</h3>
+                <p class="obc-quick-card__meta">{% trans "Provision access with the latest Barangay OBC permissions." %}</p>
+                <span class="obc-quick-card__cta">{% trans "Create user" %} <i class="fas fa-arrow-right"></i></span>
             </a>
-
-            <a href="/admin/auth/group/" class="obc-quick-action">
-                <div class="obc-quick-action__icon bg-gradient-to-br from-indigo-500 to-purple-600">
-                    <i class="fas fa-users-cog"></i>
-                </div>
-                <h3 class="obc-quick-action__title">{% trans "Manage Groups" %}</h3>
-                <p class="obc-quick-action__meta">{% trans "Configure user groups and permissions." %}</p>
-                <span class="obc-quick-action__cta">
-                    {% trans "Groups" %}
-                    <i class="fas fa-arrow-right"></i>
-                </span>
+            <a href="{% url 'common:dashboard' %}" class="obc-quick-card obc-quick-card--emerald">
+                <span class="obc-quick-card__icon"><i class="fas fa-map-location-dot"></i></span>
+                <h3 class="obc-quick-card__title">{% trans "Return to frontline view" %}</h3>
+                <p class="obc-quick-card__meta">{% trans "Sync with live community operations and status boards." %}</p>
+                <span class="obc-quick-card__cta">{% trans "Launch dashboard" %} <i class="fas fa-arrow-right"></i></span>
+            </a>
+            <a href="/admin/auth/group/" class="obc-quick-card obc-quick-card--magenta">
+                <span class="obc-quick-card__icon"><i class="fas fa-user-shield"></i></span>
+                <h3 class="obc-quick-card__title">{% trans "Tune access controls" %}</h3>
+                <p class="obc-quick-card__meta">{% trans "Refresh groups, assign capabilities, and secure every workflow." %}</p>
+                <span class="obc-quick-card__cta">{% trans "Manage groups" %} <i class="fas fa-arrow-right"></i></span>
             </a>
         </div>
     </section>
 
-    <!-- Application Models -->
     {% if app_list %}
-        <section class="space-y-6">
-            <div class="flex items-center gap-3">
-                <span class="obc-admin-card__icon text-lg">
+    <section class="obc-dashboard-section">
+        <header class="obc-dashboard-section__header">
+            <div>
+                <h2 class="obc-dashboard-section__title">
                     <i class="fas fa-th-large"></i>
-                </span>
-                <h2 class="text-xl font-semibold text-slate-700">{% trans "Application Models" %}</h2>
+                    {% trans "Application Models" %}
+                </h2>
+                <p class="obc-dashboard-section__subtitle">{% trans "Browse every module that powers Barangay OBC programs." %}</p>
             </div>
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                {% for app in app_list %}
-                    <div class="obc-admin-card">
-                        <div class="obc-admin-card__header">
-                            <div class="obc-space-between w-full">
-                                <div class="flex items-center gap-3 text-slate-700">
-                                    <span class="obc-admin-card__icon text-base">
-                                        {% if app.app_label == 'common' %}
-                                            <i class="fas fa-cog"></i>
-                                        {% elif app.app_label == 'communities' %}
-                                            <i class="fas fa-users"></i>
-                                        {% elif app.app_label == 'mana' %}
-                                            <i class="fas fa-map"></i>
-                                        {% elif app.app_label == 'coordination' %}
-                                            <i class="fas fa-handshake"></i>
-                                        {% elif app.app_label == 'policy_tracking' %}
-                                            <i class="fas fa-lightbulb"></i>
-                                        {% elif app.app_label == 'documents' %}
-                                            <i class="fas fa-file-alt"></i>
-                                        {% elif app.app_label == 'data_imports' %}
-                                            <i class="fas fa-download"></i>
-                                        {% else %}
-                                            <i class="fas fa-cube"></i>
-                                        {% endif %}
-                                    </span>
-                                    <span class="flex flex-col">
-                                        <span class="text-base font-semibold text-slate-700">{{ app.name }}</span>
-                                        <span class="text-xs uppercase tracking-wide text-slate-400">{{ app.app_label }}</span>
-                                    </span>
-                                </div>
-                                {% if app.app_url %}
-                                    <a href="{{ app.app_url }}" class="obc-admin-button obc-admin-button--secondary text-xs">
-                                        <i class="fas fa-external-link-alt"></i>
-                                        {% trans "View App" %}
-                                    </a>
+        </header>
+        <div class="obc-app-grid">
+            {% for app in app_list %}
+            <div class="obc-app-card">
+                <div class="obc-app-card__header">
+                    <div class="obc-app-card__heading">
+                        <span class="obc-app-card__icon">
+                            {% if app.app_label == 'common' %}<i class="fas fa-cog"></i>
+                            {% elif app.app_label == 'communities' %}<i class="fas fa-users"></i>
+                            {% elif app.app_label == 'mana' %}<i class="fas fa-map"></i>
+                            {% elif app.app_label == 'coordination' %}<i class="fas fa-handshake"></i>
+                            {% elif app.app_label == 'policy_tracking' %}<i class="fas fa-lightbulb"></i>
+                            {% elif app.app_label == 'documents' %}<i class="fas fa-file-alt"></i>
+                            {% elif app.app_label == 'ai_assistant' %}<i class="fas fa-robot"></i>
+                            {% else %}<i class="fas fa-database"></i>{% endif %}
+                        </span>
+                        <div>
+                            <p class="obc-app-card__title">{{ app.name }}</p>
+                            <span class="obc-app-card__subtitle">{{ app.app_label }}</span>
+                        </div>
+                    </div>
+                    {% if app.app_url %}
+                    <a href="{{ app.app_url }}" class="obc-app-card__link">
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                        {% trans "View app" %}
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="obc-app-card__body">
+                    {% for model in app.models %}
+                    <div class="obc-app-card__row">
+                        <div class="obc-app-card__row-meta">
+                            <span class="obc-app-card__row-icon"><i class="fas fa-table"></i></span>
+                            <div>
+                                <p class="obc-app-card__row-title">{{ model.name }}</p>
+                                {% if model.object_name %}
+                                <p class="obc-app-card__row-hint">{{ model.object_name }}</p>
                                 {% endif %}
                             </div>
                         </div>
-                        <div class="obc-admin-card__body space-y-3">
-                            {% for model in app.models %}
-                                <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                                    <div class="flex items-center gap-3">
-                                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-400">
-                                            <i class="fas fa-table text-sm"></i>
-                                        </span>
-                                        <div>
-                                            <p class="text-sm font-semibold text-slate-700">{{ model.name }}</p>
-                                            {% if model.object_name %}
-                                                <p class="text-xs text-slate-400">{{ model.object_name }}</p>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2">
-                                        {% if model.admin_url %}
-                                            <a href="{{ model.admin_url }}" class="obc-admin-button obc-admin-button--secondary text-xs">
-                                                <i class="fas fa-eye"></i>
-                                                {% trans "View" %}
-                                            </a>
-                                        {% endif %}
-                                        {% if model.add_url %}
-                                            <a href="{{ model.add_url }}" class="obc-admin-button obc-admin-button--primary text-xs">
-                                                <i class="fas fa-plus"></i>
-                                                {% trans "Add" %}
-                                            </a>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
+                        <div class="obc-app-card__row-actions">
+                            {% if model.admin_url %}
+                            <a href="{{ model.admin_url }}" class="obc-app-card__action obc-app-card__action--ghost">
+                                <i class="fas fa-eye"></i>
+                                {% trans "View" %}
+                            </a>
+                            {% endif %}
+                            {% if model.add_url %}
+                            <a href="{{ model.add_url }}" class="obc-app-card__action">
+                                <i class="fas fa-plus"></i>
+                                {% trans "Add" %}
+                            </a>
+                            {% endif %}
                         </div>
                     </div>
-                {% endfor %}
+                    {% empty %}
+                    <p class="obc-app-card__empty">{% trans "No models exposed in admin for this app." %}</p>
+                    {% endfor %}
+                </div>
             </div>
-        </section>
-    {% else %}
-        <div class="obc-admin-card">
-            <div class="obc-admin-card__body text-center space-y-4">
-                <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                    <i class="fas fa-inbox text-2xl"></i>
-                </span>
-                <h3 class="text-lg font-semibold text-slate-700">{% trans "No Applications Available" %}</h3>
-                <p class="text-sm text-slate-500">{% trans "You don't have permission to view or edit anything." %}</p>
-            </div>
+            {% endfor %}
         </div>
+    </section>
+    {% else %}
+    <section class="obc-dashboard-section">
+        <div class="obc-system-card obc-system-card--empty">
+            <span class="obc-system-card__icon"><i class="fas fa-inbox"></i></span>
+            <h3 class="obc-system-card__title">{% trans "No applications available" %}</h3>
+            <p class="obc-system-card__meta">{% trans "You do not yet have permission to view or edit any modules." %}</p>
+        </div>
+    </section>
     {% endif %}
 
-    <!-- System Information -->
-    <div class="obc-admin-card">
-        <div class="obc-admin-card__header">
-            <div class="obc-admin-card__title text-lg">
-                <span class="obc-admin-card__icon text-base">
+    <section class="obc-dashboard-section">
+        <div class="obc-system-card">
+            <header class="obc-system-card__header">
+                <h2 class="obc-system-card__title">
                     <i class="fas fa-info-circle"></i>
-                </span>
-                <span class="text-base font-semibold text-slate-700">{% trans "System Information" %}</span>
+                    {% trans "System information" %}
+                </h2>
+            </header>
+            <div class="obc-system-card__body">
+                <dl class="obc-system-card__list">
+                    <div>
+                        <dt>{% trans "Current user" %}</dt>
+                        <dd>{{ user.get_username }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% trans "Email" %}</dt>
+                        <dd>{{ user.email|default:_('Not provided') }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% trans "Active language" %}</dt>
+                        <dd>{{ LANGUAGE_CODE|upper }}</dd>
+                    </div>
+                    <div>
+                        <dt>{% trans "Server time" %}</dt>
+                        <dd>{% now "l, M d Y H:i" %}</dd>
+                    </div>
+                </dl>
             </div>
         </div>
-        <div class="obc-admin-card__body">
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <div class="obc-system-chip">
-                    <span class="obc-system-chip__icon bg-blue-100 text-blue-600">
-                        <i class="fas fa-server"></i>
-                    </span>
-                    <div>
-                        <p class="obc-system-chip__label">{% trans "System Version" %}</p>
-                        <p class="obc-system-chip__value">OBC Management v1.0</p>
-                    </div>
-                </div>
-                <div class="obc-system-chip">
-                    <span class="obc-system-chip__icon bg-emerald-100 text-emerald-600">
-                        <i class="fas fa-database"></i>
-                    </span>
-                    <div>
-                        <p class="obc-system-chip__label">{% trans "Database" %}</p>
-                        <p class="obc-system-chip__value">{% trans "Connected" %}</p>
-                    </div>
-                </div>
-                <div class="obc-system-chip">
-                    <span class="obc-system-chip__icon bg-purple-100 text-purple-600">
-                        <i class="fas fa-clock"></i>
-                    </span>
-                    <div>
-                        <p class="obc-system-chip__label">{% trans "Server Time" %}</p>
-                        <p class="obc-system-chip__value">{% now "M d, Y H:i" %}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </section>
 </div>
-
+{% endwith %}
 {% endblock %}

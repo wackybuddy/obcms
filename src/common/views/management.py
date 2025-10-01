@@ -36,6 +36,7 @@ from common.forms import (
     StaffTeamMembershipForm,
     TrainingEnrollmentForm,
     TrainingProgramForm,
+    CommunityNeedSubmissionForm,
 )
 from common.models import (
     PerformanceTarget,
@@ -60,6 +61,8 @@ from monitoring.models import (
     MonitoringEntryFunding,
     MonitoringEntryWorkflowStage,
 )
+from monitoring.scenario_models import BudgetScenario
+from monitoring.strategic_models import StrategicGoal
 
 
 PERFORMANCE_STATUS_WEIGHTS = {
@@ -169,12 +172,26 @@ def oobc_management_home(request):
     staff_qs = staff_queryset().order_by("-date_joined")
     pending_qs = User.objects.filter(is_approved=False).order_by("-date_joined")
 
+    # Calculate total budget from MonitoringEntry
+    total_budget = MonitoringEntry.objects.aggregate(
+        total=Coalesce(Sum("budget_allocation"), Value(0, output_field=DecimalField()))
+    )["total"]
+
+    # Format budget for display (in millions)
+    if total_budget and total_budget > 0:
+        budget_display = f"₱{total_budget / 1_000_000:.1f}M"
+    else:
+        budget_display = "₱0"
+
     context = {
         "metrics": {
             "staff_total": staff_qs.count(),
             "active_staff": staff_qs.filter(is_active=True).count(),
             "pending_approvals": pending_qs.count(),
             "pending_staff": pending_qs.filter(user_type__in=STAFF_USER_TYPES).count(),
+            "scenarios_count": BudgetScenario.objects.count(),
+            "goals_count": StrategicGoal.objects.count(),
+            "total_budget": budget_display,
         },
         "recent_staff": staff_qs[:8],
         "pending_users": pending_qs[:8],
@@ -1957,13 +1974,13 @@ def staff_api_teams(request):
     # Color mapping for teams
     team_colors = [
         'bg-blue-100 text-blue-800',
-        'bg-green-100 text-green-800',
-        'bg-purple-100 text-purple-800',
-        'bg-orange-100 text-orange-800',
-        'bg-pink-100 text-pink-800',
+        'bg-emerald-100 text-emerald-800',
+        'bg-teal-100 text-teal-800',
+        'bg-amber-100 text-amber-800',
+        'bg-rose-100 text-rose-800',
         'bg-yellow-100 text-yellow-800',
-        'bg-red-100 text-red-800',
-        'bg-indigo-100 text-indigo-800'
+        'bg-cyan-100 text-cyan-800',
+        'bg-ocean-100 text-ocean-800'
     ]
 
     data = []
@@ -3149,6 +3166,749 @@ def user_approval_action(request, user_id: int):
     return redirect("common:user_approvals")
 
 
+# ============================================================================
+# Phase 2: Planning & Budgeting Integration Dashboards
+# ============================================================================
+
+
+@login_required
+def gap_analysis_dashboard(request):
+    """
+    Gap Analysis Dashboard - Show unfunded community needs.
+
+    Part of Phase 2 implementation for evidence-based budgeting.
+    Displays high-priority needs that don't have budget linkage.
+    """
+    from mana.models import Need
+    from communities.models import Region
+
+    # Get filter parameters
+    region_id = request.GET.get('region')
+    category = request.GET.get('category')
+    urgency = request.GET.get('urgency')
+
+    # Base query: needs that are validated/prioritized but not linked to budget
+    unfunded_needs = Need.objects.filter(
+        Q(linked_ppa__isnull=True),  # Not linked to any PPA
+        status__in=['validated', 'prioritized'],  # Only validated needs
+    ).select_related(
+        'barangay__municipality',
+        'submitted_by_user',
+        'forwarded_to_mao',
+    )
+
+    # Apply filters
+    if region_id:
+        unfunded_needs = unfunded_needs.filter(
+            barangay__municipality__province__region_id=region_id
+        )
+    if category:
+        unfunded_needs = unfunded_needs.filter(category=category)
+    if urgency:
+        unfunded_needs = unfunded_needs.filter(urgency_level=urgency)
+
+    # Calculate statistics
+    total_unfunded = unfunded_needs.count()
+    critical_count = unfunded_needs.filter(urgency_level='critical').count()
+    high_count = unfunded_needs.filter(urgency_level='high').count()
+
+    # Breakdown by category
+    category_breakdown = unfunded_needs.values('category').annotate(
+        count=Count('id'),
+        category__display=Value('category')
+    ).order_by('-count')[:10]
+
+    context = {
+        'unfunded_needs': unfunded_needs[:50],  # Limit to 50 for display
+        'total_unfunded': total_unfunded,
+        'critical_count': critical_count,
+        'high_count': high_count,
+        'category_breakdown': category_breakdown,
+        'regions': Region.objects.all(),
+    }
+
+    return render(request, 'common/gap_analysis_dashboard.html', context)
+
+
+@login_required
+def policy_budget_matrix(request):
+    """
+    Policy-Budget Matrix - Show which policies are funded and which aren't.
+
+    Part of Phase 2 implementation for policy-to-budget integration.
+    """
+    from recommendations.policy_tracking.models import PolicyRecommendation
+
+    # Get filter parameters
+    status = request.GET.get('status')
+    funding_status = request.GET.get('funding_status')
+
+    # Get all approved policies
+    policies = PolicyRecommendation.objects.filter(
+        status__in=['approved', 'in_implementation', 'implemented']
+    ).prefetch_related(
+        'implementing_ppas',
+        'milestones',
+    )
+
+    # Apply filters
+    if status:
+        policies = policies.filter(status=status)
+
+    # Build matrix data with annotations
+    policies_list = []
+    for policy in policies:
+        ppas = policy.implementing_ppas.all()
+        ppa_count = ppas.count()
+        total_budget = ppas.aggregate(Sum('budget_allocation'))['budget_allocation__sum'] or 0
+
+        # Get milestone progress
+        milestones = policy.milestones.all()
+        if milestones.exists():
+            avg_progress = milestones.aggregate(
+                avg=Sum('progress_percentage')
+            )['avg'] / milestones.count()
+        else:
+            avg_progress = 0
+
+        policies_list.append({
+            'id': policy.id,
+            'title': policy.title,
+            'status': policy.status,
+            'recommendation_type_display': policy.get_recommendation_type_display() if hasattr(policy, 'recommendation_type') else 'Policy',
+            'ppa_count': ppa_count,
+            'total_budget': total_budget,
+            'milestone_count': milestones.count(),
+            'avg_progress': avg_progress,
+        })
+
+    # Apply funding filter
+    if funding_status == 'funded':
+        policies_list = [p for p in policies_list if p['ppa_count'] > 0]
+    elif funding_status == 'unfunded':
+        policies_list = [p for p in policies_list if p['ppa_count'] == 0]
+
+    # Calculate summary statistics
+    total_policies = len(policies_list)
+    funded_policies = sum(1 for p in policies_list if p['ppa_count'] > 0)
+    unfunded_policies = total_policies - funded_policies
+    funding_rate = (funded_policies / total_policies * 100) if total_policies > 0 else 0
+
+    context = {
+        'policies': policies_list,
+        'total_policies': total_policies,
+        'funded_policies': funded_policies,
+        'unfunded_policies': unfunded_policies,
+        'funding_rate': funding_rate,
+    }
+
+    return render(request, 'common/policy_budget_matrix.html', context)
+
+
+@login_required
+def mao_focal_persons_registry(request):
+    """
+    MAO Focal Persons Registry - Directory of all MAO focal persons.
+
+    Part of Phase 2 implementation for MAO coordination.
+    """
+    from coordination.models import MAOFocalPerson, Organization
+
+    # Get filter parameters
+    mao_id = request.GET.get('mao')
+    role = request.GET.get('role')
+    status = request.GET.get('status')
+
+    # Base query
+    focal_persons = MAOFocalPerson.objects.select_related(
+        'mao',
+        'user',
+    ).prefetch_related(
+        'managed_services',
+    )
+
+    # Apply filters
+    if mao_id:
+        focal_persons = focal_persons.filter(mao_id=mao_id)
+    if role:
+        focal_persons = focal_persons.filter(role=role)
+    if status == 'active':
+        focal_persons = focal_persons.filter(is_active=True)
+    elif status == 'inactive':
+        focal_persons = focal_persons.filter(is_active=False)
+
+    # Order by MAO and role
+    focal_persons = focal_persons.order_by('mao__name', 'role', '-appointed_date')
+
+    # Get statistics
+    total_focal_persons = focal_persons.count()
+    active_focal_persons = focal_persons.filter(is_active=True).count()
+
+    # MAO coverage
+    total_maos = focal_persons.values('mao').distinct().count()
+
+    # Get all MAOs for filter dropdown
+    maos = Organization.objects.filter(organization_type='bmoa').order_by('name')
+
+    context = {
+        'focal_persons': focal_persons,
+        'total_focal_persons': total_focal_persons,
+        'active_focal_persons': active_focal_persons,
+        'total_maos': total_maos,
+        'maos': maos,
+    }
+
+    return render(request, 'common/mao_focal_persons_registry.html', context)
+
+
+@login_required
+def community_need_submit(request):
+    """Allow community leaders to submit needs directly into the MANA pipeline."""
+
+    from mana.models import Need
+
+    form = CommunityNeedSubmissionForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        need = form.save(submitter=request.user)
+        messages.success(
+            request,
+            "Community need submitted successfully. The OOBC team will review it shortly.",
+        )
+        return redirect("common:community_needs_summary")
+
+    submitted_needs = (
+        Need.objects.filter(
+            submission_type="community_submitted",
+            submitted_by_user=request.user,
+        )
+        .select_related("community")
+        .order_by("-created_at")[:10]
+    )
+
+    context = {
+        "form": form,
+        "submitted_needs": submitted_needs,
+    }
+
+    return render(request, "common/community_need_submit.html", context)
+
+
+@login_required
+def community_needs_summary(request):
+    """
+    Community Needs Summary - Overview of all community needs.
+
+    Part of Phase 2 implementation for community participation tracking.
+    """
+    from mana.models import Need
+    from communities.models import Region
+
+    # Get filter parameters
+    submission_type = request.GET.get('submission_type')
+    category = request.GET.get('category')
+    funding_status = request.GET.get('funding_status')
+    region_id = request.GET.get('region')
+
+    # Base query
+    needs = Need.objects.select_related(
+        'community',
+        'community__barangay',
+        'community__barangay__municipality',
+        'community__barangay__municipality__province',
+        'community__barangay__municipality__province__region',
+        'submitted_by_user',
+        'forwarded_to_mao',
+        'linked_ppa',
+    )
+
+    # Apply filters
+    if submission_type:
+        needs = needs.filter(submission_type=submission_type)
+    if category:
+        needs = needs.filter(category=category)
+    if region_id:
+        needs = needs.filter(
+            community__barangay__municipality__province__region_id=region_id
+        )
+    if funding_status == 'funded':
+        needs = needs.filter(linked_ppa__isnull=False)
+    elif funding_status == 'unfunded':
+        needs = needs.filter(linked_ppa__isnull=True)
+    elif funding_status == 'forwarded':
+        needs = needs.filter(forwarded_to_mao__isnull=False, linked_ppa__isnull=True)
+
+    # Calculate statistics
+    total_needs = needs.count()
+
+    # By submission type
+    assessment_driven_count = needs.filter(submission_type='assessment_driven').count()
+    community_submitted_count = needs.filter(submission_type='community_submitted').count()
+
+    # By funding status
+    funded_needs = needs.filter(linked_ppa__isnull=False).count()
+    forwarded_needs = needs.filter(
+        forwarded_to_mao__isnull=False,
+        linked_ppa__isnull=True
+    ).count()
+    unfunded_needs = needs.filter(
+        linked_ppa__isnull=True,
+        status__in=['validated', 'prioritized']
+    ).count()
+
+    # Funding rate
+    funding_rate = (funded_needs / total_needs * 100) if total_needs > 0 else 0
+
+    # Breakdown by category
+    category_breakdown = needs.values('category').annotate(
+        count=Count('id'),
+        category__display=Value('category'),
+        funded_count=Count('id', filter=Q(linked_ppa__isnull=False)),
+        unfunded_count=Count('id', filter=Q(linked_ppa__isnull=True)),
+    ).order_by('-count')[:10]
+
+    context = {
+        'needs': needs[:50],  # Limit to 50 for display
+        'total_needs': total_needs,
+        'assessment_driven_count': assessment_driven_count,
+        'community_submitted_count': community_submitted_count,
+        'funded_needs': funded_needs,
+        'forwarded_needs': forwarded_needs,
+        'unfunded_needs': unfunded_needs,
+        'funding_rate': funding_rate,
+        'category_breakdown': category_breakdown,
+        'regions': Region.objects.all(),
+    }
+
+    return render(request, 'common/community_needs_summary.html', context)
+
+
+# ============================================================================
+# Phase 4: Participatory Budgeting - Community Voting System
+# ============================================================================
+
+
+@login_required
+def community_voting_browse(request):
+    """
+    Browse community needs and cast votes.
+
+    Part of Phase 4: Participatory Budgeting.
+    Allows community members to view and vote on priority needs.
+    """
+    from mana.models import Need, NeedVote
+    from communities.models import Region
+
+    # Get filter parameters
+    region_id = request.GET.get('region')
+    category = request.GET.get('category')
+    sort_by = request.GET.get('sort', 'votes')  # votes, recent, priority
+
+    # Base query: validated needs that can be voted on
+    needs = Need.objects.filter(
+        status__in=['validated', 'prioritized']
+    ).select_related(
+        'barangay__municipality__province__region',
+        'submitted_by_user',
+    ).prefetch_related(
+        'votes'
+    )
+
+    # Apply filters
+    if region_id:
+        needs = needs.filter(
+            barangay__municipality__province__region_id=region_id
+        )
+    if category:
+        needs = needs.filter(category=category)
+
+    # Sorting
+    if sort_by == 'votes':
+        needs = needs.order_by('-community_votes', '-created_at')
+    elif sort_by == 'recent':
+        needs = needs.order_by('-created_at')
+    elif sort_by == 'priority':
+        needs = needs.order_by('-priority_score', '-community_votes')
+    else:
+        needs = needs.order_by('-community_votes')
+
+    # Get user's votes
+    user_votes = {}
+    if request.user.is_authenticated:
+        user_votes_qs = NeedVote.objects.filter(
+            user=request.user,
+            need__in=needs
+        ).values_list('need_id', 'vote_weight')
+        user_votes = dict(user_votes_qs)
+
+    # Calculate top voted needs
+    top_voted = Need.objects.filter(
+        status__in=['validated', 'prioritized']
+    ).order_by('-community_votes')[:10]
+
+    context = {
+        'needs': needs[:50],  # Limit to 50 for performance
+        'user_votes': user_votes,
+        'top_voted': top_voted,
+        'regions': Region.objects.all(),
+        'total_votable_needs': needs.count(),
+    }
+
+    return render(request, 'common/community_voting_browse.html', context)
+
+
+@login_required
+@require_POST
+def community_voting_vote(request):
+    """
+    Cast or update a vote on a need (AJAX endpoint).
+
+    Returns JSON response with updated vote counts.
+    """
+    from mana.models import Need, NeedVote
+    from django.http import JsonResponse
+
+    need_id = request.POST.get('need_id')
+    vote_weight = int(request.POST.get('vote_weight', 1))
+    comment = request.POST.get('comment', '')
+
+    # Validate inputs
+    if not need_id:
+        return JsonResponse({'error': 'Need ID required'}, status=400)
+
+    if vote_weight < 1 or vote_weight > 5:
+        return JsonResponse({'error': 'Vote weight must be 1-5'}, status=400)
+
+    try:
+        need = Need.objects.get(id=need_id)
+    except Need.DoesNotExist:
+        return JsonResponse({'error': 'Need not found'}, status=404)
+
+    # Check if need is votable
+    if need.status not in ['validated', 'prioritized']:
+        return JsonResponse({'error': 'This need cannot be voted on'}, status=400)
+
+    # Get client IP for fraud detection
+    ip_address = request.META.get('HTTP_X_FORWARDED_FOR', request.META.get('REMOTE_ADDR', ''))
+    if ip_address:
+        ip_address = ip_address.split(',')[0].strip()
+
+    # Create or update vote
+    vote, created = NeedVote.objects.update_or_create(
+        need=need,
+        user=request.user,
+        defaults={
+            'vote_weight': vote_weight,
+            'comment': comment,
+            'ip_address': ip_address,
+        }
+    )
+
+    # Refresh need to get updated vote count
+    need.refresh_from_db()
+
+    return JsonResponse({
+        'success': True,
+        'created': created,
+        'vote_weight': vote.vote_weight,
+        'total_votes': need.community_votes,
+        'message': 'Vote recorded successfully' if created else 'Vote updated successfully'
+    })
+
+
+@login_required
+def community_voting_results(request):
+    """
+    View detailed voting results and analytics.
+
+    Part of Phase 4: Participatory Budgeting.
+    Shows which needs have the most community support.
+    """
+    from mana.models import Need, NeedVote
+    from django.db.models import Count, Sum, Avg
+
+    # Get filter parameters
+    region_id = request.GET.get('region')
+    category = request.GET.get('category')
+
+    # Base query for needs with votes
+    needs = Need.objects.filter(
+        votes__isnull=False,
+        status__in=['validated', 'prioritized']
+    ).distinct().annotate(
+        vote_count=Count('votes'),
+        total_weight=Sum('votes__vote_weight'),
+        avg_weight=Avg('votes__vote_weight'),
+    ).select_related(
+        'barangay__municipality__province__region',
+    )
+
+    # Apply filters
+    if region_id:
+        needs = needs.filter(
+            barangay__municipality__province__region_id=region_id
+        )
+    if category:
+        needs = needs.filter(category=category)
+
+    # Order by total votes
+    needs = needs.order_by('-total_weight', '-vote_count')
+
+    # Get top 10 most voted
+    top_voted = needs[:10]
+
+    # Recent votes
+    recent_votes = NeedVote.objects.select_related(
+        'need',
+        'user',
+    ).order_by('-voted_at')[:20]
+
+    # Voting statistics
+    total_votes_cast = NeedVote.objects.count()
+    unique_voters = NeedVote.objects.values('user').distinct().count()
+    total_needs_voted = Need.objects.filter(
+        votes__isnull=False
+    ).distinct().count()
+
+    # Category breakdown
+    category_breakdown = Need.objects.filter(
+        votes__isnull=False,
+        status__in=['validated', 'prioritized']
+    ).values('category').annotate(
+        vote_count=Count('votes'),
+        needs_count=Count('id', distinct=True),
+    ).order_by('-vote_count')[:10]
+
+    context = {
+        'top_voted': top_voted,
+        'recent_votes': recent_votes,
+        'total_votes_cast': total_votes_cast,
+        'unique_voters': unique_voters,
+        'total_needs_voted': total_needs_voted,
+        'category_breakdown': category_breakdown,
+        'needs': needs[:50],  # For table display
+    }
+
+    return render(request, 'common/community_voting_results.html', context)
+
+
+# ============================================================================
+# Phase 4.2: Budget Feedback Loop
+# ============================================================================
+
+
+@login_required
+def budget_feedback_dashboard(request):
+    """
+    Dashboard showing budget allocation feedback and satisfaction ratings.
+
+    Part of Phase 4: Budget Feedback Loop.
+    Shows community satisfaction with implemented programs and services.
+    """
+    from services.models import ServiceApplication
+    from monitoring.models import MonitoringEntry, MonitoringEntryTaskAssignment
+    from django.db.models import Avg, Count, Prefetch, Q
+
+    # Service delivery feedback
+    completed_applications = ServiceApplication.objects.filter(
+        status='completed'
+    ).select_related(
+        'service__offering_mao',
+        'applicant_community__barangay',
+        'applicant_user',
+    )
+
+    # Calculate satisfaction metrics
+    avg_satisfaction = completed_applications.aggregate(
+        Avg('satisfaction_rating')
+    )['satisfaction_rating__avg'] or 0
+
+    # Satisfaction distribution
+    satisfaction_counts = completed_applications.values(
+        'satisfaction_rating'
+    ).annotate(count=Count('id')).order_by('satisfaction_rating')
+
+    # Feedback by MAO
+    mao_feedback = completed_applications.values(
+        'service__offering_mao__name',
+        'service__offering_mao__acronym'
+    ).annotate(
+        applications=Count('id'),
+        avg_rating=Avg('satisfaction_rating'),
+        high_satisfaction=Count('id', filter=Q(satisfaction_rating__gte=4)),
+        low_satisfaction=Count('id', filter=Q(satisfaction_rating__lte=2)),
+    ).order_by('-avg_rating')
+
+    # Recent feedback
+    recent_feedback = completed_applications.filter(
+        satisfaction_rating__isnull=False
+    ).order_by('-service_completion_date')[:10]
+
+    # PPA completion feedback
+    task_assignment_prefetch = Prefetch(
+        'task_assignments',
+        queryset=MonitoringEntryTaskAssignment.objects.select_related('assigned_to').order_by('created_at'),
+        to_attr='prefetched_task_assignments',
+    )
+
+    completed_ppas_qs = MonitoringEntry.objects.filter(
+        status__in=['completed', 'evaluated']
+    ).prefetch_related(task_assignment_prefetch)[:10]
+
+    completed_ppas = list(completed_ppas_qs)
+    for entry in completed_ppas:
+        entry.assigned_to = next(
+            (assignment.assigned_to for assignment in getattr(entry, 'prefetched_task_assignments', []) if assignment.assigned_to_id),
+            None,
+        )
+
+    context = {
+        'total_completed': completed_applications.count(),
+        'avg_satisfaction': avg_satisfaction,
+        'satisfaction_counts': satisfaction_counts,
+        'mao_feedback': mao_feedback,
+        'recent_feedback': recent_feedback,
+        'completed_ppas': completed_ppas,
+    }
+
+    return render(request, 'common/budget_feedback_dashboard.html', context)
+
+
+@login_required
+def submit_service_feedback(request, application_id):
+    """
+    Submit feedback for a completed service application.
+
+    Part of Phase 4: Budget Feedback Loop.
+    """
+    from services.models import ServiceApplication
+    from django.http import JsonResponse
+
+    try:
+        application = ServiceApplication.objects.get(
+            id=application_id,
+            applicant_user=request.user,
+            status='completed'
+        )
+    except ServiceApplication.DoesNotExist:
+        return JsonResponse({'error': 'Application not found or not completed'}, status=404)
+
+    if request.method == 'POST':
+        rating = int(request.POST.get('rating', 0))
+        feedback_text = request.POST.get('feedback', '')
+
+        # Validate rating
+        if rating < 1 or rating > 5:
+            return JsonResponse({'error': 'Rating must be 1-5'}, status=400)
+
+        # Update application with feedback
+        application.satisfaction_rating = rating
+        application.feedback = feedback_text
+        application.save(update_fields=['satisfaction_rating', 'feedback'])
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Thank you for your feedback!',
+            'rating': rating
+        })
+
+    # GET request: show feedback form
+    context = {
+        'application': application,
+    }
+    return render(request, 'common/submit_service_feedback.html', context)
+
+
+@login_required
+def transparency_dashboard(request):
+    """
+    Public-facing transparency dashboard showing budget allocations and outcomes.
+
+    Part of Phase 4: Transparency Features.
+    Shows how community funds are being used and results achieved.
+    """
+    from monitoring.models import MonitoringEntry, MonitoringEntryTaskAssignment
+    from mana.models import Need
+    from services.models import ServiceApplication, ServiceOffering
+    from django.db.models import Sum, Count, Avg, Prefetch, Q
+
+    # Budget allocation summary
+    total_allocated = MonitoringEntry.objects.aggregate(
+        total=Sum('budget_allocation')
+    )['total'] or 0
+
+    total_disbursed = MonitoringEntry.objects.aggregate(
+        total=Sum('amount_disbursed')
+    )['total'] or 0
+
+    # Funding status
+    funded_needs = Need.objects.filter(linked_ppa__isnull=False).count()
+    total_needs = Need.objects.filter(
+        status__in=['validated', 'prioritized']
+    ).count()
+    funding_rate = (funded_needs / total_needs * 100) if total_needs > 0 else 0
+
+    # PPAs by status
+    ppa_status_breakdown = MonitoringEntry.objects.values(
+        'status'
+    ).annotate(
+        count=Count('id'),
+        budget=Sum('budget_allocation')
+    ).order_by('-count')
+
+    # Regional distribution
+    regional_distribution = MonitoringEntry.objects.values(
+        'implementing_office'
+    ).annotate(
+        ppas=Count('id'),
+        budget=Sum('budget_allocation'),
+        beneficiaries=Sum('target_beneficiaries')
+    ).order_by('-budget')[:10]
+
+    # Service delivery stats
+    active_services = ServiceOffering.objects.filter(status='active').count()
+    total_applications = ServiceApplication.objects.count()
+    approved_applications = ServiceApplication.objects.filter(
+        status__in=['approved', 'in_progress', 'completed']
+    ).count()
+
+    task_assignment_prefetch = Prefetch(
+        'task_assignments',
+        queryset=MonitoringEntryTaskAssignment.objects.select_related('assigned_to').order_by('created_at'),
+        to_attr='prefetched_task_assignments',
+    )
+
+    # Recent completions
+    recent_completion_qs = MonitoringEntry.objects.filter(
+        status='completed'
+    ).prefetch_related(task_assignment_prefetch).order_by('-updated_at')[:5]
+
+    recent_completions = list(recent_completion_qs)
+    for entry in recent_completions:
+        entry.assigned_to = next(
+            (assignment.assigned_to for assignment in getattr(entry, 'prefetched_task_assignments', []) if assignment.assigned_to_id),
+            None,
+        )
+
+    context = {
+        'total_allocated': total_allocated,
+        'total_disbursed': total_disbursed,
+        'disbursement_rate': (total_disbursed / total_allocated * 100) if total_allocated > 0 else 0,
+        'funded_needs': funded_needs,
+        'total_needs': total_needs,
+        'funding_rate': funding_rate,
+        'ppa_status_breakdown': ppa_status_breakdown,
+        'regional_distribution': regional_distribution,
+        'active_services': active_services,
+        'total_applications': total_applications,
+        'approved_applications': approved_applications,
+        'approval_rate': (approved_applications / total_applications * 100) if total_applications > 0 else 0,
+        'recent_completions': recent_completions,
+    }
+
+    return render(request, 'common/transparency_dashboard.html', context)
+
+
 __all__ = [
     "oobc_management_home",
     "oobc_calendar",
@@ -3156,6 +3916,16 @@ __all__ = [
     "oobc_calendar_feed_ics",
     "oobc_calendar_brief",
     "planning_budgeting",
+    "gap_analysis_dashboard",
+    "policy_budget_matrix",
+    "mao_focal_persons_registry",
+    "community_needs_summary",
+    "community_voting_browse",
+    "community_voting_vote",
+    "community_voting_results",
+    "budget_feedback_dashboard",
+    "submit_service_feedback",
+    "transparency_dashboard",
     "staff_management",
     "staff_task_board",
     "staff_task_modal_create",
@@ -3180,3 +3950,838 @@ __all__ = [
     "user_approvals",
     "user_approval_action",
 ]
+
+
+# ============================================================================
+# Phase 5: Strategic Planning Integration
+# ============================================================================
+
+
+@login_required
+def strategic_goals_dashboard(request):
+    """
+    Dashboard for strategic goals tracking and alignment.
+    
+    Part of Phase 5: Strategic Planning Integration.
+    Shows multi-year goals, progress, and PPA/policy alignment.
+    """
+    from monitoring.models import StrategicGoal
+    from django.db.models import Count, Sum, Avg, Q
+    
+    # Get filter parameters
+    sector = request.GET.get('sector')
+    status = request.GET.get('status')
+    priority = request.GET.get('priority')
+    
+    # Base query
+    goals = StrategicGoal.objects.select_related(
+        'lead_agency',
+    ).prefetch_related(
+        'linked_ppas',
+        'linked_policies',
+        'supporting_agencies',
+    )
+    
+    # Apply filters
+    if sector:
+        goals = goals.filter(sector=sector)
+    if status:
+        goals = goals.filter(status=status)
+    if priority:
+        goals = goals.filter(priority_level=priority)
+    
+    # Calculate statistics
+    total_goals = goals.count()
+    active_goals = goals.filter(status='active').count()
+    achieved_goals = goals.filter(status='achieved').count()
+    
+    # Progress aggregation
+    avg_progress = goals.aggregate(Avg('progress_percentage'))['progress_percentage__avg'] or 0
+    
+    # Sector breakdown
+    sector_breakdown = StrategicGoal.objects.values(
+        'sector'
+    ).annotate(
+        count=Count('id'),
+        avg_progress=Avg('progress_percentage'),
+        active_count=Count('id', filter=Q(status='active')),
+    ).order_by('-count')
+    
+    # Priority breakdown
+    priority_breakdown = StrategicGoal.objects.values(
+        'priority_level'
+    ).annotate(
+        count=Count('id'),
+        avg_progress=Avg('progress_percentage'),
+    ).order_by('priority_level')
+    
+    # RDP alignment
+    rdp_aligned = goals.filter(aligns_with_rdp=True).count()
+    national_aligned = goals.filter(aligns_with_national_framework=True).count()
+    
+    # Goals with budget gaps (no linked PPAs)
+    goals_without_ppas = goals.annotate(
+        ppa_count=Count('linked_ppas')
+    ).filter(ppa_count=0, status__in=['approved', 'active'])
+    
+    context = {
+        'goals': goals[:50],  # Limit for display
+        'total_goals': total_goals,
+        'active_goals': active_goals,
+        'achieved_goals': achieved_goals,
+        'avg_progress': avg_progress,
+        'sector_breakdown': sector_breakdown,
+        'priority_breakdown': priority_breakdown,
+        'rdp_aligned': rdp_aligned,
+        'national_aligned': national_aligned,
+        'goals_without_ppas': goals_without_ppas,
+    }
+    
+    return render(request, 'common/strategic_goals_dashboard.html', context)
+
+
+@login_required
+def annual_planning_dashboard(request):
+    """
+    Dashboard for annual planning cycles and budget tracking.
+    
+    Part of Phase 5: Strategic Planning Integration.
+    Shows current and upcoming fiscal year planning status.
+    """
+    from monitoring.models import AnnualPlanningCycle
+    from django.utils import timezone
+    from django.db.models import Count, Sum
+    
+    current_year = timezone.now().year
+    
+    # Get current and upcoming cycles
+    current_cycle = AnnualPlanningCycle.objects.filter(
+        fiscal_year=current_year
+    ).first()
+    
+    upcoming_cycle = AnnualPlanningCycle.objects.filter(
+        fiscal_year=current_year + 1
+    ).first()
+    
+    # All cycles for timeline
+    all_cycles = AnnualPlanningCycle.objects.all()[:10]
+    
+    # Budget summary across cycles
+    total_budget_all_years = AnnualPlanningCycle.objects.aggregate(
+        total=Sum('total_budget_envelope')
+    )['total'] or 0
+    
+    total_allocated_all_years = AnnualPlanningCycle.objects.aggregate(
+        total=Sum('allocated_budget')
+    )['total'] or 0
+    
+    # Status distribution
+    status_distribution = AnnualPlanningCycle.objects.values(
+        'status'
+    ).annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    # Planning milestones for current cycle
+    milestones = []
+    if current_cycle:
+        today = timezone.now().date()
+        milestones = [
+            {
+                'name': 'Planning Start',
+                'date': current_cycle.planning_start_date,
+                'status': 'completed' if today > current_cycle.planning_start_date else 'upcoming'
+            },
+            {
+                'name': 'Planning End',
+                'date': current_cycle.planning_end_date,
+                'status': 'completed' if today > current_cycle.planning_end_date else 'current' if today > current_cycle.planning_start_date else 'upcoming'
+            },
+            {
+                'name': 'Budget Submission',
+                'date': current_cycle.budget_submission_date,
+                'status': 'completed' if today > current_cycle.budget_submission_date else 'current' if today > current_cycle.planning_end_date else 'upcoming'
+            },
+            {
+                'name': 'Execution Start',
+                'date': current_cycle.execution_start_date,
+                'status': 'completed' if today > current_cycle.execution_start_date else 'upcoming'
+            },
+        ]
+    
+    context = {
+        'current_cycle': current_cycle,
+        'upcoming_cycle': upcoming_cycle,
+        'all_cycles': all_cycles,
+        'total_budget_all_years': total_budget_all_years,
+        'total_allocated_all_years': total_allocated_all_years,
+        'status_distribution': status_distribution,
+        'milestones': milestones,
+    }
+    
+    return render(request, 'common/annual_planning_dashboard.html', context)
+
+
+@login_required
+def regional_development_alignment(request):
+    """
+    Dashboard showing alignment between PPAs and Regional Development Plans.
+    
+    Part of Phase 5: Strategic Planning Integration.
+    """
+    from monitoring.models import StrategicGoal, MonitoringEntry
+    from django.db.models import Count, Sum, Q
+    
+    # RDP-aligned goals
+    rdp_goals = StrategicGoal.objects.filter(
+        aligns_with_rdp=True
+    ).prefetch_related('linked_ppas')
+    
+    # PPAs linked to RDP-aligned goals
+    rdp_aligned_ppas = MonitoringEntry.objects.filter(
+        contributing_strategic_goals__aligns_with_rdp=True
+    ).distinct()
+    
+    # PPAs NOT linked to any strategic goal
+    unaligned_ppas = MonitoringEntry.objects.annotate(
+        goal_count=Count('contributing_strategic_goals')
+    ).filter(goal_count=0)
+    
+    # Budget allocation by RDP alignment
+    rdp_budget = rdp_aligned_ppas.aggregate(
+        total=Sum('budget_allocation')
+    )['total'] or 0
+    
+    total_budget = MonitoringEntry.objects.aggregate(
+        total=Sum('budget_allocation')
+    )['total'] or 0
+    
+    alignment_rate = (rdp_budget / total_budget * 100) if total_budget > 0 else 0
+    
+    # Sector-wise RDP alignment
+    sector_alignment = {}
+    for goal in rdp_goals:
+        sector = goal.get_sector_display()
+        if sector not in sector_alignment:
+            sector_alignment[sector] = {
+                'goals': 0,
+                'ppas': 0,
+                'budget': 0,
+            }
+        sector_alignment[sector]['goals'] += 1
+        sector_alignment[sector]['ppas'] += goal.linked_ppas.count()
+        sector_alignment[sector]['budget'] += goal.linked_ppas.aggregate(
+            Sum('budget_allocation')
+        )['budget_allocation__sum'] or 0
+    
+    context = {
+        'rdp_goals': rdp_goals,
+        'rdp_aligned_ppas': rdp_aligned_ppas[:50],
+        'unaligned_ppas': unaligned_ppas[:50],
+        'rdp_budget': rdp_budget,
+        'total_budget': total_budget,
+        'alignment_rate': alignment_rate,
+        'sector_alignment': sector_alignment,
+    }
+
+    return render(request, 'common/regional_development_alignment.html', context)
+
+
+# =============================================================================
+# Phase 6: Scenario Planning & Budget Optimization Views
+# =============================================================================
+
+@login_required
+def scenario_list(request):
+    """
+    List all budget scenarios with filtering and status overview.
+    """
+    from monitoring.models import BudgetScenario, AnnualPlanningCycle
+    from django.db.models import Count, Sum
+
+    # Filter parameters
+    status_filter = request.GET.get('status', '')
+    scenario_type_filter = request.GET.get('type', '')
+    planning_cycle_filter = request.GET.get('cycle', '')
+
+    # Base queryset
+    scenarios = BudgetScenario.objects.select_related(
+        'planning_cycle', 'created_by'
+    ).prefetch_related('allocations').annotate(
+        allocations_count=Count('allocations'),
+        total_allocated=Sum('allocations__allocated_amount')
+    )
+
+    # Apply filters
+    if status_filter:
+        scenarios = scenarios.filter(status=status_filter)
+    if scenario_type_filter:
+        scenarios = scenarios.filter(scenario_type=scenario_type_filter)
+    if planning_cycle_filter:
+        scenarios = scenarios.filter(planning_cycle_id=planning_cycle_filter)
+
+    # Get baseline scenario
+    baseline_scenario = scenarios.filter(is_baseline=True).first()
+
+    # Summary statistics
+    summary = {
+        'total_scenarios': scenarios.count(),
+        'draft': scenarios.filter(status='draft').count(),
+        'under_review': scenarios.filter(status='under_review').count(),
+        'approved': scenarios.filter(status='approved').count(),
+        'implemented': scenarios.filter(status='implemented').count(),
+    }
+
+    # Planning cycles for filter
+    planning_cycles = AnnualPlanningCycle.objects.all()
+
+    context = {
+        'scenarios': scenarios,
+        'baseline_scenario': baseline_scenario,
+        'summary': summary,
+        'planning_cycles': planning_cycles,
+        'current_filters': {
+            'status': status_filter,
+            'type': scenario_type_filter,
+            'cycle': planning_cycle_filter,
+        },
+    }
+
+    return render(request, 'common/scenario_list.html', context)
+
+
+@login_required
+def scenario_create(request):
+    """
+    Create a new budget scenario with PPAs allocation.
+    """
+    from monitoring.models import (
+        BudgetScenario, ScenarioAllocation, MonitoringEntry,
+        AnnualPlanningCycle
+    )
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    from decimal import Decimal
+
+    if request.method == 'POST':
+        try:
+            # Create scenario
+            scenario = BudgetScenario.objects.create(
+                name=request.POST.get('name'),
+                description=request.POST.get('description', ''),
+                scenario_type=request.POST.get('scenario_type'),
+                total_budget=Decimal(request.POST.get('total_budget', '0')),
+                is_baseline=request.POST.get('is_baseline') == 'on',
+                planning_cycle_id=request.POST.get('planning_cycle') or None,
+                status='draft',
+                created_by=request.user,
+                weight_needs_coverage=Decimal(request.POST.get('weight_needs_coverage', '0.40')),
+                weight_equity=Decimal(request.POST.get('weight_equity', '0.30')),
+                weight_strategic_alignment=Decimal(request.POST.get('weight_strategic_alignment', '0.30')),
+            )
+
+            messages.success(request, f'Scenario "{scenario.name}" created successfully!')
+            return redirect('common:scenario_detail', scenario_id=scenario.id)
+
+        except Exception as e:
+            messages.error(request, f'Error creating scenario: {str(e)}')
+
+    # GET request - show form
+    planning_cycles = AnnualPlanningCycle.objects.filter(
+        status__in=['planning', 'budget_preparation']
+    )
+
+    context = {
+        'planning_cycles': planning_cycles,
+        'scenario_types': BudgetScenario.SCENARIO_TYPE_CHOICES,
+    }
+
+    return render(request, 'common/scenario_create.html', context)
+
+
+@login_required
+def scenario_detail(request, scenario_id):
+    """
+    View and edit a budget scenario with PPA allocations.
+    """
+    from monitoring.models import (
+        BudgetScenario, ScenarioAllocation, MonitoringEntry
+    )
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from decimal import Decimal
+
+    scenario = get_object_or_404(
+        BudgetScenario.objects.prefetch_related(
+            'allocations__ppa',
+            'allocations__ppa__addresses_needs',
+        ),
+        id=scenario_id
+    )
+
+    # Handle POST for adding allocations
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'add_allocation':
+            try:
+                ppa_id = request.POST.get('ppa_id')
+                allocated_amount = Decimal(request.POST.get('allocated_amount', '0'))
+
+                allocation, created = ScenarioAllocation.objects.get_or_create(
+                    scenario=scenario,
+                    ppa_id=ppa_id,
+                    defaults={
+                        'allocated_amount': allocated_amount,
+                        'status': 'proposed',
+                    }
+                )
+
+                if not created:
+                    allocation.allocated_amount = allocated_amount
+                    allocation.save()
+
+                # Calculate metrics
+                allocation.calculate_metrics()
+
+                messages.success(request, 'Allocation added successfully!')
+
+            except Exception as e:
+                messages.error(request, f'Error adding allocation: {str(e)}')
+
+        elif action == 'remove_allocation':
+            try:
+                allocation_id = request.POST.get('allocation_id')
+                ScenarioAllocation.objects.filter(
+                    id=allocation_id,
+                    scenario=scenario
+                ).delete()
+                messages.success(request, 'Allocation removed successfully!')
+            except Exception as e:
+                messages.error(request, f'Error removing allocation: {str(e)}')
+
+        elif action == 'update_scenario':
+            try:
+                scenario.name = request.POST.get('name', scenario.name)
+                scenario.description = request.POST.get('description', scenario.description)
+                scenario.status = request.POST.get('status', scenario.status)
+                scenario.save()
+                messages.success(request, 'Scenario updated successfully!')
+            except Exception as e:
+                messages.error(request, f'Error updating scenario: {str(e)}')
+
+        return redirect('common:scenario_detail', scenario_id=scenario_id)
+
+    # GET request - show details
+    allocations = scenario.allocations.select_related('ppa').all()
+
+    # Available PPAs (not yet allocated)
+    allocated_ppa_ids = allocations.values_list('ppa_id', flat=True)
+    available_ppas = MonitoringEntry.objects.filter(
+        status__in=['approved', 'ongoing']
+    ).exclude(id__in=allocated_ppa_ids)
+
+    # Summary metrics
+    total_allocated = sum(a.allocated_amount for a in allocations)
+    unallocated = scenario.total_budget - total_allocated
+    utilization_rate = (total_allocated / scenario.total_budget * 100) if scenario.total_budget > 0 else 0
+
+    # Top allocations by amount
+    top_allocations = allocations.order_by('-allocated_amount')[:10]
+
+    context = {
+        'scenario': scenario,
+        'allocations': allocations,
+        'available_ppas': available_ppas,
+        'total_allocated': total_allocated,
+        'unallocated': unallocated,
+        'utilization_rate': utilization_rate,
+        'top_allocations': top_allocations,
+    }
+
+    return render(request, 'common/scenario_detail.html', context)
+
+
+@login_required
+def scenario_compare(request):
+    """
+    Compare multiple budget scenarios side-by-side.
+    """
+    from monitoring.models import BudgetScenario
+    from django.shortcuts import get_object_or_404
+
+    # Get scenario IDs from query params
+    scenario_ids = request.GET.getlist('scenarios')
+
+    if not scenario_ids:
+        # Default to comparing baseline vs latest draft
+        scenarios = BudgetScenario.objects.all()
+        baseline = scenarios.filter(is_baseline=True).first()
+        latest_draft = scenarios.filter(status='draft').order_by('-created_at').first()
+
+        compared_scenarios = [s for s in [baseline, latest_draft] if s]
+    else:
+        compared_scenarios = BudgetScenario.objects.filter(
+            id__in=scenario_ids
+        ).prefetch_related(
+            'allocations__ppa',
+            'allocations__ppa__addresses_needs',
+        )
+
+    # Comparative metrics
+    comparison_data = []
+    for scenario in compared_scenarios:
+        allocations = scenario.allocations.all()
+
+        comparison_data.append({
+            'scenario': scenario,
+            'total_ppas': allocations.count(),
+            'total_allocated': scenario.allocated_budget,
+            'utilization_rate': scenario.budget_utilization_rate,
+            'estimated_beneficiaries': scenario.estimated_beneficiaries,
+            'needs_addressed': scenario.estimated_needs_addressed,
+            'optimization_score': scenario.optimization_score or 0,
+            'top_sectors': allocations.values('ppa__sector').annotate(
+                total=Sum('allocated_amount')
+            ).order_by('-total')[:5],
+        })
+
+    # Get all scenarios for selection
+    all_scenarios = BudgetScenario.objects.all()
+
+    context = {
+        'compared_scenarios': compared_scenarios,
+        'comparison_data': comparison_data,
+        'all_scenarios': all_scenarios,
+    }
+
+    return render(request, 'common/scenario_compare.html', context)
+
+
+@login_required
+@require_POST
+def scenario_optimize(request, scenario_id):
+    """
+    Run optimization algorithm for a budget scenario.
+
+    Uses constraint-based optimization to maximize impact:
+    - Maximize needs coverage per peso
+    - Respect budget constraints
+    - Consider equity distribution
+    - Align with strategic goals
+    """
+    from monitoring.models import (
+        BudgetScenario, ScenarioAllocation, MonitoringEntry
+    )
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from decimal import Decimal
+    import json
+
+    scenario = get_object_or_404(BudgetScenario, id=scenario_id)
+
+    try:
+        # Get eligible PPAs
+        eligible_ppas = MonitoringEntry.objects.filter(
+            status__in=['approved', 'planned']
+        ).prefetch_related(
+            'addresses_needs',
+            'contributing_strategic_goals',
+            'municipality_coverage',
+            'province_coverage'
+        )
+
+        # Score each PPA based on scenario weights
+        ppa_scores = []
+        for ppa in eligible_ppas:
+            # Needs coverage score
+            needs_count = ppa.addresses_needs.count()
+            needs_score = Decimal(str(needs_count * 10))
+
+            # Equity score (geographic coverage)
+            coverage_count = ppa.municipality_coverage.count() + ppa.province_coverage.count()
+            equity_score = Decimal(str(coverage_count * 5))
+
+            # Strategic alignment score
+            strategic_goals_count = ppa.contributing_strategic_goals.count()
+            strategic_score = Decimal(str(strategic_goals_count * 15))
+
+            # Weighted overall score
+            overall_score = (
+                (needs_score * scenario.weight_needs_coverage) +
+                (equity_score * scenario.weight_equity) +
+                (strategic_score * scenario.weight_strategic_alignment)
+            )
+
+            # Cost efficiency (score per peso)
+            budget_request = ppa.budget_allocation or Decimal('1')
+            efficiency = overall_score / budget_request if budget_request > 0 else Decimal('0')
+
+            ppa_scores.append({
+                'ppa': ppa,
+                'overall_score': overall_score,
+                'efficiency': efficiency,
+                'budget_request': budget_request,
+                'needs_score': needs_score,
+                'equity_score': equity_score,
+                'strategic_score': strategic_score,
+            })
+
+        # Sort by efficiency (bang for buck)
+        ppa_scores.sort(key=lambda x: float(x['efficiency']), reverse=True)
+
+        # Greedy allocation: add PPAs until budget exhausted
+        remaining_budget = scenario.total_budget
+        allocated_ppas = []
+
+        for item in ppa_scores:
+            if remaining_budget <= 0:
+                break
+
+            ppa = item['ppa']
+            budget_request = item['budget_request']
+
+            # Allocate either full request or remaining budget
+            allocation_amount = min(budget_request, remaining_budget)
+
+            if allocation_amount > 0:
+                allocated_ppas.append({
+                    'ppa': ppa,
+                    'amount': allocation_amount,
+                    'overall_score': item['overall_score'],
+                    'needs_score': item['needs_score'],
+                    'equity_score': item['equity_score'],
+                    'strategic_score': item['strategic_score'],
+                })
+                remaining_budget -= allocation_amount
+
+        # Clear existing allocations
+        scenario.allocations.all().delete()
+
+        # Create optimized allocations
+        for idx, item in enumerate(allocated_ppas, 1):
+            allocation = ScenarioAllocation.objects.create(
+                scenario=scenario,
+                ppa=item['ppa'],
+                allocated_amount=item['amount'],
+                priority_rank=idx,
+                status='proposed',
+                allocation_rationale=f"Optimized allocation (rank {idx}, score: {item['overall_score']:.2f})",
+                needs_coverage_score=item['needs_score'],
+                equity_score=item['equity_score'],
+                strategic_alignment_score=item['strategic_score'],
+                overall_score=item['overall_score'],
+            )
+
+        # Update scenario optimization score
+        if allocated_ppas:
+            avg_score = sum(item['overall_score'] for item in allocated_ppas) / len(allocated_ppas)
+            scenario.optimization_score = avg_score
+            scenario.save()
+
+        # Recalculate totals
+        scenario.recalculate_totals()
+
+        messages.success(
+            request,
+            f'Optimization complete! Allocated {len(allocated_ppas)} PPAs with ₱{scenario.allocated_budget:,.2f} '
+            f'({scenario.budget_utilization_rate:.1f}% utilization).'
+        )
+
+    except Exception as e:
+        messages.error(request, f'Optimization failed: {str(e)}')
+
+    return redirect('common:scenario_detail', scenario_id=scenario_id)
+
+
+# =============================================================================
+# Phase 7: Analytics & Forecasting Views
+# =============================================================================
+
+@login_required
+def analytics_dashboard(request):
+    """
+    Comprehensive analytics dashboard with trends, forecasts, and insights.
+    """
+    from monitoring.analytics import (
+        calculate_budget_trends,
+        forecast_budget_needs,
+        analyze_sector_performance,
+        calculate_impact_metrics
+    )
+
+    # Get analytics data
+    trends = calculate_budget_trends(years=5)
+    forecast = forecast_budget_needs(horizon_years=3)
+    sector_performance = analyze_sector_performance()
+    impact_metrics = calculate_impact_metrics()
+
+    context = {
+        'trends': trends,
+        'forecast': forecast,
+        'sector_performance': sector_performance[:10],  # Top 10 sectors
+        'impact_metrics': impact_metrics,
+    }
+
+    return render(request, 'common/analytics_dashboard.html', context)
+
+
+@login_required
+def budget_forecasting(request):
+    """
+    Budget forecasting tool with multiple scenarios and predictions.
+    """
+    from monitoring.analytics import forecast_budget_needs, generate_budget_recommendations
+    from django.http import JsonResponse
+
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # AJAX request for forecast calculation
+        horizon_years = int(request.POST.get('horizon_years', 3))
+        forecast = forecast_budget_needs(horizon_years=horizon_years)
+        return JsonResponse(forecast)
+
+    # GET request - show dashboard
+    base_forecast = forecast_budget_needs(horizon_years=3)
+
+    # Generate recommendations for next year's projected budget
+    if base_forecast['projected_budget']:
+        next_year_budget = base_forecast['projected_budget'][0]
+        recommendations = generate_budget_recommendations(next_year_budget)
+    else:
+        recommendations = None
+
+    context = {
+        'forecast': base_forecast,
+        'recommendations': recommendations,
+    }
+
+    return render(request, 'common/budget_forecasting.html', context)
+
+
+@login_required
+def trend_analysis(request):
+    """
+    Detailed trend analysis across multiple dimensions.
+    """
+    from monitoring.analytics import calculate_budget_trends, analyze_sector_performance
+    from monitoring.models import MonitoringEntry, MonitoringEntryTaskAssignment
+    from mana.models import Need
+    from django.db.models import Count, Sum
+    from django.db.models.functions import TruncMonth, TruncYear
+    from datetime import timedelta
+
+    # Budget trends
+    budget_trends = calculate_budget_trends(years=5)
+
+    # Sector trends
+    sector_performance = analyze_sector_performance()
+
+    # Needs trends (by month for last 12 months)
+    from django.utils import timezone
+    twelve_months_ago = timezone.now() - timedelta(days=365)
+
+    needs_trend = Need.objects.filter(
+        created_at__gte=twelve_months_ago
+    ).annotate(
+        month=TruncMonth('created_at')
+    ).values('month').annotate(
+        count=Count('id'),
+        votes=Sum('community_votes')
+    ).order_by('month')
+
+    # PPAs trend (by quarter)
+    ppas_trend = MonitoringEntry.objects.filter(
+        start_date__year__gte=timezone.now().year - 2
+    ).annotate(
+        year=TruncYear('start_date')
+    ).values('year', 'status').annotate(
+        count=Count('id'),
+        budget=Sum('budget_allocation')
+    ).order_by('year', 'status')
+
+    context = {
+        'budget_trends': budget_trends,
+        'sector_performance': sector_performance,
+        'needs_trend': list(needs_trend),
+        'ppas_trend': list(ppas_trend),
+    }
+
+    return render(request, 'common/trend_analysis.html', context)
+
+
+@login_required
+def impact_assessment(request):
+    """
+    Impact assessment dashboard measuring outcomes and effectiveness.
+    """
+    from monitoring.analytics import calculate_impact_metrics, analyze_sector_performance
+    from monitoring.models import MonitoringEntry, MonitoringEntryTaskAssignment
+    from mana.models import Need
+    from django.db.models import Count, Q, Sum, Avg, F
+
+    # Overall impact
+    impact = calculate_impact_metrics()
+
+    # Sector impact
+    sector_impact = analyze_sector_performance()
+
+    # Geographic impact (by region/province)
+    geographic_impact = []
+    from communities.models import MunicipalCoverage, ProvincialCoverage
+
+    # Province-level impact
+    provinces = ProvincialCoverage.objects.annotate(
+        ppas=Count('monitoring_entries'),
+        total_budget=Sum('monitoring_entries__budget_allocation')
+    ).filter(ppas__gt=0).order_by('-total_budget')[:10]
+
+    for province in provinces:
+        geographic_impact.append({
+            'name': province.province,
+            'type': 'Province',
+            'ppas': province.ppas,
+            'budget': float(province.total_budget or 0),
+        })
+
+    # Needs fulfillment analysis
+    needs_fulfillment = {
+        'total_needs': Need.objects.count(),
+        'addressed': Need.objects.filter(addressing_ppas__isnull=False).distinct().count(),
+        'critical_unaddressed': Need.objects.filter(
+            urgency_level='critical',
+            addressing_ppas__isnull=True
+        ).count(),
+        'high_priority_unaddressed': Need.objects.filter(
+            urgency_level='high',
+            addressing_ppas__isnull=True
+        ).count(),
+    }
+
+    # Calculate fulfillment rate
+    if needs_fulfillment['total_needs'] > 0:
+        needs_fulfillment['fulfillment_rate'] = round(
+            (needs_fulfillment['addressed'] / needs_fulfillment['total_needs']) * 100,
+            2
+        )
+    else:
+        needs_fulfillment['fulfillment_rate'] = 0
+
+    # Budget efficiency metrics
+    efficiency = {
+        'cost_per_beneficiary': impact['cost_per_beneficiary'],
+        'avg_ppa_duration': MonitoringEntry.objects.filter(
+            end_date__isnull=False
+        ).annotate(
+            duration=(F('end_date') - F('start_date'))
+        ).aggregate(Avg('duration'))['duration__avg'],
+    }
+
+    context = {
+        'impact': impact,
+        'sector_impact': sector_impact[:10],
+        'geographic_impact': geographic_impact,
+        'needs_fulfillment': needs_fulfillment,
+        'efficiency': efficiency,
+    }
+
+    return render(request, 'common/impact_assessment.html', context)

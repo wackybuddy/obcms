@@ -1,0 +1,117 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}{% translate 'Log in' %} | OBC Management System{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+{{ form.media }}
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} login obc-login-page{% endblock %}
+
+{% block header %}{% endblock %}
+{% block nav-breadcrumbs %}{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block messages %}{% endblock %}
+
+{% block content %}
+<div class="obc-login">
+    <div class="obc-login__grid">
+        <div class="obc-login__hero">
+            <div class="obc-login__hero-card">
+                <span class="obc-login__hero-icon">
+                    <i class="fas fa-mosque"></i>
+                </span>
+                <h1 class="obc-login__hero-title">Barangay OBC Admin</h1>
+                <p class="obc-login__hero-copy">
+                    {% blocktranslate trimmed %}
+                    Coordinate policies, manage communities, and stay on top of OBC operations with a refreshed admin panel built around clarity and efficiency.
+                    {% endblocktranslate %}
+                </p>
+                <ul class="obc-login__highlights">
+                    <li><i class="fas fa-gauge-high"></i> {% translate "Faster navigation across modules" %}</li>
+                    <li><i class="fas fa-shield-check"></i> {% translate "Secure access controls" %}</li>
+                    <li><i class="fas fa-circle-nodes"></i> {% translate "Integrated ministry view" %}</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="obc-login__card">
+            <div class="obc-login__branding">
+                <span class="obc-login__badge">{% translate "Administrator" %}</span>
+                <h2 class="obc-login__title">{% translate "Sign in to continue" %}</h2>
+                <p class="obc-login__subtitle">{% translate "Use your staff credentials to access the OBC Management System." %}</p>
+            </div>
+
+            {% if form.errors and not form.non_field_errors %}
+                <div class="obc-form-field__errors obc-login__alert">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>
+                        {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+                    </span>
+                </div>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+                <div class="obc-form-field__errors obc-login__alert">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </span>
+                </div>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                <div class="obc-login__info">
+                    <i class="fas fa-circle-info"></i>
+                    <span>
+                        {% blocktranslate trimmed %}
+                            You are authenticated as {{ username }}, but are not authorized to access this page.
+                            Would you like to login to a different account?
+                        {% endblocktranslate %}
+                    </span>
+                </div>
+            {% endif %}
+
+            <form action="{{ app_path }}" method="post" id="login-form" class="obc-login__form">
+                {% csrf_token %}
+                <div class="obc-login-field">
+                    <label for="id_username">{% translate 'Username' %}</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="obc-form-field__errors">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="obc-login-field">
+                    <div class="obc-login-field__header">
+                        <label for="id_password">{% translate 'Password' %}</label>
+                        {% url 'admin_password_reset' as password_reset_url %}
+                        {% if password_reset_url %}
+                            <a class="obc-login__link" href="{{ password_reset_url }}">{% translate 'Forgot password?' %}</a>
+                        {% endif %}
+                    </div>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="obc-form-field__errors">{{ form.password.errors }}</div>
+                    {% endif %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                </div>
+                <button type="submit" class="obc-admin-button obc-admin-button--primary obc-login__submit">
+                    <i class="fas fa-right-to-bracket"></i>
+                    {% translate 'Log in' %}
+                </button>
+            </form>
+
+            <div class="obc-login__footer">
+                <span class="obc-login__meta-label">{% translate "Need help?" %}</span>
+                <p class="obc-login__meta-copy">
+                    {% translate "Contact the MSSD OBC coordination team to reset your access or request updates." %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

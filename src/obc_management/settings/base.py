@@ -78,6 +78,7 @@ LOCAL_APPS = [
     'recommendations.policies',
     'recommendations.policy_tracking',
     'data_imports',
+    'services',  # Phase 3: Service catalog and applications
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -166,7 +167,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    BASE_DIR.parent / "static",  # Points to src/static/ directory
 ]
 
 # Django 4.2+ STORAGES configuration

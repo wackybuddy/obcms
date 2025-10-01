@@ -31,6 +31,13 @@
 
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}"
   data-admin-utc-offset="{% now "Z" %}">
+
+<!-- Skip Navigation for Accessibility -->
+<a href="#main-content" class="skip-link">{% trans 'Skip to main content' %}</a>
+
+<!-- ARIA Live Region for Dynamic Updates -->
+<div id="aria-live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
 <div id="container">
 
     {% block header %}
@@ -89,7 +96,7 @@
         {% endif %}
     {% endblock messages %}
 
-    <div id="content" class="{% block coltype %}colM{% endblock %}">
+    <div id="content" id="main-content" class="{% block coltype %}colM{% endblock %}">
         {% block pretitle %}{% endblock %}
         {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
         {% block content_subtitle %}{% if subtitle %}<h2>{{ subtitle }}</h2>{% endif %}{% endblock %}

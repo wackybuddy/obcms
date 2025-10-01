@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Transparency Dashboard - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Transparency Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Budget Transparency Dashboard</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">
+                Public accountability dashboard showing how community funds are allocated and what outcomes are achieved.
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'common:budget_feedback_dashboard' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+                <i class="fas fa-comments"></i>
+                View Feedback
+            </a>
+            <a href="{% url 'common:community_voting_results' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+                <i class="fas fa-poll"></i>
+                Community Priorities
+            </a>
+        </div>
+    </div>
+
+    <!-- Key Metrics Row -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Budget Allocated</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-2">₱{{ total_allocated|floatformat:0 }}</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <i class="fas fa-hand-holding-usd text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Disbursed</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-2">₱{{ total_disbursed|floatformat:0 }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ disbursement_rate|floatformat:1 }}% disbursement rate</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <i class="fas fa-money-check-alt text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Funded Community Needs</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-2">{{ funded_needs }}/{{ total_needs }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ funding_rate|floatformat:1 }}% funding rate</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <i class="fas fa-tasks text-2xl text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Service Applications</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-2">{{ approved_applications }}/{{ total_applications }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ approval_rate|floatformat:1 }}% approval rate</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                    <i class="fas fa-file-alt text-2xl text-yellow-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disbursement Progress Bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Budget Disbursement Progress</h2>
+        <div class="space-y-2">
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">Disbursed: ₱{{ total_disbursed|floatformat:0 }}</span>
+                <span class="text-gray-600">Allocated: ₱{{ total_allocated|floatformat:0 }}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-8">
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 h-8 rounded-full flex items-center justify-center" style="width: {{ disbursement_rate|floatformat:1 }}%">
+                    <span class="text-sm font-semibold text-white">{{ disbursement_rate|floatformat:1 }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PPA Status & Regional Distribution -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- PPA Status Breakdown -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">PPAs by Status</h2>
+            <div class="space-y-3">
+                {% for status_data in ppa_status_breakdown %}
+                <div class="border-l-4
+                    {% if status_data.status == 'completed' %}border-emerald-500
+                    {% elif status_data.status == 'in_progress' %}border-blue-500
+                    {% elif status_data.status == 'planning' %}border-yellow-500
+                    {% else %}border-gray-500{% endif %}
+                    pl-4 py-2">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-semibold text-gray-900 capitalize">{{ status_data.status|title }}</h3>
+                            <p class="text-sm text-gray-600">{{ status_data.count }} PPAs</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-gray-900">₱{{ status_data.budget|floatformat:0 }}</p>
+                            <p class="text-xs text-gray-500">Budget allocated</p>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 text-center py-4">No PPA data available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Regional Distribution -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Budget by Implementing Office</h2>
+            <div class="space-y-3 max-h-80 overflow-y-auto">
+                {% for region in regional_distribution %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900">{{ region.implementing_office|default:"Central Office" }}</h3>
+                        <div class="flex items-center gap-4 mt-1 text-xs text-gray-600">
+                            <span><i class="fas fa-project-diagram text-blue-600"></i> {{ region.ppas }} PPAs</span>
+                            <span><i class="fas fa-users text-purple-600"></i> {{ region.beneficiaries|default:0 }} beneficiaries</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold text-gray-900">₱{{ region.budget|floatformat:0 }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 text-center py-4">No regional distribution data available.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Delivery Stats -->
+    <div class="bg-gradient-to-r from-emerald-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <h2 class="text-2xl font-bold mb-4">Service Delivery Performance</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-full bg-white bg-opacity-30 flex items-center justify-center">
+                        <i class="fas fa-concierge-bell text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm opacity-90">Active Services</p>
+                        <p class="text-3xl font-bold">{{ active_services }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-full bg-white bg-opacity-30 flex items-center justify-center">
+                        <i class="fas fa-clipboard-list text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm opacity-90">Total Applications</p>
+                        <p class="text-3xl font-bold">{{ total_applications }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <div class="flex items-center gap-3">
+                    <div class="h-12 w-12 rounded-full bg-white bg-opacity-30 flex items-center justify-center">
+                        <i class="fas fa-check-double text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm opacity-90">Approved/Completed</p>
+                        <p class="text-3xl font-bold">{{ approved_applications }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Completions -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Project Completions</h2>
+        <div class="space-y-3">
+            {% for ppa in recent_completions %}
+            <div class="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition">
+                <div class="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-check-circle text-2xl text-emerald-600"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 mb-1">{{ ppa.title }}</h3>
+                    <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                        <span><i class="fas fa-layer-group text-blue-600"></i> {{ ppa.sector|default:"General" }}</span>
+                        <span><i class="fas fa-money-bill-wave text-emerald-600"></i> ₱{{ ppa.budget_allocation|floatformat:0 }}</span>
+                        <span><i class="fas fa-users text-purple-600"></i> {{ ppa.target_beneficiaries|default:0 }} beneficiaries</span>
+                        {% if ppa.assigned_to %}
+                        <span><i class="fas fa-user text-gray-600"></i> {{ ppa.assigned_to.get_full_name|default:ppa.assigned_to.username }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        Completed
+                    </span>
+                    <p class="text-xs text-gray-500 mt-1">{{ ppa.updated_at|date:"M d, Y" }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-8">
+                <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500">No completed projects yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Transparency Statement -->
+    <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-info-circle text-2xl text-blue-600 mt-1"></i>
+            <div>
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">Our Commitment to Transparency</h3>
+                <p class="text-sm text-blue-800 mb-3">
+                    This dashboard provides real-time visibility into how OOBC allocates and uses resources to serve Bangsamoro communities.
+                    All budget allocations, disbursements, and outcomes are tracked and publicly accessible to ensure accountability.
+                </p>
+                <p class="text-xs text-blue-700">
+                    <strong>Last Updated:</strong> {{ "now"|date:"F d, Y - H:i" }} (Philippine Time)
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

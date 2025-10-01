@@ -104,11 +104,46 @@ urlpatterns = [
     path('oobc-management/user-approvals/', views.user_approvals, name='user_approvals'),
     path('oobc-management/user-approvals/<int:user_id>/action/', views.user_approval_action, name='user_approval_action'),
 
+    # Phase 2: Planning & Budgeting Integration Dashboards
+    path('oobc-management/gap-analysis/', views.gap_analysis_dashboard, name='gap_analysis_dashboard'),
+    path('oobc-management/policy-budget-matrix/', views.policy_budget_matrix, name='policy_budget_matrix'),
+    path('oobc-management/mao-focal-persons/', views.mao_focal_persons_registry, name='mao_focal_persons_registry'),
+    path('oobc-management/community-needs/submit/', views.community_need_submit, name='community_need_submit'),
+    path('oobc-management/community-needs/', views.community_needs_summary, name='community_needs_summary'),
+
+    # Phase 4: Participatory Budgeting - Community Voting
+    path('community/voting/', views.community_voting_browse, name='community_voting_browse'),
+    path('community/voting/vote/', views.community_voting_vote, name='community_voting_vote'),
+    path('community/voting/results/', views.community_voting_results, name='community_voting_results'),
+
+    # Phase 4: Budget Feedback & Transparency
+    path('oobc-management/budget-feedback/', views.budget_feedback_dashboard, name='budget_feedback_dashboard'),
+    path('services/feedback/<uuid:application_id>/', views.submit_service_feedback, name='submit_service_feedback'),
+    path('transparency/', views.transparency_dashboard, name='transparency_dashboard'),
+
+    # Phase 5: Strategic Planning Integration
+    path('oobc-management/strategic-goals/', views.strategic_goals_dashboard, name='strategic_goals_dashboard'),
+    path('oobc-management/annual-planning/', views.annual_planning_dashboard, name='annual_planning_dashboard'),
+    path('oobc-management/rdp-alignment/', views.regional_development_alignment, name='regional_development_alignment'),
+
+    # Phase 6: Scenario Planning & Budget Optimization
+    path('oobc-management/scenarios/', views.scenario_list, name='scenario_list'),
+    path('oobc-management/scenarios/create/', views.scenario_create, name='scenario_create'),
+    path('oobc-management/scenarios/<uuid:scenario_id>/', views.scenario_detail, name='scenario_detail'),
+    path('oobc-management/scenarios/compare/', views.scenario_compare, name='scenario_compare'),
+    path('oobc-management/scenarios/<uuid:scenario_id>/optimize/', views.scenario_optimize, name='scenario_optimize'),
+
+    # Phase 7: Analytics & Forecasting
+    path('oobc-management/analytics/', views.analytics_dashboard, name='analytics_dashboard'),
+    path('oobc-management/forecasting/', views.budget_forecasting, name='budget_forecasting'),
+    path('oobc-management/trends/', views.trend_analysis, name='trend_analysis'),
+    path('oobc-management/impact/', views.impact_assessment, name='impact_assessment'),
+
     # Data Import/Export/Report URLs
     path('communities/import/', data_utils.import_communities_csv, name='import_communities'),
     path('communities/export/', data_utils.export_communities, name='export_communities'),
     path('communities/report/', data_utils.generate_obc_report, name='generate_obc_report'),
     path('data-guidelines/', data_utils.data_guidelines, name='data_guidelines'),
-    
+
     path('', views.dashboard, name='home'),  # Default to dashboard
 ]

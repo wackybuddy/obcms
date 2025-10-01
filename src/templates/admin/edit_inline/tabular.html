@@ -1,0 +1,113 @@
+{% load i18n admin_urls static admin_modify %}
+<div class="js-inline-admin-formset inline-group obc-inline-group"
+     id="{{ inline_admin_formset.formset.prefix }}-group"
+     data-inline-type="tabular"
+     data-inline-formset="{{ inline_admin_formset.inline_formset_data }}">
+    <div class="obc-admin-card obc-inline-card">
+        <div class="obc-admin-card__header">
+            <div class="obc-space-between w-full">
+                <div class="obc-inline-card__heading">
+                    <span class="obc-admin-card__icon"><i class="fas fa-table-list"></i></span>
+                    <div class="obc-inline-card__meta">
+                        {% if inline_admin_formset.formset.max_num == 1 %}
+                            <h2 class="obc-inline-card__title">{{ inline_admin_formset.opts.verbose_name|capfirst }}</h2>
+                        {% else %}
+                            <h2 class="obc-inline-card__title">{{ inline_admin_formset.opts.verbose_name_plural|capfirst }}</h2>
+                        {% endif %}
+                        <p class="obc-inline-card__hint">{% translate "Quickly review and edit related records inline." %}</p>
+                    </div>
+                </div>
+                {% if inline_admin_formset.has_add_permission %}
+                    <button type="button" class="obc-admin-button obc-admin-button--secondary obc-inline-card__add"
+                            data-inline-prefix="{{ inline_admin_formset.formset.prefix }}">
+                        <i class="fas fa-plus"></i>
+                        {% blocktranslate with name=inline_admin_formset.opts.verbose_name %}Add {{ name }}{% endblocktranslate %}
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="obc-admin-card__body obc-inline-card__body--table">
+            {{ inline_admin_formset.formset.management_form }}
+            <fieldset class="module aligned obc-inline-fieldset {{ inline_admin_formset.classes }}">
+                {{ inline_admin_formset.formset.non_form_errors }}
+                <div class="obc-inline-table-wrapper">
+                    <table class="obc-inline-table">
+                        <thead>
+                        <tr>
+                            <th class="obc-inline-table__col original">{% translate "Record" %}</th>
+                            {% for field in inline_admin_formset.fields %}
+                                <th class="obc-inline-table__col column-{{ field.name }}{% if field.required %} required{% endif %}{% if field.widget.is_hidden %} hidden{% endif %}">
+                                    <span>{{ field.label|capfirst }}</span>
+                                    {% if field.help_text %}
+                                        <span class="obc-inline-table__help" title="{{ field.help_text|striptags }}">
+                                            <i class="fas fa-circle-info"></i>
+                                        </span>
+                                    {% endif %}
+                                </th>
+                            {% endfor %}
+                            {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission %}
+                                <th class="obc-inline-table__col delete">{% translate "Delete?" %}</th>
+                            {% endif %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for inline_admin_form in inline_admin_formset %}
+                            {% if inline_admin_form.form.non_field_errors %}
+                                <tr class="row-form-errors">
+                                    <td colspan="{{ inline_admin_form|cell_count }}" class="obc-inline-table__errors">{{ inline_admin_form.form.non_field_errors }}</td>
+                                </tr>
+                            {% endif %}
+                            <tr class="form-row{% if inline_admin_form.original or inline_admin_form.show_url %} has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form{% endif %}"
+                                id="{{ inline_admin_formset.formset.prefix }}-{% if forloop.last and inline_admin_formset.has_add_permission %}empty{% else %}{{ forloop.counter0 }}{% endif %}">
+                                <td class="original">
+                                    <div class="obc-inline-table__record">
+                                        {% if inline_admin_form.original or inline_admin_form.show_url %}
+                                            <div class="obc-inline-table__record-meta">
+                                                {% if inline_admin_form.original %}
+                                                    <span class="obc-inline-table__record-label">{{ inline_admin_form.original|truncatechars:45 }}</span>
+                                                    {% if inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %}
+                                                        <a href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}"
+                                                           class="obc-inline-related__link">
+                                                            {% if inline_admin_formset.has_change_permission %}{% translate "Change" %}{% else %}{% translate "View" %}{% endif %}
+                                                        </a>
+                                                    {% endif %}
+                                                {% endif %}
+                                                {% if inline_admin_form.show_url %}
+                                                    <a href="{{ inline_admin_form.absolute_url }}" class="obc-inline-related__link">
+                                                        {% translate "View on site" %}
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <span class="obc-inline-table__record-label muted">#{{ forloop.counter }}</span>
+                                        {% endif %}
+                                        {% if inline_admin_form.needs_explicit_pk_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
+                                        {% if inline_admin_form.fk_field %}{{ inline_admin_form.fk_field.field }}{% endif %}
+                                    </div>
+                                </td>
+                                {% for fieldset in inline_admin_form %}
+                                    {% for line in fieldset %}
+                                        {% for field in line %}
+                                            <td class="obc-inline-table__cell{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% if field.field.is_hidden %} hidden{% endif %}">
+                                                {% if field.is_readonly %}
+                                                    <div class="obc-inline-table__readonly">{{ field.contents }}</div>
+                                                {% else %}
+                                                    {{ field.errors }}
+                                                    {{ field.field }}
+                                                {% endif %}
+                                            </td>
+                                        {% endfor %}
+                                    {% endfor %}
+                                {% endfor %}
+                                {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission %}
+                                    <td class="obc-inline-table__cell delete">{% if inline_admin_form.original %}{{ inline_admin_form.deletion_field.field }}{% endif %}</td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>

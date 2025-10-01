@@ -6,6 +6,8 @@ from .models import (
     MonitoringEntry,
     MonitoringEntryFunding,
     MonitoringEntryWorkflowStage,
+    MonitoringEntryWorkflowDocument,
+    MonitoringEntryTaskAssignment,
     MonitoringUpdate,
 )
 
@@ -43,6 +45,53 @@ class MonitoringEntryFundingSerializer(serializers.ModelSerializer):
         ]
 
 
+class MonitoringEntryWorkflowDocumentSerializer(serializers.ModelSerializer):
+    """Serialize workflow stage documents."""
+
+    document_type_display = serializers.CharField(
+        source="get_document_type_display", read_only=True
+    )
+    uploaded_by_name = serializers.CharField(
+        source="uploaded_by.get_full_name", read_only=True
+    )
+    file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MonitoringEntryWorkflowDocument
+        fields = [
+            "id",
+            "title",
+            "document_type",
+            "document_type_display",
+            "file",
+            "file_url",
+            "file_size",
+            "description",
+            "uploaded_by",
+            "uploaded_by_name",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "document_type_display",
+            "file_url",
+            "file_size",
+            "uploaded_by",
+            "uploaded_by_name",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_file_url(self, obj):
+        """Return full URL for file download."""
+        if obj.file:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.file.url)
+            return obj.file.url
+        return None
+
+
 class MonitoringEntryWorkflowStageSerializer(serializers.ModelSerializer):
     """Serialize workflow stages and status updates."""
 
@@ -54,6 +103,7 @@ class MonitoringEntryWorkflowStageSerializer(serializers.ModelSerializer):
     owner_organization_name = serializers.CharField(
         source="owner_organization.name", read_only=True
     )
+    documents = MonitoringEntryWorkflowDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = MonitoringEntryWorkflowStage
@@ -70,6 +120,7 @@ class MonitoringEntryWorkflowStageSerializer(serializers.ModelSerializer):
             "due_date",
             "completed_at",
             "notes",
+            "documents",
             "updated_at",
         ]
         read_only_fields = [
@@ -77,6 +128,68 @@ class MonitoringEntryWorkflowStageSerializer(serializers.ModelSerializer):
             "status_display",
             "owner_team_name",
             "owner_organization_name",
+            "documents",
+            "updated_at",
+        ]
+
+
+class MonitoringEntryTaskAssignmentSerializer(serializers.ModelSerializer):
+    """Serialize task assignments with assignee details."""
+
+    assigned_to_name = serializers.CharField(
+        source="assigned_to.get_full_name", read_only=True
+    )
+    assigned_by_name = serializers.CharField(
+        source="assigned_by.get_full_name", read_only=True
+    )
+    role_display = serializers.CharField(
+        source="get_role_display", read_only=True
+    )
+    status_display = serializers.CharField(
+        source="get_status_display", read_only=True
+    )
+    priority_display = serializers.CharField(
+        source="get_priority_display", read_only=True
+    )
+    is_overdue = serializers.BooleanField(read_only=True)
+    days_until_due = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = MonitoringEntryTaskAssignment
+        fields = [
+            "id",
+            "task_title",
+            "task_description",
+            "assigned_to",
+            "assigned_to_name",
+            "assigned_by",
+            "assigned_by_name",
+            "role",
+            "role_display",
+            "status",
+            "status_display",
+            "priority",
+            "priority_display",
+            "due_date",
+            "completed_at",
+            "estimated_hours",
+            "actual_hours",
+            "notes",
+            "is_overdue",
+            "days_until_due",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "assigned_to_name",
+            "assigned_by_name",
+            "role_display",
+            "status_display",
+            "priority_display",
+            "is_overdue",
+            "days_until_due",
+            "completed_at",
+            "created_at",
             "updated_at",
         ]
 
@@ -163,6 +276,7 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
     updates = MonitoringUpdateSerializer(many=True, read_only=True)
     funding_flows = MonitoringEntryFundingSerializer(many=True, read_only=True)
     workflow_stages = MonitoringEntryWorkflowStageSerializer(many=True, read_only=True)
+    task_assignments = MonitoringEntryTaskAssignmentSerializer(many=True, read_only=True)
     sector_display = serializers.CharField(source="get_sector_display", read_only=True)
     appropriation_class_display = serializers.CharField(
         source="get_appropriation_class_display",
@@ -225,7 +339,11 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
             "budget_allocation",
             "budget_currency",
             "budget_obc_allocation",
+            "cost_per_beneficiary",
+            "cost_effectiveness_rating",
+            "outcome_framework",
             "outcome_indicators",
+            "standard_outcome_indicators",
             "accomplishments",
             "challenges",
             "support_required",
@@ -238,6 +356,7 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
             "updates",
             "funding_flows",
             "workflow_stages",
+            "task_assignments",
         ]
         read_only_fields = [
             "created_by",

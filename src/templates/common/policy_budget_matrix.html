@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Policy-Budget Matrix - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Policy-Budget Matrix</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Policy-Budget Matrix</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">
+                Track which policy recommendations have budget support through PPAs and which need funding advocacy.
+            </p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Policies</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ total_policies }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">With Budget Support</p>
+                    <p class="mt-2 text-3xl font-bold text-green-600">{{ funded_policies }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-600">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Without Budget</p>
+                    <p class="mt-2 text-3xl font-bold text-orange-600">{{ unfunded_policies }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Funding Coverage</p>
+                    <p class="mt-2 text-3xl font-bold text-emerald-600">{{ funding_rate|floatformat:0 }}%</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                    <i class="fas fa-percentage"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="space-y-1">
+                <label for="status" class="block text-sm font-medium text-gray-700">Policy Status</label>
+                <select name="status" id="status" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Statuses</option>
+                    <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="in_implementation" {% if request.GET.status == 'in_implementation' %}selected{% endif %}>In Implementation</option>
+                    <option value="implemented" {% if request.GET.status == 'implemented' %}selected{% endif %}>Implemented</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="funding_status" class="block text-sm font-medium text-gray-700">Funding Status</label>
+                <select name="funding_status" id="funding_status" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All</option>
+                    <option value="funded" {% if request.GET.funding_status == 'funded' %}selected{% endif %}>With Budget Support</option>
+                    <option value="unfunded" {% if request.GET.funding_status == 'unfunded' %}selected{% endif %}>Without Budget</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <i class="fas fa-filter"></i>
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Policy-Budget Matrix Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Policy Recommendations & Budget Support</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Policy Recommendation
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Implementing PPAs
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Total Budget
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Progress
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for policy in policies %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ policy.title }}</div>
+                            <div class="text-sm text-gray-500">{{ policy.recommendation_type_display }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if policy.status == 'approved' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Approved
+                            </span>
+                            {% elif policy.status == 'in_implementation' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                In Implementation
+                            </span>
+                            {% elif policy.status == 'implemented' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                Implemented
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if policy.ppa_count > 0 %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                <i class="fas fa-link mr-1"></i> {{ policy.ppa_count }} PPA{{ policy.ppa_count|pluralize }}
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-times-circle mr-1"></i> No PPAs
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if policy.total_budget %}
+                                ₱{{ policy.total_budget|floatformat:2|intcomma }}
+                            {% else %}
+                                <span class="text-gray-400">No budget</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if policy.milestone_count > 0 %}
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div class="bg-emerald-600 h-2 rounded-full" style="width: {{ policy.avg_progress|default:0 }}%"></div>
+                                </div>
+                                <span class="text-xs text-gray-600">{{ policy.avg_progress|default:0|floatformat:0 }}%</span>
+                            </div>
+                            {% else %}
+                            <span class="text-sm text-gray-400">No milestones</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{% url 'admin:policy_tracking_policyrecommendation_change' policy.id %}" class="text-emerald-600 hover:text-emerald-900 text-sm font-medium">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-400">
+                                    <i class="fas fa-inbox text-xl"></i>
+                                </div>
+                                <p class="text-lg font-semibold text-gray-900">No policies found</p>
+                                <p class="text-sm text-gray-500">No policy recommendations match your current filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Implementation Progress -->
+    {% if policies %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Budget Support Distribution</h2>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">Policies with budget support</span>
+                <span class="font-semibold text-gray-900">{{ funded_policies }} / {{ total_policies }}</span>
+            </div>
+            <div class="flex-1 bg-gray-200 rounded-full h-3">
+                <div class="bg-emerald-600 h-3 rounded-full" style="width: {{ funding_rate }}%"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

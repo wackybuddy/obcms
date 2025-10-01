@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}RDP Alignment - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">RDP Alignment</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Regional Development Plan Alignment</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">
+                Monitor alignment between strategic goals, PPAs, and the Regional Development Plan.
+            </p>
+        </div>
+        <a href="{% url 'common:strategic_goals_dashboard' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+            <i class="fas fa-bullseye"></i>
+            View Strategic Goals
+        </a>
+    </div>
+
+    <!-- Alignment Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">RDP-Aligned Goals</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-2">{{ rdp_goals|length }}</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <i class="fas fa-bullseye text-2xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">RDP-Aligned Budget</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-2">₱{{ rdp_budget|floatformat:0 }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ alignment_rate|floatformat:1 }}% of total</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <i class="fas fa-hand-holding-usd text-2xl text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Budget</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-2">₱{{ total_budget|floatformat:0 }}</p>
+                </div>
+                <div class="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <i class="fas fa-wallet text-2xl text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alignment Progress Bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">RDP Budget Alignment Progress</h2>
+        <div class="space-y-2">
+            <div class="flex items-center justify-between text-sm">
+                <span class="text-gray-600">RDP-Aligned: ₱{{ rdp_budget|floatformat:0 }}</span>
+                <span class="text-gray-600">Total: ₱{{ total_budget|floatformat:0 }}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-8">
+                <div class="bg-gradient-to-r from-blue-500 to-emerald-500 h-8 rounded-full flex items-center justify-center" style="width: {{ alignment_rate|floatformat:1 }}%">
+                    <span class="text-sm font-semibold text-white">{{ alignment_rate|floatformat:1 }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sector-Wise Alignment -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">RDP Alignment by Sector</h2>
+        <div class="space-y-3">
+            {% for sector, data in sector_alignment.items %}
+            <div class="border-l-4 border-blue-500 pl-4 py-3 bg-gray-50 rounded-r-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900">{{ sector }}</h3>
+                        <div class="flex items-center gap-4 mt-1 text-xs text-gray-600">
+                            <span><i class="fas fa-bullseye text-blue-600"></i> {{ data.goals }} goals</span>
+                            <span><i class="fas fa-project-diagram text-purple-600"></i> {{ data.ppas }} PPAs</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-gray-900">₱{{ data.budget|floatformat:0 }}</p>
+                        <p class="text-xs text-gray-500">Budget allocated</p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-4">No sector alignment data available.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- RDP-Aligned Strategic Goals -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">RDP-Aligned Strategic Goals</h2>
+        <div class="space-y-3">
+            {% for goal in rdp_goals %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 mb-2">{{ goal.title }}</h3>
+                        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-2">
+                            <span><i class="fas fa-layer-group text-blue-600"></i> {{ goal.sector|title }}</span>
+                            <span><i class="fas fa-calendar-alt text-gray-600"></i> {{ goal.start_year }}-{{ goal.target_year }}</span>
+                            <span><i class="fas fa-project-diagram text-purple-600"></i> {{ goal.linked_ppas.count }} linked PPAs</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1">
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="{% if goal.progress_percentage >= 70 %}bg-emerald-500{% elif goal.progress_percentage >= 40 %}bg-blue-500{% else %}bg-yellow-500{% endif %} h-2 rounded-full" style="width: {{ goal.progress_percentage }}%"></div>
+                                </div>
+                            </div>
+                            <span class="text-xs font-semibold text-gray-700">{{ goal.progress_percentage }}%</span>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <i class="fas fa-check-circle mr-1"></i> RDP Aligned
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-8">No RDP-aligned goals found.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Unaligned PPAs Alert -->
+    {% if unaligned_ppas %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-6">
+        <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-triangle text-2xl text-yellow-600 mt-1"></i>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-yellow-900 mb-2">PPAs Without Strategic Goal Alignment</h3>
+                <p class="text-sm text-yellow-800 mb-3">
+                    {{ unaligned_ppas|length }} PPA(s) are not linked to any strategic goal. Link these to strategic goals to improve RDP alignment.
+                </p>
+                <div class="space-y-2">
+                    {% for ppa in unaligned_ppas|slice:":5" %}
+                    <div class="text-sm text-yellow-800">
+                        • {{ ppa.title|truncatewords:15 }} ({{ ppa.sector|default:"General" }})
+                    </div>
+                    {% endfor %}
+                    {% if unaligned_ppas|length > 5 %}
+                    <p class="text-xs text-yellow-700 italic mt-2">... and {{ unaligned_ppas|length|add:"-5" }} more PPAs</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- RDP-Aligned PPAs -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">RDP-Aligned PPAs</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PPA Title</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sector</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Budget</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Strategic Goals</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for ppa in rdp_aligned_ppas %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ ppa.title|truncatewords:10 }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-600">{{ ppa.sector|default:"General" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">₱{{ ppa.budget_allocation|floatformat:0 }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full
+                                {% if ppa.status == 'completed' %}bg-emerald-100 text-emerald-800
+                                {% elif ppa.status == 'in_progress' %}bg-blue-100 text-blue-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ ppa.status|title }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm text-gray-600">{{ ppa.contributing_strategic_goals.count }} goals</div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
+                            No RDP-aligned PPAs found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics Dashboard - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Analytics</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">Comprehensive insights into budget trends, forecasts, and performance metrics.</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'common:budget_forecasting' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+                <i class="fas fa-chart-line"></i> Forecasting
+            </a>
+            <a href="{% url 'common:trend_analysis' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                <i class="fas fa-chart-area"></i> Trend Analysis
+            </a>
+            <a href="{% url 'common:impact_assessment' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+                <i class="fas fa-bullseye"></i> Impact Assessment
+            </a>
+        </div>
+    </div>
+
+    <!-- Impact Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p class="text-sm font-medium text-gray-600">Total Budget</p>
+            <p class="text-2xl font-bold text-gray-900 mt-2">₱{{ impact_metrics.total_budget|floatformat:0 }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p class="text-sm font-medium text-gray-600">Total Beneficiaries</p>
+            <p class="text-2xl font-bold text-emerald-600 mt-2">{{ impact_metrics.total_beneficiaries|floatformat:0 }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p class="text-sm font-medium text-gray-600">Cost per Beneficiary</p>
+            <p class="text-2xl font-bold text-blue-600 mt-2">₱{{ impact_metrics.cost_per_beneficiary|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p class="text-sm font-medium text-gray-600">Total PPAs</p>
+            <p class="text-2xl font-bold text-purple-600 mt-2">{{ impact_metrics.total_ppas }}</p>
+        </div>
+    </div>
+
+    <!-- Budget Trends -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Budget Allocation Trends (5-Year History)</h2>
+        {% if trends.years %}
+        <div class="space-y-3">
+            {% for year, budget in trends.by_year.items %}
+            <div class="flex items-center gap-3">
+                <div class="w-20 text-sm font-medium text-gray-700">{{ year }}</div>
+                <div class="flex-1">
+                    <div class="w-full bg-gray-200 rounded-full h-6">
+                        {% if trends.max_budget > 0 %}
+                        {% widthratio budget trends.max_budget 100 as percentage %}
+                        <div class="bg-gradient-to-r from-blue-500 to-emerald-500 h-6 rounded-full flex items-center justify-end pr-2" style="width: {{ percentage }}%">
+                            <span class="text-xs font-semibold text-white">₱{{ budget|floatformat:0 }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500 text-center py-8">No trend data available</p>
+        {% endif %}
+    </div>
+
+    <!-- Forecast -->
+    <div class="bg-gradient-to-r from-purple-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <h2 class="text-2xl font-bold mb-4">Budget Forecast (Next 3 Years)</h2>
+        {% if forecast.forecast_years %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for year, budget in forecast.forecast_years|zip:forecast.projected_budget %}
+            <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                <p class="text-sm opacity-90">FY {{ year }}</p>
+                <p class="text-3xl font-bold mt-1">₱{{ budget|floatformat:0 }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="text-sm opacity-80 mt-4">
+            <i class="fas fa-info-circle"></i> Based on {{ forecast.avg_growth_rate|floatformat:1 }}% average annual growth rate
+        </p>
+        {% else %}
+        <p class="text-sm opacity-80">Insufficient data for forecasting</p>
+        {% endif %}
+    </div>
+
+    <!-- Sector Performance -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Top Sector Performance</h2>
+        <div class="space-y-3">
+            {% for sector in sector_performance %}
+            <div class="border-l-4 border-blue-500 pl-4 py-3 bg-gray-50 rounded-r-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="font-semibold text-gray-900 capitalize">{{ sector.sector|title }}</h3>
+                        <div class="flex items-center gap-4 mt-1 text-xs text-gray-600">
+                            <span><i class="fas fa-project-diagram text-blue-600"></i> {{ sector.total_ppas }} PPAs</span>
+                            <span><i class="fas fa-users text-purple-600"></i> {{ sector.beneficiaries|floatformat:0 }} beneficiaries</span>
+                            <span><i class="fas fa-coins text-yellow-600"></i> ₱{{ sector.cost_efficiency|floatformat:2 }}/person</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-gray-900">₱{{ sector.budget|floatformat:0 }}</p>
+                        <p class="text-xs text-gray-500">Total budget</p>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-4">No sector data available</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

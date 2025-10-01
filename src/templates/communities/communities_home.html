@@ -93,6 +93,77 @@
     </div>
     {% endif %}
 
+    <!-- Planning & Budgeting Tools -->
+    {% if user.is_staff or user.is_superuser or user.user_type == 'oobc_staff' %}
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Planning & Budgeting Tools</h2>
+                <p class="mt-1 text-sm text-gray-600">See how community input influences budget decisions</p>
+            </div>
+            <a href="{% url 'common:oobc_management_home' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                View All Tools
+                <i class="fas fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Community Needs Summary -->
+            <a href="{% url 'common:community_needs_summary' %}" class="group block bg-white p-5 border-2 border-teal-200 rounded-xl hover:border-teal-500 hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-users text-white text-lg"></i>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                        Budget Link
+                    </span>
+                </div>
+                <h3 class="font-bold text-gray-900 group-hover:text-teal-600 mb-1">Community Needs</h3>
+                <p class="text-xs text-gray-600 mb-3">Aggregated community needs summary</p>
+                <div class="flex items-center gap-2 text-xs text-emerald-600">
+                    <i class="fas fa-arrow-right"></i>
+                    <span class="font-medium">View Summary</span>
+                </div>
+            </a>
+
+            <!-- Community Voting Results -->
+            <a href="{% url 'common:community_voting_results' %}" class="group block bg-white p-5 border-2 border-emerald-200 rounded-xl hover:border-emerald-500 hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-bar text-white text-lg"></i>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Participatory
+                    </span>
+                </div>
+                <h3 class="font-bold text-gray-900 group-hover:text-emerald-600 mb-1">Voting Results</h3>
+                <p class="text-xs text-gray-600 mb-3">Community priority rankings</p>
+                <div class="flex items-center gap-2 text-xs text-emerald-600">
+                    <i class="fas fa-arrow-right"></i>
+                    <span class="font-medium">View Results</span>
+                </div>
+            </a>
+
+            <!-- Budget Feedback -->
+            <a href="{% url 'common:budget_feedback_dashboard' %}" class="group block bg-white p-5 border-2 border-purple-200 rounded-xl hover:border-purple-500 hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-comments text-white text-lg"></i>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                        Feedback
+                    </span>
+                </div>
+                <h3 class="font-bold text-gray-900 group-hover:text-purple-600 mb-1">Budget Feedback</h3>
+                <p class="text-xs text-gray-600 mb-3">Service satisfaction and feedback</p>
+                <div class="flex items-center gap-2 text-xs text-emerald-600">
+                    <i class="fas fa-arrow-right"></i>
+                    <span class="font-medium">View Feedback</span>
+                </div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Quick Actions -->
     <div>
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>

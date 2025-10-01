@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}MAO Focal Persons Registry - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">MAO Focal Persons</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">MAO Focal Persons Registry</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">
+                Directory of Ministry and Agency focal persons coordinating with OOBC on community programs and services.
+            </p>
+        </div>
+        <a href="{% url 'admin:coordination_maofocalperson_add' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <i class="fas fa-plus"></i>
+            Add Focal Person
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Focal Persons</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ total_focal_persons }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Active Focal Persons</p>
+                    <p class="mt-2 text-3xl font-bold text-green-600">{{ active_focal_persons }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-600">
+                    <i class="fas fa-user-check"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">MAOs Represented</p>
+                    <p class="mt-2 text-3xl font-bold text-emerald-600">{{ total_maos }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                    <i class="fas fa-building"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="space-y-1">
+                <label for="mao" class="block text-sm font-medium text-gray-700">Ministry/Agency</label>
+                <select name="mao" id="mao" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All MAOs</option>
+                    {% for mao in maos %}
+                    <option value="{{ mao.id }}" {% if request.GET.mao == mao.id|stringformat:"s" %}selected{% endif %}>
+                        {{ mao.acronym|default:mao.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
+                <select name="role" id="role" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Roles</option>
+                    <option value="primary" {% if request.GET.role == 'primary' %}selected{% endif %}>Primary Focal Person</option>
+                    <option value="alternate" {% if request.GET.role == 'alternate' %}selected{% endif %}>Alternate Focal Person</option>
+                    <option value="technical" {% if request.GET.role == 'technical' %}selected{% endif %}>Technical Specialist</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                <select name="status" id="status" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <i class="fas fa-filter"></i>
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Focal Persons Directory -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for focal_person in focal_persons %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition">
+            <div class="p-6 space-y-4">
+                <!-- Header with Status -->
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                            <i class="fas fa-user text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                {{ focal_person.user.get_full_name|default:focal_person.user.username }}
+                            </h3>
+                            {% if focal_person.is_active %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-circle text-green-500 text-xs mr-1"></i> Active
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-circle text-gray-400 text-xs mr-1"></i> Inactive
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAO -->
+                <div class="pt-4 border-t border-gray-100">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-building text-gray-400 mt-1"></i>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500">Ministry/Agency</p>
+                            <p class="text-sm font-medium text-gray-900">{{ focal_person.mao.acronym|default:focal_person.mao.name }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role & Designation -->
+                <div class="space-y-2">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-id-badge text-gray-400 mt-1"></i>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500">Role</p>
+                            <p class="text-sm font-medium text-gray-900">{{ focal_person.get_role_display }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-briefcase text-gray-400 mt-1"></i>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500">Designation</p>
+                            <p class="text-sm font-medium text-gray-900">{{ focal_person.designation }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="pt-4 border-t border-gray-100 space-y-2">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-envelope text-gray-400 mt-1"></i>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500">Email</p>
+                            <a href="mailto:{{ focal_person.contact_email }}" class="text-sm font-medium text-emerald-600 hover:text-emerald-800 break-all">
+                                {{ focal_person.contact_email }}
+                            </a>
+                        </div>
+                    </div>
+                    {% if focal_person.contact_phone %}
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-phone text-gray-400 mt-1"></i>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500">Phone</p>
+                            <a href="tel:{{ focal_person.contact_phone }}" class="text-sm font-medium text-emerald-600 hover:text-emerald-800">
+                                {{ focal_person.contact_phone }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Appointment Date -->
+                <div class="pt-4 border-t border-gray-100">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-calendar text-gray-400 mt-1"></i>
+                        <div class="flex-1">
+                            <p class="text-xs text-gray-500">Appointed Since</p>
+                            <p class="text-sm font-medium text-gray-900">{{ focal_person.appointed_date|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="pt-4 border-t border-gray-100">
+                    <a href="{% url 'admin:coordination_maofocalperson_change' focal_person.id %}" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <i class="fas fa-edit"></i>
+                        Edit Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                <div class="flex flex-col items-center gap-3">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-400">
+                        <i class="fas fa-users text-xl"></i>
+                    </div>
+                    <p class="text-lg font-semibold text-gray-900">No focal persons found</p>
+                    <p class="text-sm text-gray-500">No MAO focal persons match your current filters.</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

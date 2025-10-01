@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Compare Scenarios - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:scenario_list' %}" class="text-neutral-500 hover:text-neutral-700">Scenarios</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Compare</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Compare Budget Scenarios</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">Side-by-side comparison of different budget allocation scenarios.</p>
+        </div>
+        <a href="{% url 'common:scenario_list' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="space-y-1">
+                    <label for="scenario1" class="block text-sm font-medium text-gray-700">Scenario 1</label>
+                    <select name="scenario1" id="scenario1" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">Select scenario...</option>
+                        {% for scenario in scenarios %}
+                        <option value="{{ scenario.id }}" {% if scenario1.id == scenario.id %}selected{% endif %}>{{ scenario.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label for="scenario2" class="block text-sm font-medium text-gray-700">Scenario 2</label>
+                    <select name="scenario2" id="scenario2" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">Select scenario...</option>
+                        {% for scenario in scenarios %}
+                        <option value="{{ scenario.id }}" {% if scenario2.id == scenario.id %}selected{% endif %}>{{ scenario.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                    <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                        <i class="fas fa-balance-scale"></i> Compare
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {% if scenario1 and scenario2 %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border-2 border-blue-200 p-6">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">{{ scenario1.name }}</h2>
+                    <p class="text-sm text-gray-600 mt-1">{{ scenario1.get_scenario_type_display }}</p>
+                </div>
+                {% if scenario1.is_baseline %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Baseline</span>
+                {% endif %}
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Total Budget</span>
+                    <span class="text-sm font-semibold text-gray-900">₱{{ scenario1.total_budget|floatformat:0 }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Allocated Budget</span>
+                    <span class="text-sm font-semibold text-emerald-600">₱{{ scenario1.allocated_budget|floatformat:0 }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Utilization Rate</span>
+                    <span class="text-sm font-semibold text-blue-600">{{ scenario1.budget_utilization_rate|floatformat:1 }}%</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Allocations</span>
+                    <span class="text-sm font-semibold text-gray-900">{{ scenario1.allocations.count }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Est. Beneficiaries</span>
+                    <span class="text-sm font-semibold text-purple-600">{{ scenario1.estimated_beneficiaries|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border-2 border-emerald-200 p-6">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900">{{ scenario2.name }}</h2>
+                    <p class="text-sm text-gray-600 mt-1">{{ scenario2.get_scenario_type_display }}</p>
+                </div>
+                {% if scenario2.is_baseline %}
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Baseline</span>
+                {% endif %}
+            </div>
+            <div class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Total Budget</span>
+                    <span class="text-sm font-semibold text-gray-900">₱{{ scenario2.total_budget|floatformat:0 }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Allocated Budget</span>
+                    <span class="text-sm font-semibold text-emerald-600">₱{{ scenario2.allocated_budget|floatformat:0 }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Utilization Rate</span>
+                    <span class="text-sm font-semibold text-blue-600">{{ scenario2.budget_utilization_rate|floatformat:1 }}%</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Allocations</span>
+                    <span class="text-sm font-semibold text-gray-900">{{ scenario2.allocations.count }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-200">
+                    <span class="text-sm text-gray-600">Est. Beneficiaries</span>
+                    <span class="text-sm font-semibold text-purple-600">{{ scenario2.estimated_beneficiaries|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-gray-50 border border-gray-200 rounded-xl p-12 text-center">
+        <i class="fas fa-balance-scale text-5xl text-gray-300 mb-4"></i>
+        <p class="text-lg font-semibold text-gray-900">Select Two Scenarios to Compare</p>
+        <p class="text-sm text-gray-500 mt-2">Choose scenarios from the dropdowns above and click Compare.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

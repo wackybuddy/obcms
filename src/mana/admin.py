@@ -8,7 +8,7 @@ from .models import (Assessment, AssessmentCategory, AssessmentTeamMember,
                      BaselineDataCollection, BaselineIndicator, BaselineStudy,
                      BaselineStudyTeamMember, MANAReport, MappingActivity, Need,
                      NeedsCategory, NeedsPrioritization, NeedsPrioritizationItem,
-                     Survey, SurveyQuestion, SurveyResponse, WorkshopAccessLog,
+                     NeedVote, Survey, SurveyQuestion, SurveyResponse, WorkshopAccessLog,
                      WorkshopActivity, WorkshopOutput, WorkshopParticipant,
                      WorkshopParticipantAccount, WorkshopQuestionDefinition,
                      WorkshopResponse, WorkshopSession, WorkshopSynthesis)
@@ -692,20 +692,24 @@ class NeedAdmin(admin.ModelAdmin):
         "title",
         "community_link",
         "category",
+        "submission_type_badge",
         "urgency_badge",
         "impact_badge",
         "priority_score",
         "status_badge",
         "validation_status",
+        "budget_linkage_status",
         "affected_population",
     ]
     list_filter = [
+        "submission_type",
         "urgency_level",
         "impact_severity",
         "feasibility",
         "status",
         "category",
         "is_validated",
+        "forwarded_to_mao",
         "created_at",
     ]
     search_fields = [
@@ -722,8 +726,102 @@ class NeedAdmin(admin.ModelAdmin):
         "category",
         "identified_by",
         "validated_by",
+        "submitted_by_user",
+        "forwarded_by",
+        "forwarded_to_mao",
+        "linked_ppa",
     ]
     readonly_fields = ["priority_score", "created_at", "updated_at"]
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "title",
+                    "description",
+                    "category",
+                    ("community", "assessment"),
+                )
+            },
+        ),
+        (
+            "Submission & Pathway",
+            {
+                "fields": (
+                    "submission_type",
+                    ("submitted_by_user", "submission_date"),
+                    "identified_by",
+                ),
+                "description": "Track how this need was identified (assessment vs. community-submitted)",
+            },
+        ),
+        (
+            "Impact & Scope",
+            {
+                "fields": (
+                    ("affected_population", "affected_households"),
+                    "geographic_scope",
+                )
+            },
+        ),
+        (
+            "Prioritization",
+            {
+                "fields": (
+                    ("urgency_level", "impact_severity"),
+                    ("feasibility", "estimated_cost"),
+                    ("priority_score", "priority_rank"),
+                    "community_votes",
+                ),
+                "description": "Prioritization factors including participatory budgeting votes",
+            },
+        ),
+        (
+            "Status & Progress",
+            {"fields": ("status",)},
+        ),
+        (
+            "Validation",
+            {
+                "fields": (
+                    ("is_validated", "validation_method"),
+                    ("validated_by", "validation_date"),
+                    "evidence_sources",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "MAO Coordination",
+            {
+                "fields": (
+                    "forwarded_to_mao",
+                    ("forwarded_by", "forwarded_date"),
+                ),
+                "classes": ("collapse",),
+                "description": "Track forwarding to BARMM Ministries/Agencies/Offices",
+            },
+        ),
+        (
+            "Budget Linkage",
+            {
+                "fields": (
+                    "linked_ppa",
+                    "budget_inclusion_date",
+                ),
+                "classes": ("collapse",),
+                "description": "Link to budget items (PPAs) addressing this need",
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
 
     def community_link(self, obj):
         """Link to community admin page."""
@@ -796,6 +894,37 @@ class NeedAdmin(admin.ModelAdmin):
         return format_html('<span style="color: orange;">⚠ Pending</span>')
 
     validation_status.short_description = "Validation"
+
+    def submission_type_badge(self, obj):
+        """Submission type with color coding."""
+        colors = {
+            "assessment_driven": "#17a2b8",  # info blue
+            "community_submitted": "#6f42c1",  # purple
+        }
+        color = colors.get(obj.submission_type, "#6c757d")
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_submission_type_display(),
+        )
+
+    submission_type_badge.short_description = "Submission Type"
+
+    def budget_linkage_status(self, obj):
+        """Budget linkage status indicator."""
+        if obj.linked_ppa:
+            return format_html(
+                '<span style="color: green;">✓ Linked to PPA</span>'
+            )
+        elif obj.forwarded_to_mao:
+            return format_html(
+                '<span style="color: blue;">→ Forwarded to {}</span>',
+                obj.forwarded_to_mao.acronym or obj.forwarded_to_mao.name[:20],
+            )
+        return format_html('<span style="color: #dc3545;">✗ Not Funded</span>')
+
+    budget_linkage_status.short_description = "Budget Status"
 
 
 # Workshop-related Admin Classes
@@ -1692,3 +1821,115 @@ class WorkshopSynthesisAdmin(admin.ModelAdmin):
         )
 
     regenerate_synthesis.short_description = "Queue for Regeneration"
+
+
+@admin.register(NeedVote)
+class NeedVoteAdmin(admin.ModelAdmin):
+    """Admin interface for Need Votes (Participatory Budgeting)."""
+
+    list_display = [
+        'vote_summary',
+        'need_link',
+        'user_display',
+        'vote_weight_display',
+        'voter_community_display',
+        'voted_at',
+        'has_comment',
+    ]
+    
+    list_filter = [
+        'vote_weight',
+        'voted_at',
+        ('voter_community', admin.RelatedOnlyFieldListFilter),
+    ]
+    
+    search_fields = [
+        'need__title',
+        'user__username',
+        'user__first_name',
+        'user__last_name',
+        'comment',
+    ]
+    
+    readonly_fields = ['voted_at', 'updated_at', 'ip_address']
+    
+    autocomplete_fields = ['need', 'user', 'voter_community']
+    
+    date_hierarchy = 'voted_at'
+    
+    fieldsets = (
+        ('Vote Information', {
+            'fields': ('need', 'user', 'vote_weight', 'comment')
+        }),
+        ('Voter Context', {
+            'fields': ('voter_community', 'ip_address'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('voted_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def vote_summary(self, obj):
+        """Display vote summary with stars."""
+        stars = '⭐' * obj.vote_weight
+        return format_html(
+            '<strong>{}</strong> {}',
+            obj.user.get_full_name() or obj.user.username,
+            stars
+        )
+    vote_summary.short_description = 'Vote'
+
+    def need_link(self, obj):
+        """Clickable link to the need."""
+        from django.urls import reverse
+        url = reverse('admin:mana_need_change', args=[obj.need.id])
+        return format_html('<a href="{}">{}</a>', url, obj.need.title[:50])
+    need_link.short_description = 'Need'
+
+    def user_display(self, obj):
+        """Display user with link."""
+        from django.urls import reverse
+        url = reverse('admin:auth_user_change', args=[obj.user.id])
+        return format_html(
+            '<a href="{}">{}</a>',
+            url,
+            obj.user.get_full_name() or obj.user.username
+        )
+    user_display.short_description = 'Voter'
+
+    def vote_weight_display(self, obj):
+        """Display vote weight with visual indicator."""
+        stars = '⭐' * obj.vote_weight
+        return format_html(
+            '<span style="font-size: 16px;">{}</span> <span style="color: #666;">({})</span>',
+            stars,
+            obj.vote_weight
+        )
+    vote_weight_display.short_description = 'Weight'
+
+    def voter_community_display(self, obj):
+        """Display voter's community if set."""
+        if obj.voter_community:
+            return obj.voter_community.barangay.name
+        return format_html('<span style="color: #999;">—</span>')
+    voter_community_display.short_description = 'Community'
+
+    def has_comment(self, obj):
+        """Show if vote has a comment."""
+        if obj.comment:
+            return format_html(
+                '<span style="color: green;" title="{}">✓ Yes</span>',
+                obj.comment[:100]
+            )
+        return format_html('<span style="color: #ccc;">—</span>')
+    has_comment.short_description = 'Comment'
+
+    def get_queryset(self, request):
+        """Optimize queries."""
+        return super().get_queryset(request).select_related(
+            'need',
+            'user',
+            'voter_community__barangay'
+        )

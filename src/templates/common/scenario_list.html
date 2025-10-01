@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Budget Scenarios - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li><a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a></li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Budget Scenarios</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Budget Scenarios</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">Create and compare what-if budget allocation scenarios.</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'common:scenario_compare' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50">
+                <i class="fas fa-balance-scale"></i> Compare Scenarios
+            </a>
+            <a href="{% url 'common:scenario_create' %}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700">
+                <i class="fas fa-plus"></i> New Scenario
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p class="text-sm font-medium text-gray-600">Total Scenarios</p>
+            <p class="text-3xl font-bold text-gray-900 mt-2">{{ summary.total_scenarios }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p class="text-sm font-medium text-gray-600">Draft</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-2">{{ summary.draft }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p class="text-sm font-medium text-gray-600">Under Review</p>
+            <p class="text-3xl font-bold text-blue-600 mt-2">{{ summary.under_review }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <p class="text-sm font-medium text-gray-600">Approved</p>
+            <p class="text-3xl font-bold text-emerald-600 mt-2">{{ summary.approved }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="space-y-1">
+                <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                <select name="status" id="status" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Statuses</option>
+                    <option value="draft" {% if current_filters.status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="under_review" {% if current_filters.status == 'under_review' %}selected{% endif %}>Under Review</option>
+                    <option value="approved" {% if current_filters.status == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="implemented" {% if current_filters.status == 'implemented' %}selected{% endif %}>Implemented</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label for="type" class="block text-sm font-medium text-gray-700">Scenario Type</label>
+                <select name="type" id="type" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Types</option>
+                    <option value="baseline">Baseline</option>
+                    <option value="optimistic">Optimistic</option>
+                    <option value="conservative">Conservative</option>
+                    <option value="needs_based">Needs-Based</option>
+                    <option value="equity_focused">Equity-Focused</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label for="cycle" class="block text-sm font-medium text-gray-700">Planning Cycle</label>
+                <select name="cycle" id="cycle" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Cycles</option>
+                    {% for cycle in planning_cycles %}
+                    <option value="{{ cycle.id }}">FY {{ cycle.fiscal_year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Scenarios</h2>
+        <div class="space-y-4">
+            {% for scenario in scenarios %}
+            <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h3 class="font-semibold text-gray-900 text-lg">{{ scenario.name }}</h3>
+                            {% if scenario.is_baseline %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                <i class="fas fa-star mr-1"></i> Baseline
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% if scenario.description %}
+                        <p class="text-sm text-gray-600 mb-3">{{ scenario.description|truncatewords:20 }}</p>
+                        {% endif %}
+                        <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-3">
+                            <span><i class="fas fa-tag"></i> {{ scenario.get_scenario_type_display }}</span>
+                            <span><i class="fas fa-wallet text-emerald-600"></i> ₱{{ scenario.total_budget|floatformat:0 }} total</span>
+                            <span><i class="fas fa-hand-holding-usd text-blue-600"></i> ₱{{ scenario.allocated_budget|floatformat:0 }} allocated</span>
+                            <span><i class="fas fa-project-diagram text-purple-600"></i> {{ scenario.allocations_count }} allocations</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            {% if scenario.total_budget > 0 %}
+                            {% widthratio scenario.allocated_budget scenario.total_budget 100 as util %}
+                            <div class="{% if util >= 80 %}bg-emerald-500{% elif util >= 50 %}bg-blue-500{% else %}bg-yellow-500{% endif %} h-2 rounded-full" style="width: {{ util }}%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-right space-y-2">
+                        <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full
+                            {% if scenario.status == 'approved' %}bg-emerald-100 text-emerald-800
+                            {% elif scenario.status == 'under_review' %}bg-blue-100 text-blue-800
+                            {% elif scenario.status == 'implemented' %}bg-purple-100 text-purple-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ scenario.status|title }}
+                        </span>
+                        <br>
+                        <a href="{% url 'common:scenario_detail' scenario_id=scenario.id %}" class="text-sm text-emerald-600 hover:text-emerald-800 font-medium">
+                            View Details →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-12">
+                <i class="fas fa-project-diagram text-5xl text-gray-300 mb-4"></i>
+                <p class="text-lg font-semibold text-gray-900">No scenarios found</p>
+                <p class="text-sm text-gray-500 mt-2">Create a new budget scenario to start planning.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

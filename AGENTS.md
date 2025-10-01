@@ -83,3 +83,31 @@ Refer to `docs/improvements/instant_ui_improvements_plan.md` for detailed implem
 
 ## Security & Configuration Tips
 Copy `.env.example` to `.env`, fill `SECRET_KEY`, database, Redis, and third-party credentials, and keep secrets out of git. SQLite suffices for quick checks, but align staging with Postgres and Redis. Document integration details and follow-up notes in `docs/` so future contributors can trace decisions.
+
+## Documentation Organization
+
+**All documentation MUST be placed under `docs/` in appropriate subdirectories:**
+
+```
+docs/
+├── deployment/      # Deployment, production setup
+├── testing/        # Tests, verification reports
+├── improvements/   # Feature plans, implementation tracking
+├── guidelines/     # Program guides (MANA, policies)
+├── reference/      # Technical specs, standards
+├── development/    # Development guidelines
+└── [other categories]
+```
+
+**Critical Rules:**
+1. **Never create `.md` docs in project root** (except config files)
+2. Choose correct category: deployment, testing, improvements, etc.
+3. Update `docs/README.md` index after adding new docs
+4. Use relative links within docs: `[text](../category/file.md)`
+
+**Config files that STAY in ROOT:**
+- `CLAUDE.md`, `GEMINI.md`, `AGENTS.md` (AI configuration)
+- `README.md` (project overview)
+- `.env.example` (environment template)
+
+**Reference:** See [docs/DOCUMENTATION_ORGANIZATION.md](docs/DOCUMENTATION_ORGANIZATION.md) for complete organization details.

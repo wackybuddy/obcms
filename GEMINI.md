@@ -138,3 +138,45 @@ def update_task_view(request, task_id):
 **Current Issue**: Task deletion in the kanban board (`/oobc-management/staff/tasks/`) doesn't instantly remove task cards. The delete form targets `[data-task-row]` but the kanban view uses `[data-task-id]`. This targeting mismatch prevents instant UI updates.
 
 For comprehensive implementation details, consult `docs/improvements/instant_ui_improvements_plan.md`.
+
+## Documentation Guidelines
+
+### Where to Write Documentation
+
+**IMPORTANT: All documentation MUST be placed under the `docs/` directory in the appropriate category.**
+
+#### Documentation Organization
+```
+docs/
+├── deployment/      # Deployment, production setup
+├── development/     # Development guidelines
+├── testing/        # Testing, verification
+├── reference/      # Technical specs, standards
+├── improvements/   # Feature plans, implementation tracking
+├── guidelines/     # Program guidelines
+├── product/       # Roadmap, architecture
+├── reports/       # Research, analysis
+└── [other categories]
+```
+
+#### Key Rules
+
+1. **Never create docs in root** - Use `docs/[category]/filename.md`
+2. **Update docs/README.md** - Add new docs to the index
+3. **Use relative links** - `[text](../category/file.md)` within docs
+4. **Follow naming** - lowercase with underscores
+
+#### Config vs Documentation
+
+**Config files (in ROOT):**
+- `CLAUDE.md`, `GEMINI.md`, `AGENTS.md` (AI config)
+- `README.md` (project overview)
+- `.env.example` (environment template)
+
+**Documentation (in docs/):**
+- Implementation plans → `docs/improvements/`
+- Deployment guides → `docs/deployment/`
+- Testing docs → `docs/testing/`
+- User guides → `docs/guidelines/`
+
+**Reference:** [docs/DOCUMENTATION_ORGANIZATION.md](docs/DOCUMENTATION_ORGANIZATION.md)

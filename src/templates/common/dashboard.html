@@ -329,6 +329,136 @@
         </div>
     </div>
 
+    <!-- Planning & Budgeting Quick Access -->
+    {% if user.is_staff or user.is_superuser or user.user_type == 'oobc_staff' %}
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Planning & Budgeting</h2>
+            <a href="{% url 'common:oobc_management_home' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                View All Features
+                <i class="fas fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Planning Dashboard -->
+            <a href="{% url 'common:planning_budgeting' %}" class="group bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+                <div class="p-6 text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                            <i class="fas fa-chart-line text-2xl"></i>
+                        </div>
+                        <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Planning Dashboard</h3>
+                    <p class="text-sm text-blue-100">Budget tracking & PPA monitoring</p>
+                </div>
+            </a>
+
+            <!-- Analytics & Forecasting -->
+            <a href="{% url 'common:analytics_dashboard' %}" class="group bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+                <div class="p-6 text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                            <i class="fas fa-chart-area text-2xl"></i>
+                        </div>
+                        <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Analytics</h3>
+                    <p class="text-sm text-cyan-100">Trends, forecasts & impact metrics</p>
+                </div>
+            </a>
+
+            <!-- Scenario Planning -->
+            <a href="{% url 'common:scenario_list' %}" class="group bg-gradient-to-br from-orange-500 to-red-600 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+                <div class="p-6 text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                            <i class="fas fa-project-diagram text-2xl"></i>
+                        </div>
+                        <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Scenarios</h3>
+                    <p class="text-sm text-orange-100">Budget optimization & what-if analysis</p>
+                </div>
+            </a>
+
+            <!-- Strategic Goals -->
+            <a href="{% url 'common:strategic_goals_dashboard' %}" class="group bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+                <div class="p-6 text-white">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                            <i class="fas fa-bullseye text-2xl"></i>
+                        </div>
+                        <i class="fas fa-arrow-right transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Strategic Goals</h3>
+                    <p class="text-sm text-purple-100">Multi-year goals & RDP alignment</p>
+                </div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Community Participation (Public) -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Community Participation</h2>
+            <a href="{% url 'common:transparency_dashboard' %}" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-2">
+                View Transparency Dashboard
+                <i class="fas fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Community Voting -->
+            <a href="{% url 'common:community_voting_browse' %}" class="group bg-white rounded-lg shadow-lg border-2 border-emerald-200 hover:border-emerald-500 hover:shadow-xl transition-all duration-200">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-vote-yea text-white text-xl"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                            <i class="fas fa-users mr-1"></i> Public
+                        </span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors mb-2">
+                        Vote on Community Needs
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        Help prioritize community needs by casting your vote. Your voice matters in budget decisions.
+                    </p>
+                    <div class="mt-4 flex items-center text-emerald-600 text-sm font-medium">
+                        <span>Cast Your Vote</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Budget Transparency -->
+            <a href="{% url 'common:transparency_dashboard' %}" class="group bg-white rounded-lg shadow-lg border-2 border-cyan-200 hover:border-cyan-500 hover:shadow-xl transition-all duration-200">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-eye text-white text-xl"></i>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
+                            <i class="fas fa-globe mr-1"></i> Public
+                        </span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-cyan-600 transition-colors mb-2">
+                        Budget Transparency
+                    </h3>
+                    <p class="text-sm text-gray-600">
+                        See how community funds are allocated and what outcomes are achieved. Full transparency, full accountability.
+                    </p>
+                    <div class="mt-4 flex items-center text-cyan-600 text-sm font-medium">
+                        <span>View Budget Details</span>
+                        <i class="fas fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
     <!-- Quick Actions -->
     <div class="mb-8">
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>

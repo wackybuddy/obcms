@@ -160,28 +160,133 @@ When the server is running, API documentation is available at:
 
 ## Deployment
 
+### Docker Production Deployment
+
+The system is production-ready with Docker and supports deployment to:
+- **Coolify** (recommended for single-server deployments)
+- **Docker Compose** (generic deployment)
+- **Kubernetes** (requires S3 storage - see scaling guide)
+
+**Quick Deploy with Docker:**
+```bash
+# Copy and configure environment
+cp .env.example .env.prod
+nano .env.prod  # Edit with production values
+
+# Deploy with Docker Compose
+docker-compose -f docker-compose.prod.yml up -d
+
+# Verify health
+curl http://localhost:8000/health/
+```
+
+For detailed deployment instructions, see:
+- **[Production Deployment Guide](docs/deployment/production-deployment-issues-resolution.md)**
+- **[Deployment Status](docs/deployment/DEPLOYMENT_IMPLEMENTATION_STATUS.md)**
+
 ### Environment Variables
 
 Key environment variables for production:
 
 ```env
-SECRET_KEY=your-production-secret-key
-DEBUG=False
-ALLOWED_HOSTS=your-domain.com
+# Django Core (REQUIRED)
+DJANGO_SETTINGS_MODULE=obc_management.settings.production
+SECRET_KEY=your-production-secret-key-minimum-50-characters
+DEBUG=0
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+CSRF_TRUSTED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+
+# Database (REQUIRED)
 DATABASE_URL=postgres://user:password@host:port/database
+
+# Redis/Celery (REQUIRED)
 REDIS_URL=redis://host:port/0
+CELERY_BROKER_URL=redis://host:port/0
+
+# Email (REQUIRED for production)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=1
+EMAIL_HOST_USER=noreply@yourdomain.com
+EMAIL_HOST_PASSWORD=your-email-app-password
+
+# Gunicorn Tuning (Optional)
+GUNICORN_WORKERS=4  # Formula: (2 × CPU cores) + 1
+GUNICORN_THREADS=2
+GUNICORN_LOG_LEVEL=info
 ```
 
 ### Production Checklist
 
-- [ ] Set `DEBUG=False`
-- [ ] Configure production database (PostgreSQL recommended)
+Before deploying to production, ensure:
+
+**Security:**
+- [ ] Set `DEBUG=0` (False)
+- [ ] Generate strong `SECRET_KEY` (50+ characters)
+- [ ] Configure `ALLOWED_HOSTS` with actual domain(s)
+- [ ] Set `CSRF_TRUSTED_ORIGINS` with `https://` scheme
+- [ ] Run `python manage.py check --deploy` with zero errors
+
+**Infrastructure:**
+- [ ] Configure production database (PostgreSQL 15+ required)
 - [ ] Set up Redis for Celery background tasks
-- [ ] Configure email settings
-- [ ] Set up static file serving
-- [ ] Configure logging
-- [ ] Set up SSL/TLS
-- [ ] Configure backup strategy
+- [ ] Configure email backend (not console)
+- [ ] Set up SSL/TLS certificates
+- [ ] Configure health check endpoints (`/health/`, `/ready/`)
+
+**Operations:**
+- [ ] Configure logging (stdout/stderr for Docker)
+- [ ] Set up database backup strategy
+- [ ] Set up media file backup strategy (Docker volumes)
+- [ ] Configure monitoring/alerting
+
+**Testing:**
+- [ ] Verify static files load (`/static/admin/css/base.css`)
+- [ ] Test file uploads work
+- [ ] Verify CSRF protection on forms
+- [ ] Test Celery tasks execute
+- [ ] Run smoke tests on critical workflows
+
+## 📈 Scaling Considerations
+
+### Current Architecture: Single-Server Deployment
+
+**Media Storage:** Docker volumes (filesystem storage)
+
+This setup is production-ready for:
+- ✅ Government agencies with regional deployment
+- ✅ Up to 10,000 concurrent users
+- ✅ Up to 100GB media files
+- ✅ Single Coolify/Docker host deployments
+
+**Advantages:**
+- Simple architecture with no external dependencies
+- Zero cloud storage costs
+- Fast local file access
+- Easy to backup and restore
+
+**Limitations:**
+- Cannot horizontally scale web service (max 1 replica)
+- Limited to single-server disk capacity
+- No built-in CDN for global distribution
+
+### Future Scaling: Multi-Server Deployment
+
+**When you need to scale** (multiple web replicas, Kubernetes, high availability):
+
+📚 **See:** [Migrating to S3 Storage](docs/deployment/s3-migration-guide.md)
+
+You should implement S3 storage when:
+- Traffic requires multiple web server replicas (>1000 concurrent users)
+- Deploying to Kubernetes or container orchestration platforms
+- Media storage exceeds 100GB or server disk capacity
+- Need CDN for global file distribution
+- Require zero-maintenance cloud backups
+
+**Migration Path:** Filesystem → S3 can be done with zero downtime. All implementation details, code changes, and step-by-step migration instructions are documented in the scaling guide.
+
+**Estimated Migration Effort:** 4-6 hours (includes testing)
 
 ## Contributing
 

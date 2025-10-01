@@ -33,6 +33,8 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Strict'  # CSRF protection via SameSite
+CSRF_COOKIE_SAMESITE = 'Strict'
 
 # SECURITY: Additional headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -42,6 +44,17 @@ SECURE_BROWSER_XSS_FILTER = True
 # SECURITY: Proxy SSL header (for Coolify/Traefik/Nginx)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
+
+# SECURITY: CORS Configuration for Production
+# Override base.py localhost settings with production domain
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+if not CORS_ALLOWED_ORIGINS:
+    # WARNING: CORS_ALLOWED_ORIGINS must be set in production .env
+    # Example: CORS_ALLOWED_ORIGINS=https://obcms.example.gov.ph,https://api.obcms.example.gov.ph
+    pass  # Will use empty list, effectively blocking cross-origin requests (secure default)
+
+# Never allow all origins in production
+CORS_ALLOW_ALL_ORIGINS = False
 
 # ADMIN: Restrict admin access by IP if needed
 # ALLOWED_ADMIN_IPS = env.list('ALLOWED_ADMIN_IPS', default=[])

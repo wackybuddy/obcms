@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from . import views
+from . import exports, prioritization, scenario_api, views
 
 app_name = "monitoring"
 
@@ -31,4 +31,14 @@ urlpatterns = [
     path("create/moa/obc/", views.ajax_create_obc, name="ajax_create_obc"),
     path("create/oobc/", views.create_oobc_entry, name="create_oobc"),
     path("create/request/", views.create_request_entry, name="create_request"),
+    # Export endpoints
+    path("exports/aip-summary/", exports.export_aip_summary_excel, name="export_aip_summary"),
+    path("exports/compliance/", exports.export_compliance_report_excel, name="export_compliance"),
+    path("exports/budget-csv/", exports.export_budget_csv, name="export_budget_csv"),
+    path("exports/funding-timeline/", exports.export_funding_timeline_excel, name="export_funding_timeline"),
+    # Prioritization and scenario planning
+    path("prioritization/", prioritization.prioritization_matrix, name="prioritization_matrix"),
+    path("api/scenario/rebalance/", scenario_api.scenario_rebalance_budget, name="scenario_rebalance"),
+    path("api/scenario/funding-mix/", scenario_api.scenario_funding_mix, name="scenario_funding_mix"),
+    path("api/scenario/obligation-forecast/", scenario_api.scenario_obligation_forecast, name="scenario_obligation_forecast"),
 ]

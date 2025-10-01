@@ -164,6 +164,59 @@
         </div>
     </div>
 
+    <!-- Planning & Budgeting Integration -->
+    {% if user.is_staff or user.is_superuser or user.user_type == 'oobc_staff' %}
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Budget & Funding</h2>
+                <p class="mt-1 text-sm text-gray-600">Track budget allocation for MANA priorities and identified needs</p>
+            </div>
+            <a href="{% url 'common:oobc_management_home' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                View All Tools
+                <i class="fas fa-arrow-right text-xs"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Gap Analysis Dashboard -->
+            <a href="{% url 'common:gap_analysis_dashboard' %}" class="group block bg-white p-5 border-2 border-teal-200 rounded-xl hover:border-teal-500 hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-pie text-white text-lg"></i>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                        Analysis
+                    </span>
+                </div>
+                <h3 class="font-bold text-gray-900 group-hover:text-teal-600 mb-1">Gap Analysis</h3>
+                <p class="text-xs text-gray-600 mb-3">Identify funding gaps for MANA-identified needs</p>
+                <div class="flex items-center gap-2 text-xs text-emerald-600">
+                    <i class="fas fa-arrow-right"></i>
+                    <span class="font-medium">View Analysis</span>
+                </div>
+            </a>
+
+            <!-- Planning Dashboard (MANA Sector Filter) -->
+            <a href="{% url 'common:planning_budgeting' %}" class="group block bg-white p-5 border-2 border-blue-200 rounded-xl hover:border-blue-500 hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i class="fas fa-chart-line text-white text-lg"></i>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                        Budget Tracking
+                    </span>
+                </div>
+                <h3 class="font-bold text-gray-900 group-hover:text-blue-600 mb-1">Planning Dashboard</h3>
+                <p class="text-xs text-gray-600 mb-3">Track budget allocation by MANA sectors</p>
+                <div class="flex items-center gap-2 text-xs text-emerald-600">
+                    <i class="fas fa-arrow-right"></i>
+                    <span class="font-medium">View Dashboard</span>
+                </div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Quick Actions -->
     <div>
         <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Actions</h2>

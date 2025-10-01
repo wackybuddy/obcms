@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block title %}Community Needs Summary - OBC Management System{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:oobc_management_home' %}" class="text-neutral-500 hover:text-neutral-700">OOBC Management</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Community Needs</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div class="space-y-3">
+            <h1 class="text-3xl font-bold text-gray-900">Community Needs Summary</h1>
+            <p class="text-lg text-gray-600 max-w-4xl">
+                Overview of all community needs from assessments and direct submissions, with funding status tracking.
+            </p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Needs</p>
+                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ total_needs }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                    <i class="fas fa-list"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">With Budget Support</p>
+                    <p class="mt-2 text-3xl font-bold text-green-600">{{ funded_needs }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-600">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Forwarded to MAO</p>
+                    <p class="mt-2 text-3xl font-bold text-blue-600">{{ forwarded_needs }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Unfunded</p>
+                    <p class="mt-2 text-3xl font-bold text-orange-600">{{ unfunded_needs }}</p>
+                </div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submission Type Breakdown -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Needs by Submission Type</h2>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-clipboard-list text-blue-600"></i>
+                        <span class="text-sm font-medium text-gray-700">Assessment-Driven</span>
+                    </div>
+                    <span class="text-lg font-bold text-gray-900">{{ assessment_driven_count }}</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-users text-emerald-600"></i>
+                        <span class="text-sm font-medium text-gray-700">Community-Submitted</span>
+                    </div>
+                    <span class="text-lg font-bold text-gray-900">{{ community_submitted_count }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Funding Status Distribution</h2>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Funded</span>
+                    <span class="font-semibold text-green-600">{{ funding_rate|floatformat:1 }}%</span>
+                </div>
+                <div class="flex-1 bg-gray-200 rounded-full h-3">
+                    <div class="bg-green-600 h-3 rounded-full transition-all" style="width: {{ funding_rate }}%"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-2">
+                    <div class="text-center p-2 bg-green-50 rounded">
+                        <p class="text-xs text-gray-600">Funded</p>
+                        <p class="text-lg font-bold text-green-600">{{ funded_needs }}</p>
+                    </div>
+                    <div class="text-center p-2 bg-orange-50 rounded">
+                        <p class="text-xs text-gray-600">Unfunded</p>
+                        <p class="text-lg font-bold text-orange-600">{{ unfunded_needs }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="space-y-1">
+                <label for="submission_type" class="block text-sm font-medium text-gray-700">Submission Type</label>
+                <select name="submission_type" id="submission_type" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Types</option>
+                    <option value="assessment_driven" {% if request.GET.submission_type == 'assessment_driven' %}selected{% endif %}>Assessment-Driven</option>
+                    <option value="community_submitted" {% if request.GET.submission_type == 'community_submitted' %}selected{% endif %}>Community-Submitted</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+                <select name="category" id="category" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Categories</option>
+                    <option value="education" {% if request.GET.category == 'education' %}selected{% endif %}>Education</option>
+                    <option value="health" {% if request.GET.category == 'health' %}selected{% endif %}>Health</option>
+                    <option value="livelihood" {% if request.GET.category == 'livelihood' %}selected{% endif %}>Livelihood</option>
+                    <option value="infrastructure" {% if request.GET.category == 'infrastructure' %}selected{% endif %}>Infrastructure</option>
+                    <option value="social_protection" {% if request.GET.category == 'social_protection' %}selected{% endif %}>Social Protection</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="funding_status" class="block text-sm font-medium text-gray-700">Funding Status</label>
+                <select name="funding_status" id="funding_status" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All</option>
+                    <option value="funded" {% if request.GET.funding_status == 'funded' %}selected{% endif %}>With Budget Support</option>
+                    <option value="unfunded" {% if request.GET.funding_status == 'unfunded' %}selected{% endif %}>Unfunded</option>
+                    <option value="forwarded" {% if request.GET.funding_status == 'forwarded' %}selected{% endif %}>Forwarded to MAO</option>
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label for="region" class="block text-sm font-medium text-gray-700">Region</label>
+                <select name="region" id="region" class="block w-full py-2 px-3 rounded-lg border border-gray-300 focus:ring-emerald-500 focus:border-emerald-500">
+                    <option value="">All Regions</option>
+                    {% for region in regions %}
+                    <option value="{{ region.id }}" {% if request.GET.region == region.id|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="space-y-1">
+                <label class="block text-sm font-medium text-gray-700">&nbsp;</label>
+                <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600 bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <i class="fas fa-filter"></i>
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Community Needs Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Community Needs</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Need / Location
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Category
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Submission Type
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Community Votes
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Funding Status
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for need in needs %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">{{ need.title }}</div>
+                            <div class="text-sm text-gray-500">
+                                {% if need.barangay %}
+                                    {{ need.barangay.name }}, {{ need.barangay.municipality.name }}
+                                {% else %}
+                                    Region-wide
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ need.get_category_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if need.submission_type == 'assessment_driven' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                <i class="fas fa-clipboard-list mr-1"></i> Assessment
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                <i class="fas fa-users mr-1"></i> Community
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-1">
+                                <i class="fas fa-thumbs-up text-emerald-600 text-sm"></i>
+                                <span class="text-sm font-semibold text-gray-900">{{ need.community_votes|default:0 }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if need.linked_ppa %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i> Funded
+                            </span>
+                            {% elif need.forwarded_to_mao %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-paper-plane mr-1"></i> Forwarded
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Unfunded
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="{% url 'admin:mana_need_change' need.id %}" class="text-emerald-600 hover:text-emerald-900 text-sm font-medium">
+                                View Details
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-gray-400">
+                                    <i class="fas fa-inbox text-xl"></i>
+                                </div>
+                                <p class="text-lg font-semibold text-gray-900">No community needs found</p>
+                                <p class="text-sm text-gray-500">No needs match your current filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Category Breakdown -->
+    {% if category_breakdown %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Needs by Category</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for item in category_breakdown %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">{{ item.category__display }}</span>
+                    <span class="text-xl font-bold text-gray-900">{{ item.count }}</span>
+                </div>
+                {% if item.funded_count %}
+                <div class="mt-2 pt-2 border-t border-gray-100">
+                    <div class="flex items-center justify-between text-xs text-gray-500">
+                        <span>Funded: {{ item.funded_count }}</span>
+                        <span>Unfunded: {{ item.unfunded_count }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

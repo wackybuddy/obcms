@@ -6,10 +6,12 @@ from django.utils.safestring import mark_safe
 from .models import (ActionItem, Communication, CommunicationSchedule,
                      CommunicationTemplate, ConsultationFeedback,
                      EngagementFacilitator, EngagementTracking, Event,
-                     EventDocument, EventParticipant, Organization,
-                     OrganizationContact, Partnership, PartnershipDocument,
-                     PartnershipMilestone, PartnershipSignatory,
-                     StakeholderEngagement, StakeholderEngagementType)
+                     EventDocument, EventParticipant, MAOFocalPerson,
+                     MAOQuarterlyReport,
+                     Organization, OrganizationContact, Partnership,
+                     PartnershipDocument, PartnershipMilestone,
+                     PartnershipSignatory, StakeholderEngagement,
+                     StakeholderEngagementType)
 
 
 # Organization Admin
@@ -173,6 +175,136 @@ class OrganizationContactAdmin(admin.ModelAdmin):
     full_name.short_description = "Contact Person"
 
 
+@admin.register(MAOFocalPerson)
+class MAOFocalPersonAdmin(admin.ModelAdmin):
+    """
+    Admin interface for MAO Focal Persons.
+
+    Part of Phase 1 implementation for MAO coordination workflow.
+    """
+
+    list_display = (
+        "user_name",
+        "mao_link",
+        "role_badge",
+        "designation",
+        "contact_email",
+        "is_active_badge",
+        "appointed_date",
+    )
+    list_filter = (
+        "role",
+        "is_active",
+        "mao__organization_type",
+        "appointed_date",
+    )
+    search_fields = (
+        "user__first_name",
+        "user__last_name",
+        "user__username",
+        "mao__name",
+        "mao__acronym",
+        "designation",
+        "contact_email",
+    )
+    autocomplete_fields = ("mao", "user")
+    date_hierarchy = "appointed_date"
+    ordering = ("mao__name", "role", "-appointed_date")
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    ("mao", "user"),
+                    "role",
+                    "designation",
+                )
+            },
+        ),
+        (
+            "Contact Information",
+            {
+                "fields": (
+                    "contact_email",
+                    ("contact_phone", "contact_mobile"),
+                )
+            },
+        ),
+        (
+            "Status & Timeline",
+            {
+                "fields": (
+                    "is_active",
+                    ("appointed_date", "end_date"),
+                )
+            },
+        ),
+        (
+            "Notes",
+            {"fields": ("notes",), "classes": ("collapse",)},
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    readonly_fields = ("created_at", "updated_at")
+
+    def user_name(self, obj):
+        """Display user's full name."""
+        return obj.user.get_full_name() or obj.user.username
+
+    user_name.short_description = "Focal Person"
+    user_name.admin_order_field = "user__last_name"
+
+    def mao_link(self, obj):
+        """Link to MAO organization page."""
+        from django.urls import reverse
+        from django.utils.html import format_html
+
+        url = reverse("admin:coordination_organization_change", args=[obj.mao.pk])
+        display_name = obj.mao.acronym or obj.mao.name[:30]
+        return format_html('<a href="{}">{}</a>', url, display_name)
+
+    mao_link.short_description = "MAO"
+    mao_link.admin_order_field = "mao__name"
+
+    def role_badge(self, obj):
+        """Role with color coding."""
+        from django.utils.html import format_html
+
+        colors = {
+            "primary": "#17a2b8",  # blue
+            "alternate": "#6c757d",  # gray
+        }
+        color = colors.get(obj.role, "#6c757d")
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 2px 6px; '
+            'border-radius: 3px; font-size: 11px;">{}</span>',
+            color,
+            obj.get_role_display(),
+        )
+
+    role_badge.short_description = "Role"
+    role_badge.admin_order_field = "role"
+
+    def is_active_badge(self, obj):
+        """Active status indicator."""
+        from django.utils.html import format_html
+
+        if obj.is_active:
+            return format_html('<span style="color: green;">✓ Active</span>')
+        return format_html('<span style="color: red;">✗ Inactive</span>')
+
+    is_active_badge.short_description = "Status"
+    is_active_badge.admin_order_field = "is_active"
+
+
 # Event Admin
 class EventParticipantInline(admin.TabularInline):
     """Inline admin for event participants."""
@@ -214,10 +346,19 @@ class EventAdmin(admin.ModelAdmin):
         "start_date",
         "venue",
         "status",
+        "quarterly_coordination_badge",
         "participant_count",
         "action_items_count",
     )
-    list_filter = ("event_type", "status", "start_date", "is_virtual")
+    list_filter = (
+        "event_type",
+        "status",
+        "start_date",
+        "is_virtual",
+        "is_quarterly_coordination",
+        "quarter",
+        "fiscal_year",
+    )
     search_fields = ("title", "description", "venue", "organizer")
     ordering = ("-start_date",)
     date_hierarchy = "start_date"
@@ -257,6 +398,18 @@ class EventAdmin(admin.ModelAdmin):
         ),
         ("Outcomes", {"fields": ("outcomes", "follow_up_actions", "lessons_learned")}),
         (
+            "Quarterly Coordination Meeting",
+            {
+                "fields": (
+                    "is_quarterly_coordination",
+                    ("quarter", "fiscal_year"),
+                    "pre_meeting_reports_due",
+                ),
+                "classes": ("collapse",),
+                "description": "Settings for OCM quarterly coordination meetings (Phase 1 MAO workflow)",
+            },
+        ),
+        (
             "Metadata",
             {"fields": ("notes", "created_at", "updated_at"), "classes": ("collapse",)},
         ),
@@ -264,6 +417,20 @@ class EventAdmin(admin.ModelAdmin):
 
     readonly_fields = ("created_at", "updated_at")
     inlines = [EventParticipantInline, ActionItemInline, EventDocumentInline]
+
+    def quarterly_coordination_badge(self, obj):
+        """Display quarterly coordination status."""
+        if obj.is_quarterly_coordination:
+            display_text = f"{obj.quarter} FY{obj.fiscal_year}" if obj.quarter and obj.fiscal_year else "QCM"
+            return format_html(
+                '<span style="background-color: #6f42c1; color: white; padding: 2px 6px; '
+                'border-radius: 3px; font-size: 11px;">{}</span>',
+                display_text,
+            )
+        return "-"
+
+    quarterly_coordination_badge.short_description = "Quarterly Meeting"
+    quarterly_coordination_badge.admin_order_field = "is_quarterly_coordination"
 
     def participant_count(self, obj):
         """Display participant count with status breakdown."""
@@ -569,9 +736,15 @@ class StakeholderEngagementAdmin(admin.ModelAdmin):
         "status",
         "community_display",
         "planned_date",
+        "is_participatory_budgeting",
         "participant_count",
     )
-    list_filter = ("engagement_type", "status", "planned_date")
+    list_filter = (
+        "engagement_type",
+        "status",
+        "planned_date",
+        "is_participatory_budgeting",
+    )
     search_fields = ("title", "description", "facilitator")
     ordering = ("-planned_date",)
     date_hierarchy = "planned_date"
@@ -601,6 +774,18 @@ class StakeholderEngagementAdmin(admin.ModelAdmin):
                     "materials_needed",
                     "logistics_requirements",
                 )
+            },
+        ),
+        (
+            "Participatory Budgeting",
+            {
+                "fields": (
+                    "is_participatory_budgeting",
+                    "budget_amount_to_allocate",
+                    "voting_open_date",
+                    "voting_close_date",
+                ),
+                "classes": ("collapse",),
             },
         ),
         (
@@ -689,6 +874,39 @@ class EventDocumentAdmin(admin.ModelAdmin):
     list_filter = ("document_type", "is_public", "upload_date")
     search_fields = ("title", "event__title", "description")
     ordering = ("-upload_date",)
+
+
+@admin.register(MAOQuarterlyReport)
+class MAOQuarterlyReportAdmin(admin.ModelAdmin):
+    """Admin for quarterly coordination reports submitted by MAOs."""
+
+    list_display = (
+        "meeting",
+        "mao",
+        "submitted_by",
+        "submitted_at",
+        "total_budget_allocated",
+        "total_obc_beneficiaries",
+    )
+    list_filter = (
+        "meeting__fiscal_year",
+        "meeting__quarter",
+        "mao",
+    )
+    search_fields = (
+        "meeting__title",
+        "mao__name",
+        "accomplishments",
+        "challenges",
+    )
+    autocomplete_fields = (
+        "meeting",
+        "mao",
+        "ppas_implemented",
+        "regions_covered",
+        "submitted_by",
+    )
+    filter_horizontal = ("ppas_implemented", "regions_covered")
 
 
 @admin.register(PartnershipSignatory)

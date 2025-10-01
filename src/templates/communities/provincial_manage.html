@@ -79,10 +79,16 @@
             </h2>
         </div>
         <div class="p-6">
-            <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+            <form method="get"
+                  hx-get="{% url 'common:communities_manage_provincial' %}"
+                  hx-target="#provincial-results-container"
+                  hx-swap="innerHTML transition:true"
+                  hx-trigger="change from:select, submit"
+                  hx-indicator="#filter-loading-indicator"
+                  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
                 <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Region</label>
-                    <select name="region" data-initial="{{ current_region|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                    <select name="region" data-initial="{{ current_region|default:'' }}" class="block w-full py-3 px-4 text-base rounded-xl border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200">
                         <option value="">All Regions</option>
                         {% for region in regions %}
                         <option value="{{ region.id }}" {% if current_region == region.id|stringformat:"s" %}selected{% endif %}>{{ region.name }}</option>
@@ -91,7 +97,7 @@
                 </div>
                 <div class="lg:col-span-3">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Province</label>
-                    <select name="province" data-initial="{{ current_province|default:'' }}" class="block w-full py-3 px-4 text-base rounded-lg border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                    <select name="province" data-initial="{{ current_province|default:'' }}" class="block w-full py-3 px-4 text-base rounded-xl border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200">
                         <option value="">All Provinces</option>
                         {% for province in provinces %}
                         <option value="{{ province.id }}" {% if current_province == province.id|stringformat:"s" %}selected{% endif %}>{{ province.name }}</option>
@@ -102,11 +108,16 @@
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
                     <input type="text" name="search" value="{{ search_query|default:'' }}"
                            placeholder="Search province, region, or key municipalities..."
-                           class="block w-full py-3 px-4 text-base rounded-lg border border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 min-h-[48px] transition-all duration-200">
+                           class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200">
                 </div>
                 <div class="lg:col-span-2 flex items-end gap-3">
-                    <button type="submit" class="inline-flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 w-full">
-                        <i class="fas fa-search mr-2"></i>Apply
+                    <button type="submit" class="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-semibold transition-all duration-200 w-full">
+                        <span class="htmx-indicator hidden" id="filter-loading-indicator">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                        </span>
+                        <span class="htmx-indicator-shown">
+                            <i class="fas fa-search mr-2"></i>Apply
+                        </span>
                     </button>
                     <a href="{% url 'common:communities_manage_provincial' %}" class="inline-flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-all duration-200 w-full">
                         <i class="fas fa-times mr-2"></i>Clear
@@ -116,6 +127,7 @@
         </div>
     </div>
 
+    <div id="provincial-results-container">
     <div class="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-gray-50">
             <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -448,4 +460,5 @@
         });
     </script>
 {% endif %}
+    </div> <!-- Close #provincial-results-container -->
 {% endblock %}

@@ -9,6 +9,7 @@ from .community import (
     ProvinceCoverageForm,
     OBCCommunityForm,
 )
+from .needs import CommunityNeedSubmissionForm
 from .province import ProvinceForm
 from .staff import (
     PerformanceTargetForm,
@@ -31,6 +32,7 @@ __all__ = [
     "MunicipalityCoverageForm",
     "ProvinceCoverageForm",
     "OBCCommunityForm",
+    "CommunityNeedSubmissionForm",
     "ProvinceForm",
     "StaffProfileForm",
     "StaffTeamForm",

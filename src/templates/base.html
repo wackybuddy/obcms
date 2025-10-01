@@ -280,11 +280,23 @@
             ring: 2px solid var(--primary-blue);
             border-color: var(--primary-blue);
         }
-        
+
         .focus-bangsamoro-teal:focus {
             outline: none;
             ring: 2px solid var(--primary-teal);
             border-color: var(--primary-teal);
+        }
+
+        /* Placeholder Contrast Fix - WCAG AA Compliance (4.5:1 ratio) */
+        ::placeholder {
+            color: var(--neutral-500); /* gray-500 #6b7280 instead of gray-400 #9ca3af */
+            opacity: 1;
+        }
+        :-ms-input-placeholder {
+            color: var(--neutral-500);
+        }
+        ::-ms-input-placeholder {
+            color: var(--neutral-500);
         }
 
         /* Mobile Responsive Utilities */
@@ -588,9 +600,10 @@
             }
         });
     </script>
-    
+
     <script src="{% static 'common/js/location_data_loader.js' %}"></script>
-    
+    <script src="{% static 'common/js/htmx-focus-management.js' %}"></script>
+
     <div id="toast-root" class="fixed top-6 right-6 z-50 space-y-2 pointer-events-none"></div>
     <script>
     (function () {
@@ -632,6 +645,34 @@
         document.body.addEventListener('show-toast', function (event) {
             showToast(event.detail);
         });
+
+        // Global HTMX error handler for better user feedback
+        document.body.addEventListener('htmx:responseError', function(event) {
+            console.error('HTMX Error:', event.detail);
+            showToast({
+                message: 'An error occurred. Please try again or contact support.',
+                level: 'error'
+            });
+        });
+
+        document.body.addEventListener('htmx:sendError', function(event) {
+            console.error('HTMX Network Error:', event.detail);
+            showToast({
+                message: 'Network error. Please check your connection and try again.',
+                level: 'error'
+            });
+        });
+
+        document.body.addEventListener('htmx:timeout', function(event) {
+            console.error('HTMX Timeout:', event.detail);
+            showToast({
+                message: 'Request timed out. Please try again.',
+                level: 'warning'
+            });
+        });
+
+        // Expose showToast globally for use in other scripts
+        window.showToast = showToast;
     })();
     </script>
 
