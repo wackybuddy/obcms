@@ -226,8 +226,15 @@ def communities_home(request):
 
     # Calculate totals for the new stat cards
     # Include barangay populations + non-auto-synced municipal populations to avoid double-counting
-    barangay_population = communities.aggregate(total=Sum("estimated_obc_population"))["total"] or 0
-    municipal_population = municipality_coverages.filter(auto_sync=False).aggregate(total=Sum("estimated_obc_population"))["total"] or 0
+    barangay_population = (
+        communities.aggregate(total=Sum("estimated_obc_population"))["total"] or 0
+    )
+    municipal_population = (
+        municipality_coverages.filter(auto_sync=False).aggregate(
+            total=Sum("estimated_obc_population")
+        )["total"]
+        or 0
+    )
     total_obc_population = barangay_population + municipal_population
     total_barangay_obcs = communities.count()
     total_municipal_obcs = municipality_coverages.count()
@@ -339,7 +346,9 @@ def communities_add_municipality(request):
         form = MunicipalityCoverageForm(request.POST)
         if form.is_valid():
             coverage = form.save(commit=False)
-            coverage.created_by = request.user if request.user.is_authenticated else None
+            coverage.created_by = (
+                request.user if request.user.is_authenticated else None
+            )
             coverage.updated_by = coverage.created_by
             coverage.save()
             coverage.refresh_from_communities()
@@ -378,7 +387,9 @@ def communities_add_province(request):
         form = ProvinceCoverageForm(request.POST)
         if form.is_valid():
             coverage = form.save(commit=False)
-            coverage.created_by = request.user if request.user.is_authenticated else None
+            coverage.created_by = (
+                request.user if request.user.is_authenticated else None
+            )
             coverage.updated_by = coverage.created_by
             coverage.save()
             coverage.refresh_from_municipalities()
@@ -502,9 +513,7 @@ def communities_manage(request):
     )
 
     barangay_page_size = _resolve_page_size(request, "barangay_page_size")
-    municipality_page_size = _resolve_page_size(
-        request, "municipality_page_size"
-    )
+    municipality_page_size = _resolve_page_size(request, "municipality_page_size")
 
     barangay_page_number = request.GET.get("barangay_page") or 1
     municipality_page_number = request.GET.get("municipality_page") or 1
@@ -512,9 +521,7 @@ def communities_manage(request):
     communities_paginator = Paginator(communities, barangay_page_size)
     communities_page = communities_paginator.get_page(barangay_page_number)
 
-    municipality_paginator = Paginator(
-        municipality_coverages, municipality_page_size
-    )
+    municipality_paginator = Paginator(municipality_coverages, municipality_page_size)
     municipality_page = municipality_paginator.get_page(municipality_page_number)
 
     request_params = request.GET.dict()
@@ -594,7 +601,9 @@ def communities_manage_municipal(request):
     show_archived = request.GET.get("archived") == "1"
 
     base_manager = (
-        MunicipalityCoverage.all_objects if show_archived else MunicipalityCoverage.objects
+        MunicipalityCoverage.all_objects
+        if show_archived
+        else MunicipalityCoverage.objects
     )
 
     coverages = base_manager.select_related(
@@ -615,14 +624,10 @@ def communities_manage_municipal(request):
     search_query = request.GET.get("search")
 
     if region_filter:
-        coverages = coverages.filter(
-            municipality__province__region__id=region_filter
-        )
+        coverages = coverages.filter(municipality__province__region__id=region_filter)
 
     if province_filter:
-        coverages = coverages.filter(
-            municipality__province__id=province_filter
-        )
+        coverages = coverages.filter(municipality__province__id=province_filter)
 
     if search_query:
         coverages = coverages.filter(
@@ -676,18 +681,22 @@ def communities_manage_municipal(request):
 
     stat_cards = [
         {
-            "title": "Total Municipal OBCs in the Database"
-            if not show_archived
-            else "Total Archived Municipal OBCs",
+            "title": (
+                "Total Municipal OBCs in the Database"
+                if not show_archived
+                else "Total Archived Municipal OBCs"
+            ),
             "value": total_coverages,
             "icon": "fas fa-city",
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "text_color": "text-blue-100",
         },
         {
-            "title": "Total OBC Population from the Municipalities"
-            if not show_archived
-            else "Archived OBC Population Total",
+            "title": (
+                "Total OBC Population from the Municipalities"
+                if not show_archived
+                else "Archived OBC Population Total"
+            ),
             "value": total_population,
             "icon": "fas fa-users",
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
@@ -711,11 +720,7 @@ def communities_manage_municipal(request):
 
     stat_cards_grid_class = "mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
 
-    page_title = (
-        "Archived Municipal OBCs"
-        if show_archived
-        else "Manage Municipal OBC"
-    )
+    page_title = "Archived Municipal OBCs" if show_archived else "Manage Municipal OBC"
     page_description = (
         "Review archived municipality-level Bangsamoro coverage data"
         if show_archived
@@ -793,6 +798,7 @@ def communities_manage_provincial(request):
         # Get the participant's account and region
         try:
             from mana.models import WorkshopParticipantAccount
+
             participant_account = WorkshopParticipantAccount.objects.select_related(
                 "province__region"
             ).get(user=request.user)
@@ -879,18 +885,22 @@ def communities_manage_provincial(request):
 
     stat_cards = [
         {
-            "title": "Total Provincial OBCs in the Database"
-            if not show_archived
-            else "Total Archived Provincial OBCs",
+            "title": (
+                "Total Provincial OBCs in the Database"
+                if not show_archived
+                else "Total Archived Provincial OBCs"
+            ),
             "value": total_coverages,
             "icon": "fas fa-flag",
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "text_color": "text-blue-100",
         },
         {
-            "title": "Total OBC Population from the Provinces"
-            if not show_archived
-            else "Archived OBC Population Total",
+            "title": (
+                "Total OBC Population from the Provinces"
+                if not show_archived
+                else "Archived OBC Population Total"
+            ),
             "value": total_population,
             "icon": "fas fa-users",
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
@@ -914,7 +924,9 @@ def communities_manage_provincial(request):
 
     stat_cards_grid_class = "mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
 
-    page_title = "Archived Provincial OBCs" if show_archived else "Manage Provincial OBC"
+    page_title = (
+        "Archived Provincial OBCs" if show_archived else "Manage Provincial OBC"
+    )
     page_description = (
         "Review archived province-level Bangsamoro coverage data"
         if show_archived
@@ -1026,9 +1038,7 @@ def communities_view_municipal(request, coverage_id):
         delete_review_mode = False
 
     related_communities = (
-        OBCCommunity.objects.select_related(
-            "barangay__municipality__province__region"
-        )
+        OBCCommunity.objects.select_related("barangay__municipality__province__region")
         .filter(barangay__municipality=coverage.municipality)
         .order_by("barangay__name")
     )
@@ -1069,18 +1079,20 @@ def communities_view_provincial(request, coverage_id):
 
     if is_mana_participant:
         if coverage.created_by != request.user:
-            raise PermissionDenied("You can only view Provincial OBCs that you created.")
+            raise PermissionDenied(
+                "You can only view Provincial OBCs that you created."
+            )
 
     can_edit = not coverage.is_submitted and (
-        request.user.is_staff or
-        request.user.is_superuser or
-        (is_mana_participant and coverage.created_by == request.user)
+        request.user.is_staff
+        or request.user.is_superuser
+        or (is_mana_participant and coverage.created_by == request.user)
     )
 
     can_submit = (
-        is_mana_participant and
-        coverage.created_by == request.user and
-        not coverage.is_submitted
+        is_mana_participant
+        and coverage.created_by == request.user
+        and not coverage.is_submitted
     )
 
     delete_review_mode = (
@@ -1095,17 +1107,13 @@ def communities_view_provincial(request, coverage_id):
         delete_review_mode = False
 
     related_municipal_coverages = (
-        MunicipalityCoverage.objects.select_related(
-            "municipality__province__region"
-        )
+        MunicipalityCoverage.objects.select_related("municipality__province__region")
         .filter(municipality__province=coverage.province)
         .order_by("municipality__name")
     )
 
     related_communities = (
-        OBCCommunity.objects.select_related(
-            "barangay__municipality__province__region"
-        )
+        OBCCommunity.objects.select_related("barangay__municipality__province__region")
         .filter(barangay__municipality__province=coverage.province)
         .order_by("barangay__name")
     )
@@ -1168,19 +1176,23 @@ def location_centroid(request):
             source = geocode_source or ("geocoded" if updated else "unavailable")
 
     if lat is None or lng is None:
-        return JsonResponse({
-            "has_location": False,
-            "source": source,
-            "message": f"No coordinates available for {level} {obj.name if hasattr(obj, 'name') else obj}"
-        })
+        return JsonResponse(
+            {
+                "has_location": False,
+                "source": source,
+                "message": f"No coordinates available for {level} {obj.name if hasattr(obj, 'name') else obj}",
+            }
+        )
 
     # Validate coordinates are within reasonable bounds
     if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
-        return JsonResponse({
-            "has_location": False,
-            "source": source,
-            "message": f"Invalid coordinates for {level}: lat={lat}, lng={lng}"
-        })
+        return JsonResponse(
+            {
+                "has_location": False,
+                "source": source,
+                "message": f"Invalid coordinates for {level}: lat={lat}, lng={lng}",
+            }
+        )
 
     return JsonResponse(
         {
@@ -1189,7 +1201,7 @@ def location_centroid(request):
             "lng": float(lng),
             "source": source,
             "accuracy": "high" if source == "cached" else "medium",
-            "message": f"Coordinates found for {level} {obj.name if hasattr(obj, 'name') else obj}"
+            "message": f"Coordinates found for {level} {obj.name if hasattr(obj, 'name') else obj}",
         }
     )
 
@@ -1200,9 +1212,7 @@ def communities_edit(request, community_id):
     from communities.models import MunicipalityCoverage, OBCCommunity
 
     community = get_object_or_404(
-        OBCCommunity.objects.select_related(
-            "barangay__municipality__province__region"
-        ),
+        OBCCommunity.objects.select_related("barangay__municipality__province__region"),
         pk=community_id,
     )
 
@@ -1210,9 +1220,7 @@ def communities_edit(request, community_id):
         form = OBCCommunityForm(request.POST, instance=community)
         if form.is_valid():
             community = form.save()
-            MunicipalityCoverage.sync_for_municipality(
-                community.barangay.municipality
-            )
+            MunicipalityCoverage.sync_for_municipality(community.barangay.municipality)
             messages.success(
                 request,
                 f'Barangay OBC "{community.display_name}" has been updated successfully.',
@@ -1221,9 +1229,9 @@ def communities_edit(request, community_id):
     else:
         form = OBCCommunityForm(instance=community)
 
-    recent_communities = (
-        OBCCommunity.objects.exclude(pk=community.pk).order_by("-created_at")[:5]
-    )
+    recent_communities = OBCCommunity.objects.exclude(pk=community.pk).order_by(
+        "-created_at"
+    )[:5]
 
     context = {
         "form": form,
@@ -1246,9 +1254,7 @@ def communities_delete(request, community_id):
     from communities.models import MunicipalityCoverage, OBCCommunity
 
     community = get_object_or_404(
-        OBCCommunity.objects.select_related(
-            "barangay__municipality__province__region"
-        ),
+        OBCCommunity.objects.select_related("barangay__municipality__province__region"),
         pk=community_id,
     )
     municipality = community.barangay.municipality if community.barangay else None
@@ -1406,16 +1412,20 @@ def communities_edit_provincial(request, coverage_id):
 
     if is_mana_participant:
         if coverage.created_by != request.user:
-            raise PermissionDenied("You can only edit Provincial OBCs that you created.")
+            raise PermissionDenied(
+                "You can only edit Provincial OBCs that you created."
+            )
 
         # Cannot edit submitted records
         if coverage.is_submitted:
             messages.error(
                 request,
                 "This Provincial OBC has been submitted and can no longer be edited. "
-                "Contact OOBC staff if you need to make changes."
+                "Contact OOBC staff if you need to make changes.",
             )
-            return redirect("common:communities_view_provincial", coverage_id=coverage.id)
+            return redirect(
+                "common:communities_view_provincial", coverage_id=coverage.id
+            )
 
     if request.method == "POST":
         form = ProvinceCoverageForm(request.POST, instance=coverage)
@@ -1521,16 +1531,20 @@ def communities_delete_provincial(request, coverage_id):
 
     if is_mana_participant:
         if coverage.created_by != request.user:
-            raise PermissionDenied("You can only delete Provincial OBCs that you created.")
+            raise PermissionDenied(
+                "You can only delete Provincial OBCs that you created."
+            )
 
         # Cannot delete submitted records
         if coverage.is_submitted:
             messages.error(
                 request,
                 "This Provincial OBC has been submitted and can no longer be deleted. "
-                "Contact OOBC staff if you need to remove it."
+                "Contact OOBC staff if you need to remove it.",
             )
-            return redirect("common:communities_view_provincial", coverage_id=coverage.id)
+            return redirect(
+                "common:communities_view_provincial", coverage_id=coverage.id
+            )
 
     province_name = coverage.province.name
     coverage.soft_delete(user=request.user)
@@ -1566,7 +1580,9 @@ def communities_submit_provincial(request, coverage_id):
     )
 
     if not is_mana_participant:
-        raise PermissionDenied("Only MANA participants can submit Provincial OBC records.")
+        raise PermissionDenied(
+            "Only MANA participants can submit Provincial OBC records."
+        )
 
     if coverage.created_by != request.user:
         raise PermissionDenied("You can only submit Provincial OBCs that you created.")
@@ -1574,7 +1590,7 @@ def communities_submit_provincial(request, coverage_id):
     if coverage.is_submitted:
         messages.warning(
             request,
-            f"Provincial OBC for {coverage.province.name} has already been submitted."
+            f"Provincial OBC for {coverage.province.name} has already been submitted.",
         )
         return redirect("common:communities_view_provincial", coverage_id=coverage.id)
 
@@ -1587,7 +1603,7 @@ def communities_submit_provincial(request, coverage_id):
     messages.success(
         request,
         f"Provincial OBC for {coverage.province.name} has been submitted successfully. "
-        "This record is now read-only. Contact OOBC staff if you need to make changes."
+        "This record is now read-only. Contact OOBC staff if you need to make changes.",
     )
     return redirect("common:communities_view_provincial", coverage_id=coverage.id)
 
@@ -1614,7 +1630,9 @@ def communities_restore_provincial(request, coverage_id):
 
     if is_mana_participant:
         if coverage.created_by != request.user:
-            raise PermissionDenied("You can only restore Provincial OBCs that you created.")
+            raise PermissionDenied(
+                "You can only restore Provincial OBCs that you created."
+            )
     coverage.restore()
     coverage.refresh_from_municipalities()
 

@@ -285,8 +285,7 @@ def partnership_detail(request, partnership_id):
             "focal_person",
             "backup_focal_person",
             "created_by",
-        )
-        .prefetch_related(
+        ).prefetch_related(
             "organizations",
             "communities",
             "signatories__organization",
@@ -432,7 +431,9 @@ def event_create(request):
                 form.save_m2m()
             messages.success(request, "Event successfully scheduled.")
             return redirect("common:coordination_events")
-        messages.error(request, "Please correct the highlighted errors before submitting.")
+        messages.error(
+            request, "Please correct the highlighted errors before submitting."
+        )
         if form.errors:
             logger.warning("Event form errors: %s", form.errors)
     else:
@@ -471,15 +472,13 @@ def engagement_create(request):
             engagement.save()
             if hasattr(form, "save_m2m"):
                 form.save_m2m()
-            messages.success(
-                request, "Coordination activity recorded successfully."
-            )
+            messages.success(request, "Coordination activity recorded successfully.")
             return redirect("common:coordination_home")
-        messages.error(request, "Please correct the highlighted errors before submitting.")
+        messages.error(
+            request, "Please correct the highlighted errors before submitting."
+        )
         if form.errors:
-            logger.warning(
-                "Stakeholder engagement form errors: %s", form.errors
-            )
+            logger.warning("Stakeholder engagement form errors: %s", form.errors)
     else:
         form = StakeholderEngagementForm(initial=initial)
 
@@ -523,7 +522,11 @@ def calendar_overview(request):
         all_day = event.start_time is None
 
         if event.end_date:
-            end_time = event.end_time if event.end_time else (time.max if not all_day else time.max)
+            end_time = (
+                event.end_time
+                if event.end_time
+                else (time.max if not all_day else time.max)
+            )
             end_dt = _combine_date_time(event.end_date, end_time)
             if all_day and end_dt:
                 end_dt = end_dt + timedelta(days=1)
@@ -573,9 +576,7 @@ def calendar_overview(request):
                     "type": "activity",
                     "status": engagement.status,
                     "community": getattr(engagement.community, "name", ""),
-                    "engagementType": getattr(
-                        engagement.engagement_type, "name", ""
-                    ),
+                    "engagementType": getattr(engagement.engagement_type, "name", ""),
                 },
             }
         )
@@ -585,14 +586,12 @@ def calendar_overview(request):
     past_events = events.filter(start_date__lt=now.date()).count()
     upcoming_engagements = engagements.filter(planned_date__gte=now).count()
 
-    upcoming_event_list = (
-        events.filter(start_date__gte=now.date())
-        .order_by("start_date", "start_time")[:5]
-    )
-    upcoming_engagement_list = (
-        engagements.filter(planned_date__gte=now)
-        .order_by("planned_date")[:5]
-    )
+    upcoming_event_list = events.filter(start_date__gte=now.date()).order_by(
+        "start_date", "start_time"
+    )[:5]
+    upcoming_engagement_list = engagements.filter(planned_date__gte=now).order_by(
+        "planned_date"
+    )[:5]
 
     stats = {
         "events": {
@@ -814,6 +813,7 @@ def event_edit_instance(request, event_id):
 # Phase 3: Enhanced Resource Booking
 # ===================================
 
+
 @login_required
 def resource_bookings_feed(request, resource_id):
     """
@@ -827,25 +827,28 @@ def resource_bookings_feed(request, resource_id):
 
     # Get bookings for this resource
     bookings = CalendarResourceBooking.objects.filter(
-        resource=resource,
-        status__in=['approved', 'pending']
-    ).select_related('booked_by')
+        resource=resource, status__in=["approved", "pending"]
+    ).select_related("booked_by")
 
     events = []
     for booking in bookings:
-        events.append({
-            'id': str(booking.id),
-            'title': f"{booking.booked_by.get_full_name()} - {booking.status}",
-            'start': booking.start_datetime.isoformat(),
-            'end': booking.end_datetime.isoformat(),
-            'backgroundColor': '#10b981' if booking.status == 'approved' else '#f59e0b',
-            'borderColor': '#059669' if booking.status == 'approved' else '#d97706',
-            'extendedProps': {
-                'status': booking.status,
-                'bookedBy': booking.booked_by.get_full_name(),
-                'notes': booking.notes,
+        events.append(
+            {
+                "id": str(booking.id),
+                "title": f"{booking.booked_by.get_full_name()} - {booking.status}",
+                "start": booking.start_datetime.isoformat(),
+                "end": booking.end_datetime.isoformat(),
+                "backgroundColor": (
+                    "#10b981" if booking.status == "approved" else "#f59e0b"
+                ),
+                "borderColor": "#059669" if booking.status == "approved" else "#d97706",
+                "extendedProps": {
+                    "status": booking.status,
+                    "bookedBy": booking.booked_by.get_full_name(),
+                    "notes": booking.notes,
+                },
             }
-        })
+        )
 
     return JsonResponse(events, safe=False)
 
@@ -860,12 +863,12 @@ def calendar_check_conflicts(request):
     from django.http import HttpResponse
     from datetime import datetime
 
-    resource_id = request.GET.get('resource_id')
-    start = request.GET.get('start_datetime')
-    end = request.GET.get('end_datetime')
+    resource_id = request.GET.get("resource_id")
+    start = request.GET.get("start_datetime")
+    end = request.GET.get("end_datetime")
 
     if not (resource_id and start and end):
-        return HttpResponse('')
+        return HttpResponse("")
 
     try:
         resource = get_object_or_404(CalendarResource, id=resource_id)
@@ -877,42 +880,48 @@ def calendar_check_conflicts(request):
         # Check for overlapping bookings
         conflicts = CalendarResourceBooking.objects.filter(
             resource=resource,
-            status__in=['approved', 'pending'],
+            status__in=["approved", "pending"],
             start_datetime__lt=end_dt,
-            end_datetime__gt=start_dt
-        ).select_related('booked_by')
+            end_datetime__gt=start_dt,
+        ).select_related("booked_by")
 
         if conflicts.exists():
             html = '<div class="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">'
             html += '<div class="flex items-center mb-2">'
             html += '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>'
             html += f'<span class="font-semibold text-yellow-800">{conflicts.count()} conflicting booking(s) found:</span>'
-            html += '</div>'
+            html += "</div>"
             html += '<ul class="ml-6 list-disc space-y-1">'
             for booking in conflicts:
-                status_class = 'bg-green-100 text-green-800' if booking.status == 'approved' else 'bg-yellow-100 text-yellow-800'
+                status_class = (
+                    "bg-green-100 text-green-800"
+                    if booking.status == "approved"
+                    else "bg-yellow-100 text-yellow-800"
+                )
                 html += f'<li class="text-sm text-yellow-800">'
                 html += f'{booking.start_datetime.strftime("%b %d, %I:%M %p")} - '
                 html += f'{booking.end_datetime.strftime("%I:%M %p")} '
                 html += f'<span class="px-2 py-1 text-xs rounded {status_class}">'
-                html += f'{booking.get_status_display()}'
-                html += f'</span>'
-                html += f' by {booking.booked_by.get_full_name()}'
-                html += f'</li>'
-            html += '</ul>'
-            html += '</div>'
+                html += f"{booking.get_status_display()}"
+                html += f"</span>"
+                html += f" by {booking.booked_by.get_full_name()}"
+                html += f"</li>"
+            html += "</ul>"
+            html += "</div>"
             return HttpResponse(html)
         else:
             html = '<div class="border-l-4 border-green-500 bg-green-50 p-4 rounded">'
             html += '<div class="flex items-center">'
             html += '<i class="fas fa-check-circle text-green-600 mr-2"></i>'
             html += '<span class="text-green-800 font-medium">Resource available for selected time</span>'
-            html += '</div>'
-            html += '</div>'
+            html += "</div>"
+            html += "</div>"
             return HttpResponse(html)
     except Exception as e:
         logger.error(f"Error checking conflicts: {e}")
-        return HttpResponse(f'<div class="border-l-4 border-red-500 bg-red-50 p-4 rounded text-red-800">Error checking conflicts</div>')
+        return HttpResponse(
+            f'<div class="border-l-4 border-red-500 bg-red-50 p-4 rounded text-red-800">Error checking conflicts</div>'
+        )
 
 
 @login_required
@@ -924,12 +933,12 @@ def resource_booking_form(request, resource_id):
 
     resource = get_object_or_404(CalendarResource, id=resource_id)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         # Extract form data
-        start_datetime = request.POST.get('start_datetime')
-        end_datetime = request.POST.get('end_datetime')
-        purpose = request.POST.get('purpose')
-        is_recurring = request.POST.get('is_recurring') == 'on'
+        start_datetime = request.POST.get("start_datetime")
+        end_datetime = request.POST.get("end_datetime")
+        purpose = request.POST.get("purpose")
+        is_recurring = request.POST.get("is_recurring") == "on"
 
         try:
             # Parse datetimes
@@ -944,13 +953,13 @@ def resource_booking_form(request, resource_id):
                     start_datetime=start_dt,
                     end_datetime=end_dt,
                     notes=purpose,
-                    status='pending' if resource.requires_approval else 'approved',
+                    status="pending" if resource.requires_approval else "approved",
                 )
 
                 # Handle recurring bookings
                 if is_recurring:
-                    recurrence_pattern = request.POST.get('recurrence_pattern')
-                    recurrence_end = request.POST.get('recurrence_end_date')
+                    recurrence_pattern = request.POST.get("recurrence_pattern")
+                    recurrence_end = request.POST.get("recurrence_end_date")
 
                     if recurrence_end:
                         end_date = datetime.fromisoformat(recurrence_end).date()
@@ -959,13 +968,13 @@ def resource_booking_form(request, resource_id):
                         # Generate recurring instances (limit to 52 weeks)
                         count = 0
                         while current_date.date() < end_date and count < 52:
-                            if recurrence_pattern == 'daily':
+                            if recurrence_pattern == "daily":
                                 current_date += timedelta(days=1)
-                            elif recurrence_pattern == 'weekly':
+                            elif recurrence_pattern == "weekly":
                                 current_date += timedelta(weeks=1)
-                            elif recurrence_pattern == 'biweekly':
+                            elif recurrence_pattern == "biweekly":
                                 current_date += timedelta(weeks=2)
-                            elif recurrence_pattern == 'monthly':
+                            elif recurrence_pattern == "monthly":
                                 # Add roughly 30 days
                                 current_date += timedelta(days=30)
 
@@ -977,32 +986,37 @@ def resource_booking_form(request, resource_id):
                                     start_datetime=current_date,
                                     end_datetime=new_end,
                                     notes=f"{purpose} (Recurring)",
-                                    status='pending' if resource.requires_approval else 'approved',
+                                    status=(
+                                        "pending"
+                                        if resource.requires_approval
+                                        else "approved"
+                                    ),
                                 )
                                 count += 1
 
             messages.success(
                 request,
-                f"Resource booking submitted successfully. Status: {'Pending Approval' if resource.requires_approval else 'Approved'}"
+                f"Resource booking submitted successfully. Status: {'Pending Approval' if resource.requires_approval else 'Approved'}",
             )
-            return redirect('common:coordination_home')
+            return redirect("common:coordination_home")
 
         except Exception as e:
             logger.error(f"Error creating booking: {e}")
             messages.error(request, f"Error creating booking: {str(e)}")
 
     context = {
-        'resource': resource,
-        'return_url': reverse('common:coordination_home'),
-        'page_title': f'Book {resource.name}',
-        'page_heading': f'Book {resource.name}',
+        "resource": resource,
+        "return_url": reverse("common:coordination_home"),
+        "page_title": f"Book {resource.name}",
+        "page_heading": f"Book {resource.name}",
     }
-    return render(request, 'coordination/resource_booking_form.html', context)
+    return render(request, "coordination/resource_booking_form.html", context)
 
 
 # ===================================
 # Phase 3: Event Attendance Tracking
 # ===================================
+
 
 @login_required
 def event_attendance_tracker(request, event_id):
@@ -1014,12 +1028,12 @@ def event_attendance_tracker(request, event_id):
     event = get_object_or_404(Event, id=event_id)
 
     context = {
-        'event': event,
-        'return_url': reverse('common:coordination_events'),
-        'page_title': f'Attendance - {event.title}',
-        'page_heading': f'Attendance Tracker: {event.title}',
+        "event": event,
+        "return_url": reverse("common:coordination_events"),
+        "page_title": f"Attendance - {event.title}",
+        "page_heading": f"Attendance Tracker: {event.title}",
     }
-    return render(request, 'coordination/event_attendance_tracker.html', context)
+    return render(request, "coordination/event_attendance_tracker.html", context)
 
 
 @login_required
@@ -1035,8 +1049,7 @@ def event_attendance_count(request, event_id):
 
     # Count checked-in participants
     checked_in = EventAttendance.objects.filter(
-        event=event,
-        checked_in_at__isnull=False
+        event=event, checked_in_at__isnull=False
     ).count()
 
     # Count expected participants
@@ -1048,7 +1061,7 @@ def event_attendance_count(request, event_id):
     offset = circumference - (percentage / 100 * circumference)
 
     # Generate HTML
-    html = f'''
+    html = f"""
     <div class="flex flex-col items-center">
         <div class="relative w-48 h-48 mb-4">
             <!-- SVG Circular Progress -->
@@ -1077,7 +1090,7 @@ def event_attendance_count(request, event_id):
             Last updated: {timezone.now().strftime("%I:%M:%S %p")}
         </p>
     </div>
-    '''
+    """
 
     return HttpResponse(html)
 
@@ -1092,20 +1105,19 @@ def event_participant_list(request, event_id):
     from django.http import HttpResponse
 
     event = get_object_or_404(Event, id=event_id)
-    participants = event.participants.all().select_related('user', 'contact')
+    participants = event.participants.all().select_related("user", "contact")
 
     html = '<div class="space-y-2">'
 
     for participant in participants:
         # Check if participant has checked in
         attendance = EventAttendance.objects.filter(
-            event=event,
-            participant=participant
+            event=event, participant=participant
         ).first()
 
         checked_in = attendance and attendance.checked_in_at
 
-        html += f'''
+        html += f"""
         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
              data-participant-id="{participant.id}">
             <div class="flex items-center space-x-3">
@@ -1130,12 +1142,12 @@ def event_participant_list(request, event_id):
             </button>
             '''}
         </div>
-        '''
+        """
 
     if not participants.exists():
         html += '<p class="text-center text-gray-500 py-8">No participants registered yet.</p>'
 
-    html += '</div>'
+    html += "</div>"
 
     return HttpResponse(html)
 
@@ -1151,20 +1163,22 @@ def event_check_in(request, event_id):
     from django.http import HttpResponse
 
     event = get_object_or_404(Event, id=event_id)
-    participant_id = request.POST.get('participant_id')
-    method = request.POST.get('method', 'manual')
+    participant_id = request.POST.get("participant_id")
+    method = request.POST.get("method", "manual")
 
     try:
-        participant = get_object_or_404(EventParticipant, id=participant_id, event=event)
+        participant = get_object_or_404(
+            EventParticipant, id=participant_id, event=event
+        )
 
         # Create or update attendance record
         attendance, created = EventAttendance.objects.get_or_create(
             event=event,
             participant=participant,
             defaults={
-                'checked_in_at': timezone.now(),
-                'check_in_method': method,
-            }
+                "checked_in_at": timezone.now(),
+                "check_in_method": method,
+            },
         )
 
         if not created and not attendance.checked_in_at:
@@ -1173,7 +1187,7 @@ def event_check_in(request, event_id):
             attendance.save()
 
         # Return updated participant row HTML
-        html = f'''
+        html = f"""
         <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-500"
              data-participant-id="{participant.id}">
             <div class="flex items-center space-x-3">
@@ -1193,7 +1207,7 @@ def event_check_in(request, event_id):
                 <i class="fas fa-check text-2xl"></i>
             </div>
         </div>
-        '''
+        """
 
         return HttpResponse(html)
 
@@ -1201,5 +1215,5 @@ def event_check_in(request, event_id):
         logger.error(f"Error checking in participant: {e}")
         return HttpResponse(
             f'<div class="p-4 bg-red-50 rounded-lg text-red-800">Error: {str(e)}</div>',
-            status=400
+            status=400,
         )

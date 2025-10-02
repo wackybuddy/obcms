@@ -14,7 +14,11 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from .models import MonitoringEntry, MonitoringEntryFunding, MonitoringEntryWorkflowStage
+from .models import (
+    MonitoringEntry,
+    MonitoringEntryFunding,
+    MonitoringEntryWorkflowStage,
+)
 
 ZERO_DECIMAL = Decimal("0.00")
 
@@ -49,7 +53,9 @@ def export_aip_summary_excel(request):
     ws.title = "AIP Summary"
 
     # Header styling
-    header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    header_fill = PatternFill(
+        start_color="1F4E78", end_color="1F4E78", fill_type="solid"
+    )
     header_font = Font(bold=True, color="FFFFFF", size=11)
     header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
@@ -107,7 +113,11 @@ def export_aip_summary_excel(request):
             entry.plan_year or "",
             entry.fiscal_year or "",
             entry.get_sector_display() if entry.sector else "",
-            entry.get_appropriation_class_display() if entry.appropriation_class else "",
+            (
+                entry.get_appropriation_class_display()
+                if entry.appropriation_class
+                else ""
+            ),
             entry.get_funding_source_display() if entry.funding_source else "",
             entry.program_code or "",
             float(entry.budget_allocation or 0),
@@ -144,7 +154,7 @@ def export_aip_summary_excel(request):
         formula = f"=SUM({col_letter}2:{col_letter}{row_num-1})"
         cell = ws.cell(row=summary_row, column=col, value=formula)
         cell.font = Font(bold=True)
-        cell.number_format = '#,##0.00'
+        cell.number_format = "#,##0.00"
 
     # Auto-size columns
     for col in ws.columns:
@@ -162,7 +172,7 @@ def export_aip_summary_excel(request):
     # Number formatting for currency columns
     for row in range(2, row_num):
         for col in range(11, 17):  # Budget columns
-            ws.cell(row=row, column=col).number_format = '#,##0.00'
+            ws.cell(row=row, column=col).number_format = "#,##0.00"
 
     # Generate response
     output = BytesIO()
@@ -192,7 +202,9 @@ def export_compliance_report_excel(request):
     ws.title = "Compliance Report"
 
     # Header styling
-    header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    header_fill = PatternFill(
+        start_color="1F4E78", end_color="1F4E78", fill_type="solid"
+    )
     header_font = Font(bold=True, color="FFFFFF", size=11)
 
     headers = [
@@ -253,7 +265,7 @@ def export_compliance_report_excel(request):
 
     # Format currency column
     for row in range(2, row_num):
-        ws.cell(row=row, column=5).number_format = '#,##0.00'
+        ws.cell(row=row, column=5).number_format = "#,##0.00"
 
     output = BytesIO()
     wb.save(output)
@@ -281,48 +293,56 @@ def export_budget_csv(request):
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
     writer = csv.writer(response)
-    writer.writerow([
-        "Title",
-        "Category",
-        "Lead Organization",
-        "Plan Year",
-        "Fiscal Year",
-        "Sector",
-        "Appropriation Class",
-        "Funding Source",
-        "Budget Allocation",
-        "OBC Allocation",
-        "Budget Ceiling",
-        "Status",
-        "Progress",
-        "GAD",
-        "CCET",
-        "IP",
-        "Peace",
-        "SDG",
-    ])
+    writer.writerow(
+        [
+            "Title",
+            "Category",
+            "Lead Organization",
+            "Plan Year",
+            "Fiscal Year",
+            "Sector",
+            "Appropriation Class",
+            "Funding Source",
+            "Budget Allocation",
+            "OBC Allocation",
+            "Budget Ceiling",
+            "Status",
+            "Progress",
+            "GAD",
+            "CCET",
+            "IP",
+            "Peace",
+            "SDG",
+        ]
+    )
 
     for entry in entries:
-        writer.writerow([
-            entry.title,
-            entry.get_category_display(),
-            entry.lead_organization.name if entry.lead_organization else "",
-            entry.plan_year or "",
-            entry.fiscal_year or "",
-            entry.get_sector_display() if entry.sector else "",
-            entry.get_appropriation_class_display() if entry.appropriation_class else "",
-            entry.get_funding_source_display() if entry.funding_source else "",
-            float(entry.budget_allocation or 0),
-            float(entry.budget_obc_allocation or 0),
-            float(entry.budget_ceiling or 0),
-            entry.get_status_display(),
-            entry.progress,
-            "Yes" if entry.compliance_gad else "No",
-            "Yes" if entry.compliance_ccet else "No",
-            "Yes" if entry.benefits_indigenous_peoples else "No",
-            "Yes" if entry.supports_peace_agenda else "No",
-            "Yes" if entry.supports_sdg else "No",
-        ])
+        writer.writerow(
+            [
+                entry.title,
+                entry.get_category_display(),
+                entry.lead_organization.name if entry.lead_organization else "",
+                entry.plan_year or "",
+                entry.fiscal_year or "",
+                entry.get_sector_display() if entry.sector else "",
+                (
+                    entry.get_appropriation_class_display()
+                    if entry.appropriation_class
+                    else ""
+                ),
+                entry.get_funding_source_display() if entry.funding_source else "",
+                float(entry.budget_allocation or 0),
+                float(entry.budget_obc_allocation or 0),
+                float(entry.budget_ceiling or 0),
+                entry.get_status_display(),
+                entry.progress,
+                "Yes" if entry.compliance_gad else "No",
+                "Yes" if entry.compliance_ccet else "No",
+                "Yes" if entry.benefits_indigenous_peoples else "No",
+                "Yes" if entry.supports_peace_agenda else "No",
+                "Yes" if entry.supports_sdg else "No",
+            ]
+        )
 
     return response
 
@@ -339,7 +359,9 @@ def export_funding_timeline_excel(request):
     ws = wb.active
     ws.title = "Funding Timeline"
 
-    header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+    header_fill = PatternFill(
+        start_color="1F4E78", end_color="1F4E78", fill_type="solid"
+    )
     header_font = Font(bold=True, color="FFFFFF", size=11)
 
     headers = [
@@ -361,11 +383,19 @@ def export_funding_timeline_excel(request):
     for tranche in tranches:
         row_data = [
             tranche.entry.title,
-            tranche.entry.lead_organization.name if tranche.entry.lead_organization else "",
+            (
+                tranche.entry.lead_organization.name
+                if tranche.entry.lead_organization
+                else ""
+            ),
             tranche.get_tranche_type_display(),
             float(tranche.amount),
             tranche.get_funding_source_display() if tranche.funding_source else "",
-            tranche.scheduled_date.strftime("%Y-%m-%d") if tranche.scheduled_date else "",
+            (
+                tranche.scheduled_date.strftime("%Y-%m-%d")
+                if tranche.scheduled_date
+                else ""
+            ),
             tranche.remarks or "",
         ]
 
@@ -389,7 +419,7 @@ def export_funding_timeline_excel(request):
 
     # Format amount column
     for row in range(2, row_num):
-        ws.cell(row=row, column=4).number_format = '#,##0.00'
+        ws.cell(row=row, column=4).number_format = "#,##0.00"
 
     output = BytesIO()
     wb.save(output)

@@ -7,67 +7,75 @@ from common.models import Region, Province, Municipality, Barangay
 
 
 class Command(BaseCommand):
-    help = 'Populate center_coordinates for barangays and municipalities using geocoding'
+    help = (
+        "Populate center_coordinates for barangays and municipalities using geocoding"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--regions',
-            nargs='+',
-            help='Specify region codes to process (e.g., IX XII). If not specified, processes all regions.',
+            "--regions",
+            nargs="+",
+            help="Specify region codes to process (e.g., IX XII). If not specified, processes all regions.",
         )
         parser.add_argument(
-            '--municipalities-only',
-            action='store_true',
-            help='Only populate municipality coordinates, skip barangays',
+            "--municipalities-only",
+            action="store_true",
+            help="Only populate municipality coordinates, skip barangays",
         )
         parser.add_argument(
-            '--barangays-only',
-            action='store_true',
-            help='Only populate barangay coordinates, skip municipalities',
+            "--barangays-only",
+            action="store_true",
+            help="Only populate barangay coordinates, skip municipalities",
         )
         parser.add_argument(
-            '--limit',
+            "--limit",
             type=int,
             default=None,
-            help='Limit the number of records to process (for testing)',
+            help="Limit the number of records to process (for testing)",
         )
         parser.add_argument(
-            '--delay',
+            "--delay",
             type=float,
             default=1.0,
-            help='Delay between API requests in seconds (default: 1.0)',
+            help="Delay between API requests in seconds (default: 1.0)",
         )
 
     def handle(self, *args, **options):
-        regions = options.get('regions')
-        municipalities_only = options.get('municipalities_only')
-        barangays_only = options.get('barangays_only')
-        limit = options.get('limit')
-        delay = options.get('delay')
+        regions = options.get("regions")
+        municipalities_only = options.get("municipalities_only")
+        barangays_only = options.get("barangays_only")
+        limit = options.get("limit")
+        delay = options.get("delay")
 
         if municipalities_only and barangays_only:
-            raise CommandError("Cannot specify both --municipalities-only and --barangays-only")
+            raise CommandError(
+                "Cannot specify both --municipalities-only and --barangays-only"
+            )
 
         # Filter regions if specified
         region_queryset = Region.objects.filter(is_active=True)
         if regions:
             region_queryset = region_queryset.filter(code__in=regions)
 
-        self.stdout.write(self.style.SUCCESS(f'Processing regions: {list(region_queryset.values_list("code", flat=True))}'))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Processing regions: {list(region_queryset.values_list("code", flat=True))}'
+            )
+        )
 
         total_processed = 0
 
         if not barangays_only:
-            self.stdout.write(self.style.SUCCESS('\n=== Processing Municipalities ==='))
+            self.stdout.write(self.style.SUCCESS("\n=== Processing Municipalities ==="))
             for region in region_queryset:
                 municipalities = Municipality.objects.filter(
                     province__region=region,
                     is_active=True,
-                    center_coordinates__isnull=True
-                ).select_related('province')
+                    center_coordinates__isnull=True,
+                ).select_related("province")
 
                 if limit:
-                    municipalities = municipalities[:limit - total_processed]
+                    municipalities = municipalities[: limit - total_processed]
 
                 for municipality in municipalities:
                     if limit and total_processed >= limit:
@@ -76,21 +84,27 @@ class Command(BaseCommand):
                     success = self.geocode_municipality(municipality, delay)
                     if success:
                         total_processed += 1
-                        self.stdout.write(f'✓ {municipality.name}, {municipality.province.name}')
+                        self.stdout.write(
+                            f"✓ {municipality.name}, {municipality.province.name}"
+                        )
                     else:
-                        self.stdout.write(self.style.WARNING(f'✗ Failed: {municipality.name}, {municipality.province.name}'))
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"✗ Failed: {municipality.name}, {municipality.province.name}"
+                            )
+                        )
 
                 if limit and total_processed >= limit:
                     break
 
         if not municipalities_only:
-            self.stdout.write(self.style.SUCCESS('\n=== Processing Barangays ==='))
+            self.stdout.write(self.style.SUCCESS("\n=== Processing Barangays ==="))
             for region in region_queryset:
                 barangays = Barangay.objects.filter(
                     municipality__province__region=region,
                     is_active=True,
-                    center_coordinates__isnull=True
-                ).select_related('municipality__province')
+                    center_coordinates__isnull=True,
+                ).select_related("municipality__province")
 
                 if limit:
                     remaining_limit = limit - total_processed
@@ -105,14 +119,22 @@ class Command(BaseCommand):
                     success = self.geocode_barangay(barangay, delay)
                     if success:
                         total_processed += 1
-                        self.stdout.write(f'✓ {barangay.name}, {barangay.municipality.name}')
+                        self.stdout.write(
+                            f"✓ {barangay.name}, {barangay.municipality.name}"
+                        )
                     else:
-                        self.stdout.write(self.style.WARNING(f'✗ Failed: {barangay.name}, {barangay.municipality.name}'))
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"✗ Failed: {barangay.name}, {barangay.municipality.name}"
+                            )
+                        )
 
                 if limit and total_processed >= limit:
                     break
 
-        self.stdout.write(self.style.SUCCESS(f'\nCompleted! Processed {total_processed} locations.'))
+        self.stdout.write(
+            self.style.SUCCESS(f"\nCompleted! Processed {total_processed} locations.")
+        )
 
     def geocode_municipality(self, municipality, delay=1.0):
         """Geocode a municipality and update its center_coordinates."""
@@ -134,15 +156,15 @@ class Command(BaseCommand):
             # Use Nominatim API (free, no API key required)
             url = f"https://nominatim.openstreetmap.org/search"
             params = {
-                'q': query,
-                'format': 'json',
-                'limit': 1,
-                'countrycodes': 'ph',  # Philippines only
-                'addressdetails': 1
+                "q": query,
+                "format": "json",
+                "limit": 1,
+                "countrycodes": "ph",  # Philippines only
+                "addressdetails": 1,
             }
 
             headers = {
-                'User-Agent': 'OOBC-Django/1.0 (https://oobc.gov.ph)'  # Be respectful with user agent
+                "User-Agent": "OOBC-Django/1.0 (https://oobc.gov.ph)"  # Be respectful with user agent
             }
 
             response = requests.get(url, params=params, headers=headers, timeout=30)
@@ -154,22 +176,29 @@ class Command(BaseCommand):
 
             # Get the first result
             result = results[0]
-            lat = float(result['lat'])
-            lng = float(result['lon'])
+            lat = float(result["lat"])
+            lng = float(result["lon"])
 
             # Update the location object
             with transaction.atomic():
-                location_obj.center_coordinates = [lng, lat]  # GeoJSON format: [longitude, latitude]
-                location_obj.save(update_fields=['center_coordinates'])
+                location_obj.center_coordinates = [
+                    lng,
+                    lat,
+                ]  # GeoJSON format: [longitude, latitude]
+                location_obj.save(update_fields=["center_coordinates"])
 
             return True
 
         except requests.exceptions.RequestException as e:
-            self.stdout.write(self.style.ERROR(f'Network error for "{query}": {str(e)}'))
+            self.stdout.write(
+                self.style.ERROR(f'Network error for "{query}": {str(e)}')
+            )
             return False
         except (ValueError, KeyError) as e:
             self.stdout.write(self.style.ERROR(f'Parse error for "{query}": {str(e)}'))
             return False
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Unexpected error for "{query}": {str(e)}'))
+            self.stdout.write(
+                self.style.ERROR(f'Unexpected error for "{query}": {str(e)}')
+            )
             return False

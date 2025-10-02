@@ -12,7 +12,9 @@ from django.db import transaction
 
 from .models import WorkshopQuestionDefinition
 
-SCHEMA_PATH = Path(__file__).resolve().parent / "data" / "workshop_questions_schema.json"
+SCHEMA_PATH = (
+    Path(__file__).resolve().parent / "data" / "workshop_questions_schema.json"
+)
 DEFAULT_SCHEMA_VERSION = "participant_v1"
 
 

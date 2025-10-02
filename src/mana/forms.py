@@ -33,6 +33,7 @@ TEXTAREA_CLASS = (
     "focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
 )
 
+
 class DeskReviewQuickEntryForm(forms.ModelForm):
     """Quick entry form for logging desk review assessments."""
 
@@ -109,9 +110,11 @@ class DeskReviewQuickEntryForm(forms.ModelForm):
             .select_related("barangay__municipality__province")
             .order_by("barangay__name")
         )
-        self.fields["lead_assessor"].queryset = get_user_model().objects.filter(
-            is_active=True
-        ).order_by("first_name", "last_name")
+        self.fields["lead_assessor"].queryset = (
+            get_user_model()
+            .objects.filter(is_active=True)
+            .order_by("first_name", "last_name")
+        )
 
         self.fields["lead_assessor"].required = False
         self.fields["status"].initial = "planning"
@@ -218,9 +221,11 @@ class SurveyQuickEntryForm(forms.ModelForm):
             .select_related("barangay__municipality__province")
             .order_by("barangay__name")
         )
-        self.fields["lead_assessor"].queryset = get_user_model().objects.filter(
-            is_active=True
-        ).order_by("first_name", "last_name")
+        self.fields["lead_assessor"].queryset = (
+            get_user_model()
+            .objects.filter(is_active=True)
+            .order_by("first_name", "last_name")
+        )
 
         self.fields["lead_assessor"].required = False
         self.fields["status"].initial = "data_collection"
@@ -321,7 +326,9 @@ class AssessmentUpdateForm(forms.ModelForm):
             "actual_budget": forms.NumberInput(
                 attrs={"class": INPUT_CLASS, "step": "0.01", "min": 0}
             ),
-            "location_details": forms.Textarea(attrs={"class": TEXTAREA_CLASS, "rows": 3}),
+            "location_details": forms.Textarea(
+                attrs={"class": TEXTAREA_CLASS, "rows": 3}
+            ),
             "description": forms.Textarea(attrs={"class": TEXTAREA_CLASS, "rows": 4}),
             "objectives": forms.Textarea(attrs={"class": TEXTAREA_CLASS, "rows": 4}),
             "key_findings": forms.Textarea(attrs={"class": TEXTAREA_CLASS, "rows": 4}),
@@ -336,7 +343,9 @@ class AssessmentUpdateForm(forms.ModelForm):
         user_model = get_user_model()
 
         region_field = self.fields["region"]
-        region_field.queryset = Region.objects.filter(is_active=True).order_by("code", "name")
+        region_field.queryset = Region.objects.filter(is_active=True).order_by(
+            "code", "name"
+        )
         region_field.empty_label = "Select region..."
         region_field.required = False
         region_field.widget.attrs.update(
@@ -484,7 +493,9 @@ class AssessmentUpdateForm(forms.ModelForm):
 
         if level == "regional":
             if not region:
-                self.add_error("region", "Regional assessments require a region selection.")
+                self.add_error(
+                    "region", "Regional assessments require a region selection."
+                )
             cleaned_data.update(
                 {
                     "province": None,
@@ -495,11 +506,18 @@ class AssessmentUpdateForm(forms.ModelForm):
             )
         elif level == "provincial":
             if not region:
-                self.add_error("region", "Provincial assessments require a region selection.")
+                self.add_error(
+                    "region", "Provincial assessments require a region selection."
+                )
             if not province:
-                self.add_error("province", "Provincial assessments require a province selection.")
+                self.add_error(
+                    "province", "Provincial assessments require a province selection."
+                )
             elif region and province.region_id != region.id:
-                self.add_error("province", "Selected province does not belong to the chosen region.")
+                self.add_error(
+                    "province",
+                    "Selected province does not belong to the chosen region.",
+                )
             cleaned_data.update(
                 {
                     "municipality": None,
@@ -509,15 +527,29 @@ class AssessmentUpdateForm(forms.ModelForm):
             )
         elif level == "city_municipal":
             if not region:
-                self.add_error("region", "City/Municipal assessments require a region selection.")
+                self.add_error(
+                    "region", "City/Municipal assessments require a region selection."
+                )
             if not province:
-                self.add_error("province", "City/Municipal assessments require a province selection.")
+                self.add_error(
+                    "province",
+                    "City/Municipal assessments require a province selection.",
+                )
             elif region and province.region_id != region.id:
-                self.add_error("province", "Selected province does not belong to the chosen region.")
+                self.add_error(
+                    "province",
+                    "Selected province does not belong to the chosen region.",
+                )
             if not municipality:
-                self.add_error("municipality", "City/Municipal assessments require a municipality selection.")
+                self.add_error(
+                    "municipality",
+                    "City/Municipal assessments require a municipality selection.",
+                )
             elif province and municipality.province_id != province.id:
-                self.add_error("municipality", "Selected municipality does not belong to the chosen province.")
+                self.add_error(
+                    "municipality",
+                    "Selected municipality does not belong to the chosen province.",
+                )
             cleaned_data.update(
                 {
                     "barangay": None,
@@ -526,26 +558,48 @@ class AssessmentUpdateForm(forms.ModelForm):
             )
         elif level == "barangay":
             if not region:
-                self.add_error("region", "Barangay assessments require a region selection.")
+                self.add_error(
+                    "region", "Barangay assessments require a region selection."
+                )
             if not province:
-                self.add_error("province", "Barangay assessments require a province selection.")
+                self.add_error(
+                    "province", "Barangay assessments require a province selection."
+                )
             elif region and province.region_id != region.id:
-                self.add_error("province", "Selected province does not belong to the chosen region.")
+                self.add_error(
+                    "province",
+                    "Selected province does not belong to the chosen region.",
+                )
             if not municipality:
-                self.add_error("municipality", "Barangay assessments require a municipality selection.")
+                self.add_error(
+                    "municipality",
+                    "Barangay assessments require a municipality selection.",
+                )
             elif province and municipality.province_id != province.id:
-                self.add_error("municipality", "Selected municipality does not belong to the chosen province.")
+                self.add_error(
+                    "municipality",
+                    "Selected municipality does not belong to the chosen province.",
+                )
             if not barangay:
-                self.add_error("barangay", "Barangay assessments require a barangay selection.")
+                self.add_error(
+                    "barangay", "Barangay assessments require a barangay selection."
+                )
             elif municipality and barangay.municipality_id != municipality.id:
-                self.add_error("barangay", "Selected barangay does not belong to the chosen municipality.")
+                self.add_error(
+                    "barangay",
+                    "Selected barangay does not belong to the chosen municipality.",
+                )
             cleaned_data["community"] = None
         else:  # community-level and other granular entries
             if not community:
-                self.add_error("community", "Community assessments require a community selection.")
+                self.add_error(
+                    "community", "Community assessments require a community selection."
+                )
             elif community:
                 linked_barangay = community.barangay
-                linked_municipality = linked_barangay.municipality if linked_barangay else None
+                linked_municipality = (
+                    linked_barangay.municipality if linked_barangay else None
+                )
                 linked_province = (
                     linked_municipality.province if linked_municipality else None
                 )
@@ -636,11 +690,8 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
         queryset=Region.objects.filter(is_active=True).order_by("code", "name"),
         required=True,
         label="Region",
-        widget=forms.Select(attrs={
-            "class": SELECT_CLASS,
-            "data-level": "region"
-        }),
-        help_text="Region where the assessment will be conducted"
+        widget=forms.Select(attrs={"class": SELECT_CLASS, "data-level": "region"}),
+        help_text="Region where the assessment will be conducted",
     )
 
     # Province selection field (will be populated via JavaScript)
@@ -648,23 +699,20 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
         queryset=Province.objects.none(),  # Empty initially
         required=True,
         label="Province",
-        widget=forms.Select(attrs={
-            "class": SELECT_CLASS,
-            "data-level": "province"
-        }),
-        help_text="Province being assessed"
+        widget=forms.Select(attrs={"class": SELECT_CLASS, "data-level": "province"}),
+        help_text="Province being assessed",
     )
 
     # Date fields
     planned_start_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
         label="Planned Start Date",
-        help_text="When the regional workshop will begin"
+        help_text="When the regional workshop will begin",
     )
     planned_end_date = forms.DateField(
         widget=forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
         label="Planned End Date",
-        help_text="When the regional workshop will end"
+        help_text="When the regional workshop will end",
     )
 
     # Optional target participants
@@ -679,7 +727,7 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
                 "placeholder": "Number of expected participants (default: 30)",
             }
         ),
-        help_text="Expected number of participants for the workshops"
+        help_text="Expected number of participants for the workshops",
     )
 
     class Meta:
@@ -747,16 +795,16 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
             ).order_by("name")
             self.fields["province"].initial = self.instance.province.id
         # If form is bound (POST data), populate province choices based on submitted region
-        elif self.is_bound and self.data.get('region'):
+        elif self.is_bound and self.data.get("region"):
             try:
-                region_id = int(self.data.get('region'))
+                region_id = int(self.data.get("region"))
                 self.fields["province"].queryset = Province.objects.filter(
                     region_id=region_id, is_active=True
                 ).order_by("name")
                 # Add data attribute to preserve selected province value in JavaScript
-                province_id = self.data.get('province')
+                province_id = self.data.get("province")
                 if province_id:
-                    self.fields["province"].widget.attrs['data-initial'] = province_id
+                    self.fields["province"].widget.attrs["data-initial"] = province_id
             except (ValueError, TypeError):
                 pass
         else:
@@ -768,12 +816,15 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
 
         # Set default values
         today = timezone.now().date()
-        self.fields["planned_start_date"].initial = self.fields["planned_start_date"].initial or today
-        self.fields["planned_end_date"].initial = self.fields["planned_end_date"].initial or (today + timedelta(days=4))
+        self.fields["planned_start_date"].initial = (
+            self.fields["planned_start_date"].initial or today
+        )
+        self.fields["planned_end_date"].initial = self.fields[
+            "planned_end_date"
+        ].initial or (today + timedelta(days=4))
         self.fields["target_participants"].initial = 30
         self.fields["title"].initial = (
-            self.fields["title"].initial
-            or f"Regional Workshop Cycle - {today.year}"
+            self.fields["title"].initial or f"Regional Workshop Cycle - {today.year}"
         )
         self.fields["objectives"].initial = self.fields["objectives"].initial or (
             "Coordinate the regional workshop cycle and document core outputs across the mandated sessions."
@@ -787,8 +838,8 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         # Validate dates
-        start_date = cleaned_data.get('planned_start_date')
-        end_date = cleaned_data.get('planned_end_date')
+        start_date = cleaned_data.get("planned_start_date")
+        end_date = cleaned_data.get("planned_end_date")
 
         if start_date and end_date and end_date < start_date:
             raise forms.ValidationError(
@@ -796,8 +847,8 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
             )
 
         # Validate that the province belongs to the selected region
-        region = cleaned_data.get('region')
-        province = cleaned_data.get('province')
+        region = cleaned_data.get("region")
+        province = cleaned_data.get("province")
 
         if region and province and province.region != region:
             raise forms.ValidationError(
@@ -838,11 +889,13 @@ class RegionalWorkshopSetupForm(forms.ModelForm):
         assessment.priority = assessment.priority or "medium"
 
         # Persist the selected location details on the new region-aware fields
-        assessment.region = self.cleaned_data.get('region')
-        assessment.province = self.cleaned_data.get('province')
+        assessment.region = self.cleaned_data.get("region")
+        assessment.province = self.cleaned_data.get("province")
         assessment.municipality = None
         assessment.barangay = None
-        assessment.community = None  # Regional assessments don't link to specific communities
+        assessment.community = (
+            None  # Regional assessments don't link to specific communities
+        )
 
         # Set user as lead assessor if provided
         if user is not None:
@@ -933,9 +986,11 @@ class KIIQuickEntryForm(forms.ModelForm):
             .select_related("barangay__municipality__province")
             .order_by("barangay__name")
         )
-        self.fields["lead_assessor"].queryset = get_user_model().objects.filter(
-            is_active=True
-        ).order_by("first_name", "last_name")
+        self.fields["lead_assessor"].queryset = (
+            get_user_model()
+            .objects.filter(is_active=True)
+            .order_by("first_name", "last_name")
+        )
 
         self.fields["lead_assessor"].required = False
         self.fields["status"].initial = "preparation"
@@ -964,6 +1019,7 @@ class KIIQuickEntryForm(forms.ModelForm):
             instance.save()
             self.save_m2m()
         return instance
+
 
 class BaseWorkshopForm(forms.ModelForm):
     """Shared helpers for workshop question capture forms."""
@@ -1027,45 +1083,155 @@ class BaseWorkshopForm(forms.ModelForm):
             ),
         }
 
+
 class Workshop1Form(BaseWorkshopForm):
     """Workshop 1: Understanding the Community Context"""
-    community_description = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'class': TEXTAREA_CLASS}), label="Describe the OBCs in your region/province. What is their estimated total population? Are they mostly living in urban or rural areas? What sectors do they represent (farmers, business, laborers, traders, fisherfolk, etc.)?", required=False)
-    quality_of_life = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'class': TEXTAREA_CLASS}), label="How would you describe their general quality of life? How is their access to government services such as education, health, and social protection? What are their main sources of livelihood and income?", required=False)
-    socio_economic_issues = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'class': TEXTAREA_CLASS}), label="What are the most pressing socio-economic issues they face today? What is their level of access to infrastructure (roads, utilities, communication, housing) and financial or business services? Has it improved, worsened, or remained the same in recent years?", required=False)
-    cultural_preservation = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'class': TEXTAREA_CLASS}), label="How are OBCs preserving and promoting their culture, religion, and identity? What cultural issues and challenges do they face?", required=False)
+
+    community_description = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4, "class": TEXTAREA_CLASS}),
+        label="Describe the OBCs in your region/province. What is their estimated total population? Are they mostly living in urban or rural areas? What sectors do they represent (farmers, business, laborers, traders, fisherfolk, etc.)?",
+        required=False,
+    )
+    quality_of_life = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4, "class": TEXTAREA_CLASS}),
+        label="How would you describe their general quality of life? How is their access to government services such as education, health, and social protection? What are their main sources of livelihood and income?",
+        required=False,
+    )
+    socio_economic_issues = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4, "class": TEXTAREA_CLASS}),
+        label="What are the most pressing socio-economic issues they face today? What is their level of access to infrastructure (roads, utilities, communication, housing) and financial or business services? Has it improved, worsened, or remained the same in recent years?",
+        required=False,
+    )
+    cultural_preservation = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4, "class": TEXTAREA_CLASS}),
+        label="How are OBCs preserving and promoting their culture, religion, and identity? What cultural issues and challenges do they face?",
+        required=False,
+    )
+
 
 class Workshop2Form(BaseWorkshopForm):
     """Workshop 2: Community Aspirations and Priorities"""
-    vulnerable_areas = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="Which OBC municipalities or barangays in your area are most vulnerable? Please identify up to three and explain why.", required=False)
-    vulnerable_sectors = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="Which sectors of the OBCs (farmers, women, youth, workers, PWDs, IPs, IDPs, business owners, etc.) are most vulnerable? How are these groups coping or responding to these vulnerabilities?", required=False)
-    long_term_aspirations = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="What are the common long-term aspirations of OBCs for development, identity, and well-being? Which of these should be achieved in the short term (1–3 years) and which in the long term (5–10 years)?", required=False)
-    top_three_issues = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="In your opinion, what are the top three issues that must be addressed immediately to improve the quality of life of OBCs?", required=False)
-    prioritized_programs = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="What economic, social, and cultural development programs should be prioritized for OBCs in your area?", required=False)
-    rights_issues = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="What rights issues are most prevalent in OBCs (e.g., access to services, non-discrimination, representation, land, peace and security)? How are the rights of OBCs currently being protected and promoted? What more needs to be done?", required=False)
+
+    vulnerable_areas = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="Which OBC municipalities or barangays in your area are most vulnerable? Please identify up to three and explain why.",
+        required=False,
+    )
+    vulnerable_sectors = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="Which sectors of the OBCs (farmers, women, youth, workers, PWDs, IPs, IDPs, business owners, etc.) are most vulnerable? How are these groups coping or responding to these vulnerabilities?",
+        required=False,
+    )
+    long_term_aspirations = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="What are the common long-term aspirations of OBCs for development, identity, and well-being? Which of these should be achieved in the short term (1–3 years) and which in the long term (5–10 years)?",
+        required=False,
+    )
+    top_three_issues = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="In your opinion, what are the top three issues that must be addressed immediately to improve the quality of life of OBCs?",
+        required=False,
+    )
+    prioritized_programs = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="What economic, social, and cultural development programs should be prioritized for OBCs in your area?",
+        required=False,
+    )
+    rights_issues = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="What rights issues are most prevalent in OBCs (e.g., access to services, non-discrimination, representation, land, peace and security)? How are the rights of OBCs currently being protected and promoted? What more needs to be done?",
+        required=False,
+    )
+
 
 class Workshop3Form(BaseWorkshopForm):
     """Workshop 3: Community Collaboration and Empowerment"""
-    representation_in_governance = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="How are OBCs currently represented in local governance and development processes (barangay, municipal, city, provincial)? Which groups or leaders usually participate, and which sectors are left out?", required=False)
-    obc_organizations = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="Are there OBC organizations in your area—such as youth groups, women’s associations, religious or traditional councils—that significantly contribute to local governance and development?", required=False)
-    improving_representation = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="How can the representation and participation of OBCs in governance and development be improved? What specific measures should be taken to strengthen the voices of OBCs?", required=False)
-    collaboration_mechanisms = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="What collaboration mechanisms could be established or improved to ensure the protection of rights and promotion of welfare and development of OBCs?", required=False)
-    transparency_and_equity = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="How can transparency, accountability, and equity be ensured so that the benefits of development initiatives by government and partners are inclusive and reach all sectors of the OBCs?", required=False)
+
+    representation_in_governance = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="How are OBCs currently represented in local governance and development processes (barangay, municipal, city, provincial)? Which groups or leaders usually participate, and which sectors are left out?",
+        required=False,
+    )
+    obc_organizations = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="Are there OBC organizations in your area—such as youth groups, women’s associations, religious or traditional councils—that significantly contribute to local governance and development?",
+        required=False,
+    )
+    improving_representation = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="How can the representation and participation of OBCs in governance and development be improved? What specific measures should be taken to strengthen the voices of OBCs?",
+        required=False,
+    )
+    collaboration_mechanisms = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="What collaboration mechanisms could be established or improved to ensure the protection of rights and promotion of welfare and development of OBCs?",
+        required=False,
+    )
+    transparency_and_equity = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="How can transparency, accountability, and equity be ensured so that the benefits of development initiatives by government and partners are inclusive and reach all sectors of the OBCs?",
+        required=False,
+    )
+
 
 class Workshop4Form(BaseWorkshopForm):
     """Workshop 4: Community Feedback on Existing Initiatives"""
-    existing_programs = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="What existing programs, projects, and services for OBCs are provided by: LGUs, NGAs, BARMM, Other stakeholders?", required=False)
-    access_to_programs = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="How are OBCs currently accessing these programs and services? Which groups (women, youth, PWDs, IPs, IDPs) benefit most, and who is being left behind?", required=False)
-    effectiveness_of_initiatives = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="How effective are these initiatives? Which ones have succeeded, which ones have failed or faced significant challenges, and why? What improvements would you recommend to ensure quality delivery and inclusivity?", required=False)
-    online_access = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="How are LGUs, NGAs, and the Bangsamoro Government providing virtual or online access to these services? How is technology and digital connectivity being used to improve access for OBCs?", required=False)
-    untapped_resources = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="What other resources or support are available in your area that OBCs have not yet tapped or optimized (such as scholarships, livelihood programs, ICT hubs, partnerships, or local initiatives)?", required=False)
+
+    existing_programs = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="What existing programs, projects, and services for OBCs are provided by: LGUs, NGAs, BARMM, Other stakeholders?",
+        required=False,
+    )
+    access_to_programs = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="How are OBCs currently accessing these programs and services? Which groups (women, youth, PWDs, IPs, IDPs) benefit most, and who is being left behind?",
+        required=False,
+    )
+    effectiveness_of_initiatives = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="How effective are these initiatives? Which ones have succeeded, which ones have failed or faced significant challenges, and why? What improvements would you recommend to ensure quality delivery and inclusivity?",
+        required=False,
+    )
+    online_access = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="How are LGUs, NGAs, and the Bangsamoro Government providing virtual or online access to these services? How is technology and digital connectivity being used to improve access for OBCs?",
+        required=False,
+    )
+    untapped_resources = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="What other resources or support are available in your area that OBCs have not yet tapped or optimized (such as scholarships, livelihood programs, ICT hubs, partnerships, or local initiatives)?",
+        required=False,
+    )
+
 
 class Workshop5Form(BaseWorkshopForm):
     """Workshop 5: OBCs Needs, Challenges, Factors, and Outcomes"""
-    critical_challenges = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="Challenges – What are the most critical challenges faced by OBCs in your area (education, health, livelihood, governance, infrastructure, peace and security)? Who are the most affected (women, youth, PWDs, IPs, IDPs, elders)?", required=False)
-    challenge_factors = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="Factors – What are the main causes or factors behind each challenge? Are these related to policies, lack of resources, discrimination, geography, or governance gaps? And are these factors internal to the community, external (from government or other stakeholders), or both?", required=False)
-    specific_needs = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="Needs – Based on these challenges and factors, what specific needs must be addressed to improve the OBCs’ situation (e.g., livelihood programs, schools, health facilities, roads, scholarships, justice access, inclusion mechanisms)?", required=False)
-    expected_outcomes = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="Outcomes – If these needs are addressed, what positive outcomes or changes do you expect for the OBC? How would these outcomes affect vulnerable groups specifically?", required=False)
-    prioritization = forms.CharField(widget=forms.Textarea(attrs={'rows': 3, 'class': TEXTAREA_CLASS}), label="Prioritization – Of the challenges and needs identified, which should be addressed first? Why? How are these challenges connected to each other?", required=False)
+
+    critical_challenges = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="Challenges – What are the most critical challenges faced by OBCs in your area (education, health, livelihood, governance, infrastructure, peace and security)? Who are the most affected (women, youth, PWDs, IPs, IDPs, elders)?",
+        required=False,
+    )
+    challenge_factors = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="Factors – What are the main causes or factors behind each challenge? Are these related to policies, lack of resources, discrimination, geography, or governance gaps? And are these factors internal to the community, external (from government or other stakeholders), or both?",
+        required=False,
+    )
+    specific_needs = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="Needs – Based on these challenges and factors, what specific needs must be addressed to improve the OBCs’ situation (e.g., livelihood programs, schools, health facilities, roads, scholarships, justice access, inclusion mechanisms)?",
+        required=False,
+    )
+    expected_outcomes = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="Outcomes – If these needs are addressed, what positive outcomes or changes do you expect for the OBC? How would these outcomes affect vulnerable groups specifically?",
+        required=False,
+    )
+    prioritization = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": TEXTAREA_CLASS}),
+        label="Prioritization – Of the challenges and needs identified, which should be addressed first? Why? How are these challenges connected to each other?",
+        required=False,
+    )
 
 
 # Regional MANA Workshop Redesign Forms
@@ -1101,7 +1267,9 @@ class ParticipantOnboardingForm(forms.ModelForm):
             "aware_of_mandate",
         ]
         widgets = {
-            "age": forms.NumberInput(attrs={"class": INPUT_CLASS, "min": 1, "max": 120}),
+            "age": forms.NumberInput(
+                attrs={"class": INPUT_CLASS, "min": 1, "max": 120}
+            ),
             "sex": forms.Select(attrs={"class": SELECT_CLASS}),
             "stakeholder_type": forms.Select(attrs={"class": SELECT_CLASS}),
             "region": forms.Select(attrs={"class": SELECT_CLASS}),
@@ -1112,18 +1280,24 @@ class ParticipantOnboardingForm(forms.ModelForm):
             "arabic_education_level": forms.Select(attrs={"class": SELECT_CLASS}),
             "occupation": forms.Select(attrs={"class": SELECT_CLASS}),
             "office_business_name": forms.TextInput(
-                attrs={"class": INPUT_CLASS, "placeholder": "Name of office or business"}
+                attrs={
+                    "class": INPUT_CLASS,
+                    "placeholder": "Name of office or business",
+                }
             ),
             "office_region": forms.Select(attrs={"class": SELECT_CLASS}),
             "office_province": forms.Select(attrs={"class": SELECT_CLASS}),
             "office_municipality": forms.Select(attrs={"class": SELECT_CLASS}),
             "office_barangay": forms.Select(attrs={"class": SELECT_CLASS}),
             "office_mandate": forms.Textarea(
-                attrs={"class": TEXTAREA_CLASS, "rows": 3, "placeholder": "Mandate of your office (if government agency)"}
+                attrs={
+                    "class": TEXTAREA_CLASS,
+                    "rows": 3,
+                    "placeholder": "Mandate of your office (if government agency)",
+                }
             ),
             "aware_of_mandate": forms.RadioSelect(
-                choices=[(True, "Yes"), (False, "No")],
-                attrs={"class": "radio-inline"}
+                choices=[(True, "Yes"), (False, "No")], attrs={"class": "radio-inline"}
             ),
         }
 
@@ -1145,7 +1319,9 @@ class ParticipantOnboardingForm(forms.ModelForm):
         region = getattr(instance, "region", None) if province else None
 
         # Set up region queryset
-        self.fields["region"].queryset = Region.objects.filter(is_active=True).order_by("name")
+        self.fields["region"].queryset = Region.objects.filter(is_active=True).order_by(
+            "name"
+        )
         if region:
             self.fields["region"].initial = region.id
 
@@ -1153,20 +1329,24 @@ class ParticipantOnboardingForm(forms.ModelForm):
         if province:
             self.fields["province"].queryset = Province.objects.filter(pk=province.pk)
             self.fields["province"].initial = province
-            self.fields["municipality"].queryset = (
-                Municipality.objects.filter(province=province).order_by("name")
-            )
-            self.fields["barangay"].queryset = (
-                Barangay.objects.filter(municipality__province=province).order_by("name")
-            )
+            self.fields["municipality"].queryset = Municipality.objects.filter(
+                province=province
+            ).order_by("name")
+            self.fields["barangay"].queryset = Barangay.objects.filter(
+                municipality__province=province
+            ).order_by("name")
         else:
             self.fields["province"].queryset = Province.objects.all().order_by("name")
             self.fields["municipality"].queryset = Municipality.objects.none()
             self.fields["barangay"].queryset = Barangay.objects.none()
 
         # Set up office address querysets
-        self.fields["office_region"].queryset = Region.objects.filter(is_active=True).order_by("name")
-        self.fields["office_province"].queryset = Province.objects.all().order_by("name")
+        self.fields["office_region"].queryset = Region.objects.filter(
+            is_active=True
+        ).order_by("name")
+        self.fields["office_province"].queryset = Province.objects.all().order_by(
+            "name"
+        )
         self.fields["office_municipality"].queryset = Municipality.objects.none()
         self.fields["office_barangay"].queryset = Barangay.objects.none()
 
@@ -1177,7 +1357,9 @@ class ParticipantOnboardingForm(forms.ModelForm):
         province = cleaned_data.get("province")
         municipality = cleaned_data.get("municipality")
         if municipality and province and municipality.province_id != province.id:
-            self.add_error("municipality", "Select a municipality within your province.")
+            self.add_error(
+                "municipality", "Select a municipality within your province."
+            )
 
         barangay = cleaned_data.get("barangay")
         if barangay and municipality and barangay.municipality_id != municipality.id:
@@ -1186,12 +1368,25 @@ class ParticipantOnboardingForm(forms.ModelForm):
         # Validate office address
         office_province = cleaned_data.get("office_province")
         office_municipality = cleaned_data.get("office_municipality")
-        if office_municipality and office_province and office_municipality.province_id != office_province.id:
-            self.add_error("office_municipality", "Select a municipality within your office province.")
+        if (
+            office_municipality
+            and office_province
+            and office_municipality.province_id != office_province.id
+        ):
+            self.add_error(
+                "office_municipality",
+                "Select a municipality within your office province.",
+            )
 
         office_barangay = cleaned_data.get("office_barangay")
-        if office_barangay and office_municipality and office_barangay.municipality_id != office_municipality.id:
-            self.add_error("office_barangay", "Select a barangay within your office municipality.")
+        if (
+            office_barangay
+            and office_municipality
+            and office_barangay.municipality_id != office_municipality.id
+        ):
+            self.add_error(
+                "office_barangay", "Select a barangay within your office municipality."
+            )
 
         return cleaned_data
 
@@ -1235,7 +1430,9 @@ class ParticipantProfileForm(forms.ModelForm):
             "office_province": forms.Select(attrs={"class": SELECT_CLASS}),
             "office_municipality": forms.Select(attrs={"class": SELECT_CLASS}),
             "office_barangay": forms.Select(attrs={"class": SELECT_CLASS}),
-            "office_mandate": forms.Textarea(attrs={"class": TEXTAREA_CLASS, "rows": 3}),
+            "office_mandate": forms.Textarea(
+                attrs={"class": TEXTAREA_CLASS, "rows": 3}
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -1251,12 +1448,12 @@ class ParticipantProfileForm(forms.ModelForm):
             self.fields["province"].initial = province
             self.fields["province"].widget = forms.HiddenInput()
             self.fields["province"].required = False
-            self.fields["municipality"].queryset = (
-                Municipality.objects.filter(province=province).order_by("name")
-            )
-            self.fields["barangay"].queryset = (
-                Barangay.objects.filter(municipality__province=province).order_by("name")
-            )
+            self.fields["municipality"].queryset = Municipality.objects.filter(
+                province=province
+            ).order_by("name")
+            self.fields["barangay"].queryset = Barangay.objects.filter(
+                municipality__province=province
+            ).order_by("name")
         else:
             self.fields["province"].queryset = Province.objects.none()
             self.fields["municipality"].queryset = Municipality.objects.none()
@@ -1269,7 +1466,9 @@ class ParticipantProfileForm(forms.ModelForm):
 
         municipality = cleaned_data.get("municipality")
         if municipality and province and municipality.province_id != province.id:
-            self.add_error("municipality", "Select a municipality within your province.")
+            self.add_error(
+                "municipality", "Select a municipality within your province."
+            )
             cleaned_data["municipality"] = None
 
         barangay = cleaned_data.get("barangay")
@@ -1333,12 +1532,12 @@ class FacilitatorParticipantForm(forms.ModelForm):
             self.fields["province"].initial = province
             self.fields["province"].widget = forms.HiddenInput()
             self.fields["province"].required = False
-            self.fields["municipality"].queryset = (
-                Municipality.objects.filter(province=province).order_by("name")
-            )
-            self.fields["barangay"].queryset = (
-                Barangay.objects.filter(municipality__province=province).order_by("name")
-            )
+            self.fields["municipality"].queryset = Municipality.objects.filter(
+                province=province
+            ).order_by("name")
+            self.fields["barangay"].queryset = Barangay.objects.filter(
+                municipality__province=province
+            ).order_by("name")
         else:
             self.fields["province"].queryset = Province.objects.none()
             self.fields["municipality"].queryset = Municipality.objects.none()
@@ -1351,7 +1550,9 @@ class FacilitatorParticipantForm(forms.ModelForm):
 
         municipality = cleaned_data.get("municipality")
         if municipality and province and municipality.province_id != province.id:
-            self.add_error("municipality", "Select a municipality within your province.")
+            self.add_error(
+                "municipality", "Select a municipality within your province."
+            )
             cleaned_data["municipality"] = None
 
         barangay = cleaned_data.get("barangay")
@@ -1360,7 +1561,6 @@ class FacilitatorParticipantForm(forms.ModelForm):
             cleaned_data["barangay"] = None
 
         return cleaned_data
-
 
 
 class WorkshopResponseForm(forms.Form):
@@ -1486,9 +1686,7 @@ class WorkshopResponseForm(forms.Form):
         else:
             # Default to text field
             return forms.CharField(
-                widget=forms.TextInput(
-                    attrs={"class": f"{INPUT_CLASS} hx-field"}
-                ),
+                widget=forms.TextInput(attrs={"class": f"{INPUT_CLASS} hx-field"}),
                 label=question["text"],
                 required=required,
                 help_text=help_text,
@@ -1644,10 +1842,12 @@ class AccountCreationForm(forms.Form):
         queryset=Assessment.objects.filter(
             primary_methodology="workshop", assessment_level="regional"
         ).order_by("-planned_start_date"),
-        widget=forms.SelectMultiple(attrs={
-            "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[120px] transition-all duration-200 bg-white",
-            "id": "id_facilitator_assessments"
-        }),
+        widget=forms.SelectMultiple(
+            attrs={
+                "class": "block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[120px] transition-all duration-200 bg-white",
+                "id": "id_facilitator_assessments",
+            }
+        ),
         label="Assigned Assessments",
         required=False,
         help_text="Select one or more assessments this facilitator will manage. Hold Ctrl/Cmd to select multiple.",
@@ -1717,7 +1917,7 @@ class AccountCreationForm(forms.Form):
             if not facilitator_assessments:
                 self.add_error(
                     "facilitator_assessments",
-                    "At least one assessment must be assigned to the facilitator."
+                    "At least one assessment must be assigned to the facilitator.",
                 )
 
         # Validate participant-specific fields

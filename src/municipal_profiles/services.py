@@ -86,7 +86,9 @@ def _serialise_community(instance: OBCCommunity) -> Dict[str, object]:
     field_names = [
         field.name
         for field in instance._meta.fields
-        if field.concrete and field.editable and field.name not in {"created_at", "updated_at"}
+        if field.concrete
+        and field.editable
+        and field.name not in {"created_at", "updated_at"}
     ]
     payload = model_to_dict(instance, fields=field_names)
     payload["id"] = instance.pk
@@ -166,13 +168,18 @@ def compute_aggregate_for_municipality(
                 section_payload[section_key][metric_key] = int(value)
 
     for section_key, metric_key, rule in weighted_rules:
-        numerator = queryset.aggregate(
-            total=Sum(
-                F(rule.source) * F(rule.weight_source), output_field=FloatField()
-            )
-        )["total"] or 0.0
+        numerator = (
+            queryset.aggregate(
+                total=Sum(
+                    F(rule.source) * F(rule.weight_source), output_field=FloatField()
+                )
+            )["total"]
+            or 0.0
+        )
         denominator = queryset.aggregate(total=Sum(rule.weight_source))["total"] or 0
-        section_payload[section_key][metric_key] = round(numerator / denominator, 2) if denominator else 0
+        section_payload[section_key][metric_key] = (
+            round(numerator / denominator, 2) if denominator else 0
+        )
 
     community_ids: List[int] = list(queryset.values_list("id", flat=True))
     barangay_ids: List[int] = list(queryset.values_list("barangay_id", flat=True))
@@ -288,9 +295,7 @@ def calculate_unassigned_barangay_totals(
     reported_sections = normalise_reported_metrics(reported_payload.get("sections"))
     reported_flat = flatten_metrics(reported_sections)
     provided_fields_raw = reported_payload.get("provided_fields", [])
-    provided_fields = {
-        field for field in provided_fields_raw if isinstance(field, str)
-    }
+    provided_fields = {field for field in provided_fields_raw if isinstance(field, str)}
 
     gaps: Dict[str, object] = {}
     for metric_key, reported_value in reported_flat.items():

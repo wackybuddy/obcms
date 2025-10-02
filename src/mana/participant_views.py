@@ -20,7 +20,11 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from .decorators import participant_required
-from .forms import ParticipantOnboardingForm, ParticipantProfileForm, WorkshopResponseForm
+from .forms import (
+    ParticipantOnboardingForm,
+    ParticipantProfileForm,
+    WorkshopResponseForm,
+)
 from .models import (
     Assessment,
     WorkshopAccessLog,
@@ -42,7 +46,7 @@ def participant_assessments_list(request):
     # Get all assessments where user has WorkshopParticipantAccount
     participant_accounts = WorkshopParticipantAccount.objects.filter(
         user=user
-    ).select_related('assessment', 'province')
+    ).select_related("assessment", "province")
 
     assessments_data = []
     for account in participant_accounts:
@@ -61,23 +65,31 @@ def participant_assessments_list(request):
         else:
             status = "not_started"
 
-        assessments_data.append({
-            'account': account,
-            'assessment': assessment,
-            'progress_pct': progress_pct,
-            'completed_workshops': completed_workshops,
-            'total_workshops': total_workshops,
-            'status': status,
-            'current_workshop_display': account.get_current_workshop_display() if hasattr(account, 'get_current_workshop_display') else account.current_workshop,
-        })
+        assessments_data.append(
+            {
+                "account": account,
+                "assessment": assessment,
+                "progress_pct": progress_pct,
+                "completed_workshops": completed_workshops,
+                "total_workshops": total_workshops,
+                "status": status,
+                "current_workshop_display": (
+                    account.get_current_workshop_display()
+                    if hasattr(account, "get_current_workshop_display")
+                    else account.current_workshop
+                ),
+            }
+        )
 
     context = {
-        'assessments': assessments_data,
+        "assessments": assessments_data,
     }
-    return render(request, 'mana/participant/assessments_list.html', context)
+    return render(request, "mana/participant/assessments_list.html", context)
 
 
-def _build_workshop_navigation(assessment: Assessment, participant: WorkshopParticipantAccount):
+def _build_workshop_navigation(
+    assessment: Assessment, participant: WorkshopParticipantAccount
+):
     """Return navigation metadata for the participant dashboard."""
     access_manager = WorkshopAccessManager(assessment)
     allowed = set(access_manager.get_allowed_workshops(participant))
@@ -132,33 +144,28 @@ def participant_dashboard(request, assessment_id):
     participant = request.mana_participant_account
 
     if not participant.consent_given or not participant.profile_completed:
-        return redirect(
-            "mana:participant_onboarding", assessment_id=str(assessment.id)
-        )
+        return redirect("mana:participant_onboarding", assessment_id=str(assessment.id))
 
     nav_items, progress = _build_workshop_navigation(assessment, participant)
 
     # Get unread notifications
     unread_notifications = WorkshopNotification.objects.filter(
-        participant=participant,
-        is_read=False
-    )[:5]  # Limit to 5 most recent
+        participant=participant, is_read=False
+    )[
+        :5
+    ]  # Limit to 5 most recent
 
     # Get recent notifications (last 10)
-    recent_notifications = WorkshopNotification.objects.filter(
-        participant=participant
-    )[:10]
+    recent_notifications = WorkshopNotification.objects.filter(participant=participant)[
+        :10
+    ]
 
     current_workshop_item = next(
         (item for item in nav_items if item["is_current"]),
         None,
     )
     actionable_workshop_item = next(
-        (
-            item
-            for item in nav_items
-            if item["accessible"] and not item["completed"]
-        ),
+        (item for item in nav_items if item["accessible"] and not item["completed"]),
         None,
     )
 
@@ -209,9 +216,7 @@ def participant_onboarding(request, assessment_id):
     participant = request.mana_participant_account
 
     if participant.consent_given and participant.profile_completed:
-        return redirect(
-            "mana:participant_dashboard", assessment_id=str(assessment.id)
-        )
+        return redirect("mana:participant_dashboard", assessment_id=str(assessment.id))
 
     form = ParticipantOnboardingForm(
         data=request.POST or None,
@@ -233,24 +238,24 @@ def participant_onboarding(request, assessment_id):
             participant.consent_given = True
             participant.consent_date = timezone.now()
         participant.current_workshop = participant.current_workshop or "workshop_1"
-        participant.save(update_fields=[
-            "stakeholder_type",
-            "office_business_name",
-            "province",
-            "municipality",
-            "barangay",
-            "profile_completed",
-            "consent_given",
-            "consent_date",
-            "current_workshop",
-            "updated_at",
-        ])
+        participant.save(
+            update_fields=[
+                "stakeholder_type",
+                "office_business_name",
+                "province",
+                "municipality",
+                "barangay",
+                "profile_completed",
+                "consent_given",
+                "consent_date",
+                "current_workshop",
+                "updated_at",
+            ]
+        )
 
         messages.success(request, "Profile updated. You're ready for Workshop 1.")
 
-        redirect_url = reverse(
-            "mana:participant_dashboard", args=[str(assessment.id)]
-        )
+        redirect_url = reverse("mana:participant_dashboard", args=[str(assessment.id)])
         if request.headers.get("HX-Request"):
             response = HttpResponse(status=204)
             response["HX-Redirect"] = redirect_url
@@ -289,9 +294,7 @@ def participant_workshop_review(request, assessment_id, workshop_type):
 
     # Must have submitted responses
     responses = WorkshopResponse.objects.filter(
-        participant=participant,
-        workshop=workshop,
-        status="submitted"
+        participant=participant, workshop=workshop, status="submitted"
     ).order_by("question_id")
 
     if not responses.exists():
@@ -299,7 +302,7 @@ def participant_workshop_review(request, assessment_id, workshop_type):
         return redirect(
             "mana:participant_workshop_detail",
             assessment_id=str(assessment.id),
-            workshop_type=workshop_type
+            workshop_type=workshop_type,
         )
 
     # Get questions for this workshop
@@ -313,7 +316,9 @@ def participant_workshop_review(request, assessment_id, workshop_type):
     try:
         current_index = WorkshopAccessManager.WORKSHOP_SEQUENCE.index(workshop_type)
         if current_index < len(WorkshopAccessManager.WORKSHOP_SEQUENCE) - 1:
-            next_workshop_type = WorkshopAccessManager.WORKSHOP_SEQUENCE[current_index + 1]
+            next_workshop_type = WorkshopAccessManager.WORKSHOP_SEQUENCE[
+                current_index + 1
+            ]
             next_workshop_unlocked = next_workshop_type in allowed_workshops
             if next_workshop_unlocked:
                 next_workshop = WorkshopActivity.objects.filter(
@@ -335,19 +340,23 @@ def participant_workshop_review(request, assessment_id, workshop_type):
         assessment=assessment
     ).count()
 
-    submitted_count = WorkshopResponse.objects.filter(
-        workshop=workshop,
-        status="submitted"
-    ).values("participant").distinct().count()
+    submitted_count = (
+        WorkshopResponse.objects.filter(workshop=workshop, status="submitted")
+        .values("participant")
+        .distinct()
+        .count()
+    )
 
     # Pair questions with responses
     qa_pairs = []
     for question in questions:
         response = responses.filter(question_id=question["id"]).first()
-        qa_pairs.append({
-            "question": question,
-            "response": response,
-        })
+        qa_pairs.append(
+            {
+                "question": question,
+                "response": response,
+            }
+        )
 
     # Get submission timestamp
     first_response = responses.first()
@@ -384,10 +393,9 @@ def participant_workshop_detail(request, assessment_id, workshop_type):
         return HttpResponseForbidden("Workshop locked. Await facilitator approval.")
 
     questions = get_questions_for_workshop(workshop_type)
-    responses = (
-        WorkshopResponse.objects.filter(participant=participant, workshop=workshop)
-        .order_by("question_id")
-    )
+    responses = WorkshopResponse.objects.filter(
+        participant=participant, workshop=workshop
+    ).order_by("question_id")
 
     # Check if workshop has already been submitted (read-only mode)
     is_submitted = responses.filter(status="submitted").exists()
@@ -420,12 +428,12 @@ def participant_workshop_detail(request, assessment_id, workshop_type):
             messages.error(
                 request,
                 f"This workshop has already been submitted and cannot be edited. "
-                f"Your responses are locked to maintain data integrity."
+                f"Your responses are locked to maintain data integrity.",
             )
             return redirect(
                 "mana:participant_workshop_detail",
                 assessment_id=str(assessment.id),
-                workshop_type=workshop_type
+                workshop_type=workshop_type,
             )
 
         if form.is_valid():
@@ -478,7 +486,9 @@ def participant_workshop_detail(request, assessment_id, workshop_type):
                     workshop_type,
                     metadata={"submitted_at": timezone.now().isoformat()},
                 )
-                participant.refresh_from_db(fields=["current_workshop", "completed_workshops"])
+                participant.refresh_from_db(
+                    fields=["current_workshop", "completed_workshops"]
+                )
                 _log_workshop_action(
                     participant,
                     workshop,
@@ -493,7 +503,10 @@ def participant_workshop_detail(request, assessment_id, workshop_type):
                     participant,
                     workshop,
                     "update",
-                    metadata={"saved_at": timezone.now().isoformat(), "status": saved_status},
+                    metadata={
+                        "saved_at": timezone.now().isoformat(),
+                        "status": saved_status,
+                    },
                 )
                 messages.info(request, "Draft saved. You can continue anytime.")
 
@@ -599,22 +612,20 @@ def participant_workshop_outputs(request, assessment_id, workshop_type):
 
     # Get workshop
     workshop = get_object_or_404(
-        WorkshopActivity,
-        assessment=assessment,
-        workshop_type=workshop_type
+        WorkshopActivity, assessment=assessment, workshop_type=workshop_type
     )
 
     # Verify this workshop has been submitted
     if workshop_type not in (participant.completed_workshops or []):
         messages.error(request, "You haven't submitted this workshop yet.")
-        return redirect('mana:participant_workshop_detail', assessment_id, workshop_type)
+        return redirect(
+            "mana:participant_workshop_detail", assessment_id, workshop_type
+        )
 
     # Get all responses for this workshop
     responses = WorkshopResponse.objects.filter(
-        participant=participant,
-        workshop=workshop,
-        status="submitted"
-    ).order_by('question_id')
+        participant=participant, workshop=workshop, status="submitted"
+    ).order_by("question_id")
 
     # Get questions from schema
     questions = get_questions_for_workshop(workshop_type)
@@ -622,18 +633,24 @@ def participant_workshop_outputs(request, assessment_id, workshop_type):
     # Pair questions with responses
     qa_pairs = []
     for question in questions:
-        response = responses.filter(question_id=question['id']).first()
-        qa_pairs.append({
-            'question': question,
-            'response': response,
-        })
+        response = responses.filter(question_id=question["id"]).first()
+        qa_pairs.append(
+            {
+                "question": question,
+                "response": response,
+            }
+        )
 
     # Check advancement status
     # Participant is advanced if current_workshop has moved past this workshop
     workshop_sequence = WorkshopAccessManager.WORKSHOP_SEQUENCE
     try:
         current_index = workshop_sequence.index(workshop_type)
-        current_workshop_index = workshop_sequence.index(participant.current_workshop) if participant.current_workshop in workshop_sequence else 0
+        current_workshop_index = (
+            workshop_sequence.index(participant.current_workshop)
+            if participant.current_workshop in workshop_sequence
+            else 0
+        )
         is_advanced = current_workshop_index > current_index
     except ValueError:
         is_advanced = False
@@ -644,8 +661,7 @@ def participant_workshop_outputs(request, assessment_id, workshop_type):
         if current_index + 1 < len(workshop_sequence):
             next_workshop_type = workshop_sequence[current_index + 1]
             next_workshop = WorkshopActivity.objects.filter(
-                assessment=assessment,
-                workshop_type=next_workshop_type
+                assessment=assessment, workshop_type=next_workshop_type
             ).first()
 
     # Get submission progress
@@ -653,26 +669,28 @@ def participant_workshop_outputs(request, assessment_id, workshop_type):
         assessment=assessment
     ).count()
 
-    submitted_participants = WorkshopResponse.objects.filter(
-        workshop=workshop,
-        status="submitted"
-    ).values('participant').distinct().count()
+    submitted_participants = (
+        WorkshopResponse.objects.filter(workshop=workshop, status="submitted")
+        .values("participant")
+        .distinct()
+        .count()
+    )
 
     # Get submission timestamp
     submission_timestamp = responses.first().updated_at if responses.exists() else None
 
     context = {
-        'assessment': assessment,
-        'participant': participant,
-        'workshop': workshop,
-        'qa_pairs': qa_pairs,
-        'is_advanced': is_advanced,
-        'next_workshop': next_workshop,
-        'total_participants': total_participants,
-        'submitted_participants': submitted_participants,
-        'submission_timestamp': submission_timestamp,
+        "assessment": assessment,
+        "participant": participant,
+        "workshop": workshop,
+        "qa_pairs": qa_pairs,
+        "is_advanced": is_advanced,
+        "next_workshop": next_workshop,
+        "total_participants": total_participants,
+        "submitted_participants": submitted_participants,
+        "submission_timestamp": submission_timestamp,
     }
-    return render(request, 'mana/participant/workshop_outputs.html', context)
+    return render(request, "mana/participant/workshop_outputs.html", context)
 
 
 @login_required
@@ -683,9 +701,7 @@ def mark_notification_read(request, assessment_id, notification_id):
     participant = request.mana_participant_account
 
     notification = get_object_or_404(
-        WorkshopNotification,
-        id=notification_id,
-        participant=participant
+        WorkshopNotification, id=notification_id, participant=participant
     )
 
     notification.mark_as_read()

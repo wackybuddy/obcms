@@ -3,221 +3,759 @@ from . import views
 from communities import data_utils
 from coordination import views as coordination_views
 
-app_name = 'common'
+app_name = "common"
 
 urlpatterns = [
-    path('login/', views.CustomLoginView.as_view(), name='login'),
-    path('logout/', views.CustomLogoutView.as_view(), name='logout'),
-    path('register/', views.UserRegistrationView.as_view(), name='register'),
-    path('dashboard/', views.dashboard, name='dashboard'),
-    path('profile/', views.profile, name='profile'),
-    path('restricted/', views.page_restricted, name='page_restricted'),
-    path('communities/', views.communities_home, name='communities_home'),
-    path('communities/add/', views.communities_add, name='communities_add'),
-    path('communities/add-municipality/', views.communities_add_municipality, name='communities_add_municipality'),
-    path('communities/add-province/', views.communities_add_province, name='communities_add_province'),
-    path('communities/<int:community_id>/', views.communities_view, name='communities_view'),
-    path('communities/<int:community_id>/edit/', views.communities_edit, name='communities_edit'),
-    path('communities/<int:community_id>/delete/', views.communities_delete, name='communities_delete'),
-    path('communities/<int:community_id>/restore/', views.communities_restore, name='communities_restore'),
-    path('communities/manage/', views.communities_manage, name='communities_manage'),
-    path('communities/managemunicipal/', views.communities_manage_municipal, name='communities_manage_municipal'),
-    path('communities/managebarangayobc/', views.communities_manage, name='communities_manage_barangay_obc'),
-    path('communities/managemunicipalobc/', views.communities_manage_municipal, name='communities_manage_municipal_obc'),
-    path('communities/manageprovincial/', views.communities_manage_provincial, name='communities_manage_provincial'),
-    path('communities/manageprovincialobc/', views.communities_manage_provincial, name='communities_manage_provincial_obc'),
-    path('communities/municipal/<int:coverage_id>/', views.communities_view_municipal, name='communities_view_municipal'),
-    path('communities/municipal/<int:coverage_id>/edit/', views.communities_edit_municipal, name='communities_edit_municipal'),
-    path('communities/municipal/<int:coverage_id>/delete/', views.communities_delete_municipal, name='communities_delete_municipal'),
-    path('communities/municipal/<int:coverage_id>/restore/', views.communities_restore_municipal, name='communities_restore_municipal'),
-    path('communities/province/<int:coverage_id>/', views.communities_view_provincial, name='communities_view_provincial'),
-    path('communities/province/<int:coverage_id>/edit/', views.communities_edit_provincial, name='communities_edit_provincial'),
-    path('communities/province/<int:coverage_id>/delete/', views.communities_delete_provincial, name='communities_delete_provincial'),
-    path('communities/province/<int:coverage_id>/submit/', views.communities_submit_provincial, name='communities_submit_provincial'),
-    path('communities/province/<int:coverage_id>/restore/', views.communities_restore_provincial, name='communities_restore_provincial'),
-    path('communities/stakeholders/', views.communities_stakeholders, name='communities_stakeholders'),
-    path('locations/centroid/', views.location_centroid, name='location_centroid'),
-    path('mana/', views.mana_home, name='mana_home'),
-    path('mana/regional/', views.mana_regional_overview, name='mana_regional_overview'),
-    path('mana/provincial/', views.mana_provincial_overview, name='mana_provincial_overview'),
-    path('mana/provincial/<int:province_id>/', views.mana_provincial_card_detail, name='mana_provincial_card_detail'),
-    path('mana/provincial/<int:province_id>/edit/', views.mana_province_edit, name='mana_province_edit'),
-    path('mana/provincial/<int:province_id>/delete/', views.mana_province_delete, name='mana_province_delete'),
-    path('mana/desk-review/', views.mana_desk_review, name='mana_desk_review'),
-    path('mana/survey/', views.mana_survey_module, name='mana_survey_module'),
-    path('mana/kii/', views.mana_key_informant_interviews, name='mana_kii'),
-    path('mana/playbook/', views.mana_playbook, name='mana_playbook'),
-    path('mana/activity-planner/', views.mana_activity_planner, name='mana_activity_planner'),
-    path('mana/activity-log/', views.mana_activity_log, name='mana_activity_log'),
-    path('mana/activity-processing/', views.mana_activity_processing, name='mana_activity_processing'),
-    path('mana/new-assessment/', views.mana_new_assessment, name='mana_new_assessment'),
-    path('mana/manage-assessments/', views.mana_manage_assessments, name='mana_manage_assessments'),
-    path('mana/manage-assessments/<uuid:assessment_id>/', views.mana_assessment_detail, name='mana_assessment_detail'),
-    path('mana/manage-assessments/<uuid:assessment_id>/edit/', views.mana_assessment_edit, name='mana_assessment_edit'),
-    path('mana/manage-assessments/<uuid:assessment_id>/delete/', views.mana_assessment_delete, name='mana_assessment_delete'),
-    path('mana/geographic-data/', views.mana_geographic_data, name='mana_geographic_data'),
-    path('coordination/', views.coordination_home, name='coordination_home'),
-    path('coordination/organizations/', views.coordination_organizations, name='coordination_organizations'),
-    path('coordination/organizations/add/', views.organization_create, name='coordination_organization_add'),
-    path('coordination/organizations/<uuid:organization_id>/edit/', views.organization_edit, name='coordination_organization_edit'),
-    path('coordination/organizations/<uuid:organization_id>/delete/', views.organization_delete, name='coordination_organization_delete'),
-    path('coordination/organizations/<uuid:organization_id>/', views.organization_detail, name='coordination_organization_detail'),
-    path('coordination/partnerships/', views.coordination_partnerships, name='coordination_partnerships'),
-    path('coordination/partnerships/add/', views.partnership_create, name='coordination_partnership_add'),
-    path('coordination/partnerships/<uuid:partnership_id>/', views.partnership_detail, name='coordination_partnership_view'),
-    path('coordination/partnerships/<uuid:partnership_id>/edit/', views.partnership_update, name='coordination_partnership_edit'),
-    path('coordination/partnerships/<uuid:partnership_id>/delete/', views.partnership_delete, name='coordination_partnership_delete'),
-    path('coordination/events/add/', views.event_create, name='coordination_event_add'),
-    path('coordination/events/recurring/add/', coordination_views.event_create_recurring, name='coordination_event_recurring_add'),
-    path('coordination/events/<uuid:event_id>/edit-instance/', coordination_views.event_edit_instance, name='coordination_event_edit_instance'),
-    path('coordination/events/<uuid:event_id>/attendance/', coordination_views.event_attendance_tracker, name='coordination_event_attendance'),
-    path('coordination/events/<uuid:event_id>/attendance/count/', coordination_views.event_attendance_count, name='coordination_event_attendance_count'),
-    path('coordination/events/<uuid:event_id>/attendance/participants/', coordination_views.event_participant_list, name='coordination_event_participant_list'),
-    path('coordination/events/<uuid:event_id>/check-in/', coordination_views.event_check_in, name='coordination_event_check_in'),
-    path('coordination/events/', views.coordination_events, name='coordination_events'),
-    path('coordination/calendar/', views.coordination_calendar, name='coordination_calendar'),
-    path('coordination/activities/add/', views.coordination_activity_create, name='coordination_activity_add'),
-    path('coordination/view-all/', views.coordination_view_all, name='coordination_view_all'),
-    path('recommendations/', views.recommendations_home, name='recommendations_home'),
-    path('recommendations/new/', views.recommendations_new, name='recommendations_new'),
-    path('recommendations/manage/', views.recommendations_manage, name='recommendations_manage'),
-    path('recommendations/area/<str:area_slug>/', views.recommendations_by_area, name='recommendations_by_area'),
-    path('oobc-management/', views.oobc_management_home, name='oobc_management_home'),
-    path('oobc-management/calendar/', views.oobc_calendar, name='oobc_calendar'),
-    path('oobc-management/calendar/feed/json/', views.oobc_calendar_feed_json, name='oobc_calendar_feed_json'),
-    path('oobc-management/calendar/feed/ics/', views.oobc_calendar_feed_ics, name='oobc_calendar_feed_ics'),
-    path('oobc-management/calendar/brief/', views.oobc_calendar_brief, name='oobc_calendar_brief'),
-    path('oobc-management/calendar/preferences/', views.calendar_preferences, name='calendar_preferences'),
-
+    path("login/", views.CustomLoginView.as_view(), name="login"),
+    path("logout/", views.CustomLogoutView.as_view(), name="logout"),
+    path("register/", views.UserRegistrationView.as_view(), name="register"),
+    path("dashboard/", views.dashboard, name="dashboard"),
+    path("profile/", views.profile, name="profile"),
+    path("restricted/", views.page_restricted, name="page_restricted"),
+    path("communities/", views.communities_home, name="communities_home"),
+    path("communities/add/", views.communities_add, name="communities_add"),
+    path(
+        "communities/add-municipality/",
+        views.communities_add_municipality,
+        name="communities_add_municipality",
+    ),
+    path(
+        "communities/add-province/",
+        views.communities_add_province,
+        name="communities_add_province",
+    ),
+    path(
+        "communities/<int:community_id>/",
+        views.communities_view,
+        name="communities_view",
+    ),
+    path(
+        "communities/<int:community_id>/edit/",
+        views.communities_edit,
+        name="communities_edit",
+    ),
+    path(
+        "communities/<int:community_id>/delete/",
+        views.communities_delete,
+        name="communities_delete",
+    ),
+    path(
+        "communities/<int:community_id>/restore/",
+        views.communities_restore,
+        name="communities_restore",
+    ),
+    path("communities/manage/", views.communities_manage, name="communities_manage"),
+    path(
+        "communities/managemunicipal/",
+        views.communities_manage_municipal,
+        name="communities_manage_municipal",
+    ),
+    path(
+        "communities/managebarangayobc/",
+        views.communities_manage,
+        name="communities_manage_barangay_obc",
+    ),
+    path(
+        "communities/managemunicipalobc/",
+        views.communities_manage_municipal,
+        name="communities_manage_municipal_obc",
+    ),
+    path(
+        "communities/manageprovincial/",
+        views.communities_manage_provincial,
+        name="communities_manage_provincial",
+    ),
+    path(
+        "communities/manageprovincialobc/",
+        views.communities_manage_provincial,
+        name="communities_manage_provincial_obc",
+    ),
+    path(
+        "communities/municipal/<int:coverage_id>/",
+        views.communities_view_municipal,
+        name="communities_view_municipal",
+    ),
+    path(
+        "communities/municipal/<int:coverage_id>/edit/",
+        views.communities_edit_municipal,
+        name="communities_edit_municipal",
+    ),
+    path(
+        "communities/municipal/<int:coverage_id>/delete/",
+        views.communities_delete_municipal,
+        name="communities_delete_municipal",
+    ),
+    path(
+        "communities/municipal/<int:coverage_id>/restore/",
+        views.communities_restore_municipal,
+        name="communities_restore_municipal",
+    ),
+    path(
+        "communities/province/<int:coverage_id>/",
+        views.communities_view_provincial,
+        name="communities_view_provincial",
+    ),
+    path(
+        "communities/province/<int:coverage_id>/edit/",
+        views.communities_edit_provincial,
+        name="communities_edit_provincial",
+    ),
+    path(
+        "communities/province/<int:coverage_id>/delete/",
+        views.communities_delete_provincial,
+        name="communities_delete_provincial",
+    ),
+    path(
+        "communities/province/<int:coverage_id>/submit/",
+        views.communities_submit_provincial,
+        name="communities_submit_provincial",
+    ),
+    path(
+        "communities/province/<int:coverage_id>/restore/",
+        views.communities_restore_provincial,
+        name="communities_restore_provincial",
+    ),
+    path(
+        "communities/stakeholders/",
+        views.communities_stakeholders,
+        name="communities_stakeholders",
+    ),
+    path("locations/centroid/", views.location_centroid, name="location_centroid"),
+    path("mana/", views.mana_home, name="mana_home"),
+    path("mana/regional/", views.mana_regional_overview, name="mana_regional_overview"),
+    path(
+        "mana/provincial/",
+        views.mana_provincial_overview,
+        name="mana_provincial_overview",
+    ),
+    path(
+        "mana/provincial/<int:province_id>/",
+        views.mana_provincial_card_detail,
+        name="mana_provincial_card_detail",
+    ),
+    path(
+        "mana/provincial/<int:province_id>/edit/",
+        views.mana_province_edit,
+        name="mana_province_edit",
+    ),
+    path(
+        "mana/provincial/<int:province_id>/delete/",
+        views.mana_province_delete,
+        name="mana_province_delete",
+    ),
+    path("mana/desk-review/", views.mana_desk_review, name="mana_desk_review"),
+    path("mana/survey/", views.mana_survey_module, name="mana_survey_module"),
+    path("mana/kii/", views.mana_key_informant_interviews, name="mana_kii"),
+    path("mana/playbook/", views.mana_playbook, name="mana_playbook"),
+    path(
+        "mana/activity-planner/",
+        views.mana_activity_planner,
+        name="mana_activity_planner",
+    ),
+    path("mana/activity-log/", views.mana_activity_log, name="mana_activity_log"),
+    path(
+        "mana/activity-processing/",
+        views.mana_activity_processing,
+        name="mana_activity_processing",
+    ),
+    path("mana/new-assessment/", views.mana_new_assessment, name="mana_new_assessment"),
+    path(
+        "mana/manage-assessments/",
+        views.mana_manage_assessments,
+        name="mana_manage_assessments",
+    ),
+    path(
+        "mana/manage-assessments/<uuid:assessment_id>/",
+        views.mana_assessment_detail,
+        name="mana_assessment_detail",
+    ),
+    path(
+        "mana/manage-assessments/<uuid:assessment_id>/edit/",
+        views.mana_assessment_edit,
+        name="mana_assessment_edit",
+    ),
+    path(
+        "mana/manage-assessments/<uuid:assessment_id>/delete/",
+        views.mana_assessment_delete,
+        name="mana_assessment_delete",
+    ),
+    path(
+        "mana/geographic-data/", views.mana_geographic_data, name="mana_geographic_data"
+    ),
+    path("coordination/", views.coordination_home, name="coordination_home"),
+    path(
+        "coordination/organizations/",
+        views.coordination_organizations,
+        name="coordination_organizations",
+    ),
+    path(
+        "coordination/organizations/add/",
+        views.organization_create,
+        name="coordination_organization_add",
+    ),
+    path(
+        "coordination/organizations/<uuid:organization_id>/edit/",
+        views.organization_edit,
+        name="coordination_organization_edit",
+    ),
+    path(
+        "coordination/organizations/<uuid:organization_id>/delete/",
+        views.organization_delete,
+        name="coordination_organization_delete",
+    ),
+    path(
+        "coordination/organizations/<uuid:organization_id>/",
+        views.organization_detail,
+        name="coordination_organization_detail",
+    ),
+    path(
+        "coordination/partnerships/",
+        views.coordination_partnerships,
+        name="coordination_partnerships",
+    ),
+    path(
+        "coordination/partnerships/add/",
+        views.partnership_create,
+        name="coordination_partnership_add",
+    ),
+    path(
+        "coordination/partnerships/<uuid:partnership_id>/",
+        views.partnership_detail,
+        name="coordination_partnership_view",
+    ),
+    path(
+        "coordination/partnerships/<uuid:partnership_id>/edit/",
+        views.partnership_update,
+        name="coordination_partnership_edit",
+    ),
+    path(
+        "coordination/partnerships/<uuid:partnership_id>/delete/",
+        views.partnership_delete,
+        name="coordination_partnership_delete",
+    ),
+    path("coordination/events/add/", views.event_create, name="coordination_event_add"),
+    path(
+        "coordination/events/recurring/add/",
+        coordination_views.event_create_recurring,
+        name="coordination_event_recurring_add",
+    ),
+    path(
+        "coordination/events/<uuid:event_id>/edit-instance/",
+        coordination_views.event_edit_instance,
+        name="coordination_event_edit_instance",
+    ),
+    path(
+        "coordination/events/<uuid:event_id>/attendance/",
+        coordination_views.event_attendance_tracker,
+        name="coordination_event_attendance",
+    ),
+    path(
+        "coordination/events/<uuid:event_id>/attendance/count/",
+        coordination_views.event_attendance_count,
+        name="coordination_event_attendance_count",
+    ),
+    path(
+        "coordination/events/<uuid:event_id>/attendance/participants/",
+        coordination_views.event_participant_list,
+        name="coordination_event_participant_list",
+    ),
+    path(
+        "coordination/events/<uuid:event_id>/check-in/",
+        coordination_views.event_check_in,
+        name="coordination_event_check_in",
+    ),
+    path("coordination/events/", views.coordination_events, name="coordination_events"),
+    path(
+        "coordination/calendar/",
+        views.coordination_calendar,
+        name="coordination_calendar",
+    ),
+    path(
+        "coordination/activities/add/",
+        views.coordination_activity_create,
+        name="coordination_activity_add",
+    ),
+    path(
+        "coordination/view-all/",
+        views.coordination_view_all,
+        name="coordination_view_all",
+    ),
+    path("recommendations/", views.recommendations_home, name="recommendations_home"),
+    path("recommendations/new/", views.recommendations_new, name="recommendations_new"),
+    path(
+        "recommendations/manage/",
+        views.recommendations_manage,
+        name="recommendations_manage",
+    ),
+    path(
+        "recommendations/area/<str:area_slug>/",
+        views.recommendations_by_area,
+        name="recommendations_by_area",
+    ),
+    path("oobc-management/", views.oobc_management_home, name="oobc_management_home"),
+    path("oobc-management/calendar/", views.oobc_calendar, name="oobc_calendar"),
+    path(
+        "oobc-management/calendar/feed/json/",
+        views.oobc_calendar_feed_json,
+        name="oobc_calendar_feed_json",
+    ),
+    path(
+        "oobc-management/calendar/feed/ics/",
+        views.oobc_calendar_feed_ics,
+        name="oobc_calendar_feed_ics",
+    ),
+    path(
+        "oobc-management/calendar/brief/",
+        views.oobc_calendar_brief,
+        name="oobc_calendar_brief",
+    ),
+    path(
+        "oobc-management/calendar/preferences/",
+        views.calendar_preferences,
+        name="calendar_preferences",
+    ),
     # Calendar Resource Management
-    path('oobc-management/calendar/resources/', views.resource_list, name='calendar_resource_list'),
-    path('oobc-management/calendar/resources/add/', views.resource_create, name='calendar_resource_create'),
-    path('oobc-management/calendar/resources/<int:resource_id>/', views.resource_detail, name='calendar_resource_detail'),
-    path('oobc-management/calendar/resources/<int:resource_id>/edit/', views.resource_edit, name='calendar_resource_edit'),
-    path('oobc-management/calendar/resources/<int:resource_id>/delete/', views.resource_delete, name='calendar_resource_delete'),
-    path('oobc-management/calendar/resources/<int:resource_id>/calendar/', views.resource_calendar, name='calendar_resource_calendar'),
-    path('oobc-management/calendar/resources/<int:resource_id>/book/', views.booking_request, name='calendar_booking_request'),
-    path('oobc-management/calendar/bookings/', views.booking_list, name='calendar_booking_list'),
-    path('oobc-management/calendar/bookings/request/', views.booking_request, name='calendar_booking_request_general'),
-    path('oobc-management/calendar/bookings/<int:booking_id>/approve/', views.booking_approve, name='calendar_booking_approve'),
-
+    path(
+        "oobc-management/calendar/resources/",
+        views.resource_list,
+        name="calendar_resource_list",
+    ),
+    path(
+        "oobc-management/calendar/resources/add/",
+        views.resource_create,
+        name="calendar_resource_create",
+    ),
+    path(
+        "oobc-management/calendar/resources/<int:resource_id>/",
+        views.resource_detail,
+        name="calendar_resource_detail",
+    ),
+    path(
+        "oobc-management/calendar/resources/<int:resource_id>/edit/",
+        views.resource_edit,
+        name="calendar_resource_edit",
+    ),
+    path(
+        "oobc-management/calendar/resources/<int:resource_id>/delete/",
+        views.resource_delete,
+        name="calendar_resource_delete",
+    ),
+    path(
+        "oobc-management/calendar/resources/<int:resource_id>/calendar/",
+        views.resource_calendar,
+        name="calendar_resource_calendar",
+    ),
+    path(
+        "oobc-management/calendar/resources/<int:resource_id>/book/",
+        views.booking_request,
+        name="calendar_booking_request",
+    ),
+    path(
+        "oobc-management/calendar/bookings/",
+        views.booking_list,
+        name="calendar_booking_list",
+    ),
+    path(
+        "oobc-management/calendar/bookings/request/",
+        views.booking_request,
+        name="calendar_booking_request_general",
+    ),
+    path(
+        "oobc-management/calendar/bookings/<int:booking_id>/approve/",
+        views.booking_approve,
+        name="calendar_booking_approve",
+    ),
     # Phase 3: Enhanced Resource Booking
-    path('coordination/resources/<int:resource_id>/bookings/feed/', coordination_views.resource_bookings_feed, name='coordination_resource_bookings_feed'),
-    path('coordination/resources/check-conflicts/', coordination_views.calendar_check_conflicts, name='coordination_check_conflicts'),
-    path('coordination/resources/<int:resource_id>/book-enhanced/', coordination_views.resource_booking_form, name='coordination_resource_booking_form'),
-
+    path(
+        "coordination/resources/<int:resource_id>/bookings/feed/",
+        coordination_views.resource_bookings_feed,
+        name="coordination_resource_bookings_feed",
+    ),
+    path(
+        "coordination/resources/check-conflicts/",
+        coordination_views.calendar_check_conflicts,
+        name="coordination_check_conflicts",
+    ),
+    path(
+        "coordination/resources/<int:resource_id>/book-enhanced/",
+        coordination_views.resource_booking_form,
+        name="coordination_resource_booking_form",
+    ),
     # Staff Leave Management
-    path('oobc-management/staff/leave/', views.staff_leave_list, name='staff_leave_list'),
-    path('oobc-management/staff/leave/request/', views.staff_leave_request, name='staff_leave_request'),
-    path('oobc-management/staff/leave/<int:leave_id>/approve/', views.staff_leave_approve, name='staff_leave_approve'),
-
+    path(
+        "oobc-management/staff/leave/", views.staff_leave_list, name="staff_leave_list"
+    ),
+    path(
+        "oobc-management/staff/leave/request/",
+        views.staff_leave_request,
+        name="staff_leave_request",
+    ),
+    path(
+        "oobc-management/staff/leave/<int:leave_id>/approve/",
+        views.staff_leave_approve,
+        name="staff_leave_approve",
+    ),
     # Calendar Sharing
-    path('oobc-management/calendar/share/', views.calendar_share_create, name='calendar_share_create'),
-    path('oobc-management/calendar/share/manage/', views.calendar_share_manage, name='calendar_share_manage'),
-    path('calendar/shared/<str:token>/', views.calendar_share_view, name='calendar_share_view'),
-    path('oobc-management/calendar/share/<int:share_id>/toggle/', views.calendar_share_toggle, name='calendar_share_toggle'),
-    path('oobc-management/calendar/share/<int:share_id>/delete/', views.calendar_share_delete, name='calendar_share_delete'),
-
+    path(
+        "oobc-management/calendar/share/",
+        views.calendar_share_create,
+        name="calendar_share_create",
+    ),
+    path(
+        "oobc-management/calendar/share/manage/",
+        views.calendar_share_manage,
+        name="calendar_share_manage",
+    ),
+    path(
+        "calendar/shared/<str:token>/",
+        views.calendar_share_view,
+        name="calendar_share_view",
+    ),
+    path(
+        "oobc-management/calendar/share/<int:share_id>/toggle/",
+        views.calendar_share_toggle,
+        name="calendar_share_toggle",
+    ),
+    path(
+        "oobc-management/calendar/share/<int:share_id>/delete/",
+        views.calendar_share_delete,
+        name="calendar_share_delete",
+    ),
     # Event Attendance
-    path('coordination/events/<uuid:event_id>/check-in/', views.event_check_in, name='event_check_in'),
-    path('coordination/events/<uuid:event_id>/qr-code/', views.event_generate_qr, name='event_generate_qr'),
-    path('coordination/events/<uuid:event_id>/qr-scan/', views.event_scan_qr, name='event_scan_qr'),
-    path('coordination/events/<uuid:event_id>/attendance-report/', views.event_attendance_report, name='event_attendance_report'),
-
+    path(
+        "coordination/events/<uuid:event_id>/check-in/",
+        views.event_check_in,
+        name="event_check_in",
+    ),
+    path(
+        "coordination/events/<uuid:event_id>/qr-code/",
+        views.event_generate_qr,
+        name="event_generate_qr",
+    ),
+    path(
+        "coordination/events/<uuid:event_id>/qr-scan/",
+        views.event_scan_qr,
+        name="event_scan_qr",
+    ),
+    path(
+        "coordination/events/<uuid:event_id>/attendance-report/",
+        views.event_attendance_report,
+        name="event_attendance_report",
+    ),
     # Calendar API (drag-and-drop, interactive features)
-    path('api/calendar/event/update/', views.calendar_event_update, name='calendar_event_update'),
-
-    path('oobc-management/staff/', views.staff_management, name='staff_management'),
-    path('oobc-management/staff/tasks/', views.staff_task_board, name='staff_task_board'),
-    path('oobc-management/staff/tasks/modal/new/', views.staff_task_modal_create, name='staff_task_modal_create'),
-    path('oobc-management/staff/tasks/<int:task_id>/modal/', views.staff_task_modal, name='staff_task_modal'),
-    path('oobc-management/staff/tasks/<int:task_id>/delete/', views.staff_task_delete, name='staff_task_delete'),
-    path('oobc-management/staff/tasks/<int:task_id>/inline/', views.staff_task_inline_update, name='staff_task_inline_update'),
-    path('oobc-management/staff/tasks/<int:task_id>/update-field/', views.staff_task_update_field, name='staff_task_update_field'),
-    path('oobc-management/staff/tasks/update/', views.staff_task_update, name='staff_task_update'),
-    path('oobc-management/staff/api/assignees/', views.staff_api_assignees, name='staff_api_assignees'),
-    path('oobc-management/staff/api/teams/', views.staff_api_teams, name='staff_api_teams'),
-    path('oobc-management/staff/tasks/new/', views.staff_task_create, name='staff_task_create'),
-
+    path(
+        "api/calendar/event/update/",
+        views.calendar_event_update,
+        name="calendar_event_update",
+    ),
+    path("oobc-management/staff/", views.staff_management, name="staff_management"),
+    path(
+        "oobc-management/staff/tasks/", views.staff_task_board, name="staff_task_board"
+    ),
+    path(
+        "oobc-management/staff/tasks/modal/new/",
+        views.staff_task_modal_create,
+        name="staff_task_modal_create",
+    ),
+    path(
+        "oobc-management/staff/tasks/<int:task_id>/modal/",
+        views.staff_task_modal,
+        name="staff_task_modal",
+    ),
+    path(
+        "oobc-management/staff/tasks/<int:task_id>/delete/",
+        views.staff_task_delete,
+        name="staff_task_delete",
+    ),
+    path(
+        "oobc-management/staff/tasks/<int:task_id>/inline/",
+        views.staff_task_inline_update,
+        name="staff_task_inline_update",
+    ),
+    path(
+        "oobc-management/staff/tasks/<int:task_id>/update-field/",
+        views.staff_task_update_field,
+        name="staff_task_update_field",
+    ),
+    path(
+        "oobc-management/staff/tasks/update/",
+        views.staff_task_update,
+        name="staff_task_update",
+    ),
+    path(
+        "oobc-management/staff/api/assignees/",
+        views.staff_api_assignees,
+        name="staff_api_assignees",
+    ),
+    path(
+        "oobc-management/staff/api/teams/",
+        views.staff_api_teams,
+        name="staff_api_teams",
+    ),
+    path(
+        "oobc-management/staff/tasks/new/",
+        views.staff_task_create,
+        name="staff_task_create",
+    ),
     # Enhanced Task Management URLs
-    path('oobc-management/staff/tasks/dashboard/', views.enhanced_task_dashboard, name='enhanced_task_dashboard'),
-    path('oobc-management/staff/tasks/domain/<str:domain>/', views.tasks_by_domain, name='tasks_by_domain'),
-    path('oobc-management/staff/tasks/assessment/<uuid:assessment_id>/', views.assessment_tasks, name='assessment_tasks'),
-    path('oobc-management/staff/tasks/event/<uuid:event_id>/', views.event_tasks, name='event_tasks'),
-    path('oobc-management/staff/tasks/policy/<uuid:policy_id>/', views.policy_tasks, name='policy_tasks'),
-    path('oobc-management/staff/tasks/ppa/<uuid:ppa_id>/', views.ppa_tasks, name='ppa_tasks'),
-    path('oobc-management/staff/tasks/service/<uuid:service_id>/', views.service_tasks, name='service_tasks'),
-    path('oobc-management/staff/tasks/<int:task_id>/complete/', views.task_complete, name='task_complete'),
-    path('oobc-management/staff/tasks/<int:task_id>/start/', views.task_start, name='task_start'),
-    path('oobc-management/staff/tasks/<int:task_id>/assign/', views.task_assign, name='task_assign'),
-
+    path(
+        "oobc-management/staff/tasks/dashboard/",
+        views.enhanced_task_dashboard,
+        name="enhanced_task_dashboard",
+    ),
+    path(
+        "oobc-management/staff/tasks/domain/<str:domain>/",
+        views.tasks_by_domain,
+        name="tasks_by_domain",
+    ),
+    path(
+        "oobc-management/staff/tasks/assessment/<uuid:assessment_id>/",
+        views.assessment_tasks,
+        name="assessment_tasks",
+    ),
+    path(
+        "oobc-management/staff/tasks/event/<uuid:event_id>/",
+        views.event_tasks,
+        name="event_tasks",
+    ),
+    path(
+        "oobc-management/staff/tasks/policy/<uuid:policy_id>/",
+        views.policy_tasks,
+        name="policy_tasks",
+    ),
+    path(
+        "oobc-management/staff/tasks/ppa/<uuid:ppa_id>/",
+        views.ppa_tasks,
+        name="ppa_tasks",
+    ),
+    path(
+        "oobc-management/staff/tasks/service/<uuid:service_id>/",
+        views.service_tasks,
+        name="service_tasks",
+    ),
+    path(
+        "oobc-management/staff/tasks/<int:task_id>/complete/",
+        views.task_complete,
+        name="task_complete",
+    ),
+    path(
+        "oobc-management/staff/tasks/<int:task_id>/start/",
+        views.task_start,
+        name="task_start",
+    ),
+    path(
+        "oobc-management/staff/tasks/<int:task_id>/assign/",
+        views.task_assign,
+        name="task_assign",
+    ),
     # Task Analytics URLs
-    path('oobc-management/staff/tasks/analytics/', views.task_analytics, name='task_analytics'),
-    path('oobc-management/staff/tasks/analytics/<str:domain>/', views.domain_task_analytics, name='domain_task_analytics'),
-
+    path(
+        "oobc-management/staff/tasks/analytics/",
+        views.task_analytics,
+        name="task_analytics",
+    ),
+    path(
+        "oobc-management/staff/tasks/analytics/<str:domain>/",
+        views.domain_task_analytics,
+        name="domain_task_analytics",
+    ),
     # Task Template URLs
-    path('oobc-management/staff/task-templates/', views.task_template_list, name='task_template_list'),
-    path('oobc-management/staff/task-templates/<int:template_id>/', views.task_template_detail, name='task_template_detail'),
-    path('oobc-management/staff/task-templates/<int:template_id>/instantiate/', views.instantiate_template, name='instantiate_template'),
-
-    path('oobc-management/staff/teams/assign/', views.staff_team_assign, name='staff_team_assign'),
-    path('oobc-management/staff/teams/manage/', views.staff_team_manage, name='staff_team_manage'),
-    path('oobc-management/staff/profiles/', views.staff_profiles_list, name='staff_profiles_list'),
-    path('oobc-management/staff/profiles/add/', views.staff_profile_create, name='staff_profile_create'),
-    path('oobc-management/staff/profiles/<int:pk>/', views.staff_profiles_detail, name='staff_profiles_detail'),
-    path('oobc-management/staff/profiles/<int:pk>/edit/', views.staff_profile_update, name='staff_profile_update'),
-    path('oobc-management/staff/profiles/<int:pk>/delete/', views.staff_profile_delete, name='staff_profile_delete'),
-    path('oobc-management/staff/performance/', views.staff_performance_dashboard, name='staff_performance_dashboard'),
-    path('oobc-management/staff/training/', views.staff_training_development, name='staff_training_development'),
-    path('oobc-management/planning-budgeting/', views.planning_budgeting, name='planning_budgeting'),
-    path('oobc-management/user-approvals/', views.user_approvals, name='user_approvals'),
-    path('oobc-management/user-approvals/<int:user_id>/action/', views.user_approval_action, name='user_approval_action'),
-
+    path(
+        "oobc-management/staff/task-templates/",
+        views.task_template_list,
+        name="task_template_list",
+    ),
+    path(
+        "oobc-management/staff/task-templates/<int:template_id>/",
+        views.task_template_detail,
+        name="task_template_detail",
+    ),
+    path(
+        "oobc-management/staff/task-templates/<int:template_id>/instantiate/",
+        views.instantiate_template,
+        name="instantiate_template",
+    ),
+    path(
+        "oobc-management/staff/teams/assign/",
+        views.staff_team_assign,
+        name="staff_team_assign",
+    ),
+    path(
+        "oobc-management/staff/teams/manage/",
+        views.staff_team_manage,
+        name="staff_team_manage",
+    ),
+    path(
+        "oobc-management/staff/profiles/",
+        views.staff_profiles_list,
+        name="staff_profiles_list",
+    ),
+    path(
+        "oobc-management/staff/profiles/add/",
+        views.staff_profile_create,
+        name="staff_profile_create",
+    ),
+    path(
+        "oobc-management/staff/profiles/<int:pk>/",
+        views.staff_profiles_detail,
+        name="staff_profiles_detail",
+    ),
+    path(
+        "oobc-management/staff/profiles/<int:pk>/edit/",
+        views.staff_profile_update,
+        name="staff_profile_update",
+    ),
+    path(
+        "oobc-management/staff/profiles/<int:pk>/delete/",
+        views.staff_profile_delete,
+        name="staff_profile_delete",
+    ),
+    path(
+        "oobc-management/staff/performance/",
+        views.staff_performance_dashboard,
+        name="staff_performance_dashboard",
+    ),
+    path(
+        "oobc-management/staff/training/",
+        views.staff_training_development,
+        name="staff_training_development",
+    ),
+    path(
+        "oobc-management/planning-budgeting/",
+        views.planning_budgeting,
+        name="planning_budgeting",
+    ),
+    path(
+        "oobc-management/user-approvals/", views.user_approvals, name="user_approvals"
+    ),
+    path(
+        "oobc-management/user-approvals/<int:user_id>/action/",
+        views.user_approval_action,
+        name="user_approval_action",
+    ),
     # Phase 1: Enhanced Dashboard - HTMX Endpoints
-    path('dashboard/metrics/', views.dashboard_metrics, name='dashboard_metrics'),
-    path('dashboard/activity/', views.dashboard_activity, name='dashboard_activity'),
-    path('dashboard/alerts/', views.dashboard_alerts, name='dashboard_alerts'),
-
+    path("dashboard/metrics/", views.dashboard_metrics, name="dashboard_metrics"),
+    path("dashboard/activity/", views.dashboard_activity, name="dashboard_activity"),
+    path("dashboard/alerts/", views.dashboard_alerts, name="dashboard_alerts"),
     # Phase 2: Planning & Budgeting Integration Dashboards
-    path('oobc-management/gap-analysis/', views.gap_analysis_dashboard, name='gap_analysis_dashboard'),
-    path('oobc-management/policy-budget-matrix/', views.policy_budget_matrix, name='policy_budget_matrix'),
-    path('oobc-management/mao-focal-persons/', views.mao_focal_persons_registry, name='mao_focal_persons_registry'),
-    path('oobc-management/community-needs/submit/', views.community_need_submit, name='community_need_submit'),
-    path('oobc-management/community-needs/', views.community_needs_summary, name='community_needs_summary'),
-
+    path(
+        "oobc-management/gap-analysis/",
+        views.gap_analysis_dashboard,
+        name="gap_analysis_dashboard",
+    ),
+    path(
+        "oobc-management/policy-budget-matrix/",
+        views.policy_budget_matrix,
+        name="policy_budget_matrix",
+    ),
+    path(
+        "oobc-management/mao-focal-persons/",
+        views.mao_focal_persons_registry,
+        name="mao_focal_persons_registry",
+    ),
+    path(
+        "oobc-management/community-needs/submit/",
+        views.community_need_submit,
+        name="community_need_submit",
+    ),
+    path(
+        "oobc-management/community-needs/",
+        views.community_needs_summary,
+        name="community_needs_summary",
+    ),
     # Phase 4: Participatory Budgeting - Community Voting
-    path('community/voting/', views.community_voting_browse, name='community_voting_browse'),
-    path('community/voting/vote/', views.community_voting_vote, name='community_voting_vote'),
-    path('community/voting/results/', views.community_voting_results, name='community_voting_results'),
-
+    path(
+        "community/voting/",
+        views.community_voting_browse,
+        name="community_voting_browse",
+    ),
+    path(
+        "community/voting/vote/",
+        views.community_voting_vote,
+        name="community_voting_vote",
+    ),
+    path(
+        "community/voting/results/",
+        views.community_voting_results,
+        name="community_voting_results",
+    ),
     # Phase 4: Budget Feedback & Transparency
-    path('oobc-management/budget-feedback/', views.budget_feedback_dashboard, name='budget_feedback_dashboard'),
-    path('services/feedback/<uuid:application_id>/', views.submit_service_feedback, name='submit_service_feedback'),
-    path('transparency/', views.transparency_dashboard, name='transparency_dashboard'),
-
+    path(
+        "oobc-management/budget-feedback/",
+        views.budget_feedback_dashboard,
+        name="budget_feedback_dashboard",
+    ),
+    path(
+        "services/feedback/<uuid:application_id>/",
+        views.submit_service_feedback,
+        name="submit_service_feedback",
+    ),
+    path("transparency/", views.transparency_dashboard, name="transparency_dashboard"),
     # Phase 5: Strategic Planning Integration
-    path('oobc-management/strategic-goals/', views.strategic_goals_dashboard, name='strategic_goals_dashboard'),
-    path('oobc-management/annual-planning/', views.annual_planning_dashboard, name='annual_planning_dashboard'),
-    path('oobc-management/rdp-alignment/', views.regional_development_alignment, name='regional_development_alignment'),
-
+    path(
+        "oobc-management/strategic-goals/",
+        views.strategic_goals_dashboard,
+        name="strategic_goals_dashboard",
+    ),
+    path(
+        "oobc-management/annual-planning/",
+        views.annual_planning_dashboard,
+        name="annual_planning_dashboard",
+    ),
+    path(
+        "oobc-management/rdp-alignment/",
+        views.regional_development_alignment,
+        name="regional_development_alignment",
+    ),
     # Phase 6: Scenario Planning & Budget Optimization
-    path('oobc-management/scenarios/', views.scenario_list, name='scenario_list'),
-    path('oobc-management/scenarios/create/', views.scenario_create, name='scenario_create'),
-    path('oobc-management/scenarios/<uuid:scenario_id>/', views.scenario_detail, name='scenario_detail'),
-    path('oobc-management/scenarios/compare/', views.scenario_compare, name='scenario_compare'),
-    path('oobc-management/scenarios/<uuid:scenario_id>/optimize/', views.scenario_optimize, name='scenario_optimize'),
-
+    path("oobc-management/scenarios/", views.scenario_list, name="scenario_list"),
+    path(
+        "oobc-management/scenarios/create/",
+        views.scenario_create,
+        name="scenario_create",
+    ),
+    path(
+        "oobc-management/scenarios/<uuid:scenario_id>/",
+        views.scenario_detail,
+        name="scenario_detail",
+    ),
+    path(
+        "oobc-management/scenarios/compare/",
+        views.scenario_compare,
+        name="scenario_compare",
+    ),
+    path(
+        "oobc-management/scenarios/<uuid:scenario_id>/optimize/",
+        views.scenario_optimize,
+        name="scenario_optimize",
+    ),
     # Phase 7: Analytics & Forecasting
-    path('oobc-management/analytics/', views.analytics_dashboard, name='analytics_dashboard'),
-    path('oobc-management/forecasting/', views.budget_forecasting, name='budget_forecasting'),
-    path('oobc-management/trends/', views.trend_analysis, name='trend_analysis'),
-    path('oobc-management/impact/', views.impact_assessment, name='impact_assessment'),
-
+    path(
+        "oobc-management/analytics/",
+        views.analytics_dashboard,
+        name="analytics_dashboard",
+    ),
+    path(
+        "oobc-management/forecasting/",
+        views.budget_forecasting,
+        name="budget_forecasting",
+    ),
+    path("oobc-management/trends/", views.trend_analysis, name="trend_analysis"),
+    path("oobc-management/impact/", views.impact_assessment, name="impact_assessment"),
     # Data Import/Export/Report URLs
-    path('communities/import/', data_utils.import_communities_csv, name='import_communities'),
-    path('communities/export/', data_utils.export_communities, name='export_communities'),
-    path('communities/report/', data_utils.generate_obc_report, name='generate_obc_report'),
-    path('data-guidelines/', data_utils.data_guidelines, name='data_guidelines'),
-
-    path('', views.dashboard, name='home'),  # Default to dashboard
+    path(
+        "communities/import/",
+        data_utils.import_communities_csv,
+        name="import_communities",
+    ),
+    path(
+        "communities/export/", data_utils.export_communities, name="export_communities"
+    ),
+    path(
+        "communities/report/",
+        data_utils.generate_obc_report,
+        name="generate_obc_report",
+    ),
+    path("data-guidelines/", data_utils.data_guidelines, name="data_guidelines"),
+    path("", views.dashboard, name="home"),  # Default to dashboard
 ]

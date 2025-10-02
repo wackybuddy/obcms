@@ -24,23 +24,23 @@ class ProjectWorkflow(models.Model):
     """
 
     WORKFLOW_STAGES = [
-        ('need_identification', 'Need Identification'),
-        ('need_validation', 'Need Validation'),
-        ('policy_linkage', 'Policy Linkage'),
-        ('mao_coordination', 'MAO Coordination'),
-        ('budget_planning', 'Budget Planning'),
-        ('approval', 'Approval Process'),
-        ('implementation', 'Implementation'),
-        ('monitoring', 'Monitoring & Evaluation'),
-        ('completion', 'Completion'),
+        ("need_identification", "Need Identification"),
+        ("need_validation", "Need Validation"),
+        ("policy_linkage", "Policy Linkage"),
+        ("mao_coordination", "MAO Coordination"),
+        ("budget_planning", "Budget Planning"),
+        ("approval", "Approval Process"),
+        ("implementation", "Implementation"),
+        ("monitoring", "Monitoring & Evaluation"),
+        ("completion", "Completion"),
     ]
 
     PRIORITY_LEVELS = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('urgent', 'Urgent'),
-        ('critical', 'Critical'),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("urgent", "Urgent"),
+        ("critical", "Critical"),
     ]
 
     # Primary Key
@@ -48,41 +48,40 @@ class ProjectWorkflow(models.Model):
 
     # Core Relationships
     primary_need = models.OneToOneField(
-        'mana.Need',
+        "mana.Need",
         on_delete=models.CASCADE,
-        related_name='project_workflow',
-        help_text="Primary need driving this project"
+        related_name="project_workflow",
+        help_text="Primary need driving this project",
     )
 
     ppa = models.OneToOneField(
-        'monitoring.MonitoringEntry',
+        "monitoring.MonitoringEntry",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='project_workflow',
-        help_text="PPA implementing this project (created during budget planning stage)"
+        related_name="project_workflow",
+        help_text="PPA implementing this project (created during budget planning stage)",
     )
 
     # Workflow State
     current_stage = models.CharField(
         max_length=30,
         choices=WORKFLOW_STAGES,
-        default='need_identification',
+        default="need_identification",
         help_text="Current workflow stage",
         db_index=True,
     )
 
     stage_history = models.JSONField(
-        default=list,
-        help_text="History of stage transitions with timestamps and users"
+        default=list, help_text="History of stage transitions with timestamps and users"
     )
 
     # Priority
     priority_level = models.CharField(
         max_length=10,
         choices=PRIORITY_LEVELS,
-        default='medium',
-        help_text="Overall project priority"
+        default="medium",
+        help_text="Overall project priority",
     )
 
     # Participants
@@ -90,57 +89,49 @@ class ProjectWorkflow(models.Model):
         User,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='led_projects',
-        help_text="OOBC staff leading this project"
+        related_name="led_projects",
+        help_text="OOBC staff leading this project",
     )
 
     mao_focal_person = models.ForeignKey(
-        'coordination.MAOFocalPerson',
+        "coordination.MAOFocalPerson",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='coordinated_projects',
-        help_text="MAO focal person coordinating this project"
+        related_name="coordinated_projects",
+        help_text="MAO focal person coordinating this project",
     )
 
     # Timeline
     initiated_date = models.DateField(
-        default=timezone.now,
-        help_text="Date project workflow started"
+        default=timezone.now, help_text="Date project workflow started"
     )
 
     target_completion_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Target date for project completion"
+        null=True, blank=True, help_text="Target date for project completion"
     )
 
     actual_completion_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Actual date project was completed"
+        null=True, blank=True, help_text="Actual date project was completed"
     )
 
     # Progress Tracking
     overall_progress = models.IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        help_text="Overall project progress percentage (0-100%)"
+        help_text="Overall project progress percentage (0-100%)",
     )
 
     is_on_track = models.BooleanField(
-        default=True,
-        help_text="Whether project is on schedule"
+        default=True, help_text="Whether project is on schedule"
     )
 
     is_blocked = models.BooleanField(
-        default=False,
-        help_text="Whether project is blocked/stalled"
+        default=False, help_text="Whether project is blocked/stalled"
     )
 
     blocker_description = models.TextField(
-        blank=True,
-        help_text="Description of what's blocking the project"
+        blank=True, help_text="Description of what's blocking the project"
     )
 
     # Budget Status
@@ -149,29 +140,26 @@ class ProjectWorkflow(models.Model):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Estimated budget from need assessment (before PPA creation)"
+        help_text="Estimated budget from need assessment (before PPA creation)",
     )
 
     budget_approved = models.BooleanField(
         default=False,
-        help_text="Whether budget has been approved (tracked separately from PPA approval)"
+        help_text="Whether budget has been approved (tracked separately from PPA approval)",
     )
 
     budget_approval_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Date budget was approved"
+        null=True, blank=True, help_text="Date budget was approved"
     )
 
     # Notes and Documentation
     notes = models.TextField(
-        blank=True,
-        help_text="General notes and observations about this project"
+        blank=True, help_text="General notes and observations about this project"
     )
 
     lessons_learned = models.TextField(
         blank=True,
-        help_text="Lessons learned during project implementation (filled at completion)"
+        help_text="Lessons learned during project implementation (filled at completion)",
     )
 
     # Metadata
@@ -181,30 +169,34 @@ class ProjectWorkflow(models.Model):
         User,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='created_workflows',
-        help_text="User who created this workflow"
+        related_name="created_workflows",
+        help_text="User who created this workflow",
     )
 
     class Meta:
         verbose_name = "Project Workflow"
         verbose_name_plural = "Project Workflows"
-        ordering = ['-initiated_date', '-created_at']
+        ordering = ["-initiated_date", "-created_at"]
         indexes = [
-            models.Index(fields=['current_stage', 'initiated_date']),
-            models.Index(fields=['project_lead', 'current_stage']),
-            models.Index(fields=['mao_focal_person', 'current_stage']),
-            models.Index(fields=['priority_level', 'current_stage']),
-            models.Index(fields=['is_on_track', 'current_stage']),
+            models.Index(fields=["current_stage", "initiated_date"]),
+            models.Index(fields=["project_lead", "current_stage"]),
+            models.Index(fields=["mao_focal_person", "current_stage"]),
+            models.Index(fields=["priority_level", "current_stage"]),
+            models.Index(fields=["is_on_track", "current_stage"]),
         ]
 
     def __str__(self):
-        return f"Workflow: {self.primary_need.title} ({self.get_current_stage_display()})"
+        return (
+            f"Workflow: {self.primary_need.title} ({self.get_current_stage_display()})"
+        )
 
     def get_absolute_url(self):
         """Get URL for this workflow detail page."""
-        return reverse('project_central:project_workflow_detail', kwargs={'workflow_id': self.id})
+        return reverse(
+            "project_central:project_workflow_detail", kwargs={"workflow_id": self.id}
+        )
 
-    def advance_stage(self, new_stage, user, notes=''):
+    def advance_stage(self, new_stage, user, notes=""):
         """
         Advance workflow to next stage with validation.
 
@@ -218,12 +210,12 @@ class ProjectWorkflow(models.Model):
         """
         # Add to stage history
         history_entry = {
-            'stage': new_stage,
-            'previous_stage': self.current_stage,
-            'timestamp': timezone.now().isoformat(),
-            'user': user.username,
-            'user_id': user.id,
-            'notes': notes,
+            "stage": new_stage,
+            "previous_stage": self.current_stage,
+            "timestamp": timezone.now().isoformat(),
+            "user": user.username,
+            "user_id": user.id,
+            "notes": notes,
         }
 
         if not isinstance(self.stage_history, list):
@@ -252,6 +244,7 @@ class ProjectWorkflow(models.Model):
         except Exception as e:
             # Log the error but don't fail the stage advancement
             import logging
+
             logger = logging.getLogger(__name__)
             logger.error(f"Error triggering stage actions for workflow {self.id}: {e}")
 
@@ -277,13 +270,13 @@ class ProjectWorkflow(models.Model):
             return False, "Cannot skip stages. Must advance sequentially."
 
         # Stage-specific validation
-        if new_stage == 'budget_planning' and not self.primary_need.is_validated:
+        if new_stage == "budget_planning" and not self.primary_need.is_validated:
             return False, "Need must be validated before budget planning."
 
-        if new_stage == 'approval' and not self.ppa:
+        if new_stage == "approval" and not self.ppa:
             return False, "PPA must be created before approval stage."
 
-        if new_stage == 'implementation' and self.ppa and not self.budget_approved:
+        if new_stage == "implementation" and self.ppa and not self.budget_approved:
             return False, "Budget must be approved before implementation."
 
         return True, ""
@@ -295,7 +288,9 @@ class ProjectWorkflow(models.Model):
 
         # Find the last stage transition
         last_transition = self.stage_history[-1]
-        last_transition_date = timezone.datetime.fromisoformat(last_transition['timestamp']).date()
+        last_transition_date = timezone.datetime.fromisoformat(
+            last_transition["timestamp"]
+        ).date()
 
         return (timezone.now().date() - last_transition_date).days
 
@@ -304,20 +299,23 @@ class ProjectWorkflow(models.Model):
         if not self.target_completion_date:
             return False
 
-        return timezone.now().date() > self.target_completion_date and self.current_stage != 'completion'
+        return (
+            timezone.now().date() > self.target_completion_date
+            and self.current_stage != "completion"
+        )
 
     def get_stage_progress_percentage(self):
         """Calculate progress based on current stage."""
         stage_weights = {
-            'need_identification': 5,
-            'need_validation': 15,
-            'policy_linkage': 20,
-            'mao_coordination': 30,
-            'budget_planning': 40,
-            'approval': 50,
-            'implementation': 85,
-            'monitoring': 95,
-            'completion': 100,
+            "need_identification": 5,
+            "need_validation": 15,
+            "policy_linkage": 20,
+            "mao_coordination": 30,
+            "budget_planning": 40,
+            "approval": 50,
+            "implementation": 85,
+            "monitoring": 95,
+            "completion": 100,
         }
 
         return stage_weights.get(self.current_stage, 0)
@@ -332,18 +330,18 @@ class BudgetApprovalStage(models.Model):
     """
 
     STAGE_CHOICES = [
-        ('draft', 'Draft'),
-        ('technical_review', 'Technical Review'),
-        ('budget_review', 'Budget Review'),
-        ('executive_approval', 'Executive Approval'),
-        ('enacted', 'Enacted'),
+        ("draft", "Draft"),
+        ("technical_review", "Technical Review"),
+        ("budget_review", "Budget Review"),
+        ("executive_approval", "Executive Approval"),
+        ("enacted", "Enacted"),
     ]
 
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('returned', 'Returned for Revision'),
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("returned", "Returned for Revision"),
     ]
 
     # Identifiers
@@ -351,24 +349,22 @@ class BudgetApprovalStage(models.Model):
 
     # Related PPA
     ppa = models.ForeignKey(
-        'monitoring.MonitoringEntry',
+        "monitoring.MonitoringEntry",
         on_delete=models.CASCADE,
-        related_name='approval_stages',
-        help_text="PPA being approved"
+        related_name="approval_stages",
+        help_text="PPA being approved",
     )
 
     # Stage and Status
     stage = models.CharField(
-        max_length=30,
-        choices=STAGE_CHOICES,
-        help_text="Approval stage"
+        max_length=30, choices=STAGE_CHOICES, help_text="Approval stage"
     )
 
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
-        default='pending',
-        help_text="Current status of this approval stage"
+        default="pending",
+        help_text="Current status of this approval stage",
     )
 
     # Approval Details
@@ -377,20 +373,15 @@ class BudgetApprovalStage(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='budget_approvals',
-        help_text="User who approved/rejected this stage"
+        related_name="budget_approvals",
+        help_text="User who approved/rejected this stage",
     )
 
     approved_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="When this stage was approved/rejected"
+        null=True, blank=True, help_text="When this stage was approved/rejected"
     )
 
-    comments = models.TextField(
-        blank=True,
-        help_text="Reviewer comments and feedback"
-    )
+    comments = models.TextField(blank=True, help_text="Reviewer comments and feedback")
 
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
@@ -399,20 +390,20 @@ class BudgetApprovalStage(models.Model):
     class Meta:
         verbose_name = "Budget Approval Stage"
         verbose_name_plural = "Budget Approval Stages"
-        ordering = ['created_at']
-        unique_together = [['ppa', 'stage']]
+        ordering = ["created_at"]
+        unique_together = [["ppa", "stage"]]
         indexes = [
-            models.Index(fields=['ppa', 'stage']),
-            models.Index(fields=['status', 'stage']),
-            models.Index(fields=['approver', 'approved_at']),
+            models.Index(fields=["ppa", "stage"]),
+            models.Index(fields=["status", "stage"]),
+            models.Index(fields=["approver", "approved_at"]),
         ]
 
     def __str__(self):
         return f"{self.ppa.title} - {self.get_stage_display()} ({self.get_status_display()})"
 
-    def approve(self, user, comments=''):
+    def approve(self, user, comments=""):
         """Mark this stage as approved."""
-        self.status = 'approved'
+        self.status = "approved"
         self.approver = user
         self.approved_at = timezone.now()
         if comments:
@@ -421,7 +412,7 @@ class BudgetApprovalStage(models.Model):
 
     def reject(self, user, comments):
         """Mark this stage as rejected."""
-        self.status = 'rejected'
+        self.status = "rejected"
         self.approver = user
         self.approved_at = timezone.now()
         self.comments = comments
@@ -429,7 +420,7 @@ class BudgetApprovalStage(models.Model):
 
     def return_for_revision(self, user, comments):
         """Return this stage for revision."""
-        self.status = 'returned'
+        self.status = "returned"
         self.approver = user
         self.approved_at = timezone.now()
         self.comments = comments
@@ -445,31 +436,30 @@ class BudgetCeiling(models.Model):
     """
 
     SECTOR_CHOICES = [
-        ('economic', 'Economic Development'),
-        ('social', 'Social Development'),
-        ('infrastructure', 'Infrastructure'),
-        ('education', 'Education'),
-        ('health', 'Health'),
-        ('environment', 'Environment & Natural Resources'),
-        ('governance', 'Governance & Institutions'),
-        ('peace', 'Peace & Security'),
-        ('cultural', 'Cultural Development'),
+        ("economic", "Economic Development"),
+        ("social", "Social Development"),
+        ("infrastructure", "Infrastructure"),
+        ("education", "Education"),
+        ("health", "Health"),
+        ("environment", "Environment & Natural Resources"),
+        ("governance", "Governance & Institutions"),
+        ("peace", "Peace & Security"),
+        ("cultural", "Cultural Development"),
     ]
 
     FUNDING_SOURCE_CHOICES = [
-        ('gaa', 'General Appropriations Act (GAA)'),
-        ('block_grant', 'Block Grant'),
-        ('lgu', 'Local Government Unit'),
-        ('donor', 'Donor Funding'),
-        ('internal', 'Internal Revenue'),
-        ('others', 'Others'),
+        ("gaa", "General Appropriations Act (GAA)"),
+        ("block_grant", "Block Grant"),
+        ("lgu", "Local Government Unit"),
+        ("donor", "Donor Funding"),
+        ("internal", "Internal Revenue"),
+        ("others", "Others"),
     ]
 
     # Identifiers
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(
-        max_length=200,
-        help_text="Descriptive name for this budget ceiling"
+        max_length=200, help_text="Descriptive name for this budget ceiling"
     )
 
     # Scope
@@ -480,7 +470,7 @@ class BudgetCeiling(models.Model):
         choices=SECTOR_CHOICES,
         null=True,
         blank=True,
-        help_text="Sector this ceiling applies to (null = all sectors)"
+        help_text="Sector this ceiling applies to (null = all sectors)",
     )
 
     funding_source = models.CharField(
@@ -488,37 +478,34 @@ class BudgetCeiling(models.Model):
         choices=FUNDING_SOURCE_CHOICES,
         null=True,
         blank=True,
-        help_text="Funding source this ceiling applies to (null = all sources)"
+        help_text="Funding source this ceiling applies to (null = all sources)",
     )
 
     # Budget Ceiling
     ceiling_amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        help_text="Maximum budget allocation allowed"
+        max_digits=12, decimal_places=2, help_text="Maximum budget allocation allowed"
     )
 
     allocated_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
         default=0,
-        help_text="Total amount currently allocated (auto-calculated)"
+        help_text="Total amount currently allocated (auto-calculated)",
     )
 
     # Status
     is_active = models.BooleanField(
-        default=True,
-        help_text="Whether this ceiling is currently enforced"
+        default=True, help_text="Whether this ceiling is currently enforced"
     )
 
     enforcement_level = models.CharField(
         max_length=10,
         choices=[
-            ('soft', 'Soft Limit (Warning)'),
-            ('hard', 'Hard Limit (Rejection)'),
+            ("soft", "Soft Limit (Warning)"),
+            ("hard", "Hard Limit (Rejection)"),
         ],
-        default='hard',
-        help_text="Whether to warn or reject allocations exceeding ceiling"
+        default="hard",
+        help_text="Whether to warn or reject allocations exceeding ceiling",
     )
 
     # Metadata
@@ -528,7 +515,7 @@ class BudgetCeiling(models.Model):
         User,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='created_budget_ceilings'
+        related_name="created_budget_ceilings",
     )
 
     notes = models.TextField(blank=True)
@@ -536,12 +523,12 @@ class BudgetCeiling(models.Model):
     class Meta:
         verbose_name = "Budget Ceiling"
         verbose_name_plural = "Budget Ceilings"
-        ordering = ['-fiscal_year', 'sector', 'funding_source']
-        unique_together = [['fiscal_year', 'sector', 'funding_source']]
+        ordering = ["-fiscal_year", "sector", "funding_source"]
+        unique_together = [["fiscal_year", "sector", "funding_source"]]
         indexes = [
-            models.Index(fields=['fiscal_year', 'is_active']),
-            models.Index(fields=['sector', 'fiscal_year']),
-            models.Index(fields=['funding_source', 'fiscal_year']),
+            models.Index(fields=["fiscal_year", "is_active"]),
+            models.Index(fields=["sector", "fiscal_year"]),
+            models.Index(fields=["funding_source", "fiscal_year"]),
         ]
 
     def __str__(self):
@@ -584,33 +571,40 @@ class BudgetCeiling(models.Model):
         if self.allocated_amount + amount <= self.ceiling_amount:
             return True, ""
 
-        if self.enforcement_level == 'soft':
-            return True, f"Warning: Allocation would exceed ceiling by ₱{(self.allocated_amount + amount - self.ceiling_amount):,.2f}"
+        if self.enforcement_level == "soft":
+            return (
+                True,
+                f"Warning: Allocation would exceed ceiling by ₱{(self.allocated_amount + amount - self.ceiling_amount):,.2f}",
+            )
 
-        return False, f"Cannot allocate ₱{amount:,.2f}. Would exceed ceiling by ₱{(self.allocated_amount + amount - self.ceiling_amount):,.2f}"
+        return (
+            False,
+            f"Cannot allocate ₱{amount:,.2f}. Would exceed ceiling by ₱{(self.allocated_amount + amount - self.ceiling_amount):,.2f}",
+        )
 
     def update_allocated_amount(self):
         """Recalculate allocated amount from all relevant PPAs."""
         from monitoring.models import MonitoringEntry
 
         # Build filter conditions
-        filters = {'fiscal_year': self.fiscal_year}
+        filters = {"fiscal_year": self.fiscal_year}
 
         if self.sector:
-            filters['sector'] = self.sector
+            filters["sector"] = self.sector
 
         if self.funding_source:
-            filters['funding_source'] = self.funding_source
+            filters["funding_source"] = self.funding_source
 
         # Calculate total allocation
-        total = MonitoringEntry.objects.filter(
-            **filters
-        ).aggregate(
-            total=models.Sum('budget_allocation')
-        )['total'] or 0
+        total = (
+            MonitoringEntry.objects.filter(**filters).aggregate(
+                total=models.Sum("budget_allocation")
+            )["total"]
+            or 0
+        )
 
         self.allocated_amount = total
-        self.save(update_fields=['allocated_amount', 'updated_at'])
+        self.save(update_fields=["allocated_amount", "updated_at"])
 
         return self.allocated_amount
 
@@ -624,18 +618,17 @@ class BudgetScenario(models.Model):
     """
 
     STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('under_review', 'Under Review'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected'),
-        ('archived', 'Archived'),
+        ("draft", "Draft"),
+        ("under_review", "Under Review"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("archived", "Archived"),
     ]
 
     # Identifiers
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(
-        max_length=200,
-        help_text="Descriptive name for this scenario"
+        max_length=200, help_text="Descriptive name for this scenario"
     )
 
     description = models.TextField(
@@ -646,54 +639,47 @@ class BudgetScenario(models.Model):
     fiscal_year = models.IntegerField(help_text="Fiscal year this scenario applies to")
 
     # Status
-    status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='draft'
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
 
     is_baseline = models.BooleanField(
         default=False,
-        help_text="Whether this is the baseline scenario (reality/status quo)"
+        help_text="Whether this is the baseline scenario (reality/status quo)",
     )
 
     # Budget Envelope
     total_budget_envelope = models.DecimalField(
         max_digits=12,
         decimal_places=2,
-        help_text="Total budget available in this scenario"
+        help_text="Total budget available in this scenario",
     )
 
     # Scenario Data (stored as JSON for flexibility)
     allocation_by_sector = models.JSONField(
-        default=dict,
-        help_text="Budget allocation breakdown by sector"
+        default=dict, help_text="Budget allocation breakdown by sector"
     )
 
     allocation_by_source = models.JSONField(
-        default=dict,
-        help_text="Budget allocation breakdown by funding source"
+        default=dict, help_text="Budget allocation breakdown by funding source"
     )
 
     allocation_by_region = models.JSONField(
-        default=dict,
-        help_text="Budget allocation breakdown by region"
+        default=dict, help_text="Budget allocation breakdown by region"
     )
 
     key_assumptions = models.JSONField(
-        default=list,
-        help_text="List of key assumptions underlying this scenario"
+        default=list, help_text="List of key assumptions underlying this scenario"
     )
 
     expected_outcomes = models.JSONField(
-        default=list,
-        help_text="Expected outcomes if this scenario is implemented"
+        default=list, help_text="Expected outcomes if this scenario is implemented"
     )
 
     # Analysis
     strengths = models.TextField(blank=True, help_text="Strengths of this scenario")
     weaknesses = models.TextField(blank=True, help_text="Weaknesses of this scenario")
-    opportunities = models.TextField(blank=True, help_text="Opportunities this scenario enables")
+    opportunities = models.TextField(
+        blank=True, help_text="Opportunities this scenario enables"
+    )
     threats = models.TextField(blank=True, help_text="Threats/risks in this scenario")
 
     # Metadata
@@ -703,7 +689,7 @@ class BudgetScenario(models.Model):
         User,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='created_project_scenarios'
+        related_name="created_project_scenarios",
     )
 
     approved_by = models.ForeignKey(
@@ -711,7 +697,7 @@ class BudgetScenario(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='approved_scenarios'
+        related_name="approved_scenarios",
     )
 
     approved_date = models.DateTimeField(null=True, blank=True)
@@ -719,10 +705,10 @@ class BudgetScenario(models.Model):
     class Meta:
         verbose_name = "Budget Scenario"
         verbose_name_plural = "Budget Scenarios"
-        ordering = ['-fiscal_year', '-created_at']
+        ordering = ["-fiscal_year", "-created_at"]
         indexes = [
-            models.Index(fields=['fiscal_year', 'status']),
-            models.Index(fields=['is_baseline', 'fiscal_year']),
+            models.Index(fields=["fiscal_year", "status"]),
+            models.Index(fields=["is_baseline", "fiscal_year"]),
         ]
 
     def __str__(self):
@@ -752,8 +738,7 @@ class BudgetScenario(models.Model):
         """
         try:
             baseline = BudgetScenario.objects.get(
-                fiscal_year=self.fiscal_year,
-                is_baseline=True
+                fiscal_year=self.fiscal_year, is_baseline=True
             )
         except BudgetScenario.DoesNotExist:
             return {"error": "No baseline scenario found for this fiscal year"}
@@ -763,24 +748,40 @@ class BudgetScenario(models.Model):
 
         # Calculate differences
         comparison = {
-            'total_budget_diff': self.total_budget_envelope - baseline.total_budget_envelope,
-            'total_budget_diff_pct': ((self.total_budget_envelope - baseline.total_budget_envelope) / baseline.total_budget_envelope * 100) if baseline.total_budget_envelope > 0 else 0,
-            'sector_differences': {},
+            "total_budget_diff": self.total_budget_envelope
+            - baseline.total_budget_envelope,
+            "total_budget_diff_pct": (
+                (
+                    (self.total_budget_envelope - baseline.total_budget_envelope)
+                    / baseline.total_budget_envelope
+                    * 100
+                )
+                if baseline.total_budget_envelope > 0
+                else 0
+            ),
+            "sector_differences": {},
         }
 
         # Compare sector allocations
-        all_sectors = set(list(self.allocation_by_sector.keys()) + list(baseline.allocation_by_sector.keys()))
+        all_sectors = set(
+            list(self.allocation_by_sector.keys())
+            + list(baseline.allocation_by_sector.keys())
+        )
         for sector in all_sectors:
             this_amount = self.allocation_by_sector.get(sector, 0)
             baseline_amount = baseline.allocation_by_sector.get(sector, 0)
             diff = this_amount - baseline_amount
-            diff_pct = (diff / baseline_amount * 100) if baseline_amount > 0 else (100 if this_amount > 0 else 0)
+            diff_pct = (
+                (diff / baseline_amount * 100)
+                if baseline_amount > 0
+                else (100 if this_amount > 0 else 0)
+            )
 
-            comparison['sector_differences'][sector] = {
-                'amount_diff': diff,
-                'percent_diff': diff_pct,
-                'this_scenario': this_amount,
-                'baseline': baseline_amount,
+            comparison["sector_differences"][sector] = {
+                "amount_diff": diff,
+                "percent_diff": diff_pct,
+                "this_scenario": this_amount,
+                "baseline": baseline_amount,
             }
 
         return comparison
@@ -795,25 +796,25 @@ class Alert(models.Model):
     """
 
     ALERT_TYPES = [
-        ('unfunded_needs', 'Unfunded High-Priority Needs'),
-        ('overdue_ppa', 'Overdue PPA'),
-        ('pending_mao_report', 'Pending MAO Quarterly Report'),
-        ('budget_ceiling', 'Budget Ceiling Alert'),
-        ('policy_lagging', 'Policy Implementation Lagging'),
-        ('approval_bottleneck', 'Budget Approval Bottleneck'),
-        ('disbursement_delay', 'Disbursement Delay'),
-        ('underspending', 'Underspending Alert'),
-        ('overspending', 'Overspending Warning'),
-        ('workflow_blocked', 'Workflow Blocked'),
-        ('milestone_missed', 'Milestone Missed'),
+        ("unfunded_needs", "Unfunded High-Priority Needs"),
+        ("overdue_ppa", "Overdue PPA"),
+        ("pending_mao_report", "Pending MAO Quarterly Report"),
+        ("budget_ceiling", "Budget Ceiling Alert"),
+        ("policy_lagging", "Policy Implementation Lagging"),
+        ("approval_bottleneck", "Budget Approval Bottleneck"),
+        ("disbursement_delay", "Disbursement Delay"),
+        ("underspending", "Underspending Alert"),
+        ("overspending", "Overspending Warning"),
+        ("workflow_blocked", "Workflow Blocked"),
+        ("milestone_missed", "Milestone Missed"),
     ]
 
     SEVERITY_LEVELS = [
-        ('info', 'Information'),
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-        ('critical', 'Critical'),
+        ("info", "Information"),
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+        ("critical", "Critical"),
     ]
 
     # Identifiers
@@ -829,15 +830,14 @@ class Alert(models.Model):
     severity = models.CharField(
         max_length=10,
         choices=SEVERITY_LEVELS,
-        default='medium',
+        default="medium",
         help_text="Severity level of this alert",
         db_index=True,
     )
 
     # Content
     title = models.CharField(
-        max_length=200,
-        help_text="Short title describing the alert"
+        max_length=200, help_text="Short title describing the alert"
     )
 
     description = models.TextField(
@@ -846,61 +846,60 @@ class Alert(models.Model):
 
     # Related Objects (nullable to support different alert types)
     related_workflow = models.ForeignKey(
-        'ProjectWorkflow',
+        "ProjectWorkflow",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='alerts',
-        help_text="Related project workflow (if applicable)"
+        related_name="alerts",
+        help_text="Related project workflow (if applicable)",
     )
 
     related_ppa = models.ForeignKey(
-        'monitoring.MonitoringEntry',
+        "monitoring.MonitoringEntry",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='alerts',
-        help_text="Related PPA (if applicable)"
+        related_name="alerts",
+        help_text="Related PPA (if applicable)",
     )
 
     related_need = models.ForeignKey(
-        'mana.Need',
+        "mana.Need",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='alerts',
-        help_text="Related need (if applicable)"
+        related_name="alerts",
+        help_text="Related need (if applicable)",
     )
 
     related_policy = models.ForeignKey(
-        'policy_tracking.PolicyRecommendation',
+        "policy_tracking.PolicyRecommendation",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='alerts',
-        help_text="Related policy (if applicable)"
+        related_name="alerts",
+        help_text="Related policy (if applicable)",
     )
 
     related_mao = models.ForeignKey(
-        'coordination.Organization',
+        "coordination.Organization",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='alerts',
-        help_text="Related MAO (if applicable)"
+        related_name="alerts",
+        help_text="Related MAO (if applicable)",
     )
 
     # Additional Data
     alert_data = models.JSONField(
-        default=dict,
-        help_text="Additional structured data related to this alert"
+        default=dict, help_text="Additional structured data related to this alert"
     )
 
     # Action URL
     action_url = models.CharField(
         max_length=500,
         blank=True,
-        help_text="URL to navigate to for addressing this alert"
+        help_text="URL to navigate to for addressing this alert",
     )
 
     # Status
@@ -911,8 +910,7 @@ class Alert(models.Model):
     )
 
     is_acknowledged = models.BooleanField(
-        default=False,
-        help_text="Whether this alert has been acknowledged by a user"
+        default=False, help_text="Whether this alert has been acknowledged by a user"
     )
 
     acknowledged_by = models.ForeignKey(
@@ -920,44 +918,39 @@ class Alert(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='acknowledged_alerts',
-        help_text="User who acknowledged this alert"
+        related_name="acknowledged_alerts",
+        help_text="User who acknowledged this alert",
     )
 
     acknowledged_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="When this alert was acknowledged"
+        null=True, blank=True, help_text="When this alert was acknowledged"
     )
 
     resolution_notes = models.TextField(
-        blank=True,
-        help_text="Notes on how this alert was resolved"
+        blank=True, help_text="Notes on how this alert was resolved"
     )
 
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True)
     expires_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="When this alert should expire (optional)"
+        null=True, blank=True, help_text="When this alert should expire (optional)"
     )
 
     class Meta:
         verbose_name = "Alert"
         verbose_name_plural = "Alerts"
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['alert_type', 'is_active']),
-            models.Index(fields=['severity', 'is_active', '-created_at']),
-            models.Index(fields=['is_active', 'is_acknowledged']),
+            models.Index(fields=["alert_type", "is_active"]),
+            models.Index(fields=["severity", "is_active", "-created_at"]),
+            models.Index(fields=["is_active", "is_acknowledged"]),
         ]
 
     def __str__(self):
         return f"{self.get_alert_type_display()} - {self.title}"
 
-    def acknowledge(self, user, notes=''):
+    def acknowledge(self, user, notes=""):
         """Mark this alert as acknowledged."""
         self.is_acknowledged = True
         self.acknowledged_by = user
@@ -966,7 +959,7 @@ class Alert(models.Model):
             self.resolution_notes = notes
         self.save()
 
-    def deactivate(self, reason=''):
+    def deactivate(self, reason=""):
         """Deactivate this alert (mark as no longer relevant)."""
         self.is_active = False
         if reason:
@@ -1006,46 +999,39 @@ class Alert(models.Model):
             severity=severity,
             title=title,
             description=description,
-            **kwargs
+            **kwargs,
         )
 
     @classmethod
     def get_active_alerts_by_type(cls, alert_type):
         """Get all active alerts of a specific type."""
-        return cls.objects.filter(
-            alert_type=alert_type,
-            is_active=True
-        ).select_related(
-            'related_workflow',
-            'related_ppa',
-            'related_need',
-            'related_policy',
-            'related_mao',
-            'acknowledged_by'
+        return cls.objects.filter(alert_type=alert_type, is_active=True).select_related(
+            "related_workflow",
+            "related_ppa",
+            "related_need",
+            "related_policy",
+            "related_mao",
+            "acknowledged_by",
         )
 
     @classmethod
     def get_unacknowledged_count_by_severity(cls):
         """Get count of unacknowledged alerts grouped by severity."""
-        return cls.objects.filter(
-            is_active=True,
-            is_acknowledged=False
-        ).values('severity').annotate(
-            count=models.Count('id')
-        ).order_by('severity')
+        return (
+            cls.objects.filter(is_active=True, is_acknowledged=False)
+            .values("severity")
+            .annotate(count=models.Count("id"))
+            .order_by("severity")
+        )
 
     @classmethod
     def cleanup_expired_alerts(cls):
         """Deactivate all expired alerts."""
         expired_alerts = cls.objects.filter(
-            is_active=True,
-            expires_at__lt=timezone.now()
+            is_active=True, expires_at__lt=timezone.now()
         )
 
         count = expired_alerts.count()
-        expired_alerts.update(
-            is_active=False,
-            updated_at=timezone.now()
-        )
+        expired_alerts.update(is_active=False, updated_at=timezone.now())
 
         return count

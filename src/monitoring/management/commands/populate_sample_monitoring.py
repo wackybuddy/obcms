@@ -29,7 +29,10 @@ class Command(BaseCommand):
         with transaction.atomic():
             region, _ = Region.objects.get_or_create(
                 code="MNE",
-                defaults={"name": "Monitoring Sample Region", "description": "Seed data"},
+                defaults={
+                    "name": "Monitoring Sample Region",
+                    "description": "Seed data",
+                },
             )
             province, _ = Province.objects.get_or_create(
                 region=region,
@@ -39,7 +42,10 @@ class Command(BaseCommand):
             municipality, _ = Municipality.objects.get_or_create(
                 province=province,
                 code="MNE-MUN",
-                defaults={"name": "Sample Municipality", "municipality_type": "municipality"},
+                defaults={
+                    "name": "Sample Municipality",
+                    "municipality_type": "municipality",
+                },
             )
             barangay, _ = Barangay.objects.get_or_create(
                 municipality=municipality,

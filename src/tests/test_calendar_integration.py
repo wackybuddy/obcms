@@ -30,9 +30,20 @@ from common.models import (
     CalendarResourceBooking,
     SharedCalendarLink,
     StaffLeave,
+    StaffTask,
     UserCalendarPreferences,
+    Region,
+    Province,
+    Municipality,
+    Barangay,
 )
-from coordination.models import Event, EventParticipant, StakeholderEngagement
+from communities.models import OBCCommunity
+from coordination.models import (
+    Event,
+    EventParticipant,
+    StakeholderEngagement,
+    StakeholderEngagementType,
+)
 
 User = get_user_model()
 
@@ -139,6 +150,33 @@ class CalendarEventWorkflowTests(TestCase):
         self.user.user_permissions.add(add_event_perm)
         self.client.login(username="testuser", password="testpass123")
 
+        self.region = Region.objects.create(code="TST-R", name="Test Region")
+        self.province = Province.objects.create(
+            region=self.region,
+            code="TST-P",
+            name="Test Province",
+        )
+        self.municipality = Municipality.objects.create(
+            province=self.province,
+            code="TST-M",
+            name="Test Municipality",
+        )
+        self.barangay = Barangay.objects.create(
+            municipality=self.municipality,
+            code="TST-B",
+            name="Test Barangay",
+        )
+        self.community = OBCCommunity.objects.create(
+            name="Test Community",
+            barangay=self.barangay,
+        )
+
+        self.engagement_type = StakeholderEngagementType.objects.create(
+            name="Community Dialogue",
+            category="consultation",
+            description="Test engagement type",
+        )
+
     def test_create_event_and_view_on_calendar(self):
         """Test creating an event via form and seeing it on calendar view."""
         # Step 1: Create event via POST
@@ -149,7 +187,8 @@ class CalendarEventWorkflowTests(TestCase):
         )
 
         response = self.client.post(
-            reverse("common:coordination_event_add"), data=serialize_form_data(event_data)
+            reverse("common:coordination_event_add"),
+            data=serialize_form_data(event_data),
         )
 
         # Should redirect on success
@@ -180,7 +219,7 @@ class CalendarEventWorkflowTests(TestCase):
         self.assertTrue(event_found, "Event not found in calendar data")
 
     def test_drag_and_drop_event_reschedule(self):
-        """Test rescheduling event via drag-and-drop API."""
+        """Event drag-and-drop should adjust schedule via API."""
         # Step 1: Create event
         event = Event.objects.create(
             **build_event_kwargs(
@@ -223,6 +262,101 @@ class CalendarEventWorkflowTests(TestCase):
             expected_start.time().replace(microsecond=0),
         )
         self.assertEqual(event.duration_hours, 3)
+
+    def test_drag_and_drop_staff_task_reschedule(self):
+        """Staff tasks should reschedule dates when dragged."""
+
+        original_start = timezone.now().date()
+        original_due = original_start + timedelta(days=2)
+        task = StaffTask.objects.create(
+            title="Calendar Managed Task",
+            created_by=self.user,
+            start_date=original_start,
+            due_date=original_due,
+            status=StaffTask.STATUS_IN_PROGRESS,
+        )
+
+        new_start_date = original_start + timedelta(days=3)
+        new_due_date = original_due + timedelta(days=3)
+        start_dt = timezone.make_aware(
+            datetime.combine(new_start_date, time.min)
+        )
+        end_dt = timezone.make_aware(
+            datetime.combine(new_due_date, time(23, 59))
+        )
+
+        api_data = {
+            "id": str(task.id),
+            "type": "staff_task",
+            "start": start_dt.isoformat(),
+            "end": end_dt.isoformat(),
+            "allDay": True,
+            "metadata": {
+                "hasStartDate": True,
+                "hasDueDate": True,
+            },
+        }
+
+        response = self.client.post(
+            reverse("common:calendar_event_update"),
+            data=json.dumps(api_data),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+
+        task.refresh_from_db()
+        self.assertEqual(task.start_date, new_start_date)
+        self.assertEqual(task.due_date, new_due_date)
+
+    def test_drag_and_drop_engagement_reschedule(self):
+        """Stakeholder engagement drag handling should persist new planned date."""
+
+        engagement = StakeholderEngagement.objects.create(
+            title="Coordination Outreach",
+            description="Discuss barangay updates",
+            objectives="Gather barangay feedback",
+            engagement_type=self.engagement_type,
+            community=self.community,
+            venue="Community Hall",
+            address="Barangay Proper",
+            stakeholder_groups="Barangay leaders",
+            methodology="Focus group",
+            target_participants=25,
+            planned_date=timezone.now().replace(
+                hour=9, minute=0, second=0, microsecond=0
+            ),
+            created_by=self.user,
+        )
+
+        api_start = engagement.planned_date + timedelta(days=4)
+        api_end = api_start + timedelta(hours=2)
+
+        api_payload = {
+            "id": str(engagement.id),
+            "type": "engagement",
+            "start": api_start.isoformat(),
+            "end": api_end.isoformat(),
+            "allDay": False,
+        }
+
+        response = self.client.post(
+            reverse("common:calendar_event_update"),
+            data=json.dumps(api_payload),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["success"])
+
+        engagement.refresh_from_db()
+        self.assertEqual(
+            engagement.planned_date.replace(microsecond=0),
+            timezone.localtime(api_start).replace(microsecond=0),
+        )
 
     @patch("common.tasks.send_event_notification.delay")
     def test_event_with_notification(self, mock_send_notification):

@@ -22,11 +22,12 @@ class Command(BaseCommand):
                 )
             )
         else:
-            self.stdout.write(self.style.WARNING("No staff users available to assign tasks."))
+            self.stdout.write(
+                self.style.WARNING("No staff users available to assign tasks.")
+            )
 
         self.stdout.write(
             self.style.SUCCESS(
                 "Staff management workflows are populated. You can now exercise the quick-action panels in the UI."
             )
         )
-

@@ -9,7 +9,10 @@ from django.test import TestCase
 from django.utils import timezone
 
 from common.models import CalendarNotification
-from common.tasks import send_calendar_notifications_batch, send_single_calendar_notification
+from common.tasks import (
+    send_calendar_notifications_batch,
+    send_single_calendar_notification,
+)
 
 User = get_user_model()
 

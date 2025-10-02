@@ -1,9 +1,14 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .api import (CommunityInfrastructureViewSet, CommunityLivelihoodViewSet,
-                  MunicipalityCoverageViewSet, OBCCommunityViewSet,
-                  StakeholderEngagementViewSet, StakeholderViewSet)
+from .api import (
+    CommunityInfrastructureViewSet,
+    CommunityLivelihoodViewSet,
+    MunicipalityCoverageViewSet,
+    OBCCommunityViewSet,
+    StakeholderEngagementViewSet,
+    StakeholderViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"municipalities", MunicipalityCoverageViewSet)

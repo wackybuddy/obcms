@@ -19,7 +19,9 @@ router.register(r"updates", MonitoringUpdateViewSet)
 
 # Phase 5: Strategic Planning APIs
 router.register(r"strategic-goals", StrategicGoalViewSet, basename="strategic-goal")
-router.register(r"planning-cycles", AnnualPlanningCycleViewSet, basename="planning-cycle")
+router.register(
+    r"planning-cycles", AnnualPlanningCycleViewSet, basename="planning-cycle"
+)
 
 # Phase 6: Scenario Planning & Budget Optimization APIs
 router.register(r"scenarios", BudgetScenarioViewSet, basename="scenario")

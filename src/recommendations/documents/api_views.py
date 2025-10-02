@@ -15,9 +15,14 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from .models import Document, DocumentAccess, DocumentCategory, DocumentComment
-from .serializers import (DocumentAccessSerializer, DocumentCategorySerializer,
-                          DocumentCommentSerializer, DocumentListSerializer,
-                          DocumentSerializer, DocumentUploadSerializer)
+from .serializers import (
+    DocumentAccessSerializer,
+    DocumentCategorySerializer,
+    DocumentCommentSerializer,
+    DocumentListSerializer,
+    DocumentSerializer,
+    DocumentUploadSerializer,
+)
 
 
 class DocumentViewSet(viewsets.ModelViewSet):

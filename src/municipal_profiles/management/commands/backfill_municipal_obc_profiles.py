@@ -12,9 +12,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         created = 0
         updated = 0
-        for municipality in Municipality.objects.select_related("province__region").all():
+        for municipality in Municipality.objects.select_related(
+            "province__region"
+        ).all():
             profile = ensure_profile(municipality)
-            was_created = profile.aggregation_version == 0 and not profile.aggregated_metrics
+            was_created = (
+                profile.aggregation_version == 0 and not profile.aggregated_metrics
+            )
             aggregate_and_store(municipality=municipality, note="Backfill command")
             if was_created:
                 created += 1

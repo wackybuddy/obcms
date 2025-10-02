@@ -35,7 +35,9 @@ class Command(BaseCommand):
         dry_run: bool = options.get("dry_run", False)
         stats: Counter[str] = Counter()
 
-        stage_keys = [stage for stage, _label in MonitoringEntryWorkflowStage.STAGE_CHOICES]
+        stage_keys = [
+            stage for stage, _label in MonitoringEntryWorkflowStage.STAGE_CHOICES
+        ]
         today: date = timezone.now().date()
 
         queryset = MonitoringEntry.objects.all()
@@ -45,9 +47,7 @@ class Command(BaseCommand):
             with transaction.atomic():
                 stats["entries"] += 1
                 stats.update(self._backfill_entry_metadata(entry, dry_run))
-                stats.update(
-                    self._ensure_workflow_stages(entry, stage_keys, dry_run)
-                )
+                stats.update(self._ensure_workflow_stages(entry, stage_keys, dry_run))
                 stats.update(self._ensure_funding_flows(entry, today, dry_run))
 
         summary_lines = [

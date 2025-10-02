@@ -12,19 +12,49 @@ urlpatterns = [
     path("moa-ppas/import/", views.import_moa_data, name="import_moa_data"),
     path("moa-ppas/export/", views.export_moa_data, name="export_moa_data"),
     path("moa-ppas/report/", views.generate_moa_report, name="generate_moa_report"),
-    path("moa-ppas/bulk-update/", views.bulk_update_moa_status, name="bulk_update_moa_status"),
-    path("moa-ppas/schedule-review/", views.schedule_moa_review, name="schedule_moa_review"),
-    path("oobc-initiatives/", views.oobc_initiatives_dashboard, name="oobc_initiatives"),
-    path("oobc-initiatives/impact/", views.oobc_impact_report, name="oobc_impact_report"),
-    path("oobc-initiatives/performance/", views.oobc_unit_performance, name="oobc_unit_performance"),
+    path(
+        "moa-ppas/bulk-update/",
+        views.bulk_update_moa_status,
+        name="bulk_update_moa_status",
+    ),
+    path(
+        "moa-ppas/schedule-review/",
+        views.schedule_moa_review,
+        name="schedule_moa_review",
+    ),
+    path(
+        "oobc-initiatives/", views.oobc_initiatives_dashboard, name="oobc_initiatives"
+    ),
+    path(
+        "oobc-initiatives/impact/", views.oobc_impact_report, name="oobc_impact_report"
+    ),
+    path(
+        "oobc-initiatives/performance/",
+        views.oobc_unit_performance,
+        name="oobc_unit_performance",
+    ),
     path("oobc-initiatives/export/", views.export_oobc_data, name="export_oobc_data"),
-    path("oobc-initiatives/budget/", views.oobc_budget_review, name="oobc_budget_review"),
-    path("oobc-initiatives/feedback/", views.oobc_community_feedback, name="oobc_community_feedback"),
+    path(
+        "oobc-initiatives/budget/", views.oobc_budget_review, name="oobc_budget_review"
+    ),
+    path(
+        "oobc-initiatives/feedback/",
+        views.oobc_community_feedback,
+        name="oobc_community_feedback",
+    ),
     path("obc-requests/", views.obc_requests_dashboard, name="obc_requests"),
     path("obc-requests/priority/", views.obc_priority_queue, name="obc_priority_queue"),
-    path("obc-requests/community/", views.obc_community_dashboard, name="obc_community_dashboard"),
+    path(
+        "obc-requests/community/",
+        views.obc_community_dashboard,
+        name="obc_community_dashboard",
+    ),
     path("obc-requests/report/", views.generate_obc_report, name="generate_obc_report"),
-    path("obc-requests/bulk-update/", views.bulk_update_obc_status, name="bulk_update_obc_status"),
+    path(
+        "obc-requests/bulk-update/",
+        views.bulk_update_obc_status,
+        name="bulk_update_obc_status",
+    ),
     path("obc-requests/export/", views.export_obc_data, name="export_obc_data"),
     path("entry/<uuid:pk>/", views.monitoring_entry_detail, name="detail"),
     path("create/moa/", views.create_moa_entry, name="create_moa"),
@@ -32,13 +62,41 @@ urlpatterns = [
     path("create/oobc/", views.create_oobc_entry, name="create_oobc"),
     path("create/request/", views.create_request_entry, name="create_request"),
     # Export endpoints
-    path("exports/aip-summary/", exports.export_aip_summary_excel, name="export_aip_summary"),
-    path("exports/compliance/", exports.export_compliance_report_excel, name="export_compliance"),
+    path(
+        "exports/aip-summary/",
+        exports.export_aip_summary_excel,
+        name="export_aip_summary",
+    ),
+    path(
+        "exports/compliance/",
+        exports.export_compliance_report_excel,
+        name="export_compliance",
+    ),
     path("exports/budget-csv/", exports.export_budget_csv, name="export_budget_csv"),
-    path("exports/funding-timeline/", exports.export_funding_timeline_excel, name="export_funding_timeline"),
+    path(
+        "exports/funding-timeline/",
+        exports.export_funding_timeline_excel,
+        name="export_funding_timeline",
+    ),
     # Prioritization and scenario planning
-    path("prioritization/", prioritization.prioritization_matrix, name="prioritization_matrix"),
-    path("api/scenario/rebalance/", scenario_api.scenario_rebalance_budget, name="scenario_rebalance"),
-    path("api/scenario/funding-mix/", scenario_api.scenario_funding_mix, name="scenario_funding_mix"),
-    path("api/scenario/obligation-forecast/", scenario_api.scenario_obligation_forecast, name="scenario_obligation_forecast"),
+    path(
+        "prioritization/",
+        prioritization.prioritization_matrix,
+        name="prioritization_matrix",
+    ),
+    path(
+        "api/scenario/rebalance/",
+        scenario_api.scenario_rebalance_budget,
+        name="scenario_rebalance",
+    ),
+    path(
+        "api/scenario/funding-mix/",
+        scenario_api.scenario_funding_mix,
+        name="scenario_funding_mix",
+    ),
+    path(
+        "api/scenario/obligation-forecast/",
+        scenario_api.scenario_obligation_forecast,
+        name="scenario_obligation_forecast",
+    ),
 ]

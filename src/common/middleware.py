@@ -127,7 +127,7 @@ class ContentSecurityPolicyMiddleware:
         response = self.get_response(request)
 
         # Only add CSP header if configured (typically in production)
-        if hasattr(settings, 'CONTENT_SECURITY_POLICY'):
-            response['Content-Security-Policy'] = settings.CONTENT_SECURITY_POLICY
+        if hasattr(settings, "CONTENT_SECURITY_POLICY"):
+            response["Content-Security-Policy"] = settings.CONTENT_SECURITY_POLICY
 
         return response

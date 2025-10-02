@@ -22,22 +22,22 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--complete-workshop',
+            "--complete-workshop",
             type=int,
             default=1,
-            help='Which workshop to complete (1-5)',
+            help="Which workshop to complete (1-5)",
         )
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS('\n=== Region X Demo Setup ===\n'))
+        self.stdout.write(self.style.SUCCESS("\n=== Region X Demo Setup ===\n"))
 
-        workshop_num = options['complete_workshop']
-        workshop_type = f'workshop_{workshop_num}'
+        workshop_num = options["complete_workshop"]
+        workshop_type = f"workshop_{workshop_num}"
 
         # Get Region X assessment
         assessment = self._get_region_x_assessment()
         if not assessment:
-            self.stdout.write(self.style.ERROR('ERROR: Region X assessment not found!'))
+            self.stdout.write(self.style.ERROR("ERROR: Region X assessment not found!"))
             return
 
         # Get facilitator
@@ -49,12 +49,15 @@ class Command(BaseCommand):
 
         # Get workshop activity
         workshop = WorkshopActivity.objects.filter(
-            assessment=assessment,
-            workshop_type=workshop_type
+            assessment=assessment, workshop_type=workshop_type
         ).first()
 
         if not workshop:
-            self.stdout.write(self.style.ERROR(f'ERROR: Workshop {workshop_num} not found for Region X!'))
+            self.stdout.write(
+                self.style.ERROR(
+                    f"ERROR: Workshop {workshop_num} not found for Region X!"
+                )
+            )
             return
 
         # Create/get workshop questions
@@ -63,120 +66,125 @@ class Command(BaseCommand):
         # Generate responses for all 30 participants
         self._generate_participant_responses(participants, workshop, questions)
 
-        self.stdout.write(self.style.SUCCESS('\n✅ Region X Demo Setup Complete!\n'))
+        self.stdout.write(self.style.SUCCESS("\n✅ Region X Demo Setup Complete!\n"))
         self._print_summary(assessment, facilitator, participants, workshop)
 
     def _get_region_x_assessment(self):
         """Get the Region X assessment."""
         # Use province name to avoid matching Region XIII which contains 'Region X'
         assessment = Assessment.objects.filter(
-            title__contains='Bukidnon',
-            title__startswith='[TEST]'
+            title__contains="Bukidnon", title__startswith="[TEST]"
         ).first()
 
         if not assessment:
             # Fallback: try exact match with Region X
             assessment = Assessment.objects.filter(
-                title__contains='Region X (',
-                title__startswith='[TEST]'
+                title__contains="Region X (", title__startswith="[TEST]"
             ).first()
 
         if assessment:
-            self.stdout.write(f'  ✓ Found assessment: {assessment.title}')
+            self.stdout.write(f"  ✓ Found assessment: {assessment.title}")
         return assessment
 
     def _get_facilitator(self):
         """Get test facilitator."""
-        facilitator = User.objects.filter(username='test_facilitator1').first()
+        facilitator = User.objects.filter(username="test_facilitator1").first()
         if facilitator:
-            self.stdout.write(f'  ✓ Using facilitator: {facilitator.username}')
+            self.stdout.write(f"  ✓ Using facilitator: {facilitator.username}")
         return facilitator
 
     def _get_region_x_participants(self, assessment):
         """Get Region X participants."""
         participants = WorkshopParticipantAccount.objects.filter(
             assessment=assessment
-        ).select_related('user')
+        ).select_related("user")
 
-        self.stdout.write(f'  ✓ Found {participants.count()} participants for Region X')
+        self.stdout.write(f"  ✓ Found {participants.count()} participants for Region X")
         return list(participants)
 
     def _create_workshop_questions(self, workshop):
         """Create realistic workshop questions for Workshop 1."""
         questions_data = [
             {
-                'question_id': 'q1_basic_services',
-                'order': 1,
-                'definition': {
-                    'type': 'long_text',
-                    'text': 'What are the main challenges faced by your community in terms of basic services (education, health, water, electricity)?',
-                    'required': True,
-                }
+                "question_id": "q1_basic_services",
+                "order": 1,
+                "definition": {
+                    "type": "long_text",
+                    "text": "What are the main challenges faced by your community in terms of basic services (education, health, water, electricity)?",
+                    "required": True,
+                },
             },
             {
-                'question_id': 'q2_islamic_education',
-                'order': 2,
-                'definition': {
-                    'type': 'long_text',
-                    'text': 'Describe the current state of Islamic education facilities (madrasah, Arabic teachers) in your area.',
-                    'required': True,
-                }
+                "question_id": "q2_islamic_education",
+                "order": 2,
+                "definition": {
+                    "type": "long_text",
+                    "text": "Describe the current state of Islamic education facilities (madrasah, Arabic teachers) in your area.",
+                    "required": True,
+                },
             },
             {
-                'question_id': 'q3_livelihood',
-                'order': 3,
-                'definition': {
-                    'type': 'long_text',
-                    'text': 'What are the main sources of livelihood in your community? Are there specific challenges related to economic opportunities?',
-                    'required': True,
-                }
+                "question_id": "q3_livelihood",
+                "order": 3,
+                "definition": {
+                    "type": "long_text",
+                    "text": "What are the main sources of livelihood in your community? Are there specific challenges related to economic opportunities?",
+                    "required": True,
+                },
             },
             {
-                'question_id': 'q4_gov_relationship',
-                'order': 4,
-                'definition': {
-                    'type': 'single_choice',
-                    'text': 'How would you rate the current relationship between your community and local government?',
-                    'required': True,
-                    'options': ['Excellent', 'Good', 'Fair', 'Poor', 'Very Poor']
-                }
+                "question_id": "q4_gov_relationship",
+                "order": 4,
+                "definition": {
+                    "type": "single_choice",
+                    "text": "How would you rate the current relationship between your community and local government?",
+                    "required": True,
+                    "options": ["Excellent", "Good", "Fair", "Poor", "Very Poor"],
+                },
             },
             {
-                'question_id': 'q5_cultural_practices',
-                'order': 5,
-                'definition': {
-                    'type': 'long_text',
-                    'text': 'What cultural or religious practices are most important to preserve in your community?',
-                    'required': True,
-                }
+                "question_id": "q5_cultural_practices",
+                "order": 5,
+                "definition": {
+                    "type": "long_text",
+                    "text": "What cultural or religious practices are most important to preserve in your community?",
+                    "required": True,
+                },
             },
             {
-                'question_id': 'q6_government_programs',
-                'order': 6,
-                'definition': {
-                    'type': 'long_text',
-                    'text': 'Are there any ongoing or past government programs that have benefited your community? What were they?',
-                    'required': False,
-                }
+                "question_id": "q6_government_programs",
+                "order": 6,
+                "definition": {
+                    "type": "long_text",
+                    "text": "Are there any ongoing or past government programs that have benefited your community? What were they?",
+                    "required": False,
+                },
             },
             {
-                'question_id': 'q7_priority_need',
-                'order': 7,
-                'definition': {
-                    'type': 'single_choice',
-                    'text': 'What is your community\'s priority need?',
-                    'required': True,
-                    'options': ['Education', 'Healthcare', 'Infrastructure', 'Livelihood', 'Water/Sanitation', 'Peace and Security']
-                }
+                "question_id": "q7_priority_need",
+                "order": 7,
+                "definition": {
+                    "type": "single_choice",
+                    "text": "What is your community's priority need?",
+                    "required": True,
+                    "options": [
+                        "Education",
+                        "Healthcare",
+                        "Infrastructure",
+                        "Livelihood",
+                        "Water/Sanitation",
+                        "Peace and Security",
+                    ],
+                },
             },
             {
-                'question_id': 'q8_participation',
-                'order': 8,
-                'definition': {
-                    'type': 'long_text',
-                    'text': 'How does your community participate in local governance and decision-making processes?',
-                    'required': True,
-                }
+                "question_id": "q8_participation",
+                "order": 8,
+                "definition": {
+                    "type": "long_text",
+                    "text": "How does your community participate in local governance and decision-making processes?",
+                    "required": True,
+                },
             },
         ]
 
@@ -184,12 +192,9 @@ class Command(BaseCommand):
         for q_data in questions_data:
             question, created = WorkshopQuestionDefinition.objects.get_or_create(
                 workshop_type=workshop.workshop_type,
-                question_id=q_data['question_id'],
-                version='v1',
-                defaults={
-                    'order': q_data['order'],
-                    'definition': q_data['definition']
-                }
+                question_id=q_data["question_id"],
+                version="v1",
+                defaults={"order": q_data["order"], "definition": q_data["definition"]},
             )
             questions.append(question)
             if created:
@@ -222,9 +227,36 @@ class Command(BaseCommand):
                 "Mixed farming and fishing. Major issues: lack of post-harvest facilities, no farmer cooperatives, expensive farm inputs, limited technical assistance, and exploitation by traders.",
             ],
             4: [  # Government relationship rating
-                "Good", "Fair", "Fair", "Good", "Poor", "Fair", "Good", "Fair", "Fair", "Good",
-                "Fair", "Poor", "Good", "Fair", "Fair", "Good", "Fair", "Fair", "Good", "Poor",
-                "Fair", "Good", "Fair", "Fair", "Good", "Fair", "Poor", "Good", "Fair", "Fair",
+                "Good",
+                "Fair",
+                "Fair",
+                "Good",
+                "Poor",
+                "Fair",
+                "Good",
+                "Fair",
+                "Fair",
+                "Good",
+                "Fair",
+                "Poor",
+                "Good",
+                "Fair",
+                "Fair",
+                "Good",
+                "Fair",
+                "Fair",
+                "Good",
+                "Poor",
+                "Fair",
+                "Good",
+                "Fair",
+                "Fair",
+                "Good",
+                "Fair",
+                "Poor",
+                "Good",
+                "Fair",
+                "Fair",
             ],
             5: [  # Cultural practices
                 "Islamic religious observances (Ramadan, Eid celebrations), traditional wedding ceremonies, madrasah education, Friday congregational prayers, and halal food practices are central to our identity.",
@@ -241,11 +273,36 @@ class Command(BaseCommand):
                 "4Ps helps with school expenses. DOLE's TUPAD program provided temporary work. We received relief goods during disasters. Some got livelihood assistance from DSWD. Health insurance coverage improved.",
             ],
             7: [  # Priority need
-                "Education", "Healthcare", "Infrastructure", "Livelihood", "Water/Sanitation", "Education",
-                "Healthcare", "Infrastructure", "Livelihood", "Education", "Water/Sanitation", "Healthcare",
-                "Infrastructure", "Education", "Livelihood", "Healthcare", "Education", "Infrastructure",
-                "Livelihood", "Water/Sanitation", "Education", "Healthcare", "Infrastructure", "Education",
-                "Livelihood", "Healthcare", "Education", "Infrastructure", "Water/Sanitation", "Education",
+                "Education",
+                "Healthcare",
+                "Infrastructure",
+                "Livelihood",
+                "Water/Sanitation",
+                "Education",
+                "Healthcare",
+                "Infrastructure",
+                "Livelihood",
+                "Education",
+                "Water/Sanitation",
+                "Healthcare",
+                "Infrastructure",
+                "Education",
+                "Livelihood",
+                "Healthcare",
+                "Education",
+                "Infrastructure",
+                "Livelihood",
+                "Water/Sanitation",
+                "Education",
+                "Healthcare",
+                "Infrastructure",
+                "Education",
+                "Livelihood",
+                "Healthcare",
+                "Education",
+                "Infrastructure",
+                "Water/Sanitation",
+                "Education",
             ],
             8: [  # Participation in governance
                 "We participate through barangay assemblies and consultations. Community representatives attend municipal planning sessions. Islamic leaders are consulted on cultural matters. Youth and women have representation.",
@@ -260,19 +317,18 @@ class Command(BaseCommand):
         for i, participant in enumerate(participants):
             # Delete existing responses for this workshop
             WorkshopResponse.objects.filter(
-                participant=participant,
-                workshop=workshop
+                participant=participant, workshop=workshop
             ).delete()
 
             # Create responses for each question
             for question in questions:
                 # Extract question number from question_id (e.g., 'q1_basic_services' -> 1)
-                question_num = int(question.question_id.split('_')[0][1:])
+                question_num = int(question.question_id.split("_")[0][1:])
 
                 # Determine answer based on question type
-                question_type = question.definition.get('type', 'long_text')
+                question_type = question.definition.get("type", "long_text")
 
-                if question_type == 'single_choice':
+                if question_type == "single_choice":
                     # Use template responses for choice questions
                     if question_num == 4:  # Government relationship
                         answer = response_templates[4][i % len(response_templates[4])]
@@ -280,66 +336,94 @@ class Command(BaseCommand):
                         answer = response_templates[7][i % len(response_templates[7])]
                     else:
                         # Fallback to random option
-                        options = question.definition.get('options', [])
+                        options = question.definition.get("options", [])
                         answer = random.choice(options) if options else "No answer"
                 else:
                     # long_text questions
-                    templates = response_templates.get(question_num, ["Response provided."])
+                    templates = response_templates.get(
+                        question_num, ["Response provided."]
+                    )
                     answer = templates[i % len(templates)]
 
                 WorkshopResponse.objects.create(
                     participant=participant,
                     workshop=workshop,
                     question_id=question.question_id,
-                    response_data={'answer': answer},
-                    status='submitted',
-                    submitted_at=timezone.now() - timedelta(hours=random.randint(1, 48))
+                    response_data={"answer": answer},
+                    status="submitted",
+                    submitted_at=timezone.now()
+                    - timedelta(hours=random.randint(1, 48)),
                 )
 
             # Update participant status
-            participant.completed_workshops = ['workshop_1']
-            participant.current_workshop = 'workshop_1'  # Stay at workshop 1 (not advanced yet)
-            participant.facilitator_advanced_to = 'workshop_1'
-            participant.save(update_fields=['completed_workshops', 'current_workshop', 'facilitator_advanced_to', 'updated_at'])
+            participant.completed_workshops = ["workshop_1"]
+            participant.current_workshop = (
+                "workshop_1"  # Stay at workshop 1 (not advanced yet)
+            )
+            participant.facilitator_advanced_to = "workshop_1"
+            participant.save(
+                update_fields=[
+                    "completed_workshops",
+                    "current_workshop",
+                    "facilitator_advanced_to",
+                    "updated_at",
+                ]
+            )
 
             completed_count += 1
             if completed_count % 10 == 0:
-                self.stdout.write(f'  ✓ Processed {completed_count} participants...')
+                self.stdout.write(f"  ✓ Processed {completed_count} participants...")
 
-        self.stdout.write(f'  ✅ Generated responses for all {completed_count} participants')
+        self.stdout.write(
+            f"  ✅ Generated responses for all {completed_count} participants"
+        )
 
     def _print_summary(self, assessment, facilitator, participants, workshop):
         """Print demo summary."""
-        self.stdout.write('\n' + '=' * 70)
-        self.stdout.write(self.style.SUCCESS('\n📊 Region X Demo Summary\n'))
-        self.stdout.write('=' * 70)
+        self.stdout.write("\n" + "=" * 70)
+        self.stdout.write(self.style.SUCCESS("\n📊 Region X Demo Summary\n"))
+        self.stdout.write("=" * 70)
 
-        self.stdout.write(self.style.WARNING(f'\n📝 Assessment:'))
-        self.stdout.write(f'  {assessment.title}')
-        self.stdout.write(f'  ID: {assessment.id}')
+        self.stdout.write(self.style.WARNING(f"\n📝 Assessment:"))
+        self.stdout.write(f"  {assessment.title}")
+        self.stdout.write(f"  ID: {assessment.id}")
 
-        self.stdout.write(self.style.WARNING(f'\n👤 Facilitator:'))
-        self.stdout.write(f'  {facilitator.username} ({facilitator.get_full_name()})')
+        self.stdout.write(self.style.WARNING(f"\n👤 Facilitator:"))
+        self.stdout.write(f"  {facilitator.username} ({facilitator.get_full_name()})")
 
-        self.stdout.write(self.style.WARNING(f'\n👥 Participants:'))
-        self.stdout.write(f'  Total: {len(participants)}')
+        self.stdout.write(self.style.WARNING(f"\n👥 Participants:"))
+        self.stdout.write(f"  Total: {len(participants)}")
         sample_users = [p.user.username for p in participants[:5]]
         self.stdout.write(f'  Sample: {", ".join(sample_users)}...')
 
-        self.stdout.write(self.style.WARNING(f'\n📋 Workshop Completed:'))
-        self.stdout.write(f'  {workshop.title}')
-        self.stdout.write(f'  Questions: {WorkshopQuestionDefinition.objects.filter(workshop_type=workshop.workshop_type).count()}')
-        self.stdout.write(f'  Total Responses: {WorkshopResponse.objects.filter(workshop=workshop).count()}')
-        self.stdout.write(f'  Participants Submitted: {len(participants)}/30')
+        self.stdout.write(self.style.WARNING(f"\n📋 Workshop Completed:"))
+        self.stdout.write(f"  {workshop.title}")
+        self.stdout.write(
+            f"  Questions: {WorkshopQuestionDefinition.objects.filter(workshop_type=workshop.workshop_type).count()}"
+        )
+        self.stdout.write(
+            f"  Total Responses: {WorkshopResponse.objects.filter(workshop=workshop).count()}"
+        )
+        self.stdout.write(f"  Participants Submitted: {len(participants)}/30")
 
-        self.stdout.write(self.style.WARNING(f'\n🔗 Access URLs:'))
-        self.stdout.write(f'  Facilitator Dashboard:')
-        self.stdout.write(f'    http://localhost:8000/mana/workshops/assessments/{assessment.id}/facilitator/dashboard/')
-        self.stdout.write(f'  First Participant (#{participants[0].user.username}):')
-        self.stdout.write(f'    http://localhost:8000/mana/workshops/participant/assessments/')
+        self.stdout.write(self.style.WARNING(f"\n🔗 Access URLs:"))
+        self.stdout.write(f"  Facilitator Dashboard:")
+        self.stdout.write(
+            f"    http://localhost:8000/mana/workshops/assessments/{assessment.id}/facilitator/dashboard/"
+        )
+        self.stdout.write(f"  First Participant (#{participants[0].user.username}):")
+        self.stdout.write(
+            f"    http://localhost:8000/mana/workshops/participant/assessments/"
+        )
 
-        self.stdout.write('\n' + '=' * 70)
-        self.stdout.write(self.style.SUCCESS('\n✅ Region X is ready for testing!'))
-        self.stdout.write(self.style.SUCCESS('   - All 30 participants have submitted Workshop 1'))
-        self.stdout.write(self.style.SUCCESS('   - Facilitator can now advance cohort to Workshop 2'))
-        self.stdout.write(self.style.SUCCESS('   - Login as test_facilitator1 to test advancement\n'))
+        self.stdout.write("\n" + "=" * 70)
+        self.stdout.write(self.style.SUCCESS("\n✅ Region X is ready for testing!"))
+        self.stdout.write(
+            self.style.SUCCESS("   - All 30 participants have submitted Workshop 1")
+        )
+        self.stdout.write(
+            self.style.SUCCESS("   - Facilitator can now advance cohort to Workshop 2")
+        )
+        self.stdout.write(
+            self.style.SUCCESS("   - Login as test_facilitator1 to test advancement\n")
+        )

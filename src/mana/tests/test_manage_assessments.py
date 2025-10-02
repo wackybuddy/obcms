@@ -64,7 +64,9 @@ def test_create_assessment_populates_manage_listing(client):
     response = client.post(reverse("common:mana_new_assessment"), data=payload)
 
     assert response.status_code == 302
-    assert response.headers["Location"].endswith(reverse("common:mana_manage_assessments"))
+    assert response.headers["Location"].endswith(
+        reverse("common:mana_manage_assessments")
+    )
 
     assessment = Assessment.objects.get(title=payload["title"])
     assert assessment.region == region

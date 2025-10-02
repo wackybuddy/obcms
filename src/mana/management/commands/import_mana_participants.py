@@ -68,7 +68,11 @@ class Command(BaseCommand):
                     skipped += 1
                     continue
 
-                password = row.get("password") or options.get("default_password") or User.objects.make_random_password()
+                password = (
+                    row.get("password")
+                    or options.get("default_password")
+                    or User.objects.make_random_password()
+                )
 
                 user = User.objects.create_user(
                     username=email,
@@ -93,8 +97,7 @@ class Command(BaseCommand):
                     user=user,
                     stakeholder_type=row.get("stakeholder_type", "other"),
                     office_business_name=(
-                        row.get("office_business_name")
-                        or row.get("organization", "")
+                        row.get("office_business_name") or row.get("organization", "")
                     ),
                     region_id=region_id,
                     province_id=province_id,

@@ -213,53 +213,11 @@
                                 <span class="block text-xs text-gray-500">Community proposals and assistance requests.</span>
                             </span>
                         </a>
-                    </div>
-                </div>
-
-                <div class="relative group">
-                    <a href="{% url 'project_central:portfolio_dashboard' %}" class="nav-item px-3 xl:px-4 py-2 rounded-md text-white hover:text-green-200 transition-colors duration-200 flex items-center space-x-2 focus:outline-none" aria-haspopup="true">
-                        <i class="fas fa-project-diagram text-sm"></i>
-                        <span class="text-sm xl:text-base">Project Central</span>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180"></i>
-                    </a>
-                    <div class="hidden group-hover:flex group-focus-within:flex flex-col absolute left-0 top-full w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 transition-all duration-200" role="menu" aria-label="Project Central Submodules">
-                        <a href="{% url 'project_central:portfolio_dashboard' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
-                            <i class="fas fa-chart-pie text-purple-500 mt-1"></i>
-                            <span>
-                                <span class="block font-semibold text-gray-900">Portfolio Dashboard</span>
-                                <span class="block text-xs text-gray-500">Overview of all projects and workflows.</span>
-                            </span>
-                        </a>
-                        <a href="{% url 'project_central:budget_approval_dashboard' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
-                            <i class="fas fa-gavel text-amber-500 mt-1"></i>
-                            <span>
-                                <span class="block font-semibold text-gray-900">Budget Approvals</span>
-                                <span class="block text-xs text-gray-500">Review and approve budget submissions.</span>
-                            </span>
-                        </a>
                         <a href="{% url 'project_central:me_analytics_dashboard' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
                             <i class="fas fa-chart-bar text-emerald-500 mt-1"></i>
                             <span>
                                 <span class="block font-semibold text-gray-900">M&E Analytics</span>
                                 <span class="block text-xs text-gray-500">Performance metrics and impact analysis.</span>
-                            </span>
-                        </a>
-                        <a href="{% url 'project_central:alert_list' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
-                            <i class="fas fa-bell text-rose-500 mt-1"></i>
-                            <span>
-                                <span class="block font-semibold text-gray-900">Alerts
-                                    {% if unacknowledged_alerts_count > 0 %}
-                                    <span class="inline-flex items-center justify-center px-2 py-0.5 ml-2 text-xs font-bold leading-none text-white bg-red-500 rounded-full">{{ unacknowledged_alerts_count }}</span>
-                                    {% endif %}
-                                </span>
-                                <span class="block text-xs text-gray-500">System alerts and notifications.</span>
-                            </span>
-                        </a>
-                        <a href="{% url 'project_central:report_list' %}" class="flex items-start space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150" role="menuitem">
-                            <i class="fas fa-file-alt text-blue-500 mt-1"></i>
-                            <span>
-                                <span class="block font-semibold text-gray-900">Reports</span>
-                                <span class="block text-xs text-gray-500">Generate and view comprehensive reports.</span>
                             </span>
                         </a>
                     </div>
@@ -356,214 +314,235 @@
     </div>
     
     <!-- Mobile Navigation Menu -->
-    <div id="mobileMenu" class="hidden lg:hidden bg-blue-800 bg-opacity-95 backdrop-blur-sm">
+    <div id="mobileMenu" class="hidden lg:hidden bg-blue-800 bg-opacity-95 backdrop-blur-sm w-[80vw] ml-auto">
         {% if not user.is_staff and not user.is_superuser and perms.mana.can_access_regional_mana %}
         <!-- Restricted mobile menu for MANA Participants and Facilitators -->
         <div class="px-4 py-4 space-y-4">
             <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <a href="{% url 'common:communities_manage_provincial' %}" class="flex items-center space-x-2">
+                <a href="{% url 'common:communities_manage_provincial' %}" class="mobile-nav-link flex items-center space-x-2">
                     <i class="fas fa-flag w-5"></i>
                     <span>Provincial OBC</span>
                 </a>
             </div>
             <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <a href="{% url 'common:mana_regional_overview' %}" class="flex items-center space-x-2">
+                <a href="{% url 'common:mana_regional_overview' %}" class="mobile-nav-link flex items-center space-x-2">
                     <i class="fas fa-map-marked-alt w-5"></i>
                     <span>Regional MANA</span>
                 </a>
             </div>
             {% if perms.mana.can_facilitate_workshop %}
             <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <a href="{% url 'common:mana_manage_assessments' %}" class="flex items-center space-x-2">
+                <a href="{% url 'common:mana_manage_assessments' %}" class="mobile-nav-link flex items-center space-x-2">
                     <i class="fas fa-chalkboard-teacher w-5"></i>
                     <span>Facilitator Dashboard</span>
                 </a>
             </div>
             {% endif %}
-            <a href="{% url 'common:profile' %}" class="mobile-nav-item block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors duration-200 flex items-center space-x-2">
+            <a href="{% url 'common:profile' %}" class="mobile-nav-link mobile-nav-item block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors duration-200 flex items-center space-x-2">
                 <i class="fas fa-user-circle w-5"></i>
                 <span>Profile</span>
             </a>
-            <a href="{% url 'common:logout' %}" class="mobile-nav-item block px-3 py-2 rounded-md text-red-200 hover:bg-red-600 hover:bg-opacity-50 transition-colors duration-200 flex items-center space-x-2">
+            <a href="{% url 'common:logout' %}" class="mobile-nav-link mobile-nav-item block px-3 py-2 rounded-md text-red-200 hover:bg-red-600 hover:bg-opacity-50 transition-colors duration-200 flex items-center space-x-2">
                 <i class="fas fa-sign-out-alt w-5"></i>
                 <span>Logout</span>
             </a>
         </div>
         {% else %}
-        <div class="px-2 pt-2 pb-3 space-y-1 max-h-screen overflow-y-auto">
-            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-users w-5"></i>
-                    <span>OBC Data</span>
-                </div>
-                <div class="mt-2 space-y-1">
-                    <a href="{% url 'common:communities_add' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+        <div class="px-2 pt-2 pb-3 space-y-2 max-h-screen overflow-y-auto">
+            <div class="mobile-section space-y-2">
+                <button type="button"
+                        class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
+                        aria-expanded="false"
+                        aria-controls="mobile-submenu-obc"
+                        data-target="mobile-submenu-obc">
+                    <span class="flex items-center space-x-2">
+                        <i class="fas fa-users w-5"></i>
+                        <span>OBC Data</span>
+                    </span>
+                    <i class="fas fa-chevron-down text-xs transform transition-transform duration-200 mobile-section-icon"></i>
+                </button>
+                <div id="mobile-submenu-obc" class="mobile-submenu hidden mt-2 space-y-1">
+                    <a href="{% url 'common:communities_add' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Barangay OBCs
                         <span class="block text-xs text-white text-opacity-70">Manage barangay-level profiles and updates</span>
                     </a>
-                    <a href="{% url 'common:communities_add_municipality' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:communities_add_municipality' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Municipal OBCs
                         <span class="block text-xs text-white text-opacity-70">Review municipal coverage snapshots</span>
                     </a>
-                    <a href="{% url 'common:communities_manage_provincial' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:communities_manage_provincial' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Provincial OBCs
                         <span class="block text-xs text-white text-opacity-70">View provincial coverage and OBC statistics</span>
                     </a>
-                    <a href="{% url 'common:mana_geographic_data' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:mana_geographic_data' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Geographic Data
                         <span class="block text-xs text-white text-opacity-70">Manage spatial datasets and layers</span>
                     </a>
                 </div>
             </div>
-            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-map-marked-alt w-5"></i>
-                    <span>MANA</span>
-                </div>
-                <div class="mt-2 space-y-1">
-                    <a href="{% url 'common:mana_regional_overview' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+
+            <div class="mobile-section space-y-2">
+                <button type="button"
+                        class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
+                        aria-expanded="false"
+                        aria-controls="mobile-submenu-mana"
+                        data-target="mobile-submenu-mana">
+                    <span class="flex items-center space-x-2">
+                        <i class="fas fa-map-marked-alt w-5"></i>
+                        <span>MANA</span>
+                    </span>
+                    <i class="fas fa-chevron-down text-xs transform transition-transform duration-200 mobile-section-icon"></i>
+                </button>
+                <div id="mobile-submenu-mana" class="mobile-submenu hidden mt-2 space-y-1">
+                    <a href="{% url 'common:mana_regional_overview' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Regional MANA
                         <span class="block text-xs text-white text-opacity-70">Geospatial layers and analytics</span>
                     </a>
-                    <a href="{% url 'common:mana_provincial_overview' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:mana_provincial_overview' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Provincial MANA
                         <span class="block text-xs text-white text-opacity-70">Summary dashboards by province</span>
                     </a>
-                    <a href="{% url 'common:mana_desk_review' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:mana_desk_review' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Desk Review
                         <span class="block text-xs text-white text-opacity-70">Compile findings from existing reports</span>
                     </a>
-                    <a href="{% url 'common:mana_survey_module' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:mana_survey_module' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Survey
                         <span class="block text-xs text-white text-opacity-70">Launch structured field data collection</span>
                     </a>
-                    <a href="{% url 'common:mana_kii' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:mana_kii' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Key Informant Interview
                         <span class="block text-xs text-white text-opacity-70">Capture qualitative KII insights</span>
                     </a>
                 </div>
             </div>
-            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-handshake w-5"></i>
-                    <span>Coordination</span>
-                </div>
-                <div class="mt-2 space-y-1">
-                    <a href="{% url 'common:coordination_organizations' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+
+            <div class="mobile-section space-y-2">
+                <button type="button"
+                        class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
+                        aria-expanded="false"
+                        aria-controls="mobile-submenu-coordination"
+                        data-target="mobile-submenu-coordination">
+                    <span class="flex items-center space-x-2">
+                        <i class="fas fa-handshake w-5"></i>
+                        <span>Coordination</span>
+                    </span>
+                    <i class="fas fa-chevron-down text-xs transform transition-transform duration-200 mobile-section-icon"></i>
+                </button>
+                <div id="mobile-submenu-coordination" class="mobile-submenu hidden mt-2 space-y-1">
+                    <a href="{% url 'common:coordination_organizations' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Mapped Partners
                         <span class="block text-xs text-white text-opacity-70">Partner registry and contacts</span>
                     </a>
-                    <a href="{% url 'common:coordination_partnerships' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:coordination_partnerships' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Partnership Agreements
                         <span class="block text-xs text-white text-opacity-70">MOAs, MOUs, and commitments</span>
                     </a>
-                    <a href="{% url 'common:coordination_events' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:coordination_events' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Coordination Activities
                         <span class="block text-xs text-white text-opacity-70">Events, meetings, and action items</span>
                     </a>
                 </div>
             </div>
-            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-gavel w-5"></i>
-                    <span>Recommendations</span>
-                </div>
-                <div class="mt-2 space-y-1">
-                    <a href="{% url 'common:recommendations_manage' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+
+            <div class="mobile-section space-y-2">
+                <button type="button"
+                        class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
+                        aria-expanded="false"
+                        aria-controls="mobile-submenu-recommendations"
+                        data-target="mobile-submenu-recommendations">
+                    <span class="flex items-center space-x-2">
+                        <i class="fas fa-gavel w-5"></i>
+                        <span>Recommendations</span>
+                    </span>
+                    <i class="fas fa-chevron-down text-xs transform transition-transform duration-200 mobile-section-icon"></i>
+                </button>
+                <div id="mobile-submenu-recommendations" class="mobile-submenu hidden mt-2 space-y-1">
+                    <a href="{% url 'common:recommendations_manage' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Policies
                         <span class="block text-xs text-white text-opacity-70">Policy tracking and advocacy</span>
                     </a>
-                    <a href="{% url 'common:recommendations_home' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:recommendations_home' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Systematic Programs
                         <span class="block text-xs text-white text-opacity-70">Programmatic initiatives overview</span>
                     </a>
-                    <a href="{% url 'common:recommendations_home' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:recommendations_home' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Services
                         <span class="block text-xs text-white text-opacity-70">Service delivery priorities</span>
                     </a>
                 </div>
             </div>
-            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-chart-pie w-5"></i>
-                    <span>M&amp;E</span>
-                </div>
-                <div class="mt-2 space-y-1">
-                    <a href="{% url 'monitoring:moa_ppas' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+
+            <div class="mobile-section space-y-2">
+                <button type="button"
+                        class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
+                        aria-expanded="false"
+                        aria-controls="mobile-submenu-me"
+                        data-target="mobile-submenu-me">
+                    <span class="flex items-center space-x-2">
+                        <i class="fas fa-chart-pie w-5"></i>
+                        <span>M&amp;E</span>
+                    </span>
+                    <i class="fas fa-chevron-down text-xs transform transition-transform duration-200 mobile-section-icon"></i>
+                </button>
+                <div id="mobile-submenu-me" class="mobile-submenu hidden mt-2 space-y-1">
+                    <a href="{% url 'monitoring:moa_ppas' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         MOA PPAs
                         <span class="block text-xs text-white text-opacity-70">Monitor Ministries, Offices, and Agencies programs</span>
                     </a>
-                    <a href="{% url 'monitoring:oobc_initiatives' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'monitoring:oobc_initiatives' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         OOBC Initiatives
                         <span class="block text-xs text-white text-opacity-70">Office-led programs supporting OBC communities</span>
                     </a>
-                    <a href="{% url 'monitoring:obc_requests' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'monitoring:obc_requests' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         OBC Requests
                         <span class="block text-xs text-white text-opacity-70">Community proposals and assistance requests</span>
                     </a>
-                </div>
-            </div>
-            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-project-diagram w-5"></i>
-                    <span>Project Central</span>
-                </div>
-                <div class="mt-2 space-y-1">
-                    <a href="{% url 'project_central:portfolio_dashboard' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
-                        Portfolio Dashboard
-                        <span class="block text-xs text-white text-opacity-70">Overview of all projects and workflows</span>
-                    </a>
-                    <a href="{% url 'project_central:budget_approval_dashboard' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
-                        Budget Approvals
-                        <span class="block text-xs text-white text-opacity-70">Review budget submissions</span>
-                    </a>
-                    <a href="{% url 'project_central:me_analytics_dashboard' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
-                        M&E Analytics
+                    <a href="{% url 'project_central:me_analytics_dashboard' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                        M&amp;E Analytics
                         <span class="block text-xs text-white text-opacity-70">Performance and impact metrics</span>
                     </a>
-                    <a href="{% url 'project_central:alert_list' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
-                        Alerts
-                        {% if unacknowledged_alerts_count > 0 %}
-                        <span class="inline-flex items-center justify-center px-2 py-0.5 ml-2 text-xs font-bold leading-none text-white bg-red-500 rounded-full">{{ unacknowledged_alerts_count }}</span>
-                        {% endif %}
-                        <span class="block text-xs text-white text-opacity-70">System notifications</span>
-                    </a>
-                    <a href="{% url 'project_central:report_list' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
-                        Reports
-                        <span class="block text-xs text-white text-opacity-70">Comprehensive reports</span>
-                    </a>
                 </div>
             </div>
-            <div class="mobile-nav-item px-3 py-2 rounded-md text-white bg-white bg-opacity-5">
-                <div class="flex items-center space-x-2">
-                    <i class="fas fa-toolbox w-5"></i>
-                    <a href="{% url 'common:oobc_management_home' %}" class="font-medium text-white hover:text-green-200 transition-colors duration-200">OOBC Mgt</a>
-                </div>
-                <div class="mt-2 space-y-1">
-                    <a href="{% url 'common:oobc_management_home' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+
+            <div class="mobile-section space-y-2">
+                <button type="button"
+                        class="mobile-section-toggle mobile-nav-item w-full px-3 py-2 rounded-md text-left text-white bg-white bg-opacity-5 flex items-center justify-between"
+                        aria-expanded="false"
+                        aria-controls="mobile-submenu-oobc"
+                        data-target="mobile-submenu-oobc">
+                    <span class="flex items-center space-x-2">
+                        <i class="fas fa-toolbox w-5"></i>
+                        <span>OOBC Management</span>
+                    </span>
+                    <i class="fas fa-chevron-down text-xs transform transition-transform duration-200 mobile-section-icon"></i>
+                </button>
+                <div id="mobile-submenu-oobc" class="mobile-submenu hidden mt-2 space-y-1">
+                    <a href="{% url 'common:oobc_management_home' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Overview
                         <span class="block text-xs text-white text-opacity-70">High-level OOBC management metrics</span>
                     </a>
-                    <a href="{% url 'common:staff_management' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:staff_management' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Staff Management
                         <span class="block text-xs text-white text-opacity-70">Manage workloads, tasks, and staffing needs</span>
                     </a>
-                    <a href="{% url 'common:planning_budgeting' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:planning_budgeting' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Planning &amp; Budgeting
                         <span class="block text-xs text-white text-opacity-70">OOBC Office PPAs and MOA PPAs for OBCs</span>
                     </a>
-                    <a href="{% url 'common:oobc_calendar' %}" class="block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
+                    <a href="{% url 'common:oobc_calendar' %}" class="mobile-nav-link block pl-9 pr-3 py-2 rounded-md text-sm text-white text-opacity-90 hover:bg-white hover:bg-opacity-10 transition-colors duration-200">
                         Calendar Management
                         <span class="block text-xs text-white text-opacity-70">Organization-wide schedule for coordination, MANA, and staff actions</span>
                     </a>
                 </div>
             </div>
+
             <hr class="my-2 border-white border-opacity-20">
-            <a href="{% url 'common:profile' %}" class="mobile-nav-item block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors duration-200 flex items-center space-x-2">
+            <a href="{% url 'common:profile' %}" class="mobile-nav-link mobile-nav-item block px-3 py-2 rounded-md text-white hover:bg-white hover:bg-opacity-10 transition-colors duration-200 flex items-center space-x-2">
                 <i class="fas fa-user-circle w-5"></i>
                 <span>Profile</span>
             </a>
-            <a href="{% url 'common:logout' %}" class="mobile-nav-item block px-3 py-2 rounded-md text-red-200 hover:bg-red-600 hover:bg-opacity-50 transition-colors duration-200 flex items-center space-x-2">
+            <a href="{% url 'common:logout' %}" class="mobile-nav-link mobile-nav-item block px-3 py-2 rounded-md text-red-200 hover:bg-red-600 hover:bg-opacity-50 transition-colors duration-200 flex items-center space-x-2">
                 <i class="fas fa-sign-out-alt w-5"></i>
                 <span>Logout</span>
             </a>

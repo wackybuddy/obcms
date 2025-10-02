@@ -25,10 +25,12 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+
 # Import admin customizations
 from . import admin as admin_customizations
 from common.admin_views import group_changelist_view
 from common.views.health import health_check, readiness_check
+
 # API docs import removed - documentation now backend-only
 
 # Main API router
@@ -36,50 +38,49 @@ api_router = DefaultRouter()
 
 urlpatterns = [
     # Health check endpoints (no authentication required)
-    path('health/', health_check, name='health'),
-    path('ready/', readiness_check, name='readiness'),
-
+    path("health/", health_check, name="health"),
+    path("ready/", readiness_check, name="readiness"),
     # Custom admin views (must come before admin.site.urls)
-    path("admin/auth/group/", group_changelist_view, name='custom_group_changelist'),
+    path("admin/auth/group/", group_changelist_view, name="custom_group_changelist"),
     path("admin/", admin.site.urls),
-
     # Main application URLs
-    path('', include('common.urls')),
-    path('communities/', include('communities.urls')),
-    path('monitoring/', include('monitoring.urls')),
-
+    path("", include("common.urls")),
+    path("communities/", include("communities.urls")),
+    path("monitoring/", include("monitoring.urls")),
     # Project Central (Integrated Project Management)
-    path('project-central/', include('project_central.urls')),
-
+    path("project-central/", include("project_central.urls")),
     # Documents and MANA
-    path('documents/', include(('recommendations.documents.urls', 'documents'), namespace='documents')),
-    path('mana/workshops/', include(('mana.urls', 'mana'), namespace='mana')),
-    
+    path(
+        "documents/",
+        include(("recommendations.documents.urls", "documents"), namespace="documents"),
+    ),
+    path("mana/workshops/", include(("mana.urls", "mana"), namespace="mana")),
     # API Authentication
-    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    
+    path("api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # API documentation (backend only - accessible via admin or direct API calls)
-    
     # API endpoints
-    path('api/v1/', include(api_router.urls)),
-    path('api/administrative/', include(('common.api_urls', 'common_api'), namespace='common_api')),
-    path('api/communities/', include('communities.api_urls')),
-    path('api/municipal-profiles/', include('municipal_profiles.api_urls')),
-    path('api/mana/', include('mana.api_urls')),
-    path('api/coordination/', include('coordination.api_urls')),
-    path('api/policies/', include('recommendations.policies.api_urls')),
-    path('api/policy-tracking/', include('recommendations.policy_tracking.api_urls')),
-    
+    path("api/v1/", include(api_router.urls)),
+    path(
+        "api/administrative/",
+        include(("common.api_urls", "common_api"), namespace="common_api"),
+    ),
+    path("api/communities/", include("communities.api_urls")),
+    path("api/municipal-profiles/", include("municipal_profiles.api_urls")),
+    path("api/mana/", include("mana.api_urls")),
+    path("api/coordination/", include("coordination.api_urls")),
+    path("api/policies/", include("recommendations.policies.api_urls")),
+    path("api/policy-tracking/", include("recommendations.policy_tracking.api_urls")),
     # Browsable API authentication
-    path('api-auth/', include('rest_framework.urls')),
-    
-    path('', lambda request: redirect('common:dashboard')),  # Redirect root to dashboard
+    path("api-auth/", include("rest_framework.urls")),
+    path(
+        "", lambda request: redirect("common:dashboard")
+    ),  # Redirect root to dashboard
 ]
 
 # Serve media files during development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    
+
     # Debug toolbar disabled for now

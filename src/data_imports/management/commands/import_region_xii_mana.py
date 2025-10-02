@@ -3,10 +3,21 @@ from django.db import transaction
 from django.utils import timezone
 
 from common.models import Barangay, Municipality, Province, Region
-from communities.models import (CommunityInfrastructure, CommunityLivelihood,
-                                GeographicDataLayer, OBCCommunity, Stakeholder)
-from mana.models import (Assessment, AssessmentCategory, BaselineStudy,
-                         BaselineStudyTeamMember, Need, NeedsCategory)
+from communities.models import (
+    CommunityInfrastructure,
+    CommunityLivelihood,
+    GeographicDataLayer,
+    OBCCommunity,
+    Stakeholder,
+)
+from mana.models import (
+    Assessment,
+    AssessmentCategory,
+    BaselineStudy,
+    BaselineStudyTeamMember,
+    Need,
+    NeedsCategory,
+)
 
 
 class Command(BaseCommand):

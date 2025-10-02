@@ -143,7 +143,12 @@ class Command(BaseCommand):
                     created_count += 1
 
         if created_count:
-            self.stdout.write(self.style.SUCCESS(
-                f"Loaded {created_count} OOBC policy recommendations."))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Loaded {created_count} OOBC policy recommendations."
+                )
+            )
         else:
-            self.stdout.write("Policy recommendations already present; nothing to load.")
+            self.stdout.write(
+                "Policy recommendations already present; nothing to load."
+            )

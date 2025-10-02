@@ -1,8 +1,14 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .api_views import (BarangayViewSet, LocationDataView, MunicipalityViewSet,
-                        ProvinceViewSet, RegionViewSet, UserViewSet)
+from .api_views import (
+    BarangayViewSet,
+    LocationDataView,
+    MunicipalityViewSet,
+    ProvinceViewSet,
+    RegionViewSet,
+    UserViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"users", UserViewSet)

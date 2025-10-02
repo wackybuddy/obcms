@@ -38,7 +38,9 @@ class Command(BaseCommand):
 
         if schema_path is None:
             schema_path = (
-                Path(__file__).resolve().parent.parent.parent / "data" / "workshop_questions_schema.json"
+                Path(__file__).resolve().parent.parent.parent
+                / "data"
+                / "workshop_questions_schema.json"
             )
         else:
             schema_path = Path(schema_path)
@@ -50,8 +52,14 @@ class Command(BaseCommand):
             data = json.load(handle)
 
         if options["purge"]:
-            deleted, _ = WorkshopQuestionDefinition.objects.filter(version=version).delete()
-            self.stdout.write(self.style.WARNING(f"Removed {deleted} definitions for version {version}."))
+            deleted, _ = WorkshopQuestionDefinition.objects.filter(
+                version=version
+            ).delete()
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Removed {deleted} definitions for version {version}."
+                )
+            )
 
         total = 0
         for workshop_type, payload in data.items():

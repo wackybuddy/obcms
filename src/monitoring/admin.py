@@ -472,334 +472,392 @@ class OutcomeIndicatorAdmin(admin.ModelAdmin):
 
 # Phase 5: Strategic Planning Integration - Admin Interfaces
 
+
 @admin.register(StrategicGoal)
 class StrategicGoalAdmin(admin.ModelAdmin):
     """Admin interface for Strategic Goals."""
-    
+
     list_display = [
-        'title',
-        'sector_badge',
-        'priority_badge',
-        'timeline_display',
-        'progress_bar',
-        'status_badge',
-        'alignment_indicators',
-        'linked_ppas_count',
+        "title",
+        "sector_badge",
+        "priority_badge",
+        "timeline_display",
+        "progress_bar",
+        "status_badge",
+        "alignment_indicators",
+        "linked_ppas_count",
     ]
-    
+
     list_filter = [
-        'status',
-        'sector',
-        'priority_level',
-        'aligns_with_rdp',
-        'aligns_with_national_framework',
-        'start_year',
-        'target_year',
+        "status",
+        "sector",
+        "priority_level",
+        "aligns_with_rdp",
+        "aligns_with_national_framework",
+        "start_year",
+        "target_year",
     ]
-    
+
     search_fields = [
-        'title',
-        'description',
-        'goal_statement',
-        'rdp_reference',
+        "title",
+        "description",
+        "goal_statement",
+        "rdp_reference",
     ]
-    
+
     autocomplete_fields = [
-        'lead_agency',
-        'created_by',
+        "lead_agency",
+        "created_by",
     ]
-    
+
     filter_horizontal = [
-        'supporting_agencies',
-        'linked_ppas',
-        'linked_policies',
+        "supporting_agencies",
+        "linked_ppas",
+        "linked_policies",
     ]
-    
+
     readonly_fields = [
-        'created_at',
-        'updated_at',
-        'duration_years',
-        'is_active',
-        'achievement_rate',
+        "created_at",
+        "updated_at",
+        "duration_years",
+        "is_active",
+        "achievement_rate",
     ]
-    
+
     fieldsets = (
-        ('Basic Information', {
-            'fields': ('title', 'description', 'goal_statement', 'sector', 'priority_level')
-        }),
-        ('Timeline', {
-            'fields': ('start_year', 'target_year', 'duration_years')
-        }),
-        ('Alignment', {
-            'fields': (
-                'aligns_with_rdp',
-                'rdp_reference',
-                'aligns_with_national_framework',
-            )
-        }),
-        ('Targets & Indicators', {
-            'fields': (
-                'target_outcome',
-                'baseline_value',
-                'target_value',
-                'unit_of_measure',
-                'estimated_total_budget',
-            )
-        }),
-        ('Responsibility', {
-            'fields': ('lead_agency', 'supporting_agencies')
-        }),
-        ('Linkages', {
-            'fields': ('linked_ppas', 'linked_policies'),
-            'classes': ('collapse',)
-        }),
-        ('Progress & Status', {
-            'fields': ('status', 'progress_percentage', 'is_active', 'achievement_rate')
-        }),
-        ('Metadata', {
-            'fields': ('created_by', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "title",
+                    "description",
+                    "goal_statement",
+                    "sector",
+                    "priority_level",
+                )
+            },
+        ),
+        ("Timeline", {"fields": ("start_year", "target_year", "duration_years")}),
+        (
+            "Alignment",
+            {
+                "fields": (
+                    "aligns_with_rdp",
+                    "rdp_reference",
+                    "aligns_with_national_framework",
+                )
+            },
+        ),
+        (
+            "Targets & Indicators",
+            {
+                "fields": (
+                    "target_outcome",
+                    "baseline_value",
+                    "target_value",
+                    "unit_of_measure",
+                    "estimated_total_budget",
+                )
+            },
+        ),
+        ("Responsibility", {"fields": ("lead_agency", "supporting_agencies")}),
+        (
+            "Linkages",
+            {"fields": ("linked_ppas", "linked_policies"), "classes": ("collapse",)},
+        ),
+        (
+            "Progress & Status",
+            {
+                "fields": (
+                    "status",
+                    "progress_percentage",
+                    "is_active",
+                    "achievement_rate",
+                )
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
     )
-    
+
     def sector_badge(self, obj):
         colors = {
-            'education': '#3b82f6',
-            'health': '#ef4444',
-            'livelihood': '#10b981',
-            'infrastructure': '#f59e0b',
-            'governance': '#8b5cf6',
-            'social_protection': '#ec4899',
-            'cultural': '#14b8a6',
-            'peace': '#6366f1',
-            'environment': '#22c55e',
+            "education": "#3b82f6",
+            "health": "#ef4444",
+            "livelihood": "#10b981",
+            "infrastructure": "#f59e0b",
+            "governance": "#8b5cf6",
+            "social_protection": "#ec4899",
+            "cultural": "#14b8a6",
+            "peace": "#6366f1",
+            "environment": "#22c55e",
         }
-        color = colors.get(obj.sector, '#6b7280')
+        color = colors.get(obj.sector, "#6b7280")
         return format_html(
             '<span style="background-color: {}; color: white; padding: 3px 8px; '
             'border-radius: 4px; font-size: 11px; font-weight: 600;">{}</span>',
             color,
-            obj.get_sector_display()
+            obj.get_sector_display(),
         )
-    sector_badge.short_description = 'Sector'
-    
+
+    sector_badge.short_description = "Sector"
+
     def priority_badge(self, obj):
         colors = {
-            'critical': '#dc2626',
-            'high': '#ea580c',
-            'medium': '#ca8a04',
-            'low': '#65a30d',
+            "critical": "#dc2626",
+            "high": "#ea580c",
+            "medium": "#ca8a04",
+            "low": "#65a30d",
         }
-        color = colors.get(obj.priority_level, '#6b7280')
+        color = colors.get(obj.priority_level, "#6b7280")
         return format_html(
             '<span style="background-color: {}; color: white; padding: 3px 8px; '
             'border-radius: 4px; font-size: 11px; font-weight: 600;">{}</span>',
             color,
-            obj.get_priority_level_display()
+            obj.get_priority_level_display(),
         )
-    priority_badge.short_description = 'Priority'
-    
+
+    priority_badge.short_description = "Priority"
+
     def timeline_display(self, obj):
         return f"{obj.start_year}–{obj.target_year} ({obj.duration_years}y)"
-    timeline_display.short_description = 'Timeline'
-    
+
+    timeline_display.short_description = "Timeline"
+
     def progress_bar(self, obj):
-        color = '#10b981' if obj.progress_percentage >= 70 else '#f59e0b' if obj.progress_percentage >= 40 else '#ef4444'
+        color = (
+            "#10b981"
+            if obj.progress_percentage >= 70
+            else "#f59e0b" if obj.progress_percentage >= 40 else "#ef4444"
+        )
         return format_html(
             '<div style="width: 100px; background: #e5e7eb; border-radius: 4px; height: 16px;">'
             '<div style="width: {}%; background: {}; border-radius: 4px; height: 16px; '
             'display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 600;">'
-            '{}%</div></div>',
+            "{}%</div></div>",
             obj.progress_percentage,
             color,
-            obj.progress_percentage
+            obj.progress_percentage,
         )
-    progress_bar.short_description = 'Progress'
-    
+
+    progress_bar.short_description = "Progress"
+
     def status_badge(self, obj):
         colors = {
-            'draft': '#6b7280',
-            'approved': '#3b82f6',
-            'active': '#10b981',
-            'achieved': '#14b8a6',
-            'revised': '#f59e0b',
-            'discontinued': '#ef4444',
+            "draft": "#6b7280",
+            "approved": "#3b82f6",
+            "active": "#10b981",
+            "achieved": "#14b8a6",
+            "revised": "#f59e0b",
+            "discontinued": "#ef4444",
         }
-        color = colors.get(obj.status, '#6b7280')
+        color = colors.get(obj.status, "#6b7280")
         return format_html(
             '<span style="background-color: {}; color: white; padding: 3px 8px; '
             'border-radius: 4px; font-size: 11px; font-weight: 600;">{}</span>',
             color,
-            obj.get_status_display()
+            obj.get_status_display(),
         )
-    status_badge.short_description = 'Status'
-    
+
+    status_badge.short_description = "Status"
+
     def alignment_indicators(self, obj):
         indicators = []
         if obj.aligns_with_rdp:
-            indicators.append('<span style="color: #10b981;" title="Aligns with RDP">✓ RDP</span>')
+            indicators.append(
+                '<span style="color: #10b981;" title="Aligns with RDP">✓ RDP</span>'
+            )
         if obj.aligns_with_national_framework:
-            indicators.append('<span style="color: #3b82f6;" title="Aligns with National Framework">✓ National</span>')
-        return format_html(' '.join(indicators)) if indicators else '—'
-    alignment_indicators.short_description = 'Alignment'
-    
+            indicators.append(
+                '<span style="color: #3b82f6;" title="Aligns with National Framework">✓ National</span>'
+            )
+        return format_html(" ".join(indicators)) if indicators else "—"
+
+    alignment_indicators.short_description = "Alignment"
+
     def linked_ppas_count(self, obj):
         count = obj.linked_ppas.count()
         if count > 0:
             return format_html(
-                '<span style="color: #10b981; font-weight: 600;">{} PPAs</span>',
-                count
+                '<span style="color: #10b981; font-weight: 600;">{} PPAs</span>', count
             )
         return format_html('<span style="color: #9ca3af;">No PPAs</span>')
-    linked_ppas_count.short_description = 'Linked PPAs'
+
+    linked_ppas_count.short_description = "Linked PPAs"
 
 
 @admin.register(AnnualPlanningCycle)
 class AnnualPlanningCycleAdmin(admin.ModelAdmin):
     """Admin interface for Annual Planning Cycles."""
-    
+
     list_display = [
-        'fiscal_year_display',
-        'cycle_name',
-        'status_badge',
-        'budget_summary',
-        'utilization_bar',
-        'timeline_progress',
-        'strategic_goals_count',
-        'ppas_count',
+        "fiscal_year_display",
+        "cycle_name",
+        "status_badge",
+        "budget_summary",
+        "utilization_bar",
+        "timeline_progress",
+        "strategic_goals_count",
+        "ppas_count",
     ]
-    
+
     list_filter = [
-        'status',
-        'fiscal_year',
+        "status",
+        "fiscal_year",
     ]
-    
+
     search_fields = [
-        'cycle_name',
-        'notes',
+        "cycle_name",
+        "notes",
     ]
-    
+
     autocomplete_fields = [
-        'created_by',
+        "created_by",
     ]
-    
+
     filter_horizontal = [
-        'strategic_goals',
-        'monitoring_entries',
-        'needs_addressed',
+        "strategic_goals",
+        "monitoring_entries",
+        "needs_addressed",
     ]
-    
+
     readonly_fields = [
-        'created_at',
-        'updated_at',
-        'budget_utilization_rate',
-        'is_current_cycle',
-        'days_until_budget_submission',
+        "created_at",
+        "updated_at",
+        "budget_utilization_rate",
+        "is_current_cycle",
+        "days_until_budget_submission",
     ]
-    
+
     fieldsets = (
-        ('Planning Cycle', {
-            'fields': ('fiscal_year', 'cycle_name', 'status')
-        }),
-        ('Timeline', {
-            'fields': (
-                'planning_start_date',
-                'planning_end_date',
-                'budget_submission_date',
-                'budget_approval_date',
-                'execution_start_date',
-                'execution_end_date',
-                'days_until_budget_submission',
-            )
-        }),
-        ('Budget', {
-            'fields': (
-                'total_budget_envelope',
-                'allocated_budget',
-                'budget_utilization_rate',
-            )
-        }),
-        ('Strategic Alignment', {
-            'fields': ('strategic_goals',)
-        }),
-        ('Implementation', {
-            'fields': ('monitoring_entries', 'needs_addressed'),
-            'classes': ('collapse',)
-        }),
-        ('Documentation', {
-            'fields': (
-                'plan_document_url',
-                'budget_document_url',
-                'notes',
-            ),
-            'classes': ('collapse',)
-        }),
-        ('Metadata', {
-            'fields': ('created_by', 'created_at', 'updated_at', 'is_current_cycle'),
-            'classes': ('collapse',)
-        }),
+        ("Planning Cycle", {"fields": ("fiscal_year", "cycle_name", "status")}),
+        (
+            "Timeline",
+            {
+                "fields": (
+                    "planning_start_date",
+                    "planning_end_date",
+                    "budget_submission_date",
+                    "budget_approval_date",
+                    "execution_start_date",
+                    "execution_end_date",
+                    "days_until_budget_submission",
+                )
+            },
+        ),
+        (
+            "Budget",
+            {
+                "fields": (
+                    "total_budget_envelope",
+                    "allocated_budget",
+                    "budget_utilization_rate",
+                )
+            },
+        ),
+        ("Strategic Alignment", {"fields": ("strategic_goals",)}),
+        (
+            "Implementation",
+            {
+                "fields": ("monitoring_entries", "needs_addressed"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Documentation",
+            {
+                "fields": (
+                    "plan_document_url",
+                    "budget_document_url",
+                    "notes",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "created_by",
+                    "created_at",
+                    "updated_at",
+                    "is_current_cycle",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
     )
-    
+
     def fiscal_year_display(self, obj):
         if obj.is_current_cycle:
             return format_html(
                 '<strong style="color: #10b981;">FY {} <span style="background: #10b981; '
                 'color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">CURRENT</span></strong>',
-                obj.fiscal_year
+                obj.fiscal_year,
             )
         return f"FY {obj.fiscal_year}"
-    fiscal_year_display.short_description = 'Fiscal Year'
-    
+
+    fiscal_year_display.short_description = "Fiscal Year"
+
     def status_badge(self, obj):
         colors = {
-            'planning': '#6b7280',
-            'budget_preparation': '#3b82f6',
-            'budget_approval': '#f59e0b',
-            'execution': '#10b981',
-            'monitoring': '#8b5cf6',
-            'completed': '#14b8a6',
-            'archived': '#9ca3af',
+            "planning": "#6b7280",
+            "budget_preparation": "#3b82f6",
+            "budget_approval": "#f59e0b",
+            "execution": "#10b981",
+            "monitoring": "#8b5cf6",
+            "completed": "#14b8a6",
+            "archived": "#9ca3af",
         }
-        color = colors.get(obj.status, '#6b7280')
+        color = colors.get(obj.status, "#6b7280")
         return format_html(
             '<span style="background-color: {}; color: white; padding: 3px 8px; '
             'border-radius: 4px; font-size: 11px; font-weight: 600;">{}</span>',
             color,
-            obj.get_status_display()
+            obj.get_status_display(),
         )
-    status_badge.short_description = 'Status'
-    
+
+    status_badge.short_description = "Status"
+
     def budget_summary(self, obj):
         if obj.total_budget_envelope:
             return format_html(
                 '<div style="font-size: 11px;">'
-                '<div>Envelope: <strong>₱{:,.2f}</strong></div>'
-                '<div>Allocated: <strong>₱{:,.2f}</strong></div>'
-                '</div>',
+                "<div>Envelope: <strong>₱{:,.2f}</strong></div>"
+                "<div>Allocated: <strong>₱{:,.2f}</strong></div>"
+                "</div>",
                 obj.total_budget_envelope,
-                obj.allocated_budget
+                obj.allocated_budget,
             )
-        return '—'
-    budget_summary.short_description = 'Budget'
-    
+        return "—"
+
+    budget_summary.short_description = "Budget"
+
     def utilization_bar(self, obj):
         rate = obj.budget_utilization_rate
-        color = '#10b981' if rate >= 70 else '#f59e0b' if rate >= 40 else '#ef4444'
+        color = "#10b981" if rate >= 70 else "#f59e0b" if rate >= 40 else "#ef4444"
         return format_html(
             '<div style="width: 100px; background: #e5e7eb; border-radius: 4px; height: 16px;">'
             '<div style="width: {}%; background: {}; border-radius: 4px; height: 16px; '
             'display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 600;">'
-            '{:.0f}%</div></div>',
+            "{:.0f}%</div></div>",
             min(rate, 100),
             color,
-            rate
+            rate,
         )
-    utilization_bar.short_description = 'Utilization'
-    
+
+    utilization_bar.short_description = "Utilization"
+
     def timeline_progress(self, obj):
         from django.utils import timezone
+
         today = timezone.now().date()
-        
+
         if today < obj.planning_start_date:
             return format_html('<span style="color: #6b7280;">Not Started</span>')
         elif today <= obj.planning_end_date:
@@ -807,50 +865,60 @@ class AnnualPlanningCycleAdmin(admin.ModelAdmin):
         elif today <= obj.budget_submission_date:
             days = obj.days_until_budget_submission
             return format_html(
-                '<span style="color: #f59e0b;">Budget Due: {} days</span>',
-                days
+                '<span style="color: #f59e0b;">Budget Due: {} days</span>', days
             )
         elif today <= obj.execution_end_date:
             return format_html('<span style="color: #10b981;">Executing</span>')
         else:
             return format_html('<span style="color: #9ca3af;">Ended</span>')
-    timeline_progress.short_description = 'Timeline'
-    
+
+    timeline_progress.short_description = "Timeline"
+
     def strategic_goals_count(self, obj):
         count = obj.strategic_goals.count()
-        return format_html(
-            '<span style="color: #3b82f6; font-weight: 600;">{}</span>',
-            count
-        ) if count > 0 else '—'
-    strategic_goals_count.short_description = 'Strategic Goals'
-    
+        return (
+            format_html(
+                '<span style="color: #3b82f6; font-weight: 600;">{}</span>', count
+            )
+            if count > 0
+            else "—"
+        )
+
+    strategic_goals_count.short_description = "Strategic Goals"
+
     def ppas_count(self, obj):
         count = obj.monitoring_entries.count()
-        return format_html(
-            '<span style="color: #10b981; font-weight: 600;">{}</span>',
-            count
-        ) if count > 0 else '—'
-    ppas_count.short_description = 'PPAs'
+        return (
+            format_html(
+                '<span style="color: #10b981; font-weight: 600;">{}</span>', count
+            )
+            if count > 0
+            else "—"
+        )
+
+    ppas_count.short_description = "PPAs"
 
 
 # =============================================================================
 # Phase 6: Scenario Planning & Budget Optimization Admin
 # =============================================================================
 
+
 class ScenarioAllocationInline(admin.TabularInline):
     """Inline allocations for scenario planning."""
+
     model = ScenarioAllocation
     extra = 0
     fields = (
-        'ppa',
-        'allocated_amount',
-        'priority_rank',
-        'status',
-        'allocation_rationale',
-        'overall_score',
+        "ppa",
+        "allocated_amount",
+        "priority_rank",
+        "status",
+        "allocation_rationale",
+        "overall_score",
     )
-    readonly_fields = ('overall_score',)
-    autocomplete_fields = ['ppa']
+    readonly_fields = ("overall_score",)
+    autocomplete_fields = ["ppa"]
 
 
 @admin.register(BudgetScenario)
@@ -858,88 +926,103 @@ class BudgetScenarioAdmin(admin.ModelAdmin):
     """Admin interface for budget scenarios."""
 
     list_display = [
-        'scenario_name_display',
-        'scenario_type_badge',
-        'budget_summary',
-        'utilization_bar',
-        'optimization_score_display',
-        'beneficiaries_display',
-        'status_badge',
-        'created_at',
+        "scenario_name_display",
+        "scenario_type_badge",
+        "budget_summary",
+        "utilization_bar",
+        "optimization_score_display",
+        "beneficiaries_display",
+        "status_badge",
+        "created_at",
     ]
 
     list_filter = [
-        'status',
-        'scenario_type',
-        'is_baseline',
-        'planning_cycle',
-        'created_at',
+        "status",
+        "scenario_type",
+        "is_baseline",
+        "planning_cycle",
+        "created_at",
     ]
 
     search_fields = [
-        'name',
-        'description',
-        'notes',
+        "name",
+        "description",
+        "notes",
     ]
 
     readonly_fields = [
-        'id',
-        'allocated_budget',
-        'optimization_score',
-        'estimated_beneficiaries',
-        'estimated_needs_addressed',
-        'budget_utilization_rate',
-        'unallocated_budget',
-        'optimization_weights_sum',
-        'created_at',
-        'updated_at',
+        "id",
+        "allocated_budget",
+        "optimization_score",
+        "estimated_beneficiaries",
+        "estimated_needs_addressed",
+        "budget_utilization_rate",
+        "unallocated_budget",
+        "optimization_weights_sum",
+        "created_at",
+        "updated_at",
     ]
 
     fieldsets = [
-        ('Basic Information', {
-            'fields': (
-                'id',
-                'name',
-                'description',
-                'scenario_type',
-                'is_baseline',
-                'planning_cycle',
-                'status',
-            )
-        }),
-        ('Budget', {
-            'fields': (
-                'total_budget',
-                'allocated_budget',
-                'budget_utilization_rate',
-                'unallocated_budget',
-            )
-        }),
-        ('Optimization Weights', {
-            'fields': (
-                'weight_needs_coverage',
-                'weight_equity',
-                'weight_strategic_alignment',
-                'optimization_weights_sum',
-            ),
-            'description': 'Adjust weights for multi-objective optimization (should sum to ~1.00)'
-        }),
-        ('Results & Metrics', {
-            'fields': (
-                'optimization_score',
-                'estimated_beneficiaries',
-                'estimated_needs_addressed',
-            )
-        }),
-        ('Metadata', {
-            'fields': (
-                'notes',
-                'created_by',
-                'created_at',
-                'updated_at',
-            ),
-            'classes': ('collapse',)
-        }),
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "id",
+                    "name",
+                    "description",
+                    "scenario_type",
+                    "is_baseline",
+                    "planning_cycle",
+                    "status",
+                )
+            },
+        ),
+        (
+            "Budget",
+            {
+                "fields": (
+                    "total_budget",
+                    "allocated_budget",
+                    "budget_utilization_rate",
+                    "unallocated_budget",
+                )
+            },
+        ),
+        (
+            "Optimization Weights",
+            {
+                "fields": (
+                    "weight_needs_coverage",
+                    "weight_equity",
+                    "weight_strategic_alignment",
+                    "optimization_weights_sum",
+                ),
+                "description": "Adjust weights for multi-objective optimization (should sum to ~1.00)",
+            },
+        ),
+        (
+            "Results & Metrics",
+            {
+                "fields": (
+                    "optimization_score",
+                    "estimated_beneficiaries",
+                    "estimated_needs_addressed",
+                )
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "notes",
+                    "created_by",
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
     ]
 
     inlines = [ScenarioAllocationInline]
@@ -951,30 +1034,32 @@ class BudgetScenarioAdmin(admin.ModelAdmin):
                 '<strong style="color: #10b981;">{}</strong> '
                 '<span style="background: #10b981; color: white; padding: 2px 8px; '
                 'border-radius: 12px; font-size: 10px; font-weight: 600;">BASELINE</span>',
-                obj.name
+                obj.name,
             )
-        return format_html('<strong>{}</strong>', obj.name)
-    scenario_name_display.short_description = 'Scenario'
+        return format_html("<strong>{}</strong>", obj.name)
+
+    scenario_name_display.short_description = "Scenario"
 
     def scenario_type_badge(self, obj):
         """Visual badge for scenario type."""
         colors = {
-            'baseline': '#10b981',
-            'optimistic': '#3b82f6',
-            'conservative': '#f59e0b',
-            'needs_based': '#8b5cf6',
-            'equity_focused': '#ec4899',
-            'custom': '#6b7280',
+            "baseline": "#10b981",
+            "optimistic": "#3b82f6",
+            "conservative": "#f59e0b",
+            "needs_based": "#8b5cf6",
+            "equity_focused": "#ec4899",
+            "custom": "#6b7280",
         }
-        color = colors.get(obj.scenario_type, '#6b7280')
+        color = colors.get(obj.scenario_type, "#6b7280")
 
         return format_html(
             '<span style="background: {}; color: white; padding: 4px 12px; '
             'border-radius: 16px; font-size: 11px; font-weight: 600;">{}</span>',
             color,
-            obj.get_scenario_type_display()
+            obj.get_scenario_type_display(),
         )
-    scenario_type_badge.short_description = 'Type'
+
+    scenario_type_badge.short_description = "Type"
 
     def budget_summary(self, obj):
         """Display budget allocation summary."""
@@ -982,28 +1067,30 @@ class BudgetScenarioAdmin(admin.ModelAdmin):
             '<div style="font-size: 12px;">'
             '<div style="color: #10b981; font-weight: 600;">₱{:,.0f}</div>'
             '<div style="color: #6b7280; font-size: 10px;">of ₱{:,.0f}</div>'
-            '</div>',
+            "</div>",
             obj.allocated_budget,
-            obj.total_budget
+            obj.total_budget,
         )
-    budget_summary.short_description = 'Allocation'
+
+    budget_summary.short_description = "Allocation"
 
     def utilization_bar(self, obj):
         """Visual budget utilization bar."""
         rate = float(obj.budget_utilization_rate)
-        color = '#10b981' if rate >= 80 else '#3b82f6' if rate >= 50 else '#f59e0b'
+        color = "#10b981" if rate >= 80 else "#3b82f6" if rate >= 50 else "#f59e0b"
 
         return format_html(
             '<div style="width: 120px; background: #e5e7eb; border-radius: 8px; height: 20px; position: relative;">'
             '<div style="width: {}%; background: {}; border-radius: 8px; height: 20px; '
-            'display: flex; align-items: center; justify-content: center; color: white; '
+            "display: flex; align-items: center; justify-content: center; color: white; "
             'font-size: 11px; font-weight: 700; transition: width 0.3s;">{:.1f}%</div>'
-            '</div>',
+            "</div>",
             min(rate, 100),
             color,
-            rate
+            rate,
         )
-    utilization_bar.short_description = 'Utilization'
+
+    utilization_bar.short_description = "Utilization"
 
     def optimization_score_display(self, obj):
         """Display optimization score with color coding."""
@@ -1012,25 +1099,26 @@ class BudgetScenarioAdmin(admin.ModelAdmin):
 
         score = float(obj.optimization_score)
         if score >= 80:
-            color = '#10b981'
-            icon = '✅'
+            color = "#10b981"
+            icon = "✅"
         elif score >= 60:
-            color = '#3b82f6'
-            icon = '✓'
+            color = "#3b82f6"
+            icon = "✓"
         elif score >= 40:
-            color = '#f59e0b'
-            icon = '⚠️'
+            color = "#f59e0b"
+            icon = "⚠️"
         else:
-            color = '#ef4444'
-            icon = '⚠'
+            color = "#ef4444"
+            icon = "⚠"
 
         return format_html(
             '<span style="color: {}; font-weight: 700; font-size: 13px;">{} {:.1f}</span>',
             color,
             icon,
-            score
+            score,
         )
-    optimization_score_display.short_description = 'Opt. Score'
+
+    optimization_score_display.short_description = "Opt. Score"
 
     def beneficiaries_display(self, obj):
         """Display estimated beneficiaries."""
@@ -1039,31 +1127,33 @@ class BudgetScenarioAdmin(admin.ModelAdmin):
                 '<div style="font-size: 12px;">'
                 '<div style="color: #3b82f6; font-weight: 600;">{:,}</div>'
                 '<div style="color: #6b7280; font-size: 10px;">{} needs</div>'
-                '</div>',
+                "</div>",
                 obj.estimated_beneficiaries,
-                obj.estimated_needs_addressed
+                obj.estimated_needs_addressed,
             )
-        return '—'
-    beneficiaries_display.short_description = 'Beneficiaries'
+        return "—"
+
+    beneficiaries_display.short_description = "Beneficiaries"
 
     def status_badge(self, obj):
         """Visual badge for scenario status."""
         colors = {
-            'draft': '#6b7280',
-            'under_review': '#3b82f6',
-            'approved': '#10b981',
-            'implemented': '#8b5cf6',
-            'archived': '#9ca3af',
+            "draft": "#6b7280",
+            "under_review": "#3b82f6",
+            "approved": "#10b981",
+            "implemented": "#8b5cf6",
+            "archived": "#9ca3af",
         }
-        color = colors.get(obj.status, '#6b7280')
+        color = colors.get(obj.status, "#6b7280")
 
         return format_html(
             '<span style="background: {}; color: white; padding: 4px 12px; '
             'border-radius: 16px; font-size: 11px; font-weight: 600; text-transform: uppercase;">{}</span>',
             color,
-            obj.get_status_display()
+            obj.get_status_display(),
         )
-    status_badge.short_description = 'Status'
+
+    status_badge.short_description = "Status"
 
 
 @admin.register(CeilingManagement)
@@ -1085,117 +1175,127 @@ class CeilingManagementAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
     ordering = ("-fiscal_year", "funding_source", "sector")
 
+
 @admin.register(ScenarioAllocation)
 class ScenarioAllocationAdmin(admin.ModelAdmin):
     """Admin interface for scenario allocations."""
 
     list_display = [
-        'scenario_link',
-        'ppa_link',
-        'allocated_amount_display',
-        'priority_rank',
-        'scores_display',
-        'cost_per_beneficiary_display',
-        'status_badge',
+        "scenario_link",
+        "ppa_link",
+        "allocated_amount_display",
+        "priority_rank",
+        "scores_display",
+        "cost_per_beneficiary_display",
+        "status_badge",
     ]
 
     list_filter = [
-        'status',
-        'scenario__status',
-        'scenario__scenario_type',
-        'ppa__sector',
-        'created_at',
+        "status",
+        "scenario__status",
+        "scenario__scenario_type",
+        "ppa__sector",
+        "created_at",
     ]
 
     search_fields = [
-        'scenario__name',
-        'ppa__title',
-        'allocation_rationale',
+        "scenario__name",
+        "ppa__title",
+        "allocation_rationale",
     ]
 
     readonly_fields = [
-        'id',
-        'cost_per_beneficiary',
-        'needs_coverage_score',
-        'equity_score',
-        'strategic_alignment_score',
-        'overall_score',
-        'created_at',
-        'updated_at',
+        "id",
+        "cost_per_beneficiary",
+        "needs_coverage_score",
+        "equity_score",
+        "strategic_alignment_score",
+        "overall_score",
+        "created_at",
+        "updated_at",
     ]
 
     fieldsets = [
-        ('Allocation Details', {
-            'fields': (
-                'id',
-                'scenario',
-                'ppa',
-                'allocated_amount',
-                'priority_rank',
-                'status',
-            )
-        }),
-        ('Rationale', {
-            'fields': (
-                'allocation_rationale',
-            )
-        }),
-        ('Impact Metrics (Auto-calculated)', {
-            'fields': (
-                'cost_per_beneficiary',
-                'needs_coverage_score',
-                'equity_score',
-                'strategic_alignment_score',
-                'overall_score',
-            ),
-            'classes': ('collapse',)
-        }),
-        ('Metadata', {
-            'fields': (
-                'created_at',
-                'updated_at',
-            ),
-            'classes': ('collapse',)
-        }),
+        (
+            "Allocation Details",
+            {
+                "fields": (
+                    "id",
+                    "scenario",
+                    "ppa",
+                    "allocated_amount",
+                    "priority_rank",
+                    "status",
+                )
+            },
+        ),
+        ("Rationale", {"fields": ("allocation_rationale",)}),
+        (
+            "Impact Metrics (Auto-calculated)",
+            {
+                "fields": (
+                    "cost_per_beneficiary",
+                    "needs_coverage_score",
+                    "equity_score",
+                    "strategic_alignment_score",
+                    "overall_score",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
     ]
 
-    autocomplete_fields = ['scenario', 'ppa']
+    autocomplete_fields = ["scenario", "ppa"]
 
     def scenario_link(self, obj):
         """Link to scenario."""
         return format_html(
             '<a href="/admin/monitoring/budgetscenario/{}/change/">{}</a>',
             obj.scenario.id,
-            obj.scenario.name
+            obj.scenario.name,
         )
-    scenario_link.short_description = 'Scenario'
+
+    scenario_link.short_description = "Scenario"
 
     def ppa_link(self, obj):
         """Link to PPA."""
         return format_html(
             '<a href="/admin/monitoring/monitoringentry/{}/change/">{}</a>',
             obj.ppa.id,
-            obj.ppa.title[:50]
+            obj.ppa.title[:50],
         )
-    ppa_link.short_description = 'PPA'
+
+    ppa_link.short_description = "PPA"
 
     def allocated_amount_display(self, obj):
         """Display allocated amount."""
         return format_html(
             '<span style="color: #10b981; font-weight: 700; font-size: 14px;">₱{:,.2f}</span>',
-            obj.allocated_amount
+            obj.allocated_amount,
         )
-    allocated_amount_display.short_description = 'Allocation'
+
+    allocated_amount_display.short_description = "Allocation"
 
     def cost_per_beneficiary_display(self, obj):
         """Display cost per beneficiary."""
         if obj.cost_per_beneficiary:
             return format_html(
                 '<span style="color: #6b7280; font-size: 12px;">₱{:,.2f}/person</span>',
-                obj.cost_per_beneficiary
+                obj.cost_per_beneficiary,
             )
-        return '—'
-    cost_per_beneficiary_display.short_description = 'Cost/Person'
+        return "—"
+
+    cost_per_beneficiary_display.short_description = "Cost/Person"
 
     def scores_display(self, obj):
         """Display compact scores."""
@@ -1204,29 +1304,31 @@ class ScenarioAllocationAdmin(admin.ModelAdmin):
                 '<div style="font-size: 11px;">'
                 '<div style="color: #10b981;">Overall: {:.1f}</div>'
                 '<div style="color: #6b7280;">N:{:.0f} E:{:.0f} S:{:.0f}</div>'
-                '</div>',
+                "</div>",
                 obj.overall_score,
                 obj.needs_coverage_score or 0,
                 obj.equity_score or 0,
-                obj.strategic_alignment_score or 0
+                obj.strategic_alignment_score or 0,
             )
-        return '—'
-    scores_display.short_description = 'Scores'
+        return "—"
+
+    scores_display.short_description = "Scores"
 
     def status_badge(self, obj):
         """Visual badge for allocation status."""
         colors = {
-            'proposed': '#3b82f6',
-            'approved': '#10b981',
-            'rejected': '#ef4444',
-            'pending_review': '#f59e0b',
+            "proposed": "#3b82f6",
+            "approved": "#10b981",
+            "rejected": "#ef4444",
+            "pending_review": "#f59e0b",
         }
-        color = colors.get(obj.status, '#6b7280')
+        color = colors.get(obj.status, "#6b7280")
 
         return format_html(
             '<span style="background: {}; color: white; padding: 3px 10px; '
             'border-radius: 12px; font-size: 10px; font-weight: 600;">{}</span>',
             color,
-            obj.get_status_display()
+            obj.get_status_display(),
         )
-    status_badge.short_description = 'Status'
+
+    status_badge.short_description = "Status"

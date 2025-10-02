@@ -19,122 +19,114 @@ STAFF_DIRECTORY_ENTRIES = [
     {
         "name": "Qurash D. Langcap",
         "credentials": "",
-        "position": "Deputy Executive Director"
+        "position": "Deputy Executive Director",
     },
     {
         "name": "Norhan B. Hadji Abdullah",
         "credentials": "",
-        "position": "Development Management Officer IV"
+        "position": "Development Management Officer IV",
     },
     {
         "name": "Rusman B. Musa",
         "credentials": "",
-        "position": "Development Management Officer III"
+        "position": "Development Management Officer III",
     },
     {
         "name": "Farhanna U. Kabalu",
         "credentials": "",
-        "position": "Planning Officer II"
+        "position": "Planning Officer II",
     },
     {
         "name": "Al-Amid P. Gandawali",
         "credentials": "",
-        "position": "Information System Analyst II"
+        "position": "Information System Analyst II",
     },
     {
         "name": "Michael A. Berwal",
         "credentials": "",
-        "position": "Administrative Officer II"
+        "position": "Administrative Officer II",
     },
     {
         "name": "Esnain C. Mapait",
         "credentials": "",
-        "position": "Community Development Officer I"
+        "position": "Community Development Officer I",
     },
     {
         "name": "Mohammad Hamid M. Bato",
         "credentials": "",
-        "position": "Planning Officer I"
+        "position": "Planning Officer I",
     },
     {
         "name": "Habiba B. Abunawas",
         "credentials": "",
-        "position": "Development Management Officer I"
+        "position": "Development Management Officer I",
     },
     {
         "name": "Datu Noah P. Damping",
         "credentials": "",
-        "position": "Administrative Assistant V"
+        "position": "Administrative Assistant V",
     },
     {
         "name": "Ramla L. Manguda",
         "credentials": "",
-        "position": "Administrative Assistant I"
+        "position": "Administrative Assistant I",
     },
     {
         "name": "Nor-hayya A. Donde",
         "credentials": "",
-        "position": "Administrative Assistant I"
+        "position": "Administrative Assistant I",
     },
     {
         "name": "Ummu Calthoom L. Basug",
         "credentials": "",
-        "position": "Administrative Assistant I"
+        "position": "Administrative Assistant I",
     },
     {
         "name": "Mardiya M. Jaukal",
         "credentials": "",
-        "position": "Administrative Assistant I"
+        "position": "Administrative Assistant I",
     },
     {
         "name": "Rayyana G. Pendi",
         "credentials": "",
-        "position": "Administrative Assistant I"
+        "position": "Administrative Assistant I",
     },
-    {
-        "name": "Herdan V. Tang",
-        "credentials": "",
-        "position": "Records Officer I"
-    },
+    {"name": "Herdan V. Tang", "credentials": "", "position": "Records Officer I"},
     {
         "name": "Datu Abdulbasit T. Esmael",
         "credentials": "",
-        "position": "Supply Officer I"
+        "position": "Supply Officer I",
     },
     {
         "name": "Omulheir M. Noddin",
         "credentials": "",
-        "position": "Information Officer I"
+        "position": "Information Officer I",
     },
     {
         "name": "Mohadier S. Gawan",
         "credentials": "",
-        "position": "Project Evaluation Officer I"
+        "position": "Project Evaluation Officer I",
     },
     {
         "name": "Sittie Fayesha S. Tumog",
         "credentials": "",
-        "position": "Information Assistant"
+        "position": "Information Assistant",
     },
-    {
-        "name": "Hamde B. Samana",
-        "credentials": "",
-        "position": "Administrative Aide V"
-    },
+    {"name": "Hamde B. Samana", "credentials": "", "position": "Administrative Aide V"},
     {
         "name": "Mohaimen R. Gumander",
         "credentials": "",
-        "position": "Administrative Aide V"
+        "position": "Administrative Aide V",
     },
     {
         "name": "Akmad S. Gandawali",
         "credentials": "",
-        "position": "Administrative Aide V"
+        "position": "Administrative Aide V",
     },
     {
         "name": "Marifel C. Introducion",
         "credentials": "",
-        "position": "Administrative Aide V"
+        "position": "Administrative Aide V",
     },
 ]
 

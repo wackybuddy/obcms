@@ -16,13 +16,13 @@ logger = logging.getLogger(__name__)
 # Configuration with fallbacks
 GOOGLE_API_KEY = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
 GOOGLE_GEOCODING_URL = "https://maps.googleapis.com/maps/api/geocode/json"
-ARCGIS_GEOCODING_URL = (
-    "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates"
-)
+ARCGIS_GEOCODING_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates"
 NOMINATIM_URL = getattr(
     settings, "GEOCODING_NOMINATIM_URL", "https://nominatim.openstreetmap.org/search"
 )
-USER_AGENT = getattr(settings, "GEOCODING_USER_AGENT", "OOBC-OBCMS/2.0 (+https://oobc.gov.ph)")
+USER_AGENT = getattr(
+    settings, "GEOCODING_USER_AGENT", "OOBC-OBCMS/2.0 (+https://oobc.gov.ph)"
+)
 TIMEOUT_SECONDS = getattr(settings, "GEOCODING_TIMEOUT", 15)
 CACHE_DURATION = 86400 * 7  # Cache geocoding results for 7 days
 
@@ -35,6 +35,7 @@ NOMINATIM_RATE_LIMIT_DELAY = 1.0  # 1 second delay between Nominatim requests
 @dataclass
 class GeocodeResult:
     """Structured geocoding result."""
+
     latitude: Optional[float]
     longitude: Optional[float]
     accuracy: str  # 'high', 'medium', 'low'
@@ -65,7 +66,11 @@ def _format_query_for_google(obj) -> Optional[str]:
         ]
     elif isinstance(obj, Municipality):
         # For municipalities: "Municipality/City Name, Province, Philippines"
-        type_prefix = obj.get_municipality_type_display() if hasattr(obj, 'get_municipality_type_display') else ""
+        type_prefix = (
+            obj.get_municipality_type_display()
+            if hasattr(obj, "get_municipality_type_display")
+            else ""
+        )
         if type_prefix and type_prefix != "Municipality":
             name_part = f"{type_prefix} of {obj.name}"
         else:
@@ -116,27 +121,29 @@ def _geocode_with_google(query: str) -> GeocodeResult:
     """Geocode using Google Maps Geocoding API."""
     if not GOOGLE_API_KEY:
         logger.debug("Google Maps API key not configured, skipping Google geocoding")
-        return GeocodeResult(None, None, 'low', 'google')
+        return GeocodeResult(None, None, "low", "google")
 
     cache_key = f"geocode_google_{hash(query)}"
     cached_result = cache.get(cache_key)
     if cached_result:
         return GeocodeResult(
-            cached_result['lat'], cached_result['lng'],
-            cached_result['accuracy'], 'cache',
-            cached_result.get('formatted_address'),
-            cached_result.get('confidence'),
-            cached_result.get('bounding_box')
+            cached_result["lat"],
+            cached_result["lng"],
+            cached_result["accuracy"],
+            "cache",
+            cached_result.get("formatted_address"),
+            cached_result.get("confidence"),
+            cached_result.get("bounding_box"),
         )
 
     params = {
-        'address': query,
-        'key': GOOGLE_API_KEY,
-        'components': 'country:PH',  # Restrict to Philippines
-        'region': 'ph'  # Bias results to Philippines
+        "address": query,
+        "key": GOOGLE_API_KEY,
+        "components": "country:PH",  # Restrict to Philippines
+        "region": "ph",  # Bias results to Philippines
     }
 
-    headers = {'User-Agent': USER_AGENT}
+    headers = {"User-Agent": USER_AGENT}
 
     try:
         time.sleep(GOOGLE_RATE_LIMIT_DELAY)  # Rate limiting
@@ -145,66 +152,75 @@ def _geocode_with_google(query: str) -> GeocodeResult:
             GOOGLE_GEOCODING_URL,
             params=params,
             headers=headers,
-            timeout=TIMEOUT_SECONDS
+            timeout=TIMEOUT_SECONDS,
         )
         response.raise_for_status()
 
         data = response.json()
 
-        if data['status'] != 'OK' or not data.get('results'):
-            logger.warning(f"Google geocoding failed for '{query}': {data.get('status', 'Unknown error')}")
-            return GeocodeResult(None, None, 'low', 'google')
+        if data["status"] != "OK" or not data.get("results"):
+            logger.warning(
+                f"Google geocoding failed for '{query}': {data.get('status', 'Unknown error')}"
+            )
+            return GeocodeResult(None, None, "low", "google")
 
-        result = data['results'][0]
-        location = result['geometry']['location']
+        result = data["results"][0]
+        location = result["geometry"]["location"]
 
-        lat = _to_float(location['lat'])
-        lng = _to_float(location['lng'])
+        lat = _to_float(location["lat"])
+        lng = _to_float(location["lng"])
 
         # Determine accuracy based on geometry location_type
-        location_type = result['geometry'].get('location_type', 'APPROXIMATE')
-        if location_type in ['ROOFTOP', 'RANGE_INTERPOLATED']:
-            accuracy = 'high'
-        elif location_type == 'GEOMETRIC_CENTER':
-            accuracy = 'medium'
+        location_type = result["geometry"].get("location_type", "APPROXIMATE")
+        if location_type in ["ROOFTOP", "RANGE_INTERPOLATED"]:
+            accuracy = "high"
+        elif location_type == "GEOMETRIC_CENTER":
+            accuracy = "medium"
         else:
-            accuracy = 'medium'  # Google is generally quite accurate
+            accuracy = "medium"  # Google is generally quite accurate
 
         # Extract additional information
-        formatted_address = result.get('formatted_address')
+        formatted_address = result.get("formatted_address")
 
         # Calculate bounding box if viewport is available
         bounding_box = None
-        if 'viewport' in result['geometry']:
-            viewport = result['geometry']['viewport']
+        if "viewport" in result["geometry"]:
+            viewport = result["geometry"]["viewport"]
             bounding_box = [
-                viewport['southwest']['lng'],  # west
-                viewport['southwest']['lat'],  # south
-                viewport['northeast']['lng'],  # east
-                viewport['northeast']['lat'],  # north
+                viewport["southwest"]["lng"],  # west
+                viewport["southwest"]["lat"],  # south
+                viewport["northeast"]["lng"],  # east
+                viewport["northeast"]["lat"],  # north
             ]
 
         geocode_result = GeocodeResult(
-            lat, lng, accuracy, 'google',
-            formatted_address, None, bounding_box
+            lat, lng, accuracy, "google", formatted_address, None, bounding_box
         )
 
         # Cache the result
-        cache.set(cache_key, {
-            'lat': lat, 'lng': lng, 'accuracy': accuracy,
-            'formatted_address': formatted_address,
-            'bounding_box': bounding_box
-        }, CACHE_DURATION)
+        cache.set(
+            cache_key,
+            {
+                "lat": lat,
+                "lng": lng,
+                "accuracy": accuracy,
+                "formatted_address": formatted_address,
+                "bounding_box": bounding_box,
+            },
+            CACHE_DURATION,
+        )
 
-        logger.info(f"Google geocoded '{query}' -> ({lat}, {lng}) with {accuracy} accuracy")
+        logger.info(
+            f"Google geocoded '{query}' -> ({lat}, {lng}) with {accuracy} accuracy"
+        )
         return geocode_result
 
     except requests.RequestException as e:
         logger.warning(f"Google geocoding network error for '{query}': {e}")
-        return GeocodeResult(None, None, 'low', 'google')
+        return GeocodeResult(None, None, "low", "google")
     except Exception as e:
         logger.error(f"Google geocoding unexpected error for '{query}': {e}")
-        return GeocodeResult(None, None, 'low', 'google')
+        return GeocodeResult(None, None, "low", "google")
 
 
 def _geocode_with_arcgis(query: str) -> GeocodeResult:
@@ -214,25 +230,25 @@ def _geocode_with_arcgis(query: str) -> GeocodeResult:
     cached_result = cache.get(cache_key)
     if cached_result:
         return GeocodeResult(
-            cached_result['lat'],
-            cached_result['lng'],
-            cached_result['accuracy'],
-            'cache',
-            cached_result.get('formatted_address'),
-            cached_result.get('confidence'),
-            cached_result.get('bounding_box'),
+            cached_result["lat"],
+            cached_result["lng"],
+            cached_result["accuracy"],
+            "cache",
+            cached_result.get("formatted_address"),
+            cached_result.get("confidence"),
+            cached_result.get("bounding_box"),
         )
 
     params = {
-        'f': 'pjson',
-        'SingleLine': query,
-        'maxLocations': 5,
-        'outFields': 'Match_addr,Addr_type',
-        'forStorage': 'false',
-        'countryCode': 'PHL',
+        "f": "pjson",
+        "SingleLine": query,
+        "maxLocations": 5,
+        "outFields": "Match_addr,Addr_type",
+        "forStorage": "false",
+        "countryCode": "PHL",
     }
 
-    headers = {'User-Agent': USER_AGENT}
+    headers = {"User-Agent": USER_AGENT}
 
     try:
         time.sleep(max(0.0, ARCGIS_RATE_LIMIT_DELAY))
@@ -246,43 +262,43 @@ def _geocode_with_arcgis(query: str) -> GeocodeResult:
         response.raise_for_status()
 
         payload = response.json()
-        candidates = payload.get('candidates') or []
+        candidates = payload.get("candidates") or []
         if not candidates:
             logger.info("ArcGIS returned no candidates for '%s'", query)
-            return GeocodeResult(None, None, 'low', 'arcgis')
+            return GeocodeResult(None, None, "low", "arcgis")
 
-        best_candidate = max(candidates, key=lambda cand: cand.get('score', 0) or 0)
-        location = best_candidate.get('location') or {}
-        lat = _to_float(location.get('y'))
-        lng = _to_float(location.get('x'))
+        best_candidate = max(candidates, key=lambda cand: cand.get("score", 0) or 0)
+        location = best_candidate.get("location") or {}
+        lat = _to_float(location.get("y"))
+        lng = _to_float(location.get("x"))
 
         if lat is None or lng is None:
-            return GeocodeResult(None, None, 'low', 'arcgis')
+            return GeocodeResult(None, None, "low", "arcgis")
 
-        score = _to_float(best_candidate.get('score')) or 0.0
+        score = _to_float(best_candidate.get("score")) or 0.0
         if score >= 95:
-            accuracy = 'high'
+            accuracy = "high"
         elif score >= 80:
-            accuracy = 'medium'
+            accuracy = "medium"
         else:
-            accuracy = 'low'
+            accuracy = "low"
 
-        extent = best_candidate.get('extent') or {}
-        xmin = _to_float(extent.get('xmin'))
-        ymin = _to_float(extent.get('ymin'))
-        xmax = _to_float(extent.get('xmax'))
-        ymax = _to_float(extent.get('ymax'))
+        extent = best_candidate.get("extent") or {}
+        xmin = _to_float(extent.get("xmin"))
+        ymin = _to_float(extent.get("ymin"))
+        xmax = _to_float(extent.get("xmax"))
+        ymax = _to_float(extent.get("ymax"))
         bounding_box = None
         if None not in {xmin, ymin, xmax, ymax}:
             bounding_box = [xmin, ymin, xmax, ymax]
 
-        formatted_address = best_candidate.get('address')
+        formatted_address = best_candidate.get("address")
 
         geocode_result = GeocodeResult(
             lat,
             lng,
             accuracy,
-            'arcgis',
+            "arcgis",
             formatted_address,
             score,
             bounding_box,
@@ -291,12 +307,12 @@ def _geocode_with_arcgis(query: str) -> GeocodeResult:
         cache.set(
             cache_key,
             {
-                'lat': lat,
-                'lng': lng,
-                'accuracy': accuracy,
-                'formatted_address': formatted_address,
-                'confidence': score,
-                'bounding_box': bounding_box,
+                "lat": lat,
+                "lng": lng,
+                "accuracy": accuracy,
+                "formatted_address": formatted_address,
+                "confidence": score,
+                "bounding_box": bounding_box,
             },
             CACHE_DURATION,
         )
@@ -313,10 +329,10 @@ def _geocode_with_arcgis(query: str) -> GeocodeResult:
 
     except requests.RequestException as exc:
         logger.warning("ArcGIS geocoding network error for '%s': %s", query, exc)
-        return GeocodeResult(None, None, 'low', 'arcgis')
+        return GeocodeResult(None, None, "low", "arcgis")
     except Exception as exc:  # pragma: no cover - defensive logging
         logger.error("ArcGIS geocoding unexpected error for '%s': %s", query, exc)
-        return GeocodeResult(None, None, 'low', 'arcgis')
+        return GeocodeResult(None, None, "low", "arcgis")
 
 
 def _geocode_with_nominatim(query: str) -> GeocodeResult:
@@ -325,53 +341,52 @@ def _geocode_with_nominatim(query: str) -> GeocodeResult:
     cached_result = cache.get(cache_key)
     if cached_result:
         return GeocodeResult(
-            cached_result['lat'], cached_result['lng'],
-            cached_result['accuracy'], 'cache',
-            cached_result.get('formatted_address'),
-            cached_result.get('confidence'),
-            cached_result.get('bounding_box')
+            cached_result["lat"],
+            cached_result["lng"],
+            cached_result["accuracy"],
+            "cache",
+            cached_result.get("formatted_address"),
+            cached_result.get("confidence"),
+            cached_result.get("bounding_box"),
         )
 
     params = {
-        'q': query,
-        'format': 'jsonv2',
-        'limit': 1,
-        'countrycodes': 'ph',  # Philippines only
-        'addressdetails': 1
+        "q": query,
+        "format": "jsonv2",
+        "limit": 1,
+        "countrycodes": "ph",  # Philippines only
+        "addressdetails": 1,
     }
 
-    headers = {'User-Agent': USER_AGENT}
+    headers = {"User-Agent": USER_AGENT}
 
     try:
         time.sleep(NOMINATIM_RATE_LIMIT_DELAY)  # Rate limiting
 
         response = requests.get(
-            NOMINATIM_URL,
-            params=params,
-            headers=headers,
-            timeout=TIMEOUT_SECONDS
+            NOMINATIM_URL, params=params, headers=headers, timeout=TIMEOUT_SECONDS
         )
         response.raise_for_status()
 
         data = response.json()
         if not data:
             logger.info(f"Nominatim found no results for '{query}'")
-            return GeocodeResult(None, None, 'low', 'nominatim')
+            return GeocodeResult(None, None, "low", "nominatim")
 
         result = data[0]
-        lat = _to_float(result.get('lat'))
-        lng = _to_float(result.get('lon'))
+        lat = _to_float(result.get("lat"))
+        lng = _to_float(result.get("lon"))
 
         # Nominatim accuracy is generally medium for Philippines
-        accuracy = 'medium'
+        accuracy = "medium"
 
         # Extract additional information
-        formatted_address = result.get('display_name')
-        confidence = _to_float(result.get('importance', 0.5))
+        formatted_address = result.get("display_name")
+        confidence = _to_float(result.get("importance", 0.5))
 
         # Extract bounding box
         bounding_box = None
-        bbox_data = result.get('boundingbox')
+        bbox_data = result.get("boundingbox")
         if bbox_data and len(bbox_data) == 4:
             south = _to_float(bbox_data[0])
             north = _to_float(bbox_data[1])
@@ -381,27 +396,34 @@ def _geocode_with_nominatim(query: str) -> GeocodeResult:
                 bounding_box = [west, south, east, north]
 
         geocode_result = GeocodeResult(
-            lat, lng, accuracy, 'nominatim',
-            formatted_address, confidence, bounding_box
+            lat, lng, accuracy, "nominatim", formatted_address, confidence, bounding_box
         )
 
         # Cache the result
-        cache.set(cache_key, {
-            'lat': lat, 'lng': lng, 'accuracy': accuracy,
-            'formatted_address': formatted_address,
-            'confidence': confidence,
-            'bounding_box': bounding_box
-        }, CACHE_DURATION)
+        cache.set(
+            cache_key,
+            {
+                "lat": lat,
+                "lng": lng,
+                "accuracy": accuracy,
+                "formatted_address": formatted_address,
+                "confidence": confidence,
+                "bounding_box": bounding_box,
+            },
+            CACHE_DURATION,
+        )
 
-        logger.info(f"Nominatim geocoded '{query}' -> ({lat}, {lng}) with {accuracy} accuracy")
+        logger.info(
+            f"Nominatim geocoded '{query}' -> ({lat}, {lng}) with {accuracy} accuracy"
+        )
         return geocode_result
 
     except requests.RequestException as e:
         logger.warning(f"Nominatim geocoding network error for '{query}': {e}")
-        return GeocodeResult(None, None, 'low', 'nominatim')
+        return GeocodeResult(None, None, "low", "nominatim")
     except Exception as e:
         logger.error(f"Nominatim geocoding unexpected error for '{query}': {e}")
-        return GeocodeResult(None, None, 'low', 'nominatim')
+        return GeocodeResult(None, None, "low", "nominatim")
 
 
 def enhanced_geocode_location(obj) -> GeocodeResult:
@@ -431,10 +453,12 @@ def enhanced_geocode_location(obj) -> GeocodeResult:
         return _geocode_with_nominatim(nominatim_query)
 
     logger.warning("Could not form valid geocoding query for object: %s", obj)
-    return GeocodeResult(None, None, 'low', 'error')
+    return GeocodeResult(None, None, "low", "error")
 
 
-def enhanced_ensure_location_coordinates(obj) -> Tuple[Optional[float], Optional[float], bool, str]:
+def enhanced_ensure_location_coordinates(
+    obj,
+) -> Tuple[Optional[float], Optional[float], bool, str]:
     """
     Enhanced version of ensure_location_coordinates with Google Maps integration.
 
@@ -448,13 +472,13 @@ def enhanced_ensure_location_coordinates(obj) -> Tuple[Optional[float], Optional
     # First check if we already have coordinates
     lat, lng = get_object_centroid(obj)
     if lat is not None and lng is not None:
-        return lat, lng, False, 'cached'
+        return lat, lng, False, "cached"
 
     # Use enhanced geocoding
     result = enhanced_geocode_location(obj)
 
     if result.latitude is None or result.longitude is None:
-        return None, None, False, 'unavailable'
+        return None, None, False, "unavailable"
 
     # Update the object with the new coordinates
     update_fields = []
@@ -470,7 +494,9 @@ def enhanced_ensure_location_coordinates(obj) -> Tuple[Optional[float], Optional
     if update_fields:
         try:
             obj.save(update_fields=update_fields)
-            logger.info(f"Updated {obj.__class__.__name__} {obj.pk} coordinates from {result.source}")
+            logger.info(
+                f"Updated {obj.__class__.__name__} {obj.pk} coordinates from {result.source}"
+            )
         except Exception as e:
             logger.error(f"Failed to save coordinates for {obj}: {e}")
             return result.latitude, result.longitude, False, result.source

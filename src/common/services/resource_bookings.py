@@ -22,7 +22,9 @@ def _ensure_aware(dt: datetime) -> datetime:
     return timezone.make_aware(dt, timezone.get_current_timezone())
 
 
-def _resolve_datetime(task: StaffTask, spec: Mapping[str, object], attr_prefix: str) -> datetime | None:
+def _resolve_datetime(
+    task: StaffTask, spec: Mapping[str, object], attr_prefix: str
+) -> datetime | None:
     value = spec.get(attr_prefix)
     if value:
         if isinstance(value, datetime):
@@ -53,7 +55,9 @@ def _resolve_datetime(task: StaffTask, spec: Mapping[str, object], attr_prefix: 
     return base_dt + offset
 
 
-def _determine_end_datetime(start_dt: datetime | None, spec: Mapping[str, object], task: StaffTask) -> datetime | None:
+def _determine_end_datetime(
+    start_dt: datetime | None, spec: Mapping[str, object], task: StaffTask
+) -> datetime | None:
     value = spec.get("end")
     if value:
         if isinstance(value, datetime):
@@ -134,25 +138,35 @@ def create_bookings_for_task(
     bookings: list[CalendarResourceBooking] = []
     booked_by = user or task.created_by
     if booked_by is None:
-        raise ResourceBookingSpecError("A booked_by user is required to create bookings")
+        raise ResourceBookingSpecError(
+            "A booked_by user is required to create bookings"
+        )
 
     content_type = ContentType.objects.get_for_model(task)
 
     for spec in specs:
         if not isinstance(spec, Mapping):
-            raise ResourceBookingSpecError("Each booking specification must be a mapping")
+            raise ResourceBookingSpecError(
+                "Each booking specification must be a mapping"
+            )
 
         resource = _resolve_resource(spec)
         if resource is None:
-            raise ResourceBookingSpecError("Resource could not be resolved for booking spec")
+            raise ResourceBookingSpecError(
+                "Resource could not be resolved for booking spec"
+            )
 
         start_dt = _resolve_datetime(task, spec, "start")
         if start_dt is None:
-            raise ResourceBookingSpecError("Unable to determine start datetime for booking")
+            raise ResourceBookingSpecError(
+                "Unable to determine start datetime for booking"
+            )
 
         end_dt = _determine_end_datetime(start_dt, spec, task)
         if end_dt is None:
-            raise ResourceBookingSpecError("Unable to determine end datetime for booking")
+            raise ResourceBookingSpecError(
+                "Unable to determine end datetime for booking"
+            )
 
         status = spec.get("status", CalendarResourceBooking.STATUS_PENDING)
         notes = spec.get("notes") or f"Auto-booked for task: {task.title}"

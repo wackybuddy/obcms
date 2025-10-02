@@ -14,7 +14,12 @@ class MunicipalOBCProfileAdmin(admin.ModelAdmin):
     )
     search_fields = ("municipality__name", "municipality__province__name")
     list_filter = ("is_locked", "municipality__province__region__code")
-    readonly_fields = ("created_at", "updated_at", "last_aggregated_at", "last_reported_update")
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "last_aggregated_at",
+        "last_reported_update",
+    )
 
 
 @admin.register(MunicipalOBCProfileHistory)

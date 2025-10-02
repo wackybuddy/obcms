@@ -1,8 +1,12 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .api_views import (PolicyDocumentViewSet, PolicyEvidenceViewSet,
-                        PolicyImpactViewSet, PolicyRecommendationViewSet)
+from .api_views import (
+    PolicyDocumentViewSet,
+    PolicyEvidenceViewSet,
+    PolicyImpactViewSet,
+    PolicyRecommendationViewSet,
+)
 
 app_name = "policy_tracking_api"
 

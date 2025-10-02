@@ -35,7 +35,9 @@ def assessment_setup(db):
         description="Test category",
     )
 
-    region = Region.objects.create(code="IX", name="Zamboanga Peninsula", is_active=True)
+    region = Region.objects.create(
+        code="IX", name="Zamboanga Peninsula", is_active=True
+    )
     province = Province.objects.create(
         code="ZAM",
         name="Zamboanga",
@@ -174,7 +176,9 @@ def test_participant_onboarding_completes_profile(client, participant_account):
 
 
 @pytest.mark.django_db
-def test_participant_workshop_submission_creates_responses(client, participant_account, assessment_setup):
+def test_participant_workshop_submission_creates_responses(
+    client, participant_account, assessment_setup
+):
     participant_account.profile_completed = True
     participant_account.consent_given = True
     participant_account.save()
@@ -210,7 +214,9 @@ def test_facilitator_dashboard_renders(client, assessment_setup, participant_acc
     facilitator = assessment_setup["facilitator"]
     client.force_login(facilitator)
 
-    url = reverse("mana:facilitator_dashboard", args=[assessment_setup["assessment"].id])
+    url = reverse(
+        "mana:facilitator_dashboard", args=[assessment_setup["assessment"].id]
+    )
     response = client.get(url, {"workshop": "workshop_1"})
     assert response.status_code == 200
 

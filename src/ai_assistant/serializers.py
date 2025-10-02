@@ -3,8 +3,7 @@ from rest_framework import serializers
 
 from recommendations.policy_tracking.models import PolicyRecommendation
 
-from .models import (AIConversation, AIGeneratedDocument, AIInsight,
-                     AIUsageMetrics)
+from .models import AIConversation, AIGeneratedDocument, AIInsight, AIUsageMetrics
 
 User = get_user_model()
 

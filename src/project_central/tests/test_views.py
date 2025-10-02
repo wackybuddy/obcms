@@ -178,11 +178,13 @@ class MyTasksWithProjectsViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "project_central/partials/project_task_table.html")
+        self.assertTemplateUsed(
+            response, "project_central/partials/project_task_table.html"
+        )
         content = response.content.decode()
         self.assertIn("Compile field report", content)
         self.assertNotIn("Prepare budget matrix", content)
-        self.assertIn(f"data-task-id=\"{self.monitoring_task.id}\"", content)
+        self.assertIn(f'data-task-id="{self.monitoring_task.id}"', content)
 
     def test_overdue_filter(self):
         url = reverse("project_central:my_tasks_with_projects")
@@ -242,22 +244,32 @@ class GenerateWorkflowTasksViewTests(TestCase):
         ensure_template("project_budget_planning")
 
     def test_generate_workflow_tasks_creates_records(self):
-        url = reverse("project_central:generate_workflow_tasks", args=[self.workflow.id])
+        url = reverse(
+            "project_central:generate_workflow_tasks", args=[self.workflow.id]
+        )
         response = self.client.post(url)
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("project_central:project_workflow_detail", args=[self.workflow.id]))
+        self.assertEqual(
+            response.url,
+            reverse("project_central:project_workflow_detail", args=[self.workflow.id]),
+        )
         tasks = StaffTask.objects.filter(linked_workflow=self.workflow)
         self.assertTrue(tasks.exists())
 
     def test_generate_workflow_tasks_is_idempotent(self):
-        url = reverse("project_central:generate_workflow_tasks", args=[self.workflow.id])
+        url = reverse(
+            "project_central:generate_workflow_tasks", args=[self.workflow.id]
+        )
         self.client.post(url)
         initial_count = StaffTask.objects.filter(linked_workflow=self.workflow).count()
 
         response = self.client.post(url)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("project_central:project_workflow_detail", args=[self.workflow.id]))
+        self.assertEqual(
+            response.url,
+            reverse("project_central:project_workflow_detail", args=[self.workflow.id]),
+        )
         self.assertEqual(
             StaffTask.objects.filter(linked_workflow=self.workflow).count(),
             initial_count,
@@ -318,11 +330,18 @@ class GenerateWorkflowTasksResourceBookingTests(TestCase):
         )
 
     def test_generate_with_resource_hint(self):
-        url = reverse("project_central:generate_workflow_tasks", args=[self.workflow.id])
-        response = self.client.post(f"{url}?auto_resource=1&resource_name={self.resource.name}")
+        url = reverse(
+            "project_central:generate_workflow_tasks", args=[self.workflow.id]
+        )
+        response = self.client.post(
+            f"{url}?auto_resource=1&resource_name={self.resource.name}"
+        )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("project_central:project_workflow_detail", args=[self.workflow.id]))
+        self.assertEqual(
+            response.url,
+            reverse("project_central:project_workflow_detail", args=[self.workflow.id]),
+        )
         tasks = StaffTask.objects.filter(linked_workflow=self.workflow)
         self.assertTrue(tasks.exists())
         booking_exists = CalendarResourceBooking.objects.filter(

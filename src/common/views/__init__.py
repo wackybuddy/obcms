@@ -38,6 +38,7 @@ from .attendance import (
 from .calendar_api import (
     calendar_event_update,
 )
+
 # Import task_detail for calendar integration
 # from .tasks import task_detail  # Commented out - function does not exist
 from .communities import (

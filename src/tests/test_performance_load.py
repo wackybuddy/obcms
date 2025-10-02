@@ -44,7 +44,7 @@ class CalendarPerformanceTestCase(TestCase):
             user = User.objects.create_user(
                 username=f"user{i}",
                 email=f"user{i}@example.com",
-                password="testpass123"
+                password="testpass123",
             )
             cls.users.append(user)
 
@@ -54,12 +54,13 @@ class CalendarPerformanceTestCase(TestCase):
         cls.teams = []
         for i in range(5):
             team = Team.objects.create(
-                name=f"Team {i+1}",
-                slug=f"team-{i+1}",
-                description=f"Test team {i+1}"
+                name=f"Team {i+1}", slug=f"team-{i+1}", description=f"Test team {i+1}"
             )
             # Add 2 users to each team
-            team.members.add(cls.users[i*2], cls.users[i*2+1] if i*2+1 < len(cls.users) else cls.users[0])
+            team.members.add(
+                cls.users[i * 2],
+                cls.users[i * 2 + 1] if i * 2 + 1 < len(cls.users) else cls.users[0],
+            )
             cls.teams.append(team)
 
         # Create communities
@@ -70,7 +71,7 @@ class CalendarPerformanceTestCase(TestCase):
                 barangay_name=f"Barangay {i+1}",
                 municipality_name=f"Municipality {(i % 10) + 1}",
                 province_name=f"Province {(i % 5) + 1}",
-                region="Region IX"
+                region="Region IX",
             )
             cls.communities.append(community)
 
@@ -80,18 +81,24 @@ class CalendarPerformanceTestCase(TestCase):
             need = Need.objects.create(
                 title=f"Need {i+1}",
                 description=f"Community need {i+1}",
-                need_type=["education", "health", "infrastructure", "economic", "social"][i % 5],
+                need_type=[
+                    "education",
+                    "health",
+                    "infrastructure",
+                    "economic",
+                    "social",
+                ][i % 5],
                 urgency_level=["low", "medium", "high", "critical"][i % 4],
                 status=["identified", "prioritized", "in_progress"][i % 3],
                 community=cls.communities[i % len(cls.communities)],
-                identified_by=cls.users[i % len(cls.users)]
+                identified_by=cls.users[i % len(cls.users)],
             )
             cls.needs.append(need)
 
         # Create assessments (50)
         cls.assessments = []
         for i in range(50):
-            base_date = date(2025, 10, 1) + timedelta(days=i*7)
+            base_date = date(2025, 10, 1) + timedelta(days=i * 7)
             assessment = Assessment.objects.create(
                 title=f"Assessment {i+1}",
                 methodology=["survey", "focus_group", "participatory", "mixed"][i % 4],
@@ -100,38 +107,40 @@ class CalendarPerformanceTestCase(TestCase):
                 data_collection_end_date=base_date + timedelta(days=30),
                 analysis_completion_date=base_date + timedelta(days=60),
                 report_due_date=base_date + timedelta(days=90),
-                lead_facilitator=cls.users[i % len(cls.users)]
+                lead_facilitator=cls.users[i % len(cls.users)],
             )
             cls.assessments.append(assessment)
 
         # Create PPAs (100)
         cls.ppas = []
         for i in range(100):
-            start = date(2025, 10, 1) + timedelta(days=i*3)
+            start = date(2025, 10, 1) + timedelta(days=i * 3)
             ppa = MonitoringEntry.objects.create(
                 title=f"PPA {i+1}",
                 description=f"Program/Project/Activity {i+1}",
                 category=["oobc_ppa", "moa_ppa"][i % 2],
                 status=["planning", "ongoing", "completed"][i % 3],
-                budget_allocation=Decimal(str(1000000 + i*100000)),
+                budget_allocation=Decimal(str(1000000 + i * 100000)),
                 start_date=start,
                 end_date=start + timedelta(days=365),
-                created_by=cls.users[i % len(cls.users)]
+                created_by=cls.users[i % len(cls.users)],
             )
             # Link to random needs
             ppa.needs_addressed.add(cls.needs[i % len(cls.needs)])
             if i % 3 == 0:
-                ppa.needs_addressed.add(cls.needs[(i+1) % len(cls.needs)])
+                ppa.needs_addressed.add(cls.needs[(i + 1) % len(cls.needs)])
             cls.ppas.append(ppa)
 
         # Create events (200)
         cls.events = []
         for i in range(200):
-            event_date = date(2025, 10, 1) + timedelta(days=i*2)
+            event_date = date(2025, 10, 1) + timedelta(days=i * 2)
             event = Event.objects.create(
                 title=f"Event {i+1}",
                 description=f"Coordination event {i+1}",
-                event_type=["meeting", "workshop", "consultation", "field_visit"][i % 4],
+                event_type=["meeting", "workshop", "consultation", "field_visit"][
+                    i % 4
+                ],
                 start_date=event_date,
                 start_time=dt_time(9, 0),
                 end_date=event_date,
@@ -139,14 +148,14 @@ class CalendarPerformanceTestCase(TestCase):
                 organizer=cls.users[i % len(cls.users)],
                 is_quarterly_coordination=(i % 20 == 0),
                 quarter=((i // 20) % 4) + 1 if i % 20 == 0 else None,
-                fiscal_year=2025 if i % 20 == 0 else None
+                fiscal_year=2025 if i % 20 == 0 else None,
             )
             cls.events.append(event)
 
         # Create stakeholder engagements (150)
         cls.engagements = []
         for i in range(150):
-            engagement_date = date(2025, 10, 1) + timedelta(days=i*3)
+            engagement_date = date(2025, 10, 1) + timedelta(days=i * 3)
             engagement = StakeholderEngagement.objects.create(
                 title=f"Engagement {i+1}",
                 description=f"Stakeholder engagement {i+1}",
@@ -154,7 +163,7 @@ class CalendarPerformanceTestCase(TestCase):
                 scheduled_date=engagement_date,
                 start_time=dt_time(10, 0),
                 end_time=dt_time(12, 0),
-                facilitator=cls.users[i % len(cls.users)]
+                facilitator=cls.users[i % len(cls.users)],
             )
             cls.engagements.append(engagement)
 
@@ -186,9 +195,9 @@ class CalendarPerformanceTestCase(TestCase):
 
         Target: Complete in under 2 seconds with < 100 queries.
         """
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("CALENDAR AGGREGATION PERFORMANCE TEST")
-        print("="*70)
+        print("=" * 70)
 
         # Warm up (first query might be slower due to Django startup)
         build_calendar_payload()
@@ -214,20 +223,16 @@ class CalendarPerformanceTestCase(TestCase):
         self.assertLess(
             duration,
             2.0,
-            f"Calendar aggregation took {duration:.3f}s, should be under 2s"
+            f"Calendar aggregation took {duration:.3f}s, should be under 2s",
         )
 
         self.assertLess(
             query_count,
             100,
-            f"Calendar aggregation used {query_count} queries, should be under 100"
+            f"Calendar aggregation used {query_count} queries, should be under 100",
         )
 
-        self.assertGreater(
-            entry_count,
-            0,
-            "Calendar should have entries"
-        )
+        self.assertGreater(entry_count, 0, "Calendar should have entries")
 
         # Show query breakdown if > 50 queries
         if query_count > 50:
@@ -244,9 +249,9 @@ class CalendarPerformanceTestCase(TestCase):
 
         Second call should be significantly faster due to caching.
         """
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("CALENDAR CACHING EFFECTIVENESS TEST")
-        print("="*70)
+        print("=" * 70)
 
         cache.clear()
         reset_queries()
@@ -270,20 +275,22 @@ class CalendarPerformanceTestCase(TestCase):
         print(f"\nResults:")
         print(f"  Uncached: {uncached_duration:.3f}s, {uncached_queries} queries")
         print(f"  Cached:   {cached_duration:.3f}s, {cached_queries} queries")
-        print(f"  Speedup:  {(uncached_duration/cached_duration if cached_duration > 0 else 0):.1f}x")
+        print(
+            f"  Speedup:  {(uncached_duration/cached_duration if cached_duration > 0 else 0):.1f}x"
+        )
 
         # Cached should be faster
         self.assertLess(
             cached_duration,
             uncached_duration,
-            "Cached call should be faster than uncached"
+            "Cached call should be faster than uncached",
         )
 
         # Should have fewer queries when cached
         self.assertLessEqual(
             cached_queries,
             uncached_queries,
-            "Cached call should use fewer or equal queries"
+            "Cached call should use fewer or equal queries",
         )
 
     @override_settings(DEBUG=True)
@@ -293,9 +300,9 @@ class CalendarPerformanceTestCase(TestCase):
 
         Filtering should reduce query time.
         """
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("FILTERED CALENDAR PERFORMANCE TEST")
-        print("="*70)
+        print("=" * 70)
 
         cache.clear()
         reset_queries()
@@ -324,7 +331,7 @@ class CalendarPerformanceTestCase(TestCase):
             self.assertLess(
                 duration,
                 1.5,
-                f"Filtered calendar ({module}) should complete in under 1.5s"
+                f"Filtered calendar ({module}) should complete in under 1.5s",
             )
 
 
@@ -336,15 +343,11 @@ class TaskDashboardPerformanceTestCase(TestCase):
         """Create test data."""
         # Create users and tasks
         cls.user = User.objects.create_user(
-            username="taskuser",
-            email="taskuser@example.com",
-            password="testpass123"
+            username="taskuser", email="taskuser@example.com", password="testpass123"
         )
 
         cls.team = Team.objects.create(
-            name="Task Team",
-            slug="task-team",
-            description="Team for task testing"
+            name="Task Team", slug="task-team", description="Team for task testing"
         )
         cls.team.members.add(cls.user)
 
@@ -356,7 +359,7 @@ class TaskDashboardPerformanceTestCase(TestCase):
                 category="oobc_ppa",
                 status="ongoing",
                 budget_allocation=Decimal("1000000.00"),
-                created_by=cls.user
+                created_by=cls.user,
             )
             cls.ppas.append(ppa)
 
@@ -369,12 +372,12 @@ class TaskDashboardPerformanceTestCase(TestCase):
                 status=[
                     StaffTask.STATUS_NOT_STARTED,
                     StaffTask.STATUS_IN_PROGRESS,
-                    StaffTask.STATUS_COMPLETED
+                    StaffTask.STATUS_COMPLETED,
                 ][i % 3],
                 priority=["low", "medium", "high"][i % 3],
                 related_ppa=cls.ppas[i % len(cls.ppas)] if i % 3 == 0 else None,
                 created_by=cls.user,
-                due_date=date(2025, 10, 1) + timedelta(days=i)
+                due_date=date(2025, 10, 1) + timedelta(days=i),
             )
             task.assignees.add(cls.user)
             task.teams.add(cls.team)
@@ -388,28 +391,25 @@ class TaskDashboardPerformanceTestCase(TestCase):
 
         Target: Complete in under 1 second with < 20 queries.
         """
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("TASK DASHBOARD QUERY PERFORMANCE TEST")
-        print("="*70)
+        print("=" * 70)
 
         reset_queries()
 
         # Simulate task dashboard query
         start_time = time.time()
 
-        my_tasks = StaffTask.objects.filter(
-            assignees=self.user,
-            status__in=[StaffTask.STATUS_NOT_STARTED, StaffTask.STATUS_IN_PROGRESS]
-        ).select_related(
-            'related_assessment',
-            'related_ppa',
-            'linked_event',
-            'created_by'
-        ).prefetch_related(
-            'assignees',
-            'teams',
-            'teams__members'
-        )[:50]  # Limit to 50 for dashboard
+        my_tasks = (
+            StaffTask.objects.filter(
+                assignees=self.user,
+                status__in=[StaffTask.STATUS_NOT_STARTED, StaffTask.STATUS_IN_PROGRESS],
+            )
+            .select_related(
+                "related_assessment", "related_ppa", "linked_event", "created_by"
+            )
+            .prefetch_related("assignees", "teams", "teams__members")[:50]
+        )  # Limit to 50 for dashboard
 
         # Force evaluation
         task_list = list(my_tasks)
@@ -426,38 +426,35 @@ class TaskDashboardPerformanceTestCase(TestCase):
 
         # Performance assertions
         self.assertLess(
-            duration,
-            1.0,
-            f"Task query took {duration:.3f}s, should be under 1s"
+            duration, 1.0, f"Task query took {duration:.3f}s, should be under 1s"
         )
 
         self.assertLess(
             query_count,
             20,
-            f"Task query used {query_count} queries, should be under 20"
+            f"Task query used {query_count} queries, should be under 20",
         )
 
-        self.assertGreater(
-            len(task_list),
-            0,
-            "Should retrieve tasks"
-        )
+        self.assertGreater(len(task_list), 0, "Should retrieve tasks")
 
     @override_settings(DEBUG=True)
     def test_task_filtering_performance(self):
         """Test performance of filtered task queries."""
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("TASK FILTERING PERFORMANCE TEST")
-        print("="*70)
+        print("=" * 70)
 
         filters_to_test = [
             ("domain", {"domain": "mana"}),
             ("status", {"status": StaffTask.STATUS_IN_PROGRESS}),
             ("priority", {"priority": "high"}),
-            ("due_soon", {
-                "due_date__gte": date.today(),
-                "due_date__lte": date.today() + timedelta(days=7)
-            }),
+            (
+                "due_soon",
+                {
+                    "due_date__gte": date.today(),
+                    "due_date__lte": date.today() + timedelta(days=7),
+                },
+            ),
         ]
 
         for filter_name, filter_kwargs in filters_to_test:
@@ -465,10 +462,11 @@ class TaskDashboardPerformanceTestCase(TestCase):
 
             start_time = time.time()
 
-            tasks = StaffTask.objects.filter(
-                assignees=self.user,
-                **filter_kwargs
-            ).select_related('related_ppa').prefetch_related('assignees')[:50]
+            tasks = (
+                StaffTask.objects.filter(assignees=self.user, **filter_kwargs)
+                .select_related("related_ppa")
+                .prefetch_related("assignees")[:50]
+            )
 
             task_list = list(tasks)
 
@@ -486,7 +484,7 @@ class TaskDashboardPerformanceTestCase(TestCase):
             self.assertLess(
                 duration,
                 0.5,
-                f"Filtered task query ({filter_name}) should complete in under 0.5s"
+                f"Filtered task query ({filter_name}) should complete in under 0.5s",
             )
 
 
@@ -497,23 +495,21 @@ class ProjectPortfolioDashboardPerformanceTestCase(TestCase):
     def setUpTestData(cls):
         """Create test data."""
         cls.user = User.objects.create_user(
-            username="pmuser",
-            email="pm@example.com",
-            password="testpass123"
+            username="pmuser", email="pm@example.com", password="testpass123"
         )
 
         # Create 100 PPAs with various statuses and budgets
         for i in range(100):
-            start_date = date(2025, 1, 1) + timedelta(days=i*3)
+            start_date = date(2025, 1, 1) + timedelta(days=i * 3)
             MonitoringEntry.objects.create(
                 title=f"Portfolio PPA {i+1}",
                 category=["oobc_ppa", "moa_ppa"][i % 2],
                 status=["planning", "ongoing", "completed", "on_hold"][i % 4],
-                budget_allocation=Decimal(str(500000 + i*50000)),
+                budget_allocation=Decimal(str(500000 + i * 50000)),
                 start_date=start_date,
                 end_date=start_date + timedelta(days=365),
                 progress=(i * 10) % 100,  # Progress from 0-90%
-                created_by=cls.user
+                created_by=cls.user,
             )
 
         print(f"Created 100 PPAs for portfolio testing")
@@ -525,9 +521,9 @@ class ProjectPortfolioDashboardPerformanceTestCase(TestCase):
 
         Should aggregate all PPAs efficiently.
         """
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("PORTFOLIO DASHBOARD PERFORMANCE TEST")
-        print("="*70)
+        print("=" * 70)
 
         reset_queries()
 
@@ -538,22 +534,30 @@ class ProjectPortfolioDashboardPerformanceTestCase(TestCase):
 
         ppas = MonitoringEntry.objects.filter(
             category__in=["oobc_ppa", "moa_ppa"]
-        ).select_related('created_by')
+        ).select_related("created_by")
 
         # Get aggregates
         stats = ppas.aggregate(
-            total_budget=Sum('budget_allocation'),
-            avg_progress=Avg('progress'),
-            total_ppas=Count('id'),
-            active_ppas=Count('id', filter=Q(status='ongoing')),
-            completed_ppas=Count('id', filter=Q(status='completed'))
+            total_budget=Sum("budget_allocation"),
+            avg_progress=Avg("progress"),
+            total_ppas=Count("id"),
+            active_ppas=Count("id", filter=Q(status="ongoing")),
+            completed_ppas=Count("id", filter=Q(status="completed")),
         )
 
         # Get PPA list with stats
-        ppa_list = list(ppas.values(
-            'id', 'title', 'category', 'status',
-            'budget_allocation', 'progress', 'start_date', 'end_date'
-        )[:50])
+        ppa_list = list(
+            ppas.values(
+                "id",
+                "title",
+                "category",
+                "status",
+                "budget_allocation",
+                "progress",
+                "start_date",
+                "end_date",
+            )[:50]
+        )
 
         end_time = time.time()
 
@@ -569,15 +573,13 @@ class ProjectPortfolioDashboardPerformanceTestCase(TestCase):
 
         # Performance assertions
         self.assertLess(
-            duration,
-            1.0,
-            f"Portfolio query took {duration:.3f}s, should be under 1s"
+            duration, 1.0, f"Portfolio query took {duration:.3f}s, should be under 1s"
         )
 
         self.assertLess(
             query_count,
             15,
-            f"Portfolio query used {query_count} queries, should be under 15"
+            f"Portfolio query used {query_count} queries, should be under 15",
         )
 
 
@@ -591,26 +593,24 @@ class StressTestCase(TestCase):
 
         Without date filtering, queries could be extremely slow.
         """
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("DATE RANGE FILTERING TEST")
-        print("="*70)
+        print("=" * 70)
 
         # Create user
         user = User.objects.create_user(
-            username="dateuser",
-            email="date@example.com",
-            password="testpass123"
+            username="dateuser", email="date@example.com", password="testpass123"
         )
 
         # Create events across 2 years
         for i in range(200):
-            event_date = date(2024, 1, 1) + timedelta(days=i*3)
+            event_date = date(2024, 1, 1) + timedelta(days=i * 3)
             Event.objects.create(
                 title=f"Historical Event {i+1}",
                 event_type="meeting",
                 start_date=event_date,
                 start_time=dt_time(10, 0),
-                organizer=user
+                organizer=user,
             )
 
         reset_queries()
@@ -630,11 +630,7 @@ class StressTestCase(TestCase):
         print(f"  Entries: {entry_count}")
 
         # Should still complete in reasonable time even with many events
-        self.assertLess(
-            duration,
-            3.0,
-            "Calendar should handle large datasets"
-        )
+        self.assertLess(duration, 3.0, "Calendar should handle large datasets")
 
     def test_concurrent_calendar_requests(self):
         """
@@ -642,9 +638,9 @@ class StressTestCase(TestCase):
 
         Simulates multiple users accessing calendar simultaneously.
         """
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("CONCURRENT ACCESS TEST")
-        print("="*70)
+        print("=" * 70)
 
         import threading
 
@@ -652,7 +648,7 @@ class StressTestCase(TestCase):
         user = User.objects.create_user(
             username="concurrent",
             email="concurrent@example.com",
-            password="testpass123"
+            password="testpass123",
         )
 
         for i in range(50):
@@ -661,7 +657,7 @@ class StressTestCase(TestCase):
                 event_type="meeting",
                 start_date=date(2025, 11, 1) + timedelta(days=i),
                 start_time=dt_time(10, 0),
-                organizer=user
+                organizer=user,
             )
 
         results = []
@@ -693,9 +689,7 @@ class StressTestCase(TestCase):
 
         # All requests should complete in reasonable time
         self.assertLess(
-            max_duration,
-            5.0,
-            "Concurrent requests should complete in under 5s"
+            max_duration, 5.0, "Concurrent requests should complete in under 5s"
         )
 
 
@@ -713,20 +707,24 @@ def run_performance_test_suite():
     suite = TestSuite()
 
     # Add all test cases
-    suite.addTests([
-        CalendarPerformanceTestCase('test_calendar_aggregation_performance'),
-        CalendarPerformanceTestCase('test_calendar_caching_effectiveness'),
-        CalendarPerformanceTestCase('test_filtered_calendar_performance'),
-        TaskDashboardPerformanceTestCase('test_user_task_query_performance'),
-        TaskDashboardPerformanceTestCase('test_task_filtering_performance'),
-        ProjectPortfolioDashboardPerformanceTestCase('test_portfolio_overview_performance'),
-        StressTestCase('test_calendar_with_date_range_filtering'),
-        StressTestCase('test_concurrent_calendar_requests'),
-    ])
+    suite.addTests(
+        [
+            CalendarPerformanceTestCase("test_calendar_aggregation_performance"),
+            CalendarPerformanceTestCase("test_calendar_caching_effectiveness"),
+            CalendarPerformanceTestCase("test_filtered_calendar_performance"),
+            TaskDashboardPerformanceTestCase("test_user_task_query_performance"),
+            TaskDashboardPerformanceTestCase("test_task_filtering_performance"),
+            ProjectPortfolioDashboardPerformanceTestCase(
+                "test_portfolio_overview_performance"
+            ),
+            StressTestCase("test_calendar_with_date_range_filtering"),
+            StressTestCase("test_concurrent_calendar_requests"),
+        ]
+    )
 
     runner = TextTestRunner(verbosity=2)
     runner.run(suite)
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("PERFORMANCE TEST SUITE COMPLETE")
-    print("="*70)
+    print("=" * 70)

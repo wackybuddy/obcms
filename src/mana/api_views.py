@@ -4,26 +4,46 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from communities.models import GeographicDataLayer, MapVisualization, SpatialDataPoint
-from .models import (Assessment, AssessmentCategory, AssessmentTeamMember,
-                     BaselineDataCollection, BaselineIndicator, BaselineStudy,
-                     BaselineStudyTeamMember, MappingActivity, Need, NeedsCategory,
-                     NeedsPrioritization, NeedsPrioritizationItem, Survey,
-                     SurveyQuestion, SurveyResponse)
-from .serializers import (AssessmentCategorySerializer,
-                          AssessmentListSerializer, AssessmentSerializer,
-                          AssessmentTeamMemberSerializer,
-                          BaselineDataCollectionSerializer,
-                          BaselineIndicatorSerializer,
-                          BaselineStudyListSerializer, BaselineStudySerializer,
-                          BaselineStudyTeamMemberSerializer,
-                          GeographicDataLayerSerializer,
-                          MappingActivitySerializer,
-                          MapVisualizationSerializer, NeedListSerializer,
-                          NeedsCategorySerializer, NeedSerializer,
-                          NeedsPrioritizationItemSerializer,
-                          NeedsPrioritizationSerializer,
-                          SpatialDataPointSerializer, SurveyQuestionSerializer,
-                          SurveyResponseSerializer, SurveySerializer)
+from .models import (
+    Assessment,
+    AssessmentCategory,
+    AssessmentTeamMember,
+    BaselineDataCollection,
+    BaselineIndicator,
+    BaselineStudy,
+    BaselineStudyTeamMember,
+    MappingActivity,
+    Need,
+    NeedsCategory,
+    NeedsPrioritization,
+    NeedsPrioritizationItem,
+    Survey,
+    SurveyQuestion,
+    SurveyResponse,
+)
+from .serializers import (
+    AssessmentCategorySerializer,
+    AssessmentListSerializer,
+    AssessmentSerializer,
+    AssessmentTeamMemberSerializer,
+    BaselineDataCollectionSerializer,
+    BaselineIndicatorSerializer,
+    BaselineStudyListSerializer,
+    BaselineStudySerializer,
+    BaselineStudyTeamMemberSerializer,
+    GeographicDataLayerSerializer,
+    MappingActivitySerializer,
+    MapVisualizationSerializer,
+    NeedListSerializer,
+    NeedsCategorySerializer,
+    NeedSerializer,
+    NeedsPrioritizationItemSerializer,
+    NeedsPrioritizationSerializer,
+    SpatialDataPointSerializer,
+    SurveyQuestionSerializer,
+    SurveyResponseSerializer,
+    SurveySerializer,
+)
 
 
 class AssessmentCategoryViewSet(viewsets.ModelViewSet):

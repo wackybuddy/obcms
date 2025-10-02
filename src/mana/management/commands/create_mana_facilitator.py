@@ -13,37 +13,27 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "username",
-            type=str,
-            help="Username for the facilitator account"
+            "username", type=str, help="Username for the facilitator account"
         )
         parser.add_argument(
-            "email",
-            type=str,
-            help="Email address for the facilitator account"
+            "email", type=str, help="Email address for the facilitator account"
         )
         parser.add_argument(
             "--password",
             type=str,
             default=None,
-            help="Password for the account (default: changeme123)"
+            help="Password for the account (default: changeme123)",
         )
         parser.add_argument(
-            "--first-name",
-            type=str,
-            default="",
-            help="First name of the facilitator"
+            "--first-name", type=str, default="", help="First name of the facilitator"
         )
         parser.add_argument(
-            "--last-name",
-            type=str,
-            default="",
-            help="Last name of the facilitator"
+            "--last-name", type=str, default="", help="Last name of the facilitator"
         )
         parser.add_argument(
             "--all-permissions",
             action="store_true",
-            help="Grant all MANA permissions (facilitator + participant + view OBC)"
+            help="Grant all MANA permissions (facilitator + participant + view OBC)",
         )
 
     @transaction.atomic
@@ -76,11 +66,7 @@ class Command(BaseCommand):
                 codename="can_facilitate_workshop"
             )
             user.user_permissions.add(facilitator_perm)
-            self.stdout.write(
-                self.style.SUCCESS(
-                    "✓ Granted: can_facilitate_workshop"
-                )
-            )
+            self.stdout.write(self.style.SUCCESS("✓ Granted: can_facilitate_workshop"))
         except Permission.DoesNotExist:
             self.stdout.write(
                 self.style.WARNING(
@@ -96,31 +82,23 @@ class Command(BaseCommand):
                 )
                 user.user_permissions.add(regional_perm)
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        "✓ Granted: can_access_regional_mana"
-                    )
+                    self.style.SUCCESS("✓ Granted: can_access_regional_mana")
                 )
             except Permission.DoesNotExist:
                 pass
 
             try:
-                obc_perm = Permission.objects.get(
-                    codename="can_view_provincial_obc"
-                )
+                obc_perm = Permission.objects.get(codename="can_view_provincial_obc")
                 user.user_permissions.add(obc_perm)
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        "✓ Granted: can_view_provincial_obc"
-                    )
+                    self.style.SUCCESS("✓ Granted: can_view_provincial_obc")
                 )
             except Permission.DoesNotExist:
                 pass
 
         self.stdout.write("")
         self.stdout.write(
-            self.style.SUCCESS(
-                f"✅ MANA Facilitator account created successfully!"
-            )
+            self.style.SUCCESS(f"✅ MANA Facilitator account created successfully!")
         )
         self.stdout.write("")
         self.stdout.write("Account Details:")
@@ -130,7 +108,5 @@ class Command(BaseCommand):
         self.stdout.write(f"  Full Name: {user.get_full_name() or '(not set)'}")
         self.stdout.write("")
         self.stdout.write(
-            self.style.WARNING(
-                "⚠️  Remember to change the password after first login!"
-            )
+            self.style.WARNING("⚠️  Remember to change the password after first login!")
         )

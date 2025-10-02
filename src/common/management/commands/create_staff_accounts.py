@@ -246,7 +246,9 @@ class Command(BaseCommand):
                     if skip_existing:
                         skipped_count += 1
                         self.stdout.write(
-                            self.style.WARNING(f"⏭️  Skipped: {username} (already exists)")
+                            self.style.WARNING(
+                                f"⏭️  Skipped: {username} (already exists)"
+                            )
                         )
                         continue
 
@@ -269,7 +271,9 @@ class Command(BaseCommand):
 
                     updated_count += 1
                     self.stdout.write(
-                        self.style.SUCCESS(f"✓ Updated: {username} - {staff['full_name']}")
+                        self.style.SUCCESS(
+                            f"✓ Updated: {username} - {staff['full_name']}"
+                        )
                     )
                 else:
                     # Create new user
@@ -293,7 +297,9 @@ class Command(BaseCommand):
 
                     created_count += 1
                     self.stdout.write(
-                        self.style.SUCCESS(f"✓ Created: {username} - {staff['full_name']}")
+                        self.style.SUCCESS(
+                            f"✓ Created: {username} - {staff['full_name']}"
+                        )
                     )
 
             if dry_run:

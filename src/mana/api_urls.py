@@ -1,14 +1,24 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .api_views import (AssessmentCategoryViewSet, AssessmentTeamMemberViewSet,
-                        AssessmentViewSet, BaselineDataCollectionViewSet,
-                        BaselineIndicatorViewSet, BaselineStudyViewSet,
-                        GeographicDataLayerViewSet, MappingActivityViewSet,
-                        MapVisualizationViewSet, NeedsCategoryViewSet,
-                        NeedsPrioritizationViewSet, NeedViewSet,
-                        SpatialDataPointViewSet, SurveyQuestionViewSet,
-                        SurveyResponseViewSet, SurveyViewSet)
+from .api_views import (
+    AssessmentCategoryViewSet,
+    AssessmentTeamMemberViewSet,
+    AssessmentViewSet,
+    BaselineDataCollectionViewSet,
+    BaselineIndicatorViewSet,
+    BaselineStudyViewSet,
+    GeographicDataLayerViewSet,
+    MappingActivityViewSet,
+    MapVisualizationViewSet,
+    NeedsCategoryViewSet,
+    NeedsPrioritizationViewSet,
+    NeedViewSet,
+    SpatialDataPointViewSet,
+    SurveyQuestionViewSet,
+    SurveyResponseViewSet,
+    SurveyViewSet,
+)
 
 app_name = "mana_api"
 

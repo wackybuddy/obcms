@@ -4,8 +4,11 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from common.models import Barangay
-from communities.models import (CommunityInfrastructure, CommunityLivelihood,
-                                OBCCommunity)
+from communities.models import (
+    CommunityInfrastructure,
+    CommunityLivelihood,
+    OBCCommunity,
+)
 
 
 class Command(BaseCommand):

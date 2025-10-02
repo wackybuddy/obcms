@@ -20,10 +20,79 @@
         </p>
     </div>
 
+    <!-- ========================================= -->
+    <!-- HERO SECTION (Module Mission Control) -->
+    <!-- ========================================= -->
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-800 via-orange-600 to-amber-500 shadow-2xl mb-8">
+        <div class="absolute inset-0 bg-white/10 opacity-20 mix-blend-overlay"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
+
+        <div class="relative px-6 sm:px-10 py-8 sm:py-10">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+
+                <div class="flex-1 space-y-6">
+                    <div class="inline-flex items-center rounded-lg bg-white/20 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white border border-white/30">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        POLICY DEVELOPMENT CENTER
+                    </div>
+
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white leading-tight">
+                        Recommendations & Advocacy
+                    </h2>
+
+                    <p class="text-white/90 text-base sm:text-lg max-w-2xl leading-relaxed">
+                        Evidence-based policy, program, and service recommendations for Bangsamoro communities. Track advocacy efforts, monitor implementation status, and maintain robust evidence repositories.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">Total Recommendations</p>
+                            <p class="text-2xl font-bold text-white">{{ stats.recommendations.total|default:0 }}</p>
+                        </div>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">Implemented</p>
+                            <p class="text-2xl font-bold text-white">{{ stats.recommendations.implemented|default:0 }}</p>
+                        </div>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">Under Review</p>
+                            <p class="text-2xl font-bold text-white">{{ stats.recommendations.submitted|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-shrink-0">
+                    <div class="flex flex-col gap-3 min-w-[220px]">
+                        <a href="{% url 'common:dashboard' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-gold-700 font-semibold shadow-lg hover:bg-gold-50 hover:shadow-xl transition-all duration-200">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>OBCMS Dashboard</span>
+                        </a>
+                        <a href="{% url 'common:recommendations_new' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>New Recommendation</span>
+                        </a>
+                        <a href="#" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Add Evidence</span>
+                        </a>
+                        <a href="{% url 'common:recommendations_manage' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-list-alt"></i>
+                            <span>Manage All</span>
+                        </a>
+                        <a href="#" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-medium border border-white/20 hover:bg-white/20 transition-all duration-200">
+                            <i class="fas fa-bullhorn"></i>
+                            <span>Track Advocacy</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
     <!-- Statistics Cards -->
     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Recommendations -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+        <div class="relative overflow-hidden bg-gradient-to-br from-amber-600 via-amber-700 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between mb-3">
@@ -53,7 +122,7 @@
         </div>
 
         <!-- Total Implemented -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-green-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+        <div class="relative overflow-hidden bg-gradient-to-br from-amber-600 via-amber-700 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between mb-3">
@@ -83,7 +152,7 @@
         </div>
 
         <!-- Submitted -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+        <div class="relative overflow-hidden bg-gradient-to-br from-amber-600 via-amber-700 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between mb-3">
@@ -113,7 +182,7 @@
         </div>
 
         <!-- Proposed -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+        <div class="relative overflow-hidden bg-gradient-to-br from-amber-600 via-amber-700 to-orange-700 rounded-xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
             <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
             <div class="relative p-6 text-white">
                 <div class="flex items-center justify-between mb-3">

@@ -1,4 +1,5 @@
 """Common signals for the OBCMS application."""
+
 import logging
 from django.core.cache import cache
 from django.db import models
@@ -32,6 +33,7 @@ def _invalidate_calendar_cache():
 
     cache.delete(CALENDAR_CACHE_INDEX_KEY)
 
+
 @receiver(post_save, sender=Municipality)
 def municipality_post_save(sender, instance, created, **kwargs):
     """
@@ -39,17 +41,29 @@ def municipality_post_save(sender, instance, created, **kwargs):
     This will automatically geocode the municipality if it doesn't have coordinates.
     """
     if not instance.center_coordinates:
-        logger.info(f"Municipality {instance.name} has no coordinates. Triggering geocoding.")
+        logger.info(
+            f"Municipality {instance.name} has no coordinates. Triggering geocoding."
+        )
         try:
             lat, lng, updated, source = enhanced_ensure_location_coordinates(instance)
             if updated:
-                logger.info(f"Successfully geocoded Municipality {instance.name} using {source}. New coordinates: [{lng}, {lat}]")
+                logger.info(
+                    f"Successfully geocoded Municipality {instance.name} using {source}. New coordinates: [{lng}, {lat}]"
+                )
             elif lat and lng:
-                logger.info(f"Municipality {instance.name} already had coordinates from {source}: [{lng}, {lat}]")
+                logger.info(
+                    f"Municipality {instance.name} already had coordinates from {source}: [{lng}, {lat}]"
+                )
             else:
-                logger.warning(f"Geocoding failed for Municipality {instance.name} from source {source}.")
+                logger.warning(
+                    f"Geocoding failed for Municipality {instance.name} from source {source}."
+                )
         except Exception as e:
-            logger.error(f"An error occurred during geocoding for Municipality {instance.name}: {e}", exc_info=True)
+            logger.error(
+                f"An error occurred during geocoding for Municipality {instance.name}: {e}",
+                exc_info=True,
+            )
+
 
 @receiver(post_save, sender=Barangay)
 def barangay_post_save(sender, instance, created, **kwargs):
@@ -58,17 +72,28 @@ def barangay_post_save(sender, instance, created, **kwargs):
     This will automatically geocode the barangay if it doesn't have coordinates.
     """
     if not instance.center_coordinates:
-        logger.info(f"Barangay {instance.name} has no coordinates. Triggering geocoding.")
+        logger.info(
+            f"Barangay {instance.name} has no coordinates. Triggering geocoding."
+        )
         try:
             lat, lng, updated, source = enhanced_ensure_location_coordinates(instance)
             if updated:
-                logger.info(f"Successfully geocoded Barangay {instance.name} using {source}. New coordinates: [{lng}, {lat}]")
+                logger.info(
+                    f"Successfully geocoded Barangay {instance.name} using {source}. New coordinates: [{lng}, {lat}]"
+                )
             elif lat and lng:
-                logger.info(f"Barangay {instance.name} already had coordinates from {source}: [{lng}, {lat}]")
+                logger.info(
+                    f"Barangay {instance.name} already had coordinates from {source}: [{lng}, {lat}]"
+                )
             else:
-                logger.warning(f"Geocoding failed for Barangay {instance.name} from source {source}.")
+                logger.warning(
+                    f"Geocoding failed for Barangay {instance.name} from source {source}."
+                )
         except Exception as e:
-            logger.error(f"An error occurred during geocoding for Barangay {instance.name}: {e}", exc_info=True)
+            logger.error(
+                f"An error occurred during geocoding for Barangay {instance.name}: {e}",
+                exc_info=True,
+            )
 
 
 @receiver([post_save, post_delete], sender=StaffTask)

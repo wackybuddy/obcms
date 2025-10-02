@@ -27,9 +27,7 @@ class CommunityNeedSubmissionForm(forms.ModelForm):
             if isinstance(field.widget, forms.widgets.TextInput):
                 field.widget.attrs.setdefault("placeholder", "")
 
-        self.fields["affected_population"].widget.attrs.setdefault(
-            "min", "1"
-        )
+        self.fields["affected_population"].widget.attrs.setdefault("min", "1")
         self.fields["impact_severity"].widget.attrs.setdefault("min", "1")
         self.fields["impact_severity"].widget.attrs.setdefault("max", "5")
         self.fields["estimated_cost"].widget.attrs.setdefault("min", "0")

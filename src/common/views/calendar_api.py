@@ -11,9 +11,32 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from common.models import StaffTask
 from coordination.models import Event, StakeholderEngagement
 
 logger = logging.getLogger(__name__)
+
+
+def _strip_known_prefix(raw_id: str) -> str:
+    """Remove calendar composite prefixes to recover underlying primary keys."""
+
+    if not raw_id:
+        return raw_id
+
+    known_prefixes = (
+        "coordination-event-",
+        "coordination-activity-",
+        "staff-task-",
+        "staff-training-",
+        "communities-event-",
+        "staff-leave-",
+    )
+
+    for prefix in known_prefixes:
+        if raw_id.startswith(prefix):
+            return raw_id[len(prefix) :]
+
+    return raw_id
 
 
 @login_required
@@ -38,44 +61,46 @@ def calendar_event_update(request):
         start_str = data.get("start")
         end_str = data.get("end")
         all_day = data.get("allDay", False)
+        metadata = data.get("metadata") or {}
 
         if not event_id or not start_str:
             return JsonResponse(
-                {"success": False, "error": "Missing required fields"},
-                status=400
+                {"success": False, "error": "Missing required fields"}, status=400
             )
 
         # Parse datetime strings
         try:
-            start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+            start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
             if timezone.is_aware(start_dt):
                 start_dt = timezone.localtime(start_dt)
 
             end_dt = None
             if end_str:
-                end_dt = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+                end_dt = datetime.fromisoformat(end_str.replace("Z", "+00:00"))
                 if timezone.is_aware(end_dt):
                     end_dt = timezone.localtime(end_dt)
         except (ValueError, AttributeError) as e:
             logger.error(f"Error parsing datetime: {e}")
             return JsonResponse(
-                {"success": False, "error": "Invalid datetime format"},
-                status=400
+                {"success": False, "error": "Invalid datetime format"}, status=400
             )
 
         # Update event based on type
+        normalized_id = _strip_known_prefix(str(event_id))
+
         if event_type == "event":
             try:
-                event = Event.objects.get(pk=event_id)
+                event = Event.objects.get(pk=normalized_id)
 
                 # Check permissions
-                if not (request.user.is_staff or
-                        request.user.is_superuser or
-                        event.created_by == request.user or
-                        request.user.has_perm("coordination.change_event")):
+                if not (
+                    request.user.is_staff
+                    or request.user.is_superuser
+                    or event.created_by == request.user
+                    or request.user.has_perm("coordination.change_event")
+                ):
                     return JsonResponse(
-                        {"success": False, "error": "Permission denied"},
-                        status=403
+                        {"success": False, "error": "Permission denied"}, status=403
                     )
 
                 # Update event fields
@@ -104,81 +129,179 @@ def calendar_event_update(request):
                         duration = end_dt - start_dt
                         event.duration_hours = duration.total_seconds() / 3600
 
-                event.save(update_fields=[
-                    'start_date', 'start_time', 'end_date', 'end_time', 'duration_hours'
-                ])
+                event.save(
+                    update_fields=[
+                        "start_date",
+                        "start_time",
+                        "end_date",
+                        "end_time",
+                        "duration_hours",
+                    ]
+                )
 
                 logger.info(
                     f"Event {event_id} rescheduled by {request.user.username}: "
                     f"{start_dt} to {end_dt}"
                 )
 
-                return JsonResponse({
-                    "success": True,
-                    "message": f"Event '{event.title}' rescheduled successfully"
-                })
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": f"Event '{event.title}' rescheduled successfully",
+                    }
+                )
 
             except Event.DoesNotExist:
                 return JsonResponse(
-                    {"success": False, "error": "Event not found"},
-                    status=404
+                    {"success": False, "error": "Event not found"}, status=404
                 )
 
         elif event_type == "engagement" or event_type == "activity":
             try:
-                engagement = StakeholderEngagement.objects.get(pk=event_id)
+                engagement = StakeholderEngagement.objects.get(pk=normalized_id)
 
                 # Check permissions
-                if not (request.user.is_staff or
-                        request.user.is_superuser or
-                        engagement.created_by == request.user or
-                        request.user.has_perm("coordination.change_stakeholderengagement")):
+                if not (
+                    request.user.is_staff
+                    or request.user.is_superuser
+                    or engagement.created_by == request.user
+                    or request.user.has_perm(
+                        "coordination.change_stakeholderengagement"
+                    )
+                ):
                     return JsonResponse(
-                        {"success": False, "error": "Permission denied"},
-                        status=403
+                        {"success": False, "error": "Permission denied"}, status=403
                     )
 
-                # Update engagement
+                # Update engagement schedule
                 engagement.planned_date = start_dt
+                fields_to_update = ["planned_date"]
 
                 if end_dt:
                     duration = end_dt - start_dt
-                    engagement.expected_duration_hours = duration.total_seconds() / 3600
+                    engagement.duration_minutes = int(
+                        duration.total_seconds() / 60
+                    )
+                    fields_to_update.append("duration_minutes")
+                elif engagement.duration_minutes is not None:
+                    engagement.duration_minutes = None
+                    fields_to_update.append("duration_minutes")
 
-                engagement.save(update_fields=[
-                    'planned_date', 'expected_duration_hours'
-                ])
+                engagement.save(update_fields=fields_to_update)
 
                 logger.info(
                     f"Engagement {event_id} rescheduled by {request.user.username}: "
                     f"{start_dt} to {end_dt}"
                 )
 
-                return JsonResponse({
-                    "success": True,
-                    "message": f"Activity '{engagement.title}' rescheduled successfully"
-                })
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": f"Activity '{engagement.title}' rescheduled successfully",
+                    }
+                )
 
             except StakeholderEngagement.DoesNotExist:
                 return JsonResponse(
-                    {"success": False, "error": "Engagement not found"},
-                    status=404
+                    {"success": False, "error": "Engagement not found"}, status=404
                 )
 
         else:
+            if event_type in {"staff_task", "task"}:
+                try:
+                    task = StaffTask.objects.select_related("created_by").get(
+                        pk=_strip_known_prefix(str(event_id))
+                    )
+                except StaffTask.DoesNotExist:
+                    return JsonResponse(
+                        {"success": False, "error": "Task not found"}, status=404
+                    )
+
+                if not (
+                    request.user.is_staff
+                    or request.user.is_superuser
+                    or task.created_by == request.user
+                    or request.user.has_perm("common.change_stafftask")
+                ):
+                    return JsonResponse(
+                        {"success": False, "error": "Permission denied"},
+                        status=403,
+                    )
+
+                updates = []
+                original_start_date = task.start_date
+                original_due_date = task.due_date
+
+                new_start_date = start_dt.date() if start_dt else None
+                new_due_date = None
+
+                if end_dt:
+                    new_due_date = end_dt.date()
+                elif new_start_date:
+                    new_due_date = new_start_date
+
+                reference_date = original_start_date or original_due_date
+                delta_days = 0
+                if new_start_date and reference_date:
+                    delta_days = (new_start_date - reference_date).days
+
+                if new_start_date:
+                    if original_start_date and delta_days:
+                        task.start_date = original_start_date + timedelta(
+                            days=delta_days
+                        )
+                    elif original_start_date and not delta_days:
+                        task.start_date = new_start_date
+                    elif metadata.get("hasStartDate") and not original_start_date:
+                        task.start_date = new_start_date
+
+                if new_due_date is not None:
+                    if original_due_date and delta_days:
+                        task.due_date = original_due_date + timedelta(days=delta_days)
+                    elif original_due_date and not delta_days:
+                        task.due_date = new_due_date
+                    elif not original_due_date:
+                        task.due_date = new_due_date
+                elif metadata.get("hasDueDate") and original_due_date is not None:
+                    task.due_date = None
+
+                if task.start_date != original_start_date:
+                    updates.append("start_date")
+                if task.due_date != original_due_date:
+                    updates.append("due_date")
+
+                if not updates:
+                    return JsonResponse(
+                        {
+                            "success": True,
+                            "message": "Task already up to date",
+                        }
+                    )
+
+                updates.append("updated_at")
+                task.save(update_fields=updates)
+
+                logger.info(
+                    "Staff task %s rescheduled by %s: start=%s end=%s",
+                    task.pk,
+                    request.user.username,
+                    new_start_date,
+                    new_due_date,
+                )
+
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": f"Task '{task.title}' rescheduled successfully",
+                    }
+                )
+
             return JsonResponse(
-                {"success": False, "error": "Invalid event type"},
-                status=400
+                {"success": False, "error": "Invalid event type"}, status=400
             )
 
     except json.JSONDecodeError:
-        return JsonResponse(
-            {"success": False, "error": "Invalid JSON"},
-            status=400
-        )
+        return JsonResponse({"success": False, "error": "Invalid JSON"}, status=400)
     except Exception as e:
         logger.error(f"Error updating calendar event: {e}", exc_info=True)
-        return JsonResponse(
-            {"success": False, "error": "Server error"},
-            status=500
-        )
+        return JsonResponse({"success": False, "error": "Server error"}, status=500)

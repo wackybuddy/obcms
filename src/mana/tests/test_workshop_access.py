@@ -33,7 +33,9 @@ def setup_workshop_environment(db):
         category_type="needs_assessment",
     )
 
-    region = Region.objects.create(code="IX", name="Zamboanga Peninsula", is_active=True)
+    region = Region.objects.create(
+        code="IX", name="Zamboanga Peninsula", is_active=True
+    )
     province = Province.objects.create(
         code="ZAM",
         name="Zamboanga del Sur",
@@ -169,9 +171,7 @@ class TestWorkshopAccessManager:
             result = manager.mark_workshop_complete(participant, workshop_type)
             assert result is True
             if i < 5:
-                manager.advance_all_participants(
-                    f"workshop_{i + 1}", facilitator
-                )
+                manager.advance_all_participants(f"workshop_{i + 1}", facilitator)
 
         participant.refresh_from_db()
         assert len(participant.completed_workshops) == 5

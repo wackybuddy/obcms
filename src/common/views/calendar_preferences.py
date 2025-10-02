@@ -29,7 +29,7 @@ def calendar_preferences(request):
             "push_enabled": True,
             "weekly_digest": True,
             "timezone": "Asia/Manila",
-        }
+        },
     )
 
     if request.method == "POST":
@@ -41,10 +41,7 @@ def calendar_preferences(request):
                 preferences.user = request.user
                 preferences.save()
 
-                messages.success(
-                    request,
-                    "Calendar preferences updated successfully."
-                )
+                messages.success(request, "Calendar preferences updated successfully.")
 
             return redirect("common:calendar_preferences")
     else:

@@ -3,11 +3,23 @@ from rest_framework import serializers
 from communities.models import GeographicDataLayer, MapVisualization, SpatialDataPoint
 from communities.serializers import OBCCommunityListSerializer
 
-from .models import (Assessment, AssessmentCategory, AssessmentTeamMember,
-                     BaselineDataCollection, BaselineIndicator, BaselineStudy,
-                     BaselineStudyTeamMember, MappingActivity, Need, NeedsCategory,
-                     NeedsPrioritization, NeedsPrioritizationItem,
-                     Survey, SurveyQuestion, SurveyResponse)
+from .models import (
+    Assessment,
+    AssessmentCategory,
+    AssessmentTeamMember,
+    BaselineDataCollection,
+    BaselineIndicator,
+    BaselineStudy,
+    BaselineStudyTeamMember,
+    MappingActivity,
+    Need,
+    NeedsCategory,
+    NeedsPrioritization,
+    NeedsPrioritizationItem,
+    Survey,
+    SurveyQuestion,
+    SurveyResponse,
+)
 
 
 class AssessmentCategorySerializer(serializers.ModelSerializer):

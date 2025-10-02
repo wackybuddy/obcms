@@ -4,17 +4,26 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import (CommunityInfrastructure, CommunityLivelihood,
-                      MunicipalityCoverage, OBCCommunity, Stakeholder,
-                      StakeholderEngagement)
-from ..serializers import (CommunityInfrastructureSerializer,
-                           CommunityLivelihoodSerializer,
-                           CommunityStatsSerializer,
-                           MunicipalityCoverageSerializer,
-                           OBCCommunityListSerializer, OBCCommunitySerializer,
-                           StakeholderEngagementSerializer,
-                           StakeholderListSerializer, StakeholderSerializer,
-                           StakeholderStatsSerializer)
+from ..models import (
+    CommunityInfrastructure,
+    CommunityLivelihood,
+    MunicipalityCoverage,
+    OBCCommunity,
+    Stakeholder,
+    StakeholderEngagement,
+)
+from ..serializers import (
+    CommunityInfrastructureSerializer,
+    CommunityLivelihoodSerializer,
+    CommunityStatsSerializer,
+    MunicipalityCoverageSerializer,
+    OBCCommunityListSerializer,
+    OBCCommunitySerializer,
+    StakeholderEngagementSerializer,
+    StakeholderListSerializer,
+    StakeholderSerializer,
+    StakeholderStatsSerializer,
+)
 
 
 class MunicipalityCoverageViewSet(viewsets.ModelViewSet):
@@ -186,7 +195,9 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
         # Religious facilities
         religious_facilities = {
             "communities_with_mosque": communities.filter(mosques_count__gt=0).count(),
-            "communities_with_madrasah": communities.filter(madrasah_count__gt=0).count(),
+            "communities_with_madrasah": communities.filter(
+                madrasah_count__gt=0
+            ).count(),
             "communities_with_both": communities.filter(
                 mosques_count__gt=0, madrasah_count__gt=0
             ).count(),

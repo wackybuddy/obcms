@@ -120,7 +120,7 @@ CORE_PRINCIPLES = [
     },
     {
         "title": "Equity",
-        "details": "Prioritize vulnerable and marginalized segments to avoid exclusion."
+        "details": "Prioritize vulnerable and marginalized segments to avoid exclusion.",
     },
 ]
 
@@ -378,10 +378,15 @@ def _build_regional_dataset(request):
         aggregated = (
             region_assessments.annotate(
                 resolved_region_id=Case(
-                    When(community__isnull=False, then=F("community__barangay__municipality__province__region_id")),
+                    When(
+                        community__isnull=False,
+                        then=F(
+                            "community__barangay__municipality__province__region_id"
+                        ),
+                    ),
                     When(province__isnull=False, then=F("province__region_id")),
                     default=None,
-                    output_field=IntegerField()
+                    output_field=IntegerField(),
                 )
             )
             .values("resolved_region_id")
@@ -391,13 +396,9 @@ def _build_regional_dataset(request):
                 in_progress=Count(
                     "id", filter=Q(status__in=["data_collection", "analysis"])
                 ),
-                planning=Count(
-                    "id", filter=Q(status__in=["planning", "preparation"])
-                ),
+                planning=Count("id", filter=Q(status__in=["planning", "preparation"])),
                 reporting=Count("id", filter=Q(status="reporting")),
-                desk_review=Count(
-                    "id", filter=Q(primary_methodology="desk_review")
-                ),
+                desk_review=Count("id", filter=Q(primary_methodology="desk_review")),
                 survey=Count("id", filter=Q(primary_methodology="survey")),
                 kii=Count("id", filter=Q(primary_methodology="kii")),
                 workshop=Count("id", filter=Q(primary_methodology="workshop")),
@@ -491,10 +492,22 @@ def _build_regional_dataset(request):
     region_cards = [region_summary[region.id] for region in regions]
 
     methodology_breakdown = [
-        {"label": "Desk Review", "value": sum(card["assessments"]["desk_review"] for card in region_cards)},
-        {"label": "Survey", "value": sum(card["assessments"]["survey"] for card in region_cards)},
-        {"label": "Key Informant Interview", "value": sum(card["assessments"]["kii"] for card in region_cards)},
-        {"label": "Workshop", "value": sum(card["assessments"]["workshop"] for card in region_cards)},
+        {
+            "label": "Desk Review",
+            "value": sum(card["assessments"]["desk_review"] for card in region_cards),
+        },
+        {
+            "label": "Survey",
+            "value": sum(card["assessments"]["survey"] for card in region_cards),
+        },
+        {
+            "label": "Key Informant Interview",
+            "value": sum(card["assessments"]["kii"] for card in region_cards),
+        },
+        {
+            "label": "Workshop",
+            "value": sum(card["assessments"]["workshop"] for card in region_cards),
+        },
     ]
 
     global_stats = {
@@ -699,7 +712,9 @@ def mana_new_assessment(request):
 
         province = None
         if province_id:
-            province = Province.objects.filter(pk=province_id).select_related("region").first()
+            province = (
+                Province.objects.filter(pk=province_id).select_related("region").first()
+            )
             if not province:
                 errors.append("Selected province was not found.")
 
@@ -924,9 +939,8 @@ def mana_assessment_detail(request, assessment_id):
         pk=assessment_id,
     )
 
-    team_members = (
-        assessment.assessmentteammember_set.select_related("user")
-        .order_by("role", "user__first_name", "user__last_name")
+    team_members = assessment.assessmentteammember_set.select_related("user").order_by(
+        "role", "user__first_name", "user__last_name"
     )
 
     needs_queryset = assessment.identified_needs.all()
@@ -951,10 +965,14 @@ def mana_assessment_detail(request, assessment_id):
     workshop_summary = {
         "total": len(workshops_list),
         "completed": sum(1 for item in workshops_list if item.status == "completed"),
-        "in_progress": sum(1 for item in workshops_list if item.status == "in_progress"),
+        "in_progress": sum(
+            1 for item in workshops_list if item.status == "in_progress"
+        ),
     }
 
-    status_display = dict(Assessment.STATUS_CHOICES).get(assessment.status, assessment.status)
+    status_display = dict(Assessment.STATUS_CHOICES).get(
+        assessment.status, assessment.status
+    )
     priority_display = dict(Assessment.PRIORITY_CHOICES).get(
         assessment.priority, assessment.priority
     )
@@ -1072,13 +1090,16 @@ def mana_regional_overview(request):
     Workshop participants should use /mana/workshops/ (new sequential system).
     """
     # Enforce staff-only access
-    if not request.user.is_staff and not request.user.has_perm("mana.can_facilitate_workshop"):
+    if not request.user.is_staff and not request.user.has_perm(
+        "mana.can_facilitate_workshop"
+    ):
         from django.contrib import messages
         from django.shortcuts import redirect
+
         messages.error(
             request,
             "Access denied. This area is restricted to OOBC staff. "
-            "Participants should access workshops through their participant dashboard."
+            "Participants should access workshops through their participant dashboard.",
         )
         return redirect("common:dashboard")
 
@@ -1175,8 +1196,8 @@ def mana_regional_overview(request):
 
         region_assessments = (
             Assessment.objects.filter(
-                Q(community__barangay__municipality__province__region_id__in=region_ids) |
-                Q(province__region_id__in=region_ids)
+                Q(community__barangay__municipality__province__region_id__in=region_ids)
+                | Q(province__region_id__in=region_ids)
             )
             .select_related(
                 "community__barangay__municipality__province__region",
@@ -1189,9 +1210,7 @@ def mana_regional_overview(request):
 
         regional_workshop_assessments = regional_workshop_assessments.filter(
             Q(province__region_id__in=region_ids)
-            | Q(
-                community__barangay__municipality__province__region_id__in=region_ids
-            )
+            | Q(community__barangay__municipality__province__region_id__in=region_ids)
         )
 
         selected_assessment_id = request.POST.get("assessment") or request.GET.get(
@@ -1208,10 +1227,15 @@ def mana_regional_overview(request):
         aggregated = (
             region_assessments.annotate(
                 resolved_region_id=Case(
-                    When(community__isnull=False, then=F("community__barangay__municipality__province__region_id")),
+                    When(
+                        community__isnull=False,
+                        then=F(
+                            "community__barangay__municipality__province__region_id"
+                        ),
+                    ),
                     When(province__isnull=False, then=F("province__region_id")),
                     default=None,
-                    output_field=IntegerField()
+                    output_field=IntegerField(),
                 )
             )
             .values("resolved_region_id")
@@ -1221,13 +1245,9 @@ def mana_regional_overview(request):
                 in_progress=Count(
                     "id", filter=Q(status__in=["data_collection", "analysis"])
                 ),
-                planning=Count(
-                    "id", filter=Q(status__in=["planning", "preparation"])
-                ),
+                planning=Count("id", filter=Q(status__in=["planning", "preparation"])),
                 reporting=Count("id", filter=Q(status="reporting")),
-                desk_review=Count(
-                    "id", filter=Q(primary_methodology="desk_review")
-                ),
+                desk_review=Count("id", filter=Q(primary_methodology="desk_review")),
                 survey=Count("id", filter=Q(primary_methodology="survey")),
                 kii=Count("id", filter=Q(primary_methodology="kii")),
                 workshop=Count("id", filter=Q(primary_methodology="workshop")),
@@ -1326,7 +1346,11 @@ def mana_regional_overview(request):
         for activity in workshop_queryset:
             workshop_activity_map[activity.workshop_type] = activity
 
-    if request.method == "POST" and form_action != "regional_setup" and selected_assessment:
+    if (
+        request.method == "POST"
+        and form_action != "regional_setup"
+        and selected_assessment
+    ):
         target_id = request.POST.get("workshop_id")
         if target_id:
             try:
@@ -1384,7 +1408,9 @@ def mana_regional_overview(request):
         ]
 
         activity = workshop_activity_map.get(workshop_type)
-        label = workshop_type_labels.get(workshop_type, workshop_type.replace("_", " ").title())
+        label = workshop_type_labels.get(
+            workshop_type, workshop_type.replace("_", " ").title()
+        )
 
         form_instance = None
         if activity:
@@ -1402,43 +1428,63 @@ def mana_regional_overview(request):
             ).count()
 
             submitted_responses = WorkshopResponse.objects.filter(
-                workshop=activity,
-                status="submitted"
+                workshop=activity, status="submitted"
             ).select_related("participant__user")
 
-            submitted_count = submitted_responses.values("participant").distinct().count()
+            submitted_count = (
+                submitted_responses.values("participant").distinct().count()
+            )
 
             response_analytics = {
                 "total_participants": total_participants,
                 "submitted_count": submitted_count,
-                "submission_rate": (submitted_count / total_participants * 100) if total_participants > 0 else 0,
+                "submission_rate": (
+                    (submitted_count / total_participants * 100)
+                    if total_participants > 0
+                    else 0
+                ),
             }
 
             # Fetch individual participant responses
             from mana.schema import get_questions_for_workshop
+
             questions = get_questions_for_workshop(workshop_type)
 
-            participants_with_responses = submitted_responses.values("participant").distinct()
+            participants_with_responses = submitted_responses.values(
+                "participant"
+            ).distinct()
 
             for participant_data in participants_with_responses:
                 participant_id = participant_data["participant"]
-                participant = WorkshopParticipantAccount.objects.select_related("user", "province").get(id=participant_id)
+                participant = WorkshopParticipantAccount.objects.select_related(
+                    "user", "province"
+                ).get(id=participant_id)
 
-                responses = submitted_responses.filter(participant=participant).order_by("question_id")
+                responses = submitted_responses.filter(
+                    participant=participant
+                ).order_by("question_id")
 
                 qa_pairs = []
                 for question in questions:
                     response = responses.filter(question_id=question["id"]).first()
-                    qa_pairs.append({
-                        "question": question,
-                        "response": response,
-                    })
+                    qa_pairs.append(
+                        {
+                            "question": question,
+                            "response": response,
+                        }
+                    )
 
-                participant_responses.append({
-                    "participant": participant,
-                    "responses": qa_pairs,
-                    "submitted_at": responses.first().submitted_at if responses.exists() else None,
-                })
+                participant_responses.append(
+                    {
+                        "participant": participant,
+                        "responses": qa_pairs,
+                        "submitted_at": (
+                            responses.first().submitted_at
+                            if responses.exists()
+                            else None
+                        ),
+                    }
+                )
 
         workshop_forms.append(
             {
@@ -1449,9 +1495,11 @@ def mana_regional_overview(request):
                 "completed": bool(activity and activity.status == "completed"),
                 "general_fields": WORKSHOP_GENERAL_FIELDS,
                 "synthesis_fields": WORKSHOP_SYNTHESIS_FIELDS,
-                "question_fields": getattr(form_instance, "question_field_names", [])
-                if form_instance
-                else [item["name"] for item in default_question_prompts],
+                "question_fields": (
+                    getattr(form_instance, "question_field_names", [])
+                    if form_instance
+                    else [item["name"] for item in default_question_prompts]
+                ),
                 "question_prompts": default_question_prompts,
                 "response_analytics": response_analytics,
                 "participant_responses": participant_responses,
@@ -1465,12 +1513,13 @@ def mana_regional_overview(request):
     methodology_mix = {
         "Desk Review": sum(card["assessments"]["desk_review"] for card in region_cards),
         "Survey": sum(card["assessments"]["survey"] for card in region_cards),
-        "Key Informant Interview": sum(card["assessments"]["kii"] for card in region_cards),
+        "Key Informant Interview": sum(
+            card["assessments"]["kii"] for card in region_cards
+        ),
         "Workshop": sum(card["assessments"]["workshop"] for card in region_cards),
     }
     methodology_breakdown = [
-        {"label": label, "value": value}
-        for label, value in methodology_mix.items()
+        {"label": label, "value": value} for label, value in methodology_mix.items()
     ]
 
     global_stats = {
@@ -1728,9 +1777,7 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
             kii=Count("id", filter=Q(primary_methodology="kii")),
             workshop=Count("id", filter=Q(primary_methodology="workshop")),
             community_level=Count("id", filter=Q(assessment_level="community")),
-            municipal_level=Count(
-                "id", filter=Q(assessment_level="city_municipal")
-            ),
+            municipal_level=Count("id", filter=Q(assessment_level="city_municipal")),
             barangay_level=Count("id", filter=Q(assessment_level="barangay")),
         )
     )
@@ -1810,9 +1857,7 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
         .values("derived_province_id")
         .annotate(
             total=Count("id"),
-            finalized=Count(
-                "id", filter=Q(report_status__in=["final", "submitted"])
-            ),
+            finalized=Count("id", filter=Q(report_status__in=["final", "submitted"])),
             validation=Count("id", filter=Q(report_status="validation")),
         )
     )
@@ -1826,7 +1871,11 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
         reports["finalized"] = row["finalized"]
         reports["validation"] = row["validation"]
 
-    cards = [province_summary[province.id] for province in provinces if province.id in province_summary]
+    cards = [
+        province_summary[province.id]
+        for province in provinces
+        if province.id in province_summary
+    ]
 
     methodology_mix = {
         "Desk Review": sum(card["assessments"]["desk_review"] for card in cards),
@@ -1884,7 +1933,6 @@ def _build_provincial_snapshot(provinces, *, recent_limit=8, include_querysets=F
     return snapshot
 
 
-
 @login_required
 def mana_provincial_overview(request):
     """Provincial dashboards and operational guidance for MANA deployments."""
@@ -1917,7 +1965,9 @@ def mana_provincial_overview(request):
     if province_filter:
         filtered_provinces_qs = filtered_provinces_qs.filter(id=province_filter)
     if search_term:
-        filtered_provinces_qs = filtered_provinces_qs.filter(name__icontains=search_term)
+        filtered_provinces_qs = filtered_provinces_qs.filter(
+            name__icontains=search_term
+        )
 
     provinces = list(filtered_provinces_qs)
 
@@ -1941,7 +1991,9 @@ def mana_provincial_overview(request):
     query_string = request.GET.copy()
     encoded_query = query_string.urlencode()
     overview_base_url = reverse("common:mana_provincial_overview")
-    return_url = f"{overview_base_url}?{encoded_query}" if encoded_query else overview_base_url
+    return_url = (
+        f"{overview_base_url}?{encoded_query}" if encoded_query else overview_base_url
+    )
 
     page_size_options = [5, 10, 25]
     try:
@@ -1976,7 +2028,11 @@ def mana_provincial_overview(request):
                 "detail_url": reverse(
                     "common:mana_provincial_card_detail", args=[province.id]
                 ),
-                "edit_url": f"{edit_path}?{urlencode({'next': return_url})}" if edit_path else "",
+                "edit_url": (
+                    f"{edit_path}?{urlencode({'next': return_url})}"
+                    if edit_path
+                    else ""
+                ),
                 "delete_url": delete_path,
             }
         )
@@ -1998,7 +2054,11 @@ def mana_provincial_overview(request):
     selected_province = None
     if province_filter:
         selected_province = next(
-            (province for province in province_options if province.pk == province_filter),
+            (
+                province
+                for province in province_options
+                if province.pk == province_filter
+            ),
             None,
         )
 
@@ -2121,7 +2181,7 @@ def mana_provincial_overview(request):
         },
         {
             "title": "Workshop 2",
-            "details": "Document aspirations, priority needs, and sectoral interventions."
+            "details": "Document aspirations, priority needs, and sectoral interventions.",
         },
         {
             "title": "Workshop 3",
@@ -2169,6 +2229,8 @@ def mana_provincial_overview(request):
         "page_query_prefix": page_query_prefix,
     }
     return render(request, "mana/mana_provincial_overview.html", context)
+
+
 @login_required
 def mana_provincial_card_detail(request, province_id):
     """Detailed provincial assessment card view with operational breakdown."""
@@ -2270,8 +2332,6 @@ def mana_provincial_card_detail(request, province_id):
     return render(request, "mana/mana_provincial_card_detail.html", context)
 
 
-
-
 @login_required
 def mana_province_edit(request, province_id):
     """Edit basic province metadata used across provincial MANA views."""
@@ -2323,6 +2383,7 @@ def mana_province_delete(request, province_id):
 
     return redirect(next_url)
 
+
 @login_required
 def mana_desk_review(request):
     """Desk review methodology hub anchored on the MANA guidelines."""
@@ -2365,7 +2426,9 @@ def mana_desk_review(request):
 
     desk_reports = (
         MANAReport.objects.filter(assessment__primary_methodology="desk_review")
-        .select_related("assessment__community__barangay__municipality__province__region")
+        .select_related(
+            "assessment__community__barangay__municipality__province__region"
+        )
         .order_by("-created_at")[:6]
     )
 
@@ -2725,7 +2788,7 @@ def mana_key_informant_interviews(request):
             "highlights": [
                 "Profile key informants across governance, social, economic, cultural, and rights sectors.",
                 "Customize interview guides, translation aids, and consent forms.",
-                "Brief facilitators on power dynamics and culturally sensitive questioning."
+                "Brief facilitators on power dynamics and culturally sensitive questioning.",
             ],
         },
         {
@@ -2733,7 +2796,7 @@ def mana_key_informant_interviews(request):
             "highlights": [
                 "Open with purpose, confidentiality assurances, and consent confirmation.",
                 "Probe for narratives that contextualize survey trends and desk review findings.",
-                "Manage time while allowing space for emergent issues and lived experiences."
+                "Manage time while allowing space for emergent issues and lived experiences.",
             ],
         },
         {
@@ -2741,7 +2804,7 @@ def mana_key_informant_interviews(request):
             "highlights": [
                 "Transcribe or summarize interviews promptly with secure storage of recordings.",
                 "Capture direct quotes, illustrative cases, and action points per informant.",
-                "Feed insights into thematic matrices and recommendation drafting."
+                "Feed insights into thematic matrices and recommendation drafting.",
             ],
         },
     ]
@@ -3062,7 +3125,9 @@ def mana_geographic_data(request):
     barangay_id = parse_identifier(request.GET.get("barangay"))
 
     selected_region = (
-        Region.objects.filter(pk=region_id, is_active=True).first() if region_id else None
+        Region.objects.filter(pk=region_id, is_active=True).first()
+        if region_id
+        else None
     )
 
     selected_province = None
@@ -3125,14 +3190,14 @@ def mana_geographic_data(request):
         community_filters["barangay__municipality_id"] = municipality_id
     elif province_id:
         layer_filters["community__barangay__municipality__province_id"] = province_id
-        visualization_filters[
-            "community__barangay__municipality__province_id"
-        ] = province_id
+        visualization_filters["community__barangay__municipality__province_id"] = (
+            province_id
+        )
         community_filters["barangay__municipality__province_id"] = province_id
     elif region_id:
-        layer_filters[
-            "community__barangay__municipality__province__region_id"
-        ] = region_id
+        layer_filters["community__barangay__municipality__province__region_id"] = (
+            region_id
+        )
         visualization_filters[
             "community__barangay__municipality__province__region_id"
         ] = region_id
@@ -3186,7 +3251,9 @@ def mana_geographic_data(request):
     elif selected_province:
         filter_summary_parts.append(f"Province {selected_province.name}")
     elif selected_region:
-        filter_summary_parts.append(f"Region {selected_region.code} - {selected_region.name}")
+        filter_summary_parts.append(
+            f"Region {selected_region.code} - {selected_region.name}"
+        )
 
     context = {
         "data_layers": data_layers_qs,
@@ -3204,7 +3271,8 @@ def mana_geographic_data(request):
         "selected_barangay": selected_barangay,
         "filter_summary": ", ".join(filter_summary_parts),
         "filters_applied": any(
-            identifier for identifier in [region_id, province_id, municipality_id, barangay_id]
+            identifier
+            for identifier in [region_id, province_id, municipality_id, barangay_id]
         ),
         "map_layers": map_layers,
         "map_config": map_config,

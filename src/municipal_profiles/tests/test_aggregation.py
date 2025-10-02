@@ -146,7 +146,9 @@ def test_unassigned_totals_respect_provided_fields():
     aggregate_and_store(municipality=municipality)
     profile.refresh_from_db()
 
-    summary = profile.aggregated_metrics["metadata"]["number_with_no_identified_barangay"]
+    summary = profile.aggregated_metrics["metadata"][
+        "number_with_no_identified_barangay"
+    ]
     assert summary["metrics"] == {"estimated_obc_population": 15}
     assert summary["total"] == 15
 
@@ -198,6 +200,12 @@ def test_unassigned_totals_include_vulnerable_metrics():
     aggregate_and_store(municipality=municipality)
     profile.refresh_from_db()
 
-    summary = profile.aggregated_metrics["metadata"]["number_with_no_identified_barangay"]
-    assert summary["metrics"] == {"estimated_obc_population": 15, "women_count": 10, "pwd_count": 2}
+    summary = profile.aggregated_metrics["metadata"][
+        "number_with_no_identified_barangay"
+    ]
+    assert summary["metrics"] == {
+        "estimated_obc_population": 15,
+        "women_count": 10,
+        "pwd_count": 2,
+    }
     assert summary["total"] == 27

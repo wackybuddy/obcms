@@ -16,7 +16,9 @@ def test_seed_dummy_obc_data_command_populates_demo_records():
 
     demographics = profile.aggregated_metrics["sections"]["demographics"]
     vulnerable = profile.aggregated_metrics["sections"]["vulnerable_groups"]
-    summary = profile.aggregated_metrics["metadata"]["number_with_no_identified_barangay"]
+    summary = profile.aggregated_metrics["metadata"][
+        "number_with_no_identified_barangay"
+    ]
 
     assert demographics["estimated_obc_population"] == 355
     assert demographics["households"] == 74
@@ -30,6 +32,8 @@ def test_seed_dummy_obc_data_command_populates_demo_records():
     assert summary["metrics"]["pwd_count"] == 5
     assert summary["total"] == 110
 
-    communities = OBCCommunity.objects.filter(barangay__municipality=profile.municipality)
+    communities = OBCCommunity.objects.filter(
+        barangay__municipality=profile.municipality
+    )
     assert communities.count() == 3
     assert all(c.priority_needs for c in communities)

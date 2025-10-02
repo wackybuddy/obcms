@@ -11,9 +11,13 @@ from common.management.commands.populate_administrative_hierarchy import (
     Command as HierarchyCommand,
 )
 
-from ..forms import (COMMUNITY_PROFILE_FIELDS, CustomLoginForm,
-                    MunicipalityCoverageForm, OBCCommunityForm,
-                    UserRegistrationForm)
+from ..forms import (
+    COMMUNITY_PROFILE_FIELDS,
+    CustomLoginForm,
+    MunicipalityCoverageForm,
+    OBCCommunityForm,
+    UserRegistrationForm,
+)
 from ..models import Barangay, Municipality, Province, Region, User
 from ..services.locations import build_location_data
 
@@ -868,7 +872,9 @@ class LocationDataServiceTest(SimpleTestCase):
                     if isinstance(item, dict):
                         results.append({field: item.get(field) for field in fields})
                     else:
-                        results.append({field: getattr(item, field) for field in fields})
+                        results.append(
+                            {field: getattr(item, field) for field in fields}
+                        )
                 return results
 
             def __iter__(self):
@@ -941,11 +947,15 @@ class LocationDataServiceTest(SimpleTestCase):
             data = build_location_data(include_barangays=True)
 
         region_entry = next(item for item in data["regions"] if item["id"] == region.id)
-        province_entry = next(item for item in data["provinces"] if item["id"] == province.id)
+        province_entry = next(
+            item for item in data["provinces"] if item["id"] == province.id
+        )
         municipality_entry = next(
             item for item in data["municipalities"] if item["id"] == municipality.id
         )
-        barangay_entry = next(item for item in data["barangays"] if item["id"] == barangay.id)
+        barangay_entry = next(
+            item for item in data["barangays"] if item["id"] == barangay.id
+        )
 
         self.assertEqual(region_entry["geodata_count"], 3)
         self.assertEqual(region_entry["geodata_communities"], 0)
@@ -984,6 +994,8 @@ class PopulationDatasetParseTest(SimpleTestCase):
         gensan = gensan_province["municipalities"]["General Santos City"]
         self.assertEqual(gensan["population"], 722_059)
         self.assertEqual(gensan["barangays"]["Baluan"], 14_079)
+
+
 class MunicipalityCoverageViewTest(TestCase):
     """Integration tests for the municipality addition view."""
 

@@ -17,7 +17,7 @@ from common.models import (
     CalendarResourceBooking,
     StaffLeave,
     UserCalendarPreferences,
-    CalendarNotification
+    CalendarNotification,
 )
 
 logger = logging.getLogger(__name__)
@@ -39,13 +39,12 @@ def send_event_notification(event_id, participant_ids=None):
         # Get participants
         if participant_ids:
             participants = EventParticipant.objects.filter(
-                event=event,
-                participant_id__in=participant_ids
-            ).select_related('participant')
+                event=event, participant_id__in=participant_ids
+            ).select_related("participant")
         else:
-            participants = EventParticipant.objects.filter(
-                event=event
-            ).select_related('participant')
+            participants = EventParticipant.objects.filter(event=event).select_related(
+                "participant"
+            )
 
         # Send email to each participant
         sent_count = 0
@@ -62,15 +61,17 @@ def send_event_notification(event_id, participant_ids=None):
 
             # Build email context
             context = {
-                'user': user,
-                'event': event,
-                'event_url': f"{settings.BASE_URL}{reverse('common:coordination_events')}",
-                'current_year': timezone.now().year,
-                'base_url': settings.BASE_URL,
+                "user": user,
+                "event": event,
+                "event_url": f"{settings.BASE_URL}{reverse('common:coordination_events')}",
+                "current_year": timezone.now().year,
+                "base_url": settings.BASE_URL,
             }
 
             # Render HTML email
-            html_content = render_to_string('common/email/event_notification.html', context)
+            html_content = render_to_string(
+                "common/email/event_notification.html", context
+            )
 
             # Send email
             msg = EmailMultiAlternatives(
@@ -85,7 +86,7 @@ def send_event_notification(event_id, participant_ids=None):
             # Create notification record
             CalendarNotification.objects.create(
                 user=user,
-                notification_type='event_created',
+                notification_type="event_created",
                 title=f"New Event: {event.title}",
                 message=f"You've been invited to {event.title}",
                 sent_at=timezone.now(),
@@ -120,9 +121,9 @@ def send_event_reminder(event_id, minutes_before=60):
         if event.start_datetime <= timezone.now():
             return "Event already started"
 
-        participants = EventParticipant.objects.filter(
-            event=event
-        ).select_related('participant')
+        participants = EventParticipant.objects.filter(event=event).select_related(
+            "participant"
+        )
 
         sent_count = 0
         for participant_obj in participants:
@@ -154,16 +155,16 @@ def send_event_reminder(event_id, minutes_before=60):
             minutes_until = int((time_until.total_seconds() % 3600) // 60)
 
             context = {
-                'user': user,
-                'event': event,
-                'hours_until': hours_until if hours_until > 0 else None,
-                'minutes_until': minutes_until if hours_until == 0 else None,
-                'event_url': f"{settings.BASE_URL}{reverse('common:coordination_events')}",
-                'current_year': timezone.now().year,
-                'base_url': settings.BASE_URL,
+                "user": user,
+                "event": event,
+                "hours_until": hours_until if hours_until > 0 else None,
+                "minutes_until": minutes_until if hours_until == 0 else None,
+                "event_url": f"{settings.BASE_URL}{reverse('common:coordination_events')}",
+                "current_year": timezone.now().year,
+                "base_url": settings.BASE_URL,
             }
 
-            html_content = render_to_string('common/email/event_reminder.html', context)
+            html_content = render_to_string("common/email/event_reminder.html", context)
 
             msg = EmailMultiAlternatives(
                 subject=f"Reminder: {event.title}",
@@ -195,9 +196,8 @@ def send_daily_digest():
     try:
         # Get users with daily digest enabled
         users_with_digest = UserCalendarPreferences.objects.filter(
-            daily_digest=True,
-            email_enabled=True
-        ).select_related('user')
+            daily_digest=True, email_enabled=True
+        ).select_related("user")
 
         sent_count = 0
         today = timezone.now().date()
@@ -209,31 +209,34 @@ def send_daily_digest():
 
             # Get today's events for user
             today_events = EventParticipant.objects.filter(
-                participant=user,
-                event__start_datetime__date=today
-            ).select_related('event')
+                participant=user, event__start_datetime__date=today
+            ).select_related("event")
 
             # Get upcoming events (next 7 days)
-            upcoming_events = EventParticipant.objects.filter(
-                participant=user,
-                event__start_datetime__date__range=[tomorrow, week_from_now]
-            ).select_related('event').order_by('event__start_datetime')[:10]
+            upcoming_events = (
+                EventParticipant.objects.filter(
+                    participant=user,
+                    event__start_datetime__date__range=[tomorrow, week_from_now],
+                )
+                .select_related("event")
+                .order_by("event__start_datetime")[:10]
+            )
 
             # Skip if no events
             if not today_events.exists() and not upcoming_events.exists():
                 continue
 
             context = {
-                'user': user,
-                'date': today,
-                'today_events': today_events,
-                'upcoming_events': upcoming_events,
-                'calendar_url': f"{settings.BASE_URL}{reverse('common:oobc_calendar')}",
-                'current_year': timezone.now().year,
-                'base_url': settings.BASE_URL,
+                "user": user,
+                "date": today,
+                "today_events": today_events,
+                "upcoming_events": upcoming_events,
+                "calendar_url": f"{settings.BASE_URL}{reverse('common:oobc_calendar')}",
+                "current_year": timezone.now().year,
+                "base_url": settings.BASE_URL,
             }
 
-            html_content = render_to_string('common/email/daily_digest.html', context)
+            html_content = render_to_string("common/email/daily_digest.html", context)
 
             msg = EmailMultiAlternatives(
                 subject=f"Daily Calendar Digest - {today.strftime('%B %d, %Y')}",
@@ -255,7 +258,7 @@ def send_daily_digest():
 
 
 @shared_task
-def send_booking_notification(booking_id, notification_type='created'):
+def send_booking_notification(booking_id, notification_type="created"):
     """
     Send booking-related notifications.
 
@@ -265,27 +268,31 @@ def send_booking_notification(booking_id, notification_type='created'):
     """
     try:
         booking = CalendarResourceBooking.objects.select_related(
-            'resource', 'booked_by', 'approved_by'
+            "resource", "booked_by", "approved_by"
         ).get(pk=booking_id)
 
-        if notification_type == 'created':
+        if notification_type == "created":
             # Notify resource admin
-            template = 'common/email/booking_request.html'
+            template = "common/email/booking_request.html"
             subject = f"New Booking Request: {booking.resource.name}"
-            recipient = booking.resource.admin_email if hasattr(booking.resource, 'admin_email') else settings.ADMINS[0][1]
+            recipient = (
+                booking.resource.admin_email
+                if hasattr(booking.resource, "admin_email")
+                else settings.ADMINS[0][1]
+            )
         else:
             # Notify requester
-            template = 'common/email/booking_status_update.html'
+            template = "common/email/booking_status_update.html"
             subject = f"Booking {notification_type.title()}: {booking.resource.name}"
             recipient = booking.booked_by.email
 
         context = {
-            'booking': booking,
-            'recipient': booking.booked_by if notification_type != 'created' else None,
-            'status_display': notification_type.title(),
-            'booking_url': f"{settings.BASE_URL}/oobc-management/calendar/bookings/",
-            'current_year': timezone.now().year,
-            'base_url': settings.BASE_URL,
+            "booking": booking,
+            "recipient": booking.booked_by if notification_type != "created" else None,
+            "status_display": notification_type.title(),
+            "booking_url": f"{settings.BASE_URL}/oobc-management/calendar/bookings/",
+            "current_year": timezone.now().year,
+            "base_url": settings.BASE_URL,
         }
 
         html_content = render_to_string(template, context)
@@ -299,7 +306,9 @@ def send_booking_notification(booking_id, notification_type='created'):
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 
-        logger.info(f"Sent booking {notification_type} notification for: {booking.resource.name}")
+        logger.info(
+            f"Sent booking {notification_type} notification for: {booking.resource.name}"
+        )
         return f"Sent {notification_type} notification"
 
     except CalendarResourceBooking.DoesNotExist:
@@ -327,7 +336,7 @@ def process_scheduled_reminders():
             # Find events starting at target time (within 1 minute tolerance)
             events = Event.objects.filter(
                 start_datetime__gte=target_time - timedelta(minutes=1),
-                start_datetime__lte=target_time + timedelta(minutes=1)
+                start_datetime__lte=target_time + timedelta(minutes=1),
             )
 
             for event in events:
@@ -352,9 +361,7 @@ def clean_expired_calendar_shares():
         from common.models import SharedCalendarLink
 
         now = timezone.now()
-        expired_shares = SharedCalendarLink.objects.filter(
-            expires_at__lt=now
-        )
+        expired_shares = SharedCalendarLink.objects.filter(expires_at__lt=now)
 
         count = expired_shares.count()
         expired_shares.delete()
@@ -372,7 +379,9 @@ def send_single_calendar_notification(self, notification_id):
     """Deliver a single `CalendarNotification` to its recipient."""
 
     try:
-        notification = CalendarNotification.objects.select_related("recipient").get(pk=notification_id)
+        notification = CalendarNotification.objects.select_related("recipient").get(
+            pk=notification_id
+        )
     except CalendarNotification.DoesNotExist:
         logger.warning("Calendar notification %s no longer exists", notification_id)
         return "missing"
@@ -389,7 +398,9 @@ def send_single_calendar_notification(self, notification_id):
                 "You have a new calendar update from the OOBCMS platform.",
                 f"Notification type: {notification.get_notification_type_display()}",
             ]
-            if notification.event_instance and hasattr(notification.event_instance, "title"):
+            if notification.event_instance and hasattr(
+                notification.event_instance, "title"
+            ):
                 body_lines.append(f"Event: {notification.event_instance.title}")
 
             send_mail(
@@ -416,7 +427,9 @@ def send_single_calendar_notification(self, notification_id):
         notification.status = CalendarNotification.STATUS_FAILED
         notification.error_message = str(exc)
         notification.save(update_fields=["status", "error_message"])
-        logger.error("Failed to deliver calendar notification %s: %s", notification_id, exc)
+        logger.error(
+            "Failed to deliver calendar notification %s: %s", notification_id, exc
+        )
         raise
 
 
@@ -441,6 +454,9 @@ def send_calendar_notifications_batch(batch_size=100):
         scheduled_for=now + timedelta(minutes=5)
     )
 
-    group(send_single_calendar_notification.s(notification_id) for notification_id in pending_ids).apply_async()
+    group(
+        send_single_calendar_notification.s(notification_id)
+        for notification_id in pending_ids
+    ).apply_async()
     logger.info("Queued %s calendar notifications for delivery", len(pending_ids))
     return {"queued": len(pending_ids)}

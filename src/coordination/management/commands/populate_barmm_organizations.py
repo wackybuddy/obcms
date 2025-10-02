@@ -12,7 +12,9 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Populate BARMM Ministries, Offices, and Agencies based on dataset definitions"
+    help = (
+        "Populate BARMM Ministries, Offices, and Agencies based on dataset definitions"
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -24,7 +26,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             import yaml
-        except ImportError as exc:  # pragma: no cover - executed only when dependency missing
+        except (
+            ImportError
+        ) as exc:  # pragma: no cover - executed only when dependency missing
             raise CommandError(
                 "PyYAML is required to load BARMM organization datasets. Install it via 'pip install PyYAML'."
             ) from exc
@@ -86,16 +90,22 @@ class Command(BaseCommand):
                 "created_by": system_user,
             }
 
-            org, created = Organization.objects.get_or_create(name=name, defaults=defaults)
+            org, created = Organization.objects.get_or_create(
+                name=name, defaults=defaults
+            )
 
             if created:
                 created_count += 1
                 self.stdout.write(
-                    self.style.SUCCESS(f"Created organization: {name}{f' ({acronym})' if acronym else ''}")
+                    self.style.SUCCESS(
+                        f"Created organization: {name}{f' ({acronym})' if acronym else ''}"
+                    )
                 )
                 return
 
-            should_update = options["update"] or not org.mandate or not org.powers_and_functions
+            should_update = (
+                options["update"] or not org.mandate or not org.powers_and_functions
+            )
 
             if should_update:
                 org.acronym = acronym

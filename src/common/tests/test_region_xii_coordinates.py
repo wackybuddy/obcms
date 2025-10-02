@@ -32,7 +32,9 @@ class RegionXIILocationDataTests(TestCase):
 
         for municipality in municipalities:
             payload = self.municipality_lookup.get(municipality.id)
-            self.assertIsNotNone(payload, msg=f"Missing location payload for {municipality}")
+            self.assertIsNotNone(
+                payload, msg=f"Missing location payload for {municipality}"
+            )
             self._assert_coordinate_payload(municipality.full_path, payload)
 
     def test_all_region_xii_barangays_have_plausible_coordinates(self):
@@ -42,7 +44,9 @@ class RegionXIILocationDataTests(TestCase):
 
         for barangay in barangays:
             payload = self.barangay_lookup.get(barangay.id)
-            self.assertIsNotNone(payload, msg=f"Missing location payload for {barangay}")
+            self.assertIsNotNone(
+                payload, msg=f"Missing location payload for {barangay}"
+            )
             self._assert_coordinate_payload(barangay.full_path, payload)
 
     def _assert_coordinate_payload(self, label, payload):

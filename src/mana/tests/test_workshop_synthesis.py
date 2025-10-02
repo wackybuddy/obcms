@@ -34,7 +34,9 @@ def synthesis_setup(db):
         category_type="needs_assessment",
     )
 
-    region = Region.objects.create(code="IX", name="Zamboanga Peninsula", is_active=True)
+    region = Region.objects.create(
+        code="IX", name="Zamboanga Peninsula", is_active=True
+    )
     province1 = Province.objects.create(
         code="ZAM",
         name="Zamboanga del Sur",
@@ -82,12 +84,14 @@ def synthesis_setup(db):
 
     # Create participants from different provinces and stakeholder types
     participants = []
-    for i, (prov, stakeholder) in enumerate([
-        (province1, "elder"),
-        (province1, "women_leader"),
-        (province2, "youth_leader"),
-        (province2, "farmer"),
-    ]):
+    for i, (prov, stakeholder) in enumerate(
+        [
+            (province1, "elder"),
+            (province1, "women_leader"),
+            (province2, "youth_leader"),
+            (province2, "farmer"),
+        ]
+    ):
         user = User.objects.create_user(
             username=f"participant{i}@test.com",
             email=f"participant{i}@test.com",
@@ -279,7 +283,9 @@ class TestAIWorkshopSynthesizer:
 
         synthesizer = AIWorkshopSynthesizer(workshop)
 
-        json_response = '{"summary": "Test summary", "key_themes": ["theme1", "theme2"]}'
+        json_response = (
+            '{"summary": "Test summary", "key_themes": ["theme1", "theme2"]}'
+        )
         result = synthesizer._parse_model_response(
             json_response, "Test Provider", "test-model", 150, 2.5
         )
@@ -379,7 +385,9 @@ class TestSynthesisWorkflow:
         synthesis2.synthesis_text = "Revised synthesis"
         synthesis2.save()
 
-        approved = synthesizer.approve_synthesis(synthesis2, facilitator, "Final version")
+        approved = synthesizer.approve_synthesis(
+            synthesis2, facilitator, "Final version"
+        )
         assert approved.status == "approved"
 
     def test_multiple_syntheses_for_workshop(self, synthesis_setup):

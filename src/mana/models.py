@@ -358,11 +358,19 @@ class Assessment(models.Model):
             self.region = self.province.region
 
         # Validate hierarchical coherence when explicit selections are provided
-        if self.barangay and self.municipality and self.barangay.municipality_id != self.municipality_id:
+        if (
+            self.barangay
+            and self.municipality
+            and self.barangay.municipality_id != self.municipality_id
+        ):
             errors["barangay"] = ValidationError(
                 "Selected barangay must belong to the chosen municipality."
             )
-        if self.municipality and self.province and self.municipality.province_id != self.province_id:
+        if (
+            self.municipality
+            and self.province
+            and self.municipality.province_id != self.province_id
+        ):
             errors["municipality"] = ValidationError(
                 "Selected municipality must belong to the chosen province."
             )
@@ -437,7 +445,9 @@ class Assessment(models.Model):
         if not self.region:
             errors.setdefault(
                 "region",
-                ValidationError("An assessment must be associated with at least one region."),
+                ValidationError(
+                    "An assessment must be associated with at least one region."
+                ),
             )
 
         if errors:
@@ -1197,62 +1207,59 @@ class NeedVote(models.Model):
     need = models.ForeignKey(
         Need,
         on_delete=models.CASCADE,
-        related_name='votes',
-        help_text="The community need being voted for"
+        related_name="votes",
+        help_text="The community need being voted for",
     )
 
     # Who voted
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='need_votes',
-        help_text="The user who cast this vote"
+        related_name="need_votes",
+        help_text="The user who cast this vote",
     )
 
     # Vote details
     vote_weight = models.PositiveIntegerField(
         default=1,
         validators=[MinValueValidator(1), MaxValueValidator(5)],
-        help_text="Vote weight (1-5 stars). Default is 1 for simple upvote."
+        help_text="Vote weight (1-5 stars). Default is 1 for simple upvote.",
     )
 
     comment = models.TextField(
-        blank=True,
-        help_text="Optional comment explaining why this need is important"
+        blank=True, help_text="Optional comment explaining why this need is important"
     )
 
     # Voter context (optional)
     voter_community = models.ForeignKey(
-        'communities.OBCCommunity',
+        "communities.OBCCommunity",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='community_votes',
-        help_text="Community the voter belongs to (if applicable)"
+        related_name="community_votes",
+        help_text="Community the voter belongs to (if applicable)",
     )
 
     # Metadata
     voted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     ip_address = models.GenericIPAddressField(
-        null=True,
-        blank=True,
-        help_text="IP address for fraud detection"
+        null=True, blank=True, help_text="IP address for fraud detection"
     )
 
     class Meta:
         verbose_name = "Need Vote"
         verbose_name_plural = "Need Votes"
-        unique_together = [['need', 'user']]  # One vote per user per need
-        ordering = ['-voted_at']
+        unique_together = [["need", "user"]]  # One vote per user per need
+        ordering = ["-voted_at"]
         indexes = [
-            models.Index(fields=['need', '-voted_at']),
-            models.Index(fields=['user', '-voted_at']),
-            models.Index(fields=['-voted_at']),
+            models.Index(fields=["need", "-voted_at"]),
+            models.Index(fields=["user", "-voted_at"]),
+            models.Index(fields=["-voted_at"]),
         ]
 
     def __str__(self):
-        weight_stars = '⭐' * self.vote_weight
+        weight_stars = "⭐" * self.vote_weight
         return f"{self.user.username} → {self.need.title} ({weight_stars})"
 
     def save(self, *args, **kwargs):
@@ -1271,19 +1278,19 @@ class NeedVote(models.Model):
         # Update need's vote count
         if is_new:
             # New vote: add weight
-            self.need.community_votes = models.F('community_votes') + self.vote_weight
-            self.need.save(update_fields=['community_votes'])
+            self.need.community_votes = models.F("community_votes") + self.vote_weight
+            self.need.save(update_fields=["community_votes"])
         elif old_weight != self.vote_weight:
             # Vote weight changed: adjust difference
             weight_diff = self.vote_weight - old_weight
-            self.need.community_votes = models.F('community_votes') + weight_diff
-            self.need.save(update_fields=['community_votes'])
+            self.need.community_votes = models.F("community_votes") + weight_diff
+            self.need.save(update_fields=["community_votes"])
 
     def delete(self, *args, **kwargs):
         """Update need's community_votes counter on delete."""
         # Subtract vote weight from need
-        self.need.community_votes = models.F('community_votes') - self.vote_weight
-        self.need.save(update_fields=['community_votes'])
+        self.need.community_votes = models.F("community_votes") - self.vote_weight
+        self.need.save(update_fields=["community_votes"])
         super().delete(*args, **kwargs)
 
 
@@ -2233,12 +2240,12 @@ class BaselineStudy(models.Model):
             )
 
         # Validate assessment level consistency
-        if self.assessment_level in ['regional', 'provincial'] and self.community:
+        if self.assessment_level in ["regional", "provincial"] and self.community:
             raise ValidationError(
                 "Regional/Provincial assessments should be linked to a province, not a community."
             )
 
-        if self.assessment_level in ['community', 'barangay'] and self.province:
+        if self.assessment_level in ["community", "barangay"] and self.province:
             raise ValidationError(
                 "Community/Barangay assessments should be linked to a community, not a province."
             )
@@ -3594,7 +3601,9 @@ class WorkshopSynthesis(models.Model):
 
     # AI Provider Metadata
     provider = models.CharField(
-        max_length=50, blank=True, help_text="AI provider used (e.g., OpenAI, Anthropic)"
+        max_length=50,
+        blank=True,
+        help_text="AI provider used (e.g., OpenAI, Anthropic)",
     )
 
     model = models.CharField(
@@ -3621,7 +3630,9 @@ class WorkshopSynthesis(models.Model):
         help_text="User who reviewed this synthesis",
     )
 
-    review_notes = models.TextField(blank=True, help_text="Review notes from facilitator")
+    review_notes = models.TextField(
+        blank=True, help_text="Review notes from facilitator"
+    )
 
     approved_at = models.DateTimeField(
         null=True, blank=True, help_text="When synthesis was approved"

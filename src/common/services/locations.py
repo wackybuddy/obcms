@@ -113,7 +113,9 @@ def _centroid_metadata(obj) -> Dict[str, Optional[float]]:
     return {"center_lat": lat, "center_lng": lng}
 
 
-def _apply_centroid_fallback(metadata: Dict[str, Optional[float]], fallback: Optional[Tuple[float, float]]):
+def _apply_centroid_fallback(
+    metadata: Dict[str, Optional[float]], fallback: Optional[Tuple[float, float]]
+):
     if not fallback:
         return metadata
     fallback_lat, fallback_lng = fallback
@@ -165,9 +167,15 @@ def build_location_data(include_barangays: bool = True) -> Dict[str, List[dict]]
     )
 
     coords_by_barangay: Dict[int, Tuple[float, float]] = {}
-    coords_accumulator_by_municipality = defaultdict(lambda: {"lat": 0.0, "lng": 0.0, "count": 0})
-    coords_accumulator_by_province = defaultdict(lambda: {"lat": 0.0, "lng": 0.0, "count": 0})
-    coords_accumulator_by_region = defaultdict(lambda: {"lat": 0.0, "lng": 0.0, "count": 0})
+    coords_accumulator_by_municipality = defaultdict(
+        lambda: {"lat": 0.0, "lng": 0.0, "count": 0}
+    )
+    coords_accumulator_by_province = defaultdict(
+        lambda: {"lat": 0.0, "lng": 0.0, "count": 0}
+    )
+    coords_accumulator_by_region = defaultdict(
+        lambda: {"lat": 0.0, "lng": 0.0, "count": 0}
+    )
 
     direct_layer_records = []
 
@@ -180,7 +188,9 @@ def build_location_data(include_barangays: bool = True) -> Dict[str, List[dict]]
             OBCCommunity.objects.filter(is_active=True)
             .annotate(
                 geo_layers_count=Count("geographic_layers", distinct=True),
-                map_visualizations_count=Count("community_map_visualizations", distinct=True),
+                map_visualizations_count=Count(
+                    "community_map_visualizations", distinct=True
+                ),
                 spatial_points_count=Count("spatial_points", distinct=True),
                 communities_count=Count("id"),
                 avg_latitude=Avg("latitude"),
@@ -200,22 +210,21 @@ def build_location_data(include_barangays: bool = True) -> Dict[str, List[dict]]
             )
         )
 
-        direct_layer_records = (
-            GeographicDataLayer.objects.filter(community__isnull=True)
-            .values(
-                "id",
-                "region_id",
-                "province_id",
-                "province__region_id",
-                "municipality_id",
-                "municipality__province_id",
-                "municipality__province__region_id",
-                "barangay_id",
-                "barangay__municipality_id",
-                "barangay__municipality__province_id",
-                "barangay__municipality__province__region_id",
-                "center_point",
-            )
+        direct_layer_records = GeographicDataLayer.objects.filter(
+            community__isnull=True
+        ).values(
+            "id",
+            "region_id",
+            "province_id",
+            "province__region_id",
+            "municipality_id",
+            "municipality__province_id",
+            "municipality__province__region_id",
+            "barangay_id",
+            "barangay__municipality_id",
+            "barangay__municipality__province_id",
+            "barangay__municipality__province__region_id",
+            "center_point",
         )
 
     for record in community_records:
@@ -337,7 +346,9 @@ def build_location_data(include_barangays: bool = True) -> Dict[str, List[dict]]
     coords_by_province = _finalise_accumulator(coords_accumulator_by_province)
     coords_by_region = _finalise_accumulator(coords_accumulator_by_region)
 
-    municipalities_grouped_by_province: Dict[int, List[Municipality]] = defaultdict(list)
+    municipalities_grouped_by_province: Dict[int, List[Municipality]] = defaultdict(
+        list
+    )
     for municipality in municipalities:
         municipalities_grouped_by_province[municipality.province_id].append(
             municipality
@@ -349,9 +360,7 @@ def build_location_data(include_barangays: bool = True) -> Dict[str, List[dict]]
         province_code_upper = (province_code or "").upper()
         province_name_lower = (province.name or "").lower()
 
-        grouped_municipalities = municipalities_grouped_by_province.get(
-            province.id, []
-        )
+        grouped_municipalities = municipalities_grouped_by_province.get(province.id, [])
         auto_municipality_id = None
 
         if grouped_municipalities:
@@ -410,9 +419,7 @@ def build_location_data(include_barangays: bool = True) -> Dict[str, List[dict]]
             "province_id": municipality.province_id,
             "population": municipality.population_total,
             "code": municipality.code,
-            "municipality_type": getattr(
-                municipality, "municipality_type", None
-            ),
+            "municipality_type": getattr(municipality, "municipality_type", None),
             **_apply_centroid_fallback(
                 _centroid_metadata(municipality),
                 coords_by_municipality.get(municipality.id),

@@ -23,37 +23,35 @@ def calculate_budget_trends(years=5):
     start_year = current_year - years
 
     trends = {
-        'years': [],
-        'total_budget': [],
-        'ppas_count': [],
-        'avg_budget_per_ppa': [],
-        'sectors': {},
+        "years": [],
+        "total_budget": [],
+        "ppas_count": [],
+        "avg_budget_per_ppa": [],
+        "sectors": {},
     }
 
     for year in range(start_year, current_year + 1):
-        year_data = MonitoringEntry.objects.filter(
-            start_date__year=year
-        ).aggregate(
-            total=Sum('budget_allocation'),
-            count=Count('id'),
-            avg=Avg('budget_allocation')
+        year_data = MonitoringEntry.objects.filter(start_date__year=year).aggregate(
+            total=Sum("budget_allocation"),
+            count=Count("id"),
+            avg=Avg("budget_allocation"),
         )
 
-        trends['years'].append(year)
-        trends['total_budget'].append(float(year_data['total'] or 0))
-        trends['ppas_count'].append(year_data['count'] or 0)
-        trends['avg_budget_per_ppa'].append(float(year_data['avg'] or 0))
+        trends["years"].append(year)
+        trends["total_budget"].append(float(year_data["total"] or 0))
+        trends["ppas_count"].append(year_data["count"] or 0)
+        trends["avg_budget_per_ppa"].append(float(year_data["avg"] or 0))
 
     # Calculate year-over-year growth
-    trends['growth_rates'] = []
-    for i in range(1, len(trends['total_budget'])):
-        prev = trends['total_budget'][i - 1]
-        curr = trends['total_budget'][i]
+    trends["growth_rates"] = []
+    for i in range(1, len(trends["total_budget"])):
+        prev = trends["total_budget"][i - 1]
+        curr = trends["total_budget"][i]
         if prev > 0:
             growth = ((curr - prev) / prev) * 100
-            trends['growth_rates'].append(round(growth, 2))
+            trends["growth_rates"].append(round(growth, 2))
         else:
-            trends['growth_rates'].append(0)
+            trends["growth_rates"].append(0)
 
     return trends
 
@@ -81,9 +79,12 @@ def forecast_budget_needs(horizon_years=3):
 
     historical_budgets = []
     for year in range(start_year, current_year + 1):
-        total = MonitoringEntry.objects.filter(
-            start_date__year=year
-        ).aggregate(Sum('budget_allocation'))['budget_allocation__sum'] or 0
+        total = (
+            MonitoringEntry.objects.filter(start_date__year=year).aggregate(
+                Sum("budget_allocation")
+            )["budget_allocation__sum"]
+            or 0
+        )
 
         historical_budgets.append(float(total))
 
@@ -93,7 +94,10 @@ def forecast_budget_needs(horizon_years=3):
         growth_rates = []
         for i in range(1, len(historical_budgets)):
             if historical_budgets[i - 1] > 0:
-                rate = ((historical_budgets[i] - historical_budgets[i - 1]) / historical_budgets[i - 1]) * 100
+                rate = (
+                    (historical_budgets[i] - historical_budgets[i - 1])
+                    / historical_budgets[i - 1]
+                ) * 100
                 growth_rates.append(rate)
 
         avg_growth_rate = statistics.mean(growth_rates) if growth_rates else 5.0
@@ -102,10 +106,10 @@ def forecast_budget_needs(horizon_years=3):
 
     # Forecast future years
     forecast = {
-        'forecast_years': [],
-        'projected_budget': [],
-        'confidence_level': 'medium',
-        'avg_growth_rate': round(avg_growth_rate, 2),
+        "forecast_years": [],
+        "projected_budget": [],
+        "confidence_level": "medium",
+        "avg_growth_rate": round(avg_growth_rate, 2),
     }
 
     last_budget = historical_budgets[-1] if historical_budgets else 1000000
@@ -114,16 +118,16 @@ def forecast_budget_needs(horizon_years=3):
         forecast_year = current_year + year_offset
         projected = last_budget * ((1 + avg_growth_rate / 100) ** year_offset)
 
-        forecast['forecast_years'].append(forecast_year)
-        forecast['projected_budget'].append(round(projected, 2))
+        forecast["forecast_years"].append(forecast_year)
+        forecast["projected_budget"].append(round(projected, 2))
 
     # Determine confidence based on data availability
     if len(historical_budgets) >= 5:
-        forecast['confidence_level'] = 'high'
+        forecast["confidence_level"] = "high"
     elif len(historical_budgets) >= 3:
-        forecast['confidence_level'] = 'medium'
+        forecast["confidence_level"] = "medium"
     else:
-        forecast['confidence_level'] = 'low'
+        forecast["confidence_level"] = "low"
 
     return forecast
 
@@ -137,39 +141,45 @@ def analyze_sector_performance():
     """
     from monitoring.models import MonitoringEntry
 
-    sectors = MonitoringEntry.objects.values('sector').annotate(
-        total_budget=Sum('budget_allocation'),
-        ppas_count=Count('id'),
-        avg_budget=Avg('budget_allocation'),
-        completed=Count('id', filter=Q(status='completed')),
-        ongoing=Count('id', filter=Q(status='ongoing')),
-        planned=Count('id', filter=Q(status='planned')),
-    ).order_by('-total_budget')
+    sectors = (
+        MonitoringEntry.objects.values("sector")
+        .annotate(
+            total_budget=Sum("budget_allocation"),
+            ppas_count=Count("id"),
+            avg_budget=Avg("budget_allocation"),
+            completed=Count("id", filter=Q(status="completed")),
+            ongoing=Count("id", filter=Q(status="ongoing")),
+            planned=Count("id", filter=Q(status="planned")),
+        )
+        .order_by("-total_budget")
+    )
 
     sector_performance = []
-    total_budget_all = sum(s['total_budget'] or 0 for s in sectors)
+    total_budget_all = sum(s["total_budget"] or 0 for s in sectors)
 
     for sector in sectors:
-        if sector['sector']:
+        if sector["sector"]:
             completion_rate = 0
-            if sector['ppas_count'] > 0:
-                completion_rate = (sector['completed'] / sector['ppas_count']) * 100
+            if sector["ppas_count"] > 0:
+                completion_rate = (sector["completed"] / sector["ppas_count"]) * 100
 
             budget_share = 0
             if total_budget_all > 0:
-                budget_share = (sector['total_budget'] / total_budget_all) * 100
+                budget_share = (sector["total_budget"] / total_budget_all) * 100
 
-            sector_performance.append({
-                'sector': sector['sector'],
-                'total_budget': float(sector['total_budget'] or 0),
-                'budget_share': round(budget_share, 2),
-                'ppas_count': sector['ppas_count'],
-                'avg_budget': float(sector['avg_budget'] or 0),
-                'completed': sector['completed'],
-                'ongoing': sector['ongoing'],
-                'planned': sector['planned'],
-                'completion_rate': round(completion_rate, 2),
-            })
+            sector_performance.append(
+                {
+                    "sector": sector["sector"],
+                    "total_budget": float(sector["total_budget"] or 0),
+                    "budget_share": round(budget_share, 2),
+                    "ppas_count": sector["ppas_count"],
+                    "avg_budget": float(sector["avg_budget"] or 0),
+                    "completed": sector["completed"],
+                    "ongoing": sector["ongoing"],
+                    "planned": sector["planned"],
+                    "completion_rate": round(completion_rate, 2),
+                }
+            )
 
     return sector_performance
 
@@ -185,30 +195,39 @@ def calculate_impact_metrics():
     from mana.models import Need
 
     total_ppas = MonitoringEntry.objects.count()
-    active_ppas = MonitoringEntry.objects.filter(status='ongoing').count()
+    active_ppas = MonitoringEntry.objects.filter(status="ongoing").count()
 
-    total_beneficiaries = MonitoringEntry.objects.aggregate(
-        Sum('total_slots')
-    )['total_slots__sum'] or 0
+    total_beneficiaries = (
+        MonitoringEntry.objects.aggregate(Sum("total_slots"))["total_slots__sum"] or 0
+    )
 
-    total_budget = MonitoringEntry.objects.aggregate(
-        Sum('budget_allocation')
-    )['budget_allocation__sum'] or 0
+    total_budget = (
+        MonitoringEntry.objects.aggregate(Sum("budget_allocation"))[
+            "budget_allocation__sum"
+        ]
+        or 0
+    )
 
     # Needs addressed
     total_needs = Need.objects.count()
-    addressed_needs = Need.objects.filter(
-        implementing_ppas__isnull=False
-    ).distinct().count()
+    addressed_needs = (
+        Need.objects.filter(implementing_ppas__isnull=False).distinct().count()
+    )
 
     # Geographic coverage
-    covered_municipalities = MonitoringEntry.objects.filter(
-        coverage_municipality__isnull=False
-    ).values('coverage_municipality').distinct().count()
+    covered_municipalities = (
+        MonitoringEntry.objects.filter(coverage_municipality__isnull=False)
+        .values("coverage_municipality")
+        .distinct()
+        .count()
+    )
 
-    covered_provinces = MonitoringEntry.objects.filter(
-        coverage_province__isnull=False
-    ).values('coverage_province').distinct().count()
+    covered_provinces = (
+        MonitoringEntry.objects.filter(coverage_province__isnull=False)
+        .values("coverage_province")
+        .distinct()
+        .count()
+    )
 
     # Cost efficiency
     cost_per_beneficiary = 0
@@ -221,16 +240,16 @@ def calculate_impact_metrics():
         needs_coverage_rate = (addressed_needs / total_needs) * 100
 
     return {
-        'total_ppas': total_ppas,
-        'active_ppas': active_ppas,
-        'total_beneficiaries': int(total_beneficiaries),
-        'total_budget': float(total_budget),
-        'cost_per_beneficiary': float(cost_per_beneficiary),
-        'total_needs': total_needs,
-        'addressed_needs': addressed_needs,
-        'needs_coverage_rate': round(needs_coverage_rate, 2),
-        'covered_municipalities': covered_municipalities,
-        'covered_provinces': covered_provinces,
+        "total_ppas": total_ppas,
+        "active_ppas": active_ppas,
+        "total_beneficiaries": int(total_beneficiaries),
+        "total_budget": float(total_budget),
+        "cost_per_beneficiary": float(cost_per_beneficiary),
+        "total_needs": total_needs,
+        "addressed_needs": addressed_needs,
+        "needs_coverage_rate": round(needs_coverage_rate, 2),
+        "covered_municipalities": covered_municipalities,
+        "covered_provinces": covered_provinces,
     }
 
 
@@ -249,7 +268,7 @@ def predict_needs_priority(need_id):
     try:
         need = Need.objects.get(id=need_id)
     except Need.DoesNotExist:
-        return {'error': 'Need not found'}
+        return {"error": "Need not found"}
 
     # Scoring factors
     score = 0
@@ -263,21 +282,21 @@ def predict_needs_priority(need_id):
 
     # Factor 2: Urgency level (0-25 points)
     urgency_scores = {
-        'critical': 25,
-        'high': 20,
-        'medium': 15,
-        'low': 10,
+        "critical": 25,
+        "high": 20,
+        "medium": 15,
+        "low": 10,
     }
     urgency_score = urgency_scores.get(need.urgency_level, 10)
     score += urgency_score
     factors.append(f"Urgency: {need.urgency_level} (+{urgency_score})")
 
     # Factor 3: Geographic reach (0-20 points)
-    if need.coverage_level == 'regional':
+    if need.coverage_level == "regional":
         reach_score = 20
-    elif need.coverage_level == 'provincial':
+    elif need.coverage_level == "provincial":
         reach_score = 15
-    elif need.coverage_level == 'municipal':
+    elif need.coverage_level == "municipal":
         reach_score = 10
     else:
         reach_score = 5
@@ -318,20 +337,20 @@ def predict_needs_priority(need_id):
 
     # Priority category
     if normalized_score >= 80:
-        priority = 'Critical Priority'
+        priority = "Critical Priority"
     elif normalized_score >= 60:
-        priority = 'High Priority'
+        priority = "High Priority"
     elif normalized_score >= 40:
-        priority = 'Medium Priority'
+        priority = "Medium Priority"
     else:
-        priority = 'Low Priority'
+        priority = "Low Priority"
 
     return {
-        'need_id': str(need_id),
-        'need_title': need.need_title,
-        'priority_score': normalized_score,
-        'priority_category': priority,
-        'factors': factors,
+        "need_id": str(need_id),
+        "need_title": need.need_title,
+        "priority_score": normalized_score,
+        "priority_category": priority,
+        "factors": factors,
     }
 
 
@@ -353,50 +372,54 @@ def generate_budget_recommendations(total_budget):
     # Get needs by sector with priority scoring
     needs_by_sector = {}
 
-    for need in Need.objects.filter(status__in=['validated', 'prioritized']):
-        sector = need.sector or 'other'
+    for need in Need.objects.filter(status__in=["validated", "prioritized"]):
+        sector = need.sector or "other"
         if sector not in needs_by_sector:
             needs_by_sector[sector] = {
-                'needs_count': 0,
-                'total_votes': 0,
-                'total_beneficiaries': 0,
-                'avg_urgency': 0,
+                "needs_count": 0,
+                "total_votes": 0,
+                "total_beneficiaries": 0,
+                "avg_urgency": 0,
             }
 
-        needs_by_sector[sector]['needs_count'] += 1
-        needs_by_sector[sector]['total_votes'] += need.community_votes or 0
-        needs_by_sector[sector]['total_beneficiaries'] += need.estimated_beneficiaries or 0
+        needs_by_sector[sector]["needs_count"] += 1
+        needs_by_sector[sector]["total_votes"] += need.community_votes or 0
+        needs_by_sector[sector]["total_beneficiaries"] += (
+            need.estimated_beneficiaries or 0
+        )
 
     # Calculate allocation weights
     total_weight = sum(
-        s['needs_count'] * 2 + s['total_votes'] + (s['total_beneficiaries'] / 1000)
+        s["needs_count"] * 2 + s["total_votes"] + (s["total_beneficiaries"] / 1000)
         for s in needs_by_sector.values()
     )
 
     recommendations = []
     for sector, data in needs_by_sector.items():
         weight = (
-            data['needs_count'] * 2 +
-            data['total_votes'] +
-            (data['total_beneficiaries'] / 1000)
+            data["needs_count"] * 2
+            + data["total_votes"]
+            + (data["total_beneficiaries"] / 1000)
         )
 
         allocation_percentage = (weight / total_weight * 100) if total_weight > 0 else 0
         recommended_amount = total_budget * Decimal(str(allocation_percentage / 100))
 
-        recommendations.append({
-            'sector': sector,
-            'recommended_amount': float(recommended_amount),
-            'percentage': round(allocation_percentage, 2),
-            'needs_count': data['needs_count'],
-            'total_votes': data['total_votes'],
-            'total_beneficiaries': data['total_beneficiaries'],
-            'rationale': f"{data['needs_count']} needs, {data['total_votes']} votes, {data['total_beneficiaries']:,} beneficiaries"
-        })
+        recommendations.append(
+            {
+                "sector": sector,
+                "recommended_amount": float(recommended_amount),
+                "percentage": round(allocation_percentage, 2),
+                "needs_count": data["needs_count"],
+                "total_votes": data["total_votes"],
+                "total_beneficiaries": data["total_beneficiaries"],
+                "rationale": f"{data['needs_count']} needs, {data['total_votes']} votes, {data['total_beneficiaries']:,} beneficiaries",
+            }
+        )
 
-    recommendations.sort(key=lambda x: x['recommended_amount'], reverse=True)
+    recommendations.sort(key=lambda x: x["recommended_amount"], reverse=True)
 
     return {
-        'total_budget': float(total_budget),
-        'recommendations': recommendations,
+        "total_budget": float(total_budget),
+        "recommendations": recommendations,
     }

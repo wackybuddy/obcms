@@ -58,9 +58,8 @@ User = get_user_model()
 
 
 def _build_navigation(assessment: Assessment) -> List[Dict]:
-    workshops = (
-        WorkshopActivity.objects.filter(assessment=assessment)
-        .order_by("workshop_day", "start_time")
+    workshops = WorkshopActivity.objects.filter(assessment=assessment).order_by(
+        "workshop_day", "start_time"
     )
     return list(workshops)
 
@@ -89,9 +88,7 @@ def _group_responses_by_question(
     responses: List[WorkshopResponse], questions: List[dict]
 ) -> List[Dict]:
     question_map = {q["id"]: q for q in questions}
-    grouped: Dict[str, Dict] = defaultdict(
-        lambda: {"question": None, "responses": []}
-    )
+    grouped: Dict[str, Dict] = defaultdict(lambda: {"question": None, "responses": []})
 
     for question in questions:
         grouped[question["id"]]["question"] = question
@@ -108,11 +105,15 @@ def _group_responses_by_question(
                 "status": response.status,
                 "submitted_at": response.submitted_at,
                 "data": response.response_data,
-                "rendered": json.dumps(
-                    response.response_data,
-                    ensure_ascii=False,
-                    indent=2,
-                ) if isinstance(response.response_data, (dict, list)) else response.response_data,
+                "rendered": (
+                    json.dumps(
+                        response.response_data,
+                        ensure_ascii=False,
+                        indent=2,
+                    )
+                    if isinstance(response.response_data, (dict, list))
+                    else response.response_data
+                ),
                 "is_structured": isinstance(response.response_data, (dict, list)),
             }
         )
@@ -175,13 +176,16 @@ def _build_participant_table(participants, assessment) -> dict:
                     {"content": progress_html},
                 ],
                 "view_url": reverse(
-                    "admin:mana_workshopparticipantaccount_change", args=[participant.id]
+                    "admin:mana_workshopparticipantaccount_change",
+                    args=[participant.id],
                 ),
                 "edit_url": reverse(
-                    "admin:mana_workshopparticipantaccount_change", args=[participant.id]
+                    "admin:mana_workshopparticipantaccount_change",
+                    args=[participant.id],
                 ),
                 "delete_preview_url": reverse(
-                    "admin:mana_workshopparticipantaccount_delete", args=[participant.id]
+                    "admin:mana_workshopparticipantaccount_delete",
+                    args=[participant.id],
                 ),
             }
         )
@@ -203,7 +207,9 @@ def _build_question_table(grouped_responses: List[Dict]) -> dict:
         question_id = question.get("id", "")
 
         latest = None
-        timestamps = [resp.get("submitted_at") for resp in responses if resp.get("submitted_at")]
+        timestamps = [
+            resp.get("submitted_at") for resp in responses if resp.get("submitted_at")
+        ]
         if timestamps:
             latest_dt = max(timestamps)
             if latest_dt:
@@ -228,7 +234,6 @@ def _build_question_table(grouped_responses: List[Dict]) -> dict:
         )
 
     return {"headers": headers, "rows": rows}
-
 
 
 @login_required
@@ -259,7 +264,10 @@ def manage_participants(request, assessment_id):
                     messages.error(request, "A user with that email already exists.")
                 else:
                     with transaction.atomic():
-                        temp_password = data.get("temp_password") or User.objects.make_random_password()
+                        temp_password = (
+                            data.get("temp_password")
+                            or User.objects.make_random_password()
+                        )
                         user = User.objects.create_user(
                             username=email,
                             email=email,
@@ -312,7 +320,9 @@ def manage_participants(request, assessment_id):
                             email=email,
                             first_name=row.get("first_name", ""),
                             last_name=row.get("last_name", ""),
-                            password=row.get("password", User.objects.make_random_password()),
+                            password=row.get(
+                                "password", User.objects.make_random_password()
+                            ),
                         )
                         _ensure_participant_permissions(user)
 
@@ -396,9 +406,12 @@ def facilitator_dashboard(request, assessment_id):
     participants = WorkshopParticipantAccount.objects.filter(
         assessment=assessment
     ).select_related("province")
-    submitted_count = WorkshopResponse.objects.filter(
-        workshop=workshop, status="submitted"
-    ).values("participant").distinct().count()
+    submitted_count = (
+        WorkshopResponse.objects.filter(workshop=workshop, status="submitted")
+        .values("participant")
+        .distinct()
+        .count()
+    )
 
     syntheses = WorkshopSynthesis.objects.filter(workshop=workshop).order_by(
         "-created_at"
@@ -503,9 +516,7 @@ def advance_workshop(request, assessment_id, workshop_type):
         )
         return response
 
-    return redirect(
-        "mana:facilitator_dashboard", assessment_id=str(assessment.id)
-    )
+    return redirect("mana:facilitator_dashboard", assessment_id=str(assessment.id))
 
 
 @login_required
@@ -623,7 +634,9 @@ def generate_synthesis(request, assessment_id, workshop_type):
                     "current": workshop_type,
                 },
                 "show-toast": {
-                    "message": "Synthesis queued" if async_enabled else "Synthesis complete",
+                    "message": (
+                        "Synthesis queued" if async_enabled else "Synthesis complete"
+                    ),
                     "level": "success",
                 },
             }
@@ -876,7 +889,9 @@ def create_account(request):
                             pass  # Skip if permission doesn't exist
 
                     # Assign facilitator to selected assessments
-                    facilitator_assessments = form.cleaned_data["facilitator_assessments"]
+                    facilitator_assessments = form.cleaned_data[
+                        "facilitator_assessments"
+                    ]
                     for assessment in facilitator_assessments:
                         FacilitatorAssessmentAssignment.objects.create(
                             facilitator=user,
@@ -895,7 +910,9 @@ def create_account(request):
                     assessment = form.cleaned_data["assessment"]
                     province = form.cleaned_data["province"]
                     stakeholder_type = form.cleaned_data["stakeholder_type"]
-                    office_business_name = form.cleaned_data.get("office_business_name", "")
+                    office_business_name = form.cleaned_data.get(
+                        "office_business_name", ""
+                    )
                     municipality = form.cleaned_data.get("municipality")
                     barangay = form.cleaned_data.get("barangay")
 
@@ -949,11 +966,13 @@ def facilitator_assessments_list(request):
     # Get assessments assigned to this facilitator
     assigned_assessment_ids = FacilitatorAssessmentAssignment.objects.filter(
         facilitator=request.user
-    ).values_list('assessment_id', flat=True)
+    ).values_list("assessment_id", flat=True)
 
-    assessments = Assessment.objects.filter(
-        id__in=assigned_assessment_ids
-    ).select_related('province').order_by('-planned_start_date')
+    assessments = (
+        Assessment.objects.filter(id__in=assigned_assessment_ids)
+        .select_related("province")
+        .order_by("-planned_start_date")
+    )
 
     assessments_data = []
     for assessment in assessments:
@@ -963,9 +982,9 @@ def facilitator_assessments_list(request):
         ).count()
 
         # Get workshop activities
-        workshops = WorkshopActivity.objects.filter(
-            assessment=assessment
-        ).order_by('workshop_type')
+        workshops = WorkshopActivity.objects.filter(assessment=assessment).order_by(
+            "workshop_type"
+        )
 
         # Calculate overall progress
         total_workshops = workshops.count()
@@ -974,13 +993,21 @@ def facilitator_assessments_list(request):
             total_actual_submissions = 0
 
             for workshop in workshops:
-                submitted_count = WorkshopResponse.objects.filter(
-                    workshop=workshop,
-                    status="submitted"
-                ).values('participant').distinct().count()
+                submitted_count = (
+                    WorkshopResponse.objects.filter(
+                        workshop=workshop, status="submitted"
+                    )
+                    .values("participant")
+                    .distinct()
+                    .count()
+                )
                 total_actual_submissions += submitted_count
 
-            overall_progress = (total_actual_submissions / total_possible_submissions * 100) if total_possible_submissions > 0 else 0
+            overall_progress = (
+                (total_actual_submissions / total_possible_submissions * 100)
+                if total_possible_submissions > 0
+                else 0
+            )
         else:
             overall_progress = 0
 
@@ -992,15 +1019,17 @@ def facilitator_assessments_list(request):
         else:
             status = "not_started"
 
-        assessments_data.append({
-            'assessment': assessment,
-            'total_participants': total_participants,
-            'total_workshops': total_workshops,
-            'overall_progress': overall_progress,
-            'status': status,
-        })
+        assessments_data.append(
+            {
+                "assessment": assessment,
+                "total_participants": total_participants,
+                "total_workshops": total_workshops,
+                "overall_progress": overall_progress,
+                "status": status,
+            }
+        )
 
     context = {
-        'assessments': assessments_data,
+        "assessments": assessments_data,
     }
-    return render(request, 'mana/facilitator/assessments_list.html', context)
+    return render(request, "mana/facilitator/assessments_list.html", context)

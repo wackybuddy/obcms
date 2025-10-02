@@ -11,7 +11,7 @@ from django.utils import timezone
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name='project_central.generate_daily_alerts')
+@shared_task(name="project_central.generate_daily_alerts")
 def generate_daily_alerts_task():
     """
     Generate all daily alerts.
@@ -27,9 +27,11 @@ def generate_daily_alerts_task():
 
     try:
         results = AlertService.generate_daily_alerts()
-        logger.info(f"Daily alert generation completed: {results['total']} total alerts")
+        logger.info(
+            f"Daily alert generation completed: {results['total']} total alerts"
+        )
 
-        if results['errors']:
+        if results["errors"]:
             logger.error(f"Alert generation errors: {results['errors']}")
 
         return results
@@ -39,7 +41,7 @@ def generate_daily_alerts_task():
         raise
 
 
-@shared_task(name='project_central.deactivate_resolved_alerts')
+@shared_task(name="project_central.deactivate_resolved_alerts")
 def deactivate_resolved_alerts_task():
     """
     Deactivate alerts that are no longer relevant.
@@ -63,7 +65,7 @@ def deactivate_resolved_alerts_task():
         raise
 
 
-@shared_task(name='project_central.cleanup_expired_alerts')
+@shared_task(name="project_central.cleanup_expired_alerts")
 def cleanup_expired_alerts_task():
     """
     Clean up expired alerts.
@@ -87,7 +89,7 @@ def cleanup_expired_alerts_task():
         raise
 
 
-@shared_task(name='project_central.update_budget_ceiling_allocations')
+@shared_task(name="project_central.update_budget_ceiling_allocations")
 def update_budget_ceiling_allocations_task():
     """
     Update all budget ceiling allocated amounts.
@@ -121,7 +123,7 @@ def update_budget_ceiling_allocations_task():
         raise
 
 
-@shared_task(name='project_central.generate_weekly_workflow_report')
+@shared_task(name="project_central.generate_weekly_workflow_report")
 def generate_weekly_workflow_report_task():
     """
     Generate weekly workflow performance report.
@@ -141,7 +143,9 @@ def generate_weekly_workflow_report_task():
         # Email report to administrators
         # (Future: implement email template and distribution)
 
-        logger.info(f"Generated workflow report: {metrics['total_workflows']} workflows")
+        logger.info(
+            f"Generated workflow report: {metrics['total_workflows']} workflows"
+        )
         return metrics
 
     except Exception as e:
@@ -149,7 +153,7 @@ def generate_weekly_workflow_report_task():
         raise
 
 
-@shared_task(name='project_central.generate_monthly_budget_report')
+@shared_task(name="project_central.generate_monthly_budget_report")
 def generate_monthly_budget_report_task():
     """
     Generate monthly budget utilization report.
@@ -172,9 +176,11 @@ def generate_monthly_budget_report_task():
 
         logger.info("Generated monthly budget report")
         return {
-            'fiscal_year': current_year,
-            'total_budget': summary['budget_by_sector']['totals']['total_budget'],
-            'utilization_pct': summary['utilization_rates']['ppa_utilization']['disbursement_rate'],
+            "fiscal_year": current_year,
+            "total_budget": summary["budget_by_sector"]["totals"]["total_budget"],
+            "utilization_pct": summary["utilization_rates"]["ppa_utilization"][
+                "disbursement_rate"
+            ],
         }
 
     except Exception as e:
@@ -182,7 +188,7 @@ def generate_monthly_budget_report_task():
         raise
 
 
-@shared_task(name='project_central.check_workflow_deadlines')
+@shared_task(name="project_central.check_workflow_deadlines")
 def check_workflow_deadlines_task():
     """
     Check for workflows approaching deadlines.
@@ -205,38 +211,38 @@ def check_workflow_deadlines_task():
             target_completion_date__lte=seven_days_from_now,
             target_completion_date__gte=timezone.now().date(),
             current_stage__in=[
-                'budget_planning',
-                'approval',
-                'implementation',
-                'monitoring',
+                "budget_planning",
+                "approval",
+                "implementation",
+                "monitoring",
             ],
-        ).exclude(
-            current_stage='completion'
-        )
+        ).exclude(current_stage="completion")
 
         count = 0
         for workflow in approaching_deadline:
-            days_remaining = (workflow.target_completion_date - timezone.now().date()).days
+            days_remaining = (
+                workflow.target_completion_date - timezone.now().date()
+            ).days
 
             # Check if alert already exists
             existing_alert = Alert.objects.filter(
-                alert_type='deadline_approaching',
+                alert_type="deadline_approaching",
                 related_workflow=workflow,
                 is_active=True,
             ).exists()
 
             if not existing_alert:
                 Alert.create_alert(
-                    alert_type='deadline_approaching',
-                    severity='high' if days_remaining <= 3 else 'medium',
+                    alert_type="deadline_approaching",
+                    severity="high" if days_remaining <= 3 else "medium",
                     title=f"Deadline Approaching: {workflow.primary_need.title}",
                     description=f"This workflow has {days_remaining} days until target completion date ({workflow.target_completion_date}). Current stage: {workflow.get_current_stage_display()}",
                     related_workflow=workflow,
                     action_url=workflow.get_absolute_url(),
                     alert_data={
-                        'workflow_id': str(workflow.id),
-                        'days_remaining': days_remaining,
-                        'target_date': workflow.target_completion_date.isoformat(),
+                        "workflow_id": str(workflow.id),
+                        "days_remaining": days_remaining,
+                        "target_date": workflow.target_completion_date.isoformat(),
                     },
                     expires_at=timezone.now() + timedelta(days=7),
                 )
@@ -250,7 +256,7 @@ def check_workflow_deadlines_task():
         raise
 
 
-@shared_task(name='project_central.sync_workflow_ppa_status')
+@shared_task(name="project_central.sync_workflow_ppa_status")
 def sync_workflow_ppa_status_task():
     """
     Synchronize workflow and PPA status fields.
@@ -274,22 +280,34 @@ def sync_workflow_ppa_status_task():
             updated = False
 
             # Sync status
-            if workflow.current_stage == 'completion' and workflow.ppa.status != 'completed':
-                workflow.ppa.status = 'completed'
-                workflow.ppa.save(update_fields=['status'])
+            if (
+                workflow.current_stage == "completion"
+                and workflow.ppa.status != "completed"
+            ):
+                workflow.ppa.status = "completed"
+                workflow.ppa.save(update_fields=["status"])
                 updated = True
 
-            elif workflow.current_stage in ['implementation', 'monitoring'] and workflow.ppa.status != 'ongoing':
-                workflow.ppa.status = 'ongoing'
-                workflow.ppa.save(update_fields=['status'])
+            elif (
+                workflow.current_stage in ["implementation", "monitoring"]
+                and workflow.ppa.status != "ongoing"
+            ):
+                workflow.ppa.status = "ongoing"
+                workflow.ppa.save(update_fields=["status"])
                 updated = True
 
             # Sync approval status
-            if workflow.current_stage == 'approval':
+            if workflow.current_stage == "approval":
                 from monitoring.models import MonitoringEntry
-                if workflow.ppa.approval_status == MonitoringEntry.APPROVAL_STATUS_DRAFT:
-                    workflow.ppa.approval_status = MonitoringEntry.APPROVAL_STATUS_TECHNICAL_REVIEW
-                    workflow.ppa.save(update_fields=['approval_status'])
+
+                if (
+                    workflow.ppa.approval_status
+                    == MonitoringEntry.APPROVAL_STATUS_DRAFT
+                ):
+                    workflow.ppa.approval_status = (
+                        MonitoringEntry.APPROVAL_STATUS_TECHNICAL_REVIEW
+                    )
+                    workflow.ppa.save(update_fields=["approval_status"])
                     updated = True
 
             if updated:

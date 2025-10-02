@@ -17,36 +17,36 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--regions',
+            "--regions",
             type=str,
-            nargs='+',
-            default=['IX', 'X', 'XI', 'XII'],
-            help='Region codes to process (default: IX, X, XI, XII)'
+            nargs="+",
+            default=["IX", "X", "XI", "XII"],
+            help="Region codes to process (default: IX, X, XI, XII)",
         )
         parser.add_argument(
-            '--force',
-            action='store_true',
-            help='Force update coordinates even if they already exist'
+            "--force",
+            action="store_true",
+            help="Force update coordinates even if they already exist",
         )
         parser.add_argument(
-            '--level',
-            choices=['region', 'province', 'municipality', 'barangay', 'all'],
-            default='all',
-            help='Administrative level to update (default: all)'
+            "--level",
+            choices=["region", "province", "municipality", "barangay", "all"],
+            default="all",
+            help="Administrative level to update (default: all)",
         )
         parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='Show what would be updated without making changes'
+            "--dry-run",
+            action="store_true",
+            help="Show what would be updated without making changes",
         )
 
     def handle(self, *args, **options):
         """Main command execution."""
-        self.verbosity = options['verbosity']
-        self.regions = options['regions']
-        self.force = options['force']
-        self.level = options['level']
-        self.dry_run = options['dry_run']
+        self.verbosity = options["verbosity"]
+        self.regions = options["regions"]
+        self.force = options["force"]
+        self.level = options["level"]
+        self.dry_run = options["dry_run"]
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -55,13 +55,13 @@ class Command(BaseCommand):
         )
 
         # Process each administrative level
-        if self.level in ['region', 'all']:
+        if self.level in ["region", "all"]:
             self._process_regions()
-        if self.level in ['province', 'all']:
+        if self.level in ["province", "all"]:
             self._process_provinces()
-        if self.level in ['municipality', 'all']:
+        if self.level in ["municipality", "all"]:
             self._process_municipalities()
-        if self.level in ['barangay', 'all']:
+        if self.level in ["barangay", "all"]:
             self._process_barangays()
 
         self.stdout.write(
@@ -84,20 +84,28 @@ class Command(BaseCommand):
                 continue
 
             if self.dry_run:
-                self.stdout.write(f"  Would update: Region {region.code} - {region.name}")
+                self.stdout.write(
+                    f"  Would update: Region {region.code} - {region.name}"
+                )
                 updated_count += 1
             else:
                 lat, lng, updated = ensure_location_coordinates(region)
                 if updated:
                     self.stdout.write(
-                        self.style.SUCCESS(f"  Updated: Region {region.code} - {region.name} ({lat:.6f}, {lng:.6f})")
+                        self.style.SUCCESS(
+                            f"  Updated: Region {region.code} - {region.name} ({lat:.6f}, {lng:.6f})"
+                        )
                     )
                     updated_count += 1
                 elif lat and lng:
-                    self.stdout.write(f"  Already has coordinates: Region {region.code}")
+                    self.stdout.write(
+                        f"  Already has coordinates: Region {region.code}"
+                    )
                 else:
                     self.stdout.write(
-                        self.style.WARNING(f"  Could not geocode: Region {region.code} - {region.name}")
+                        self.style.WARNING(
+                            f"  Could not geocode: Region {region.code} - {region.name}"
+                        )
                     )
 
         self.stdout.write(f"  Regions updated: {updated_count}")
@@ -116,20 +124,26 @@ class Command(BaseCommand):
                 continue
 
             if self.dry_run:
-                self.stdout.write(f"  Would update: {province.name}, {province.region.name}")
+                self.stdout.write(
+                    f"  Would update: {province.name}, {province.region.name}"
+                )
                 updated_count += 1
             else:
                 lat, lng, updated = ensure_location_coordinates(province)
                 if updated:
                     self.stdout.write(
-                        self.style.SUCCESS(f"  Updated: {province.name}, {province.region.name} ({lat:.6f}, {lng:.6f})")
+                        self.style.SUCCESS(
+                            f"  Updated: {province.name}, {province.region.name} ({lat:.6f}, {lng:.6f})"
+                        )
                     )
                     updated_count += 1
                 elif lat and lng:
                     self.stdout.write(f"  Already has coordinates: {province.name}")
                 else:
                     self.stdout.write(
-                        self.style.WARNING(f"  Could not geocode: {province.name}, {province.region.name}")
+                        self.style.WARNING(
+                            f"  Could not geocode: {province.name}, {province.region.name}"
+                        )
                     )
 
         self.stdout.write(f"  Provinces updated: {updated_count}")
@@ -138,7 +152,9 @@ class Command(BaseCommand):
         """Process municipality-level coordinates."""
         self.stdout.write("Processing municipalities...")
 
-        municipalities = Municipality.objects.filter(province__region__code__in=self.regions)
+        municipalities = Municipality.objects.filter(
+            province__region__code__in=self.regions
+        )
         if not self.force:
             municipalities = municipalities.filter(center_coordinates__isnull=True)
 
@@ -148,20 +164,26 @@ class Command(BaseCommand):
                 continue
 
             if self.dry_run:
-                self.stdout.write(f"  Would update: {municipality.name}, {municipality.province.name}")
+                self.stdout.write(
+                    f"  Would update: {municipality.name}, {municipality.province.name}"
+                )
                 updated_count += 1
             else:
                 lat, lng, updated = ensure_location_coordinates(municipality)
                 if updated:
                     self.stdout.write(
-                        self.style.SUCCESS(f"  Updated: {municipality.name}, {municipality.province.name} ({lat:.6f}, {lng:.6f})")
+                        self.style.SUCCESS(
+                            f"  Updated: {municipality.name}, {municipality.province.name} ({lat:.6f}, {lng:.6f})"
+                        )
                     )
                     updated_count += 1
                 elif lat and lng:
                     self.stdout.write(f"  Already has coordinates: {municipality.name}")
                 else:
                     self.stdout.write(
-                        self.style.WARNING(f"  Could not geocode: {municipality.name}, {municipality.province.name}")
+                        self.style.WARNING(
+                            f"  Could not geocode: {municipality.name}, {municipality.province.name}"
+                        )
                     )
 
         self.stdout.write(f"  Municipalities updated: {updated_count}")
@@ -170,7 +192,9 @@ class Command(BaseCommand):
         """Process barangay-level coordinates."""
         self.stdout.write("Processing barangays...")
 
-        barangays = Barangay.objects.filter(municipality__province__region__code__in=self.regions)
+        barangays = Barangay.objects.filter(
+            municipality__province__region__code__in=self.regions
+        )
         if not self.force:
             barangays = barangays.filter(center_coordinates__isnull=True)
 
@@ -186,32 +210,40 @@ class Command(BaseCommand):
                 continue
 
             if self.dry_run:
-                self.stdout.write(f"  Would update: Brgy. {barangay.name}, {barangay.municipality.name}")
+                self.stdout.write(
+                    f"  Would update: Brgy. {barangay.name}, {barangay.municipality.name}"
+                )
                 updated_count += 1
             else:
                 lat, lng, updated = ensure_location_coordinates(barangay)
                 if updated:
                     self.stdout.write(
-                        self.style.SUCCESS(f"  Updated: Brgy. {barangay.name}, {barangay.municipality.name} ({lat:.6f}, {lng:.6f})")
+                        self.style.SUCCESS(
+                            f"  Updated: Brgy. {barangay.name}, {barangay.municipality.name} ({lat:.6f}, {lng:.6f})"
+                        )
                     )
                     updated_count += 1
                 elif lat and lng:
-                    self.stdout.write(f"  Already has coordinates: Brgy. {barangay.name}")
+                    self.stdout.write(
+                        f"  Already has coordinates: Brgy. {barangay.name}"
+                    )
                 else:
                     self.stdout.write(
-                        self.style.WARNING(f"  Could not geocode: Brgy. {barangay.name}, {barangay.municipality.name}")
+                        self.style.WARNING(
+                            f"  Could not geocode: Brgy. {barangay.name}, {barangay.municipality.name}"
+                        )
                     )
 
         self.stdout.write(f"  Barangays updated: {updated_count}")
 
     def _has_coordinates(self, obj) -> bool:
         """Check if object has center coordinates."""
-        if hasattr(obj, 'center_coordinates') and obj.center_coordinates:
+        if hasattr(obj, "center_coordinates") and obj.center_coordinates:
             coords = obj.center_coordinates
             return (
-                isinstance(coords, list) and
-                len(coords) == 2 and
-                coords[0] is not None and
-                coords[1] is not None
+                isinstance(coords, list)
+                and len(coords) == 2
+                and coords[0] is not None
+                and coords[1] is not None
             )
         return False

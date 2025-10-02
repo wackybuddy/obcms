@@ -149,12 +149,12 @@ class MetricsTracker:
         baseline_logs = review_logs[:3]
         current_logs = review_logs.reverse()[:3]
 
-        baseline_avg = (
-            baseline_logs.aggregate(avg=Avg("duration_seconds"))["avg"] or Decimal("0")
-        )
-        current_avg = (
-            current_logs.aggregate(avg=Avg("duration_seconds"))["avg"] or Decimal("0")
-        )
+        baseline_avg = baseline_logs.aggregate(avg=Avg("duration_seconds"))[
+            "avg"
+        ] or Decimal("0")
+        current_avg = current_logs.aggregate(avg=Avg("duration_seconds"))[
+            "avg"
+        ] or Decimal("0")
 
         if baseline_avg == 0:
             reduction = Decimal("0.00")
@@ -261,9 +261,7 @@ class MetricsTracker:
         responses = WorkshopResponse.objects.filter(
             workshop__assessment=self.assessment, status="submitted"
         ).count()
-        syntheses = WorkshopSynthesis.objects.filter(
-            assessment=self.assessment
-        ).count()
+        syntheses = WorkshopSynthesis.objects.filter(assessment=self.assessment).count()
         expected_actions = responses + syntheses
 
         if expected_actions == 0:

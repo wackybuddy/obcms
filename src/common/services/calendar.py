@@ -81,8 +81,9 @@ def _isoformat(dt_value: Optional[datetime]) -> Optional[str]:
     return aware_value.isoformat()
 
 
-def _increment(stats: Dict[str, CalendarStats], module: str, *, upcoming: bool,
-               completed: bool) -> None:
+def _increment(
+    stats: Dict[str, CalendarStats], module: str, *, upcoming: bool, completed: bool
+) -> None:
     """Increment module stats counters."""
 
     record = stats.setdefault(module, CalendarStats())
@@ -94,7 +95,8 @@ def _increment(stats: Dict[str, CalendarStats], module: str, *, upcoming: bool,
 
 
 def build_calendar_payload(
-    *, filter_modules: Optional[Sequence[str]] = None,
+    *,
+    filter_modules: Optional[Sequence[str]] = None,
 ) -> Dict[str, object]:
     """Gather calendar entries across OOBC modules.
 
@@ -106,11 +108,7 @@ def build_calendar_payload(
         conflict hints suitable for rendering calendar dashboards.
     """
 
-    requested_modules = (
-        list(filter_modules)
-        if filter_modules is not None
-        else None
-    )
+    requested_modules = list(filter_modules) if filter_modules is not None else None
     allowed_modules_set = set(requested_modules or []) or None
 
     now = timezone.now()
@@ -237,6 +235,9 @@ def build_calendar_payload(
                 "extendedProps": {
                     "module": "coordination",
                     "category": "event",
+                    "type": "event",
+                    "objectId": str(event.pk),
+                    "supportsEditing": True,
                     "status": event.status,
                     "community": getattr(event.community, "name", ""),
                     "organizer": getattr(event.organizer, "get_full_name", None)
@@ -244,6 +245,7 @@ def build_calendar_payload(
                     or getattr(event.organizer, "username", ""),
                     "location": event.venue,
                 },
+                "editable": True,
             }
 
             entries.append(payload)
@@ -262,26 +264,35 @@ def build_calendar_payload(
             if start_dt:
                 display_start = _ensure_aware(start_dt)
                 display_end = _ensure_aware(end_dt) if end_dt else None
-                upcoming_items.append((display_start, {
-                    "module": module_name,
-                    "title": event.title,
-                    "start": display_start,
-                    "status": event.status,
-                }))
-                timed_entries.append({
-                    "module": module_name,
-                    "title": event.title,
-                    "start": display_start,
-                    "end": display_end or display_start,
-                    "location": event.venue,
-                })
+                upcoming_items.append(
+                    (
+                        display_start,
+                        {
+                            "module": module_name,
+                            "title": event.title,
+                            "start": display_start,
+                            "status": event.status,
+                        },
+                    )
+                )
+                timed_entries.append(
+                    {
+                        "module": module_name,
+                        "title": event.title,
+                        "start": display_start,
+                        "end": display_end or display_start,
+                        "location": event.venue,
+                    }
+                )
 
                 if display_start.date() in heatmap_days:
                     idx = heatmap_days.index(display_start.date())
                     heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                     heatmap_counts[module_name][idx] += 1
 
-            _increment(stats, "coordination", upcoming=upcoming_flag, completed=completed_flag)
+            _increment(
+                stats, "coordination", upcoming=upcoming_flag, completed=completed_flag
+            )
 
             if aware_start:
                 severity = None
@@ -310,7 +321,11 @@ def build_calendar_payload(
                         label=label,
                         due=aware_start,
                         status=event.status,
-                        notes=event.agenda[:280] if event.agenda else event.objectives[:280],
+                        notes=(
+                            event.agenda[:280]
+                            if event.agenda
+                            else event.objectives[:280]
+                        ),
                         severity=severity,
                     )
 
@@ -355,13 +370,15 @@ def build_calendar_payload(
                 "extendedProps": {
                     "module": "coordination",
                     "category": "stakeholder_engagement",
+                    "type": "engagement",
+                    "objectId": str(engagement.pk),
+                    "supportsEditing": True,
                     "status": engagement.status,
                     "community": getattr(engagement.community, "name", ""),
-                    "engagementType": getattr(
-                        engagement.engagement_type, "name", ""
-                    ),
+                    "engagementType": getattr(engagement.engagement_type, "name", ""),
                     "location": engagement.venue,
                 },
+                "editable": True,
             }
 
             entries.append(payload)
@@ -380,26 +397,35 @@ def build_calendar_payload(
             if start_dt:
                 display_start = _ensure_aware(start_dt)
                 display_end = _ensure_aware(end_dt) if end_dt else None
-                upcoming_items.append((display_start, {
-                    "module": module_name,
-                    "title": engagement.title,
-                    "start": display_start,
-                    "status": engagement.status,
-                }))
-                timed_entries.append({
-                    "module": module_name,
-                    "title": engagement.title,
-                    "start": display_start,
-                    "end": display_end or display_start,
-                    "location": engagement.venue,
-                })
+                upcoming_items.append(
+                    (
+                        display_start,
+                        {
+                            "module": module_name,
+                            "title": engagement.title,
+                            "start": display_start,
+                            "status": engagement.status,
+                        },
+                    )
+                )
+                timed_entries.append(
+                    {
+                        "module": module_name,
+                        "title": engagement.title,
+                        "start": display_start,
+                        "end": display_end or display_start,
+                        "location": engagement.venue,
+                    }
+                )
 
                 if display_start.date() in heatmap_days:
                     idx = heatmap_days.index(display_start.date())
                     heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                     heatmap_counts[module_name][idx] += 1
 
-            _increment(stats, "coordination", upcoming=upcoming_flag, completed=completed_flag)
+            _increment(
+                stats, "coordination", upcoming=upcoming_flag, completed=completed_flag
+            )
 
     # Coordination Communications Follow-ups --------------------------------
     if include_module("coordination"):
@@ -429,7 +455,9 @@ def build_calendar_payload(
                 "extendedProps": {
                     "module": "coordination",
                     "category": "communication_follow_up",
-                    "status": "completed" if communication.follow_up_completed else "pending",
+                    "status": (
+                        "completed" if communication.follow_up_completed else "pending"
+                    ),
                     "organization": getattr(communication.organization, "name", ""),
                     "location": None,
                 },
@@ -448,26 +476,35 @@ def build_calendar_payload(
                 status_counts[module_name].get(status_value, 0) + 1
             )
 
-            upcoming_items.append((aware_start, {
-                "module": module_name,
-                "title": communication.subject,
-                "start": aware_start,
-                "status": status_value,
-            }))
-            timed_entries.append({
-                "module": module_name,
-                "title": communication.subject,
-                "start": aware_start,
-                "end": aware_start + timedelta(hours=1),
-                "location": None,
-            })
+            upcoming_items.append(
+                (
+                    aware_start,
+                    {
+                        "module": module_name,
+                        "title": communication.subject,
+                        "start": aware_start,
+                        "status": status_value,
+                    },
+                )
+            )
+            timed_entries.append(
+                {
+                    "module": module_name,
+                    "title": communication.subject,
+                    "start": aware_start,
+                    "end": aware_start + timedelta(hours=1),
+                    "location": None,
+                }
+            )
 
             if aware_start.date() in heatmap_days:
                 idx = heatmap_days.index(aware_start.date())
                 heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                 heatmap_counts[module_name][idx] += 1
 
-            _increment(stats, "coordination", upcoming=upcoming_flag, completed=completed_flag)
+            _increment(
+                stats, "coordination", upcoming=upcoming_flag, completed=completed_flag
+            )
 
             append_workflow_action(
                 workflow_actions_entry,
@@ -550,7 +587,9 @@ def build_calendar_payload(
                     "id": f"coordination-partnership-{partnership.pk}-{category}",
                     "title": f"{partnership.title} – {label}",
                     "start": _isoformat(start_dt),
-                    "end": _isoformat(start_dt + timedelta(days=1)) if start_dt else None,
+                    "end": (
+                        _isoformat(start_dt + timedelta(days=1)) if start_dt else None
+                    ),
                     "allDay": True,
                     "backgroundColor": bg_color,
                     "borderColor": border_color,
@@ -587,28 +626,35 @@ def build_calendar_payload(
 
                 if start_dt:
                     display_start = aware_start
-                    display_end = _ensure_aware(
-                        start_dt + timedelta(days=1)
-                    ) if start_dt else None
-                    upcoming_items.append((display_start, {
-                        "module": module_name,
-                        "title": payload["title"],
-                        "start": display_start,
-                        "status": status_value,
-                    }))
-                    timed_entries.append({
-                        "module": module_name,
-                        "title": payload["title"],
-                        "start": display_start,
-                        "end": display_end or display_start,
-                        "location": None,
-                    })
+                    display_end = (
+                        _ensure_aware(start_dt + timedelta(days=1))
+                        if start_dt
+                        else None
+                    )
+                    upcoming_items.append(
+                        (
+                            display_start,
+                            {
+                                "module": module_name,
+                                "title": payload["title"],
+                                "start": display_start,
+                                "status": status_value,
+                            },
+                        )
+                    )
+                    timed_entries.append(
+                        {
+                            "module": module_name,
+                            "title": payload["title"],
+                            "start": display_start,
+                            "end": display_end or display_start,
+                            "location": None,
+                        }
+                    )
 
                     if display_start.date() in heatmap_days:
                         idx = heatmap_days.index(display_start.date())
-                        heatmap_counts.setdefault(
-                            module_name, [0] * len(heatmap_days)
-                        )
+                        heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                         heatmap_counts[module_name][idx] += 1
 
                 _increment(
@@ -730,19 +776,26 @@ def build_calendar_payload(
             )
 
             display_start = aware_start
-            upcoming_items.append((display_start, {
-                "module": module_name,
-                "title": payload["title"],
-                "start": display_start,
-                "status": milestone.status,
-            }))
-            timed_entries.append({
-                "module": module_name,
-                "title": payload["title"],
-                "start": display_start,
-                "end": display_start + timedelta(hours=1),
-                "location": None,
-            })
+            upcoming_items.append(
+                (
+                    display_start,
+                    {
+                        "module": module_name,
+                        "title": payload["title"],
+                        "start": display_start,
+                        "status": milestone.status,
+                    },
+                )
+            )
+            timed_entries.append(
+                {
+                    "module": module_name,
+                    "title": payload["title"],
+                    "start": display_start,
+                    "end": display_start + timedelta(hours=1),
+                    "location": None,
+                }
+            )
 
             if display_start.date() in heatmap_days:
                 idx = heatmap_days.index(display_start.date())
@@ -766,10 +819,7 @@ def build_calendar_payload(
                 elif milestone.milestone_type in {"report", "deliverable"}:
                     action_type = "follow_up"
 
-                if (
-                    milestone.status in {"delayed", "overdue"}
-                    or (due and due < now)
-                ):
+                if milestone.status in {"delayed", "overdue"} or (due and due < now):
                     severity = "critical"
                     if action_type == "workflow":
                         action_type = "escalation"
@@ -841,19 +891,26 @@ def build_calendar_payload(
             if start_dt:
                 display_start = _ensure_aware(start_dt)
                 display_end = _ensure_aware(end_dt) if end_dt else None
-                upcoming_items.append((display_start, {
-                    "module": module_name,
-                    "title": payload["title"],
-                    "start": display_start,
-                    "status": baseline.status,
-                }))
-                timed_entries.append({
-                    "module": module_name,
-                    "title": payload["title"],
-                    "start": display_start,
-                    "end": display_end or display_start,
-                    "location": baseline.location,
-                })
+                upcoming_items.append(
+                    (
+                        display_start,
+                        {
+                            "module": module_name,
+                            "title": payload["title"],
+                            "start": display_start,
+                            "status": baseline.status,
+                        },
+                    )
+                )
+                timed_entries.append(
+                    {
+                        "module": module_name,
+                        "title": payload["title"],
+                        "start": display_start,
+                        "end": display_end or display_start,
+                        "location": baseline.location,
+                    }
+                )
 
                 if display_start.date() in heatmap_days:
                     idx = heatmap_days.index(display_start.date())
@@ -870,7 +927,11 @@ def build_calendar_payload(
             if task.linked_event_id:
                 continue
             start_dt = _combine(task.start_date) if task.start_date else None
-            due_dt = _combine(task.due_date, default_time=time.max) if task.due_date else None
+            due_dt = (
+                _combine(task.due_date, default_time=time.max)
+                if task.due_date
+                else None
+            )
             start_for_sorting = start_dt or due_dt
 
             if not start_for_sorting:
@@ -900,12 +961,21 @@ def build_calendar_payload(
                 "extendedProps": {
                     "module": "staff",
                     "category": "task",
+                    "type": "staff_task",
+                    "objectId": str(task.pk),
+                    "supportsEditing": True,
+                    "hasStartDate": bool(task.start_date),
+                    "hasDueDate": bool(task.due_date),
                     "status": task.status,
                     "team": ", ".join(team_names) if team_names else "Unassigned",
                     "team_slugs": team_slugs,
-                    "assignee": ", ".join(assignee_names) if assignee_names else "Unassigned",
+                    "assignee": (
+                        ", ".join(assignee_names) if assignee_names else "Unassigned"
+                    ),
                     "location": None,
                 },
+                "editable": True,
+                "durationEditable": True,
             }
 
             entries.append(payload)
@@ -923,19 +993,26 @@ def build_calendar_payload(
 
             display_start = _ensure_aware(start_for_sorting)
             display_end = aware_due or display_start
-            upcoming_items.append((display_start, {
-                "module": module_name,
-                "title": task.title,
-                "start": display_start,
-                "status": task.status,
-            }))
-            timed_entries.append({
-                "module": module_name,
-                "title": task.title,
-                "start": display_start,
-                "end": display_end,
-                "location": None,
-            })
+            upcoming_items.append(
+                (
+                    display_start,
+                    {
+                        "module": module_name,
+                        "title": task.title,
+                        "start": display_start,
+                        "status": task.status,
+                    },
+                )
+            )
+            timed_entries.append(
+                {
+                    "module": module_name,
+                    "title": task.title,
+                    "start": display_start,
+                    "end": display_end,
+                    "location": None,
+                }
+            )
 
             if display_start.date() in heatmap_days:
                 idx = heatmap_days.index(display_start.date())
@@ -1008,19 +1085,26 @@ def build_calendar_payload(
 
             display_start = aware_start
             display_end = _ensure_aware(end_dt) if end_dt else None
-            upcoming_items.append((display_start, {
-                "module": module_name,
-                "title": payload["title"],
-                "start": display_start,
-                "status": enrollment.status,
-            }))
-            timed_entries.append({
-                "module": module_name,
-                "title": payload["title"],
-                "start": display_start,
-                "end": display_end or display_start,
-                "location": None,
-            })
+            upcoming_items.append(
+                (
+                    display_start,
+                    {
+                        "module": module_name,
+                        "title": payload["title"],
+                        "start": display_start,
+                        "status": enrollment.status,
+                    },
+                )
+            )
+            timed_entries.append(
+                {
+                    "module": module_name,
+                    "title": payload["title"],
+                    "start": display_start,
+                    "end": display_end or display_start,
+                    "location": None,
+                }
+            )
 
             if display_start.date() in heatmap_days:
                 idx = heatmap_days.index(display_start.date())
@@ -1031,14 +1115,24 @@ def build_calendar_payload(
 
     # Policy Recommendations -------------------------------------------------
     if include_module("policy"):
-        policies = PolicyRecommendation.objects.select_related("proposed_by", "lead_author")
+        policies = PolicyRecommendation.objects.select_related(
+            "proposed_by", "lead_author"
+        )
 
         for policy in policies:
             milestones = [
                 ("policy_submission", policy.submission_date, "Submission"),
                 ("policy_review", policy.review_deadline, "Review Deadline"),
-                ("policy_start", policy.implementation_start_date, "Implementation Start"),
-                ("policy_deadline", policy.implementation_deadline, "Implementation Deadline"),
+                (
+                    "policy_start",
+                    policy.implementation_start_date,
+                    "Implementation Start",
+                ),
+                (
+                    "policy_deadline",
+                    policy.implementation_deadline,
+                    "Implementation Deadline",
+                ),
             ]
 
             for category, date_value, label in milestones:
@@ -1082,29 +1176,41 @@ def build_calendar_payload(
                     status_counts[module_name].get(status_value, 0) + 1
                 )
 
-                upcoming_items.append((aware_start, {
-                    "module": module_name,
-                    "title": f"{policy.title} ({label})",
-                    "start": aware_start,
-                    "status": policy.status,
-                }))
-                timed_entries.append({
-                    "module": module_name,
-                    "title": f"{policy.title} ({label})",
-                    "start": aware_start,
-                    "end": aware_start + timedelta(hours=1),
-                    "location": None,
-                })
+                upcoming_items.append(
+                    (
+                        aware_start,
+                        {
+                            "module": module_name,
+                            "title": f"{policy.title} ({label})",
+                            "start": aware_start,
+                            "status": policy.status,
+                        },
+                    )
+                )
+                timed_entries.append(
+                    {
+                        "module": module_name,
+                        "title": f"{policy.title} ({label})",
+                        "start": aware_start,
+                        "end": aware_start + timedelta(hours=1),
+                        "location": None,
+                    }
+                )
 
                 if aware_start.date() in heatmap_days:
                     idx = heatmap_days.index(aware_start.date())
                     heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                     heatmap_counts[module_name][idx] += 1
 
-                _increment(stats, "policy", upcoming=upcoming_flag, completed=completed_flag)
+                _increment(
+                    stats, "policy", upcoming=upcoming_flag, completed=completed_flag
+                )
 
                 if category in {"policy_review", "policy_deadline"}:
-                    is_escalated = aware_start < now and policy.status not in {"implemented", "approved"}
+                    is_escalated = aware_start < now and policy.status not in {
+                        "implemented",
+                        "approved",
+                    }
                     action_type = (
                         "approval"
                         if category == "policy_review"
@@ -1187,26 +1293,35 @@ def build_calendar_payload(
                     status_counts[module_name].get(status_value, 0) + 1
                 )
 
-                upcoming_items.append((aware_start, {
-                    "module": module_name,
-                    "title": f"{entry.title} ({label})",
-                    "start": aware_start,
-                    "status": entry.status,
-                }))
-                timed_entries.append({
-                    "module": module_name,
-                    "title": f"{entry.title} ({label})",
-                    "start": aware_start,
-                    "end": aware_start + timedelta(hours=1),
-                    "location": None,
-                })
+                upcoming_items.append(
+                    (
+                        aware_start,
+                        {
+                            "module": module_name,
+                            "title": f"{entry.title} ({label})",
+                            "start": aware_start,
+                            "status": entry.status,
+                        },
+                    )
+                )
+                timed_entries.append(
+                    {
+                        "module": module_name,
+                        "title": f"{entry.title} ({label})",
+                        "start": aware_start,
+                        "end": aware_start + timedelta(hours=1),
+                        "location": None,
+                    }
+                )
 
                 if aware_start.date() in heatmap_days:
                     idx = heatmap_days.index(aware_start.date())
                     heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                     heatmap_counts[module_name][idx] += 1
 
-                _increment(stats, "planning", upcoming=upcoming_flag, completed=completed_flag)
+                _increment(
+                    stats, "planning", upcoming=upcoming_flag, completed=completed_flag
+                )
 
                 if category == "planning_milestone":
                     append_workflow_action(
@@ -1229,7 +1344,11 @@ def build_calendar_payload(
                             indicator = first_output.get("indicator") or ""
                             target = first_output.get("target")
                             actual = first_output.get("actual")
-                            notes = f"{indicator}: {actual or 0}/{target or 0}" if indicator else ""
+                            notes = (
+                                f"{indicator}: {actual or 0}/{target or 0}"
+                                if indicator
+                                else ""
+                            )
                     if not notes and entry.outcome_indicators:
                         notes = entry.outcome_indicators[:280]
 
@@ -1279,7 +1398,9 @@ def build_calendar_payload(
                     parsed_date = parse_date(milestone_date_value)
                     if parsed_date is None:
                         try:
-                            parsed_date = datetime.fromisoformat(milestone_date_value).date()
+                            parsed_date = datetime.fromisoformat(
+                                milestone_date_value
+                            ).date()
                         except ValueError:
                             parsed_date = None
 
@@ -1289,8 +1410,12 @@ def build_calendar_payload(
                 start_dt = _combine(parsed_date)
                 aware_start = _ensure_aware(start_dt)
 
-                milestone_status = str(milestone.get("status") or "").lower() or entry.status
-                milestone_title = milestone.get("title") or milestone.get("label") or "Milestone"
+                milestone_status = (
+                    str(milestone.get("status") or "").lower() or entry.status
+                )
+                milestone_title = (
+                    milestone.get("title") or milestone.get("label") or "Milestone"
+                )
                 milestone_notes = (
                     milestone.get("notes")
                     or milestone.get("description")
@@ -1304,7 +1429,9 @@ def build_calendar_payload(
                 )
 
                 completed_flag = milestone_status in {"completed", "done", "closed"}
-                upcoming_flag = bool(aware_start and aware_start >= now and not completed_flag)
+                upcoming_flag = bool(
+                    aware_start and aware_start >= now and not completed_flag
+                )
 
                 payload = {
                     "id": f"planning-entry-{entry.pk}-milestone-{milestone_index}",
@@ -1343,26 +1470,35 @@ def build_calendar_payload(
                 )
 
                 if aware_start:
-                    upcoming_items.append((aware_start, {
-                        "module": module_name,
-                        "title": payload["title"],
-                        "start": aware_start,
-                        "status": milestone_status,
-                    }))
-                    timed_entries.append({
-                        "module": module_name,
-                        "title": payload["title"],
-                        "start": aware_start,
-                        "end": aware_start + timedelta(hours=1),
-                        "location": None,
-                    })
+                    upcoming_items.append(
+                        (
+                            aware_start,
+                            {
+                                "module": module_name,
+                                "title": payload["title"],
+                                "start": aware_start,
+                                "status": milestone_status,
+                            },
+                        )
+                    )
+                    timed_entries.append(
+                        {
+                            "module": module_name,
+                            "title": payload["title"],
+                            "start": aware_start,
+                            "end": aware_start + timedelta(hours=1),
+                            "location": None,
+                        }
+                    )
 
                     if aware_start.date() in heatmap_days:
                         idx = heatmap_days.index(aware_start.date())
                         heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                         heatmap_counts[module_name][idx] += 1
 
-                _increment(stats, "planning", upcoming=upcoming_flag, completed=completed_flag)
+                _increment(
+                    stats, "planning", upcoming=upcoming_flag, completed=completed_flag
+                )
 
                 risk_statuses = {"delayed", "at_risk", "blocked", "overdue"}
                 severity = None
@@ -1391,10 +1527,9 @@ def build_calendar_payload(
                 )
 
         if include_module("planning"):
-            stages = (
-                MonitoringEntryWorkflowStage.objects.select_related("entry")
-                .filter(due_date__isnull=False)
-            )
+            stages = MonitoringEntryWorkflowStage.objects.select_related(
+                "entry"
+            ).filter(due_date__isnull=False)
 
             for stage in stages:
                 if stage.status == MonitoringEntryWorkflowStage.STATUS_COMPLETED:
@@ -1434,19 +1569,26 @@ def build_calendar_payload(
                     status_counts[module_name].get(status_value, 0) + 1
                 )
 
-                upcoming_items.append((aware_start, {
-                    "module": module_name,
-                    "title": f"{stage.entry.title} - {stage.get_stage_display()}",
-                    "start": aware_start,
-                    "status": stage.status,
-                }))
-                timed_entries.append({
-                    "module": module_name,
-                    "title": f"{stage.entry.title} - {stage.get_stage_display()}",
-                    "start": aware_start,
-                    "end": aware_start + timedelta(hours=1),
-                    "location": None,
-                })
+                upcoming_items.append(
+                    (
+                        aware_start,
+                        {
+                            "module": module_name,
+                            "title": f"{stage.entry.title} - {stage.get_stage_display()}",
+                            "start": aware_start,
+                            "status": stage.status,
+                        },
+                    )
+                )
+                timed_entries.append(
+                    {
+                        "module": module_name,
+                        "title": f"{stage.entry.title} - {stage.get_stage_display()}",
+                        "start": aware_start,
+                        "end": aware_start + timedelta(hours=1),
+                        "location": None,
+                    }
+                )
 
                 if aware_start.date() in heatmap_days:
                     idx = heatmap_days.index(aware_start.date())
@@ -1478,8 +1620,14 @@ def build_calendar_payload(
         )
 
         for ce in community_events:
-            start_dt = _combine(ce.start_date, ce.start_time if not ce.all_day else None)
-            end_dt = _combine(ce.end_date, ce.end_time if not ce.all_day else None) if ce.end_date else start_dt
+            start_dt = _combine(
+                ce.start_date, ce.start_time if not ce.all_day else None
+            )
+            end_dt = (
+                _combine(ce.end_date, ce.end_time if not ce.all_day else None)
+                if ce.end_date
+                else start_dt
+            )
 
             if ce.all_day and end_dt:
                 end_dt = end_dt + timedelta(days=1)
@@ -1488,13 +1636,13 @@ def build_calendar_payload(
             upcoming_flag = bool(aware_start and aware_start >= now)
 
             # Color based on event type
-            if ce.event_type == 'cultural':
+            if ce.event_type == "cultural":
                 bg_color = "#f59e0b"  # amber
                 border_color = "#d97706"
-            elif ce.event_type == 'religious':
+            elif ce.event_type == "religious":
                 bg_color = "#8b5cf6"  # purple
                 border_color = "#7c3aed"
-            elif ce.event_type == 'disaster':
+            elif ce.event_type == "disaster":
                 bg_color = "#ef4444"  # red
                 border_color = "#dc2626"
             else:
@@ -1530,17 +1678,22 @@ def build_calendar_payload(
             _increment(stats, module_name, upcoming=upcoming_flag, completed=False)
 
             if upcoming_flag:
-                upcoming_items.append((aware_start, {
-                    "module": module_name,
-                    "title": f"[{ce.community.name}] {ce.title}",
-                    "start": aware_start,
-                    "status": "scheduled",
-                }))
+                upcoming_items.append(
+                    (
+                        aware_start,
+                        {
+                            "module": module_name,
+                            "title": f"[{ce.community.name}] {ce.title}",
+                            "start": aware_start,
+                            "status": "scheduled",
+                        },
+                    )
+                )
 
     # Staff Leave -----------------------------------------------------------
     if include_module("staff"):
         staff_leaves = StaffLeave.objects.select_related("staff").filter(
-            status__in=['pending', 'approved']
+            status__in=["pending", "approved"]
         )
 
         for leave in staff_leaves:
@@ -1553,7 +1706,7 @@ def build_calendar_payload(
             upcoming_flag = bool(aware_start and aware_start >= now)
 
             # Color based on leave status
-            if leave.status == 'approved':
+            if leave.status == "approved":
                 bg_color = "#6366f1"  # indigo
                 border_color = "#4f46e5"
             else:  # pending
@@ -1593,10 +1746,15 @@ def build_calendar_payload(
                 heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                 heatmap_counts[module_name][idx] += 1
 
-            _increment(stats, module_name, upcoming=upcoming_flag, completed=leave.status == 'completed')
+            _increment(
+                stats,
+                module_name,
+                upcoming=upcoming_flag,
+                completed=leave.status == "completed",
+            )
 
             # Add approval workflow if pending
-            if leave.status == 'pending':
+            if leave.status == "pending":
                 append_workflow_action(
                     workflow_actions_entry,
                     module_name,
@@ -1612,9 +1770,7 @@ def build_calendar_payload(
     if include_module("resources"):
         bookings = CalendarResourceBooking.objects.select_related(
             "resource", "booked_by"
-        ).filter(
-            status__in=['pending', 'approved']
-        )
+        ).filter(status__in=["pending", "approved"])
 
         for booking in bookings:
             aware_start = _ensure_aware(booking.start_datetime)
@@ -1625,7 +1781,7 @@ def build_calendar_payload(
             description = booking.notes[:50] if booking.notes else "Resource Booking"
 
             # Color based on status
-            if booking.status == 'approved':
+            if booking.status == "approved":
                 bg_color = "#059669"  # emerald
                 border_color = "#047857"
             else:  # pending
@@ -1663,26 +1819,38 @@ def build_calendar_payload(
                 heatmap_counts.setdefault(module_name, [0] * len(heatmap_days))
                 heatmap_counts[module_name][idx] += 1
 
-            _increment(stats, module_name, upcoming=upcoming_flag, completed=booking.status == 'completed')
+            _increment(
+                stats,
+                module_name,
+                upcoming=upcoming_flag,
+                completed=booking.status == "completed",
+            )
 
             if upcoming_flag:
-                upcoming_items.append((aware_start, {
+                upcoming_items.append(
+                    (
+                        aware_start,
+                        {
+                            "module": module_name,
+                            "title": f"[{booking.resource.name}] {description[:30]}",
+                            "start": aware_start,
+                            "status": booking.status,
+                        },
+                    )
+                )
+
+            timed_entries.append(
+                {
                     "module": module_name,
                     "title": f"[{booking.resource.name}] {description[:30]}",
                     "start": aware_start,
-                    "status": booking.status,
-                }))
-
-            timed_entries.append({
-                "module": module_name,
-                "title": f"[{booking.resource.name}] {description[:30]}",
-                "start": aware_start,
-                "end": aware_end,
-                "location": booking.resource.location,
-            })
+                    "end": aware_end,
+                    "location": booking.resource.location,
+                }
+            )
 
             # Add approval workflow if pending
-            if booking.status == 'pending':
+            if booking.status == "pending":
                 append_workflow_action(
                     workflow_actions_entry,
                     module_name,
@@ -1727,10 +1895,9 @@ def build_calendar_payload(
                 continue
 
             same_module = candidate["module"] == other["module"]
-            same_location = (
-                candidate.get("location")
-                and candidate.get("location") == other.get("location")
-            )
+            same_location = candidate.get("location") and candidate.get(
+                "location"
+            ) == other.get("location")
 
             if not (same_module or same_location):
                 continue
@@ -1786,8 +1953,7 @@ def build_calendar_payload(
             },
         },
         "status_counts": {
-            module: status_counts.get(module, {})
-            for module in heatmap_modules
+            module: status_counts.get(module, {}) for module in heatmap_modules
         },
         "workflow_summary": workflow_summary,
     }
@@ -1834,6 +2000,16 @@ def build_calendar_payload(
         "modules": compliance_modules,
         "totals": compliance_totals,
     }
+
+    for entry in entries:
+        props = entry.setdefault("extendedProps", {})
+        if props.get("supportsEditing") is True:
+            entry.setdefault("editable", True)
+        else:
+            props["supportsEditing"] = False
+            if entry.get("editable") is not True:
+                entry["editable"] = False
+            entry.setdefault("durationEditable", False)
 
     payload = {
         "entries": entries,

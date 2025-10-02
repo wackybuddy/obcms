@@ -176,9 +176,7 @@ def infer_municipality_type(name: str) -> str:
 
 
 class Command(BaseCommand):
-    help = (
-        "Import population hierarchy data into Region, Province, Municipality, and Barangay tables."
-    )
+    help = "Import population hierarchy data into Region, Province, Municipality, and Barangay tables."
 
     def add_arguments(self, parser) -> None:
         parser.add_argument(
@@ -298,7 +296,9 @@ class Command(BaseCommand):
                 stats["provinces_updated"] += 1
 
             for municipality_record in province_record.municipalities:
-                municipality_code = build_code(province.code or province_code, municipality_record.name)
+                municipality_code = build_code(
+                    province.code or province_code, municipality_record.name
+                )
                 municipality_type = infer_municipality_type(municipality_record.name)
                 municipality, municipality_created = Municipality.objects.get_or_create(
                     province=province,

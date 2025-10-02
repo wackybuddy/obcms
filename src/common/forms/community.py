@@ -14,7 +14,9 @@ from common.models import Region, Province, Municipality
 from . import mixins as _location_mixins
 
 LocationSelectionMixin = _location_mixins.LocationSelectionMixin
-enhanced_ensure_location_coordinates = _location_mixins.enhanced_ensure_location_coordinates
+enhanced_ensure_location_coordinates = (
+    _location_mixins.enhanced_ensure_location_coordinates
+)
 
 
 COMMUNITY_PROFILE_FIELDS = [
@@ -81,7 +83,9 @@ COMMUNITY_PROFILE_WIDGETS = {
         attrs={"class": "form-control", "min": "0"}
     ),
     "unemployed_count": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
-    "migrants_transients_count": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
+    "migrants_transients_count": forms.NumberInput(
+        attrs={"class": "form-control", "min": "0"}
+    ),
     "religious_leaders_count": forms.NumberInput(
         attrs={"class": "form-control", "min": "0"}
     ),
@@ -173,9 +177,7 @@ COMMUNITY_PROFILE_WIDGETS = {
         attrs={"class": "form-control", "rows": 3}
     ),
     "identified_gaps": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-    "key_community_leaders": forms.Textarea(
-        attrs={"class": "form-control", "rows": 3}
-    ),
+    "key_community_leaders": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
     "relevant_lgu_officials": forms.Textarea(
         attrs={"class": "form-control", "rows": 3}
     ),
@@ -290,9 +292,9 @@ class MunicipalityCoverageForm(LocationSelectionMixin, forms.ModelForm):
 
     # Configure location fields - barangay not required for municipality coverage
     location_fields_config = {
-        'region': {'required': True, 'level': 'region', 'zoom': 7},
-        'province': {'required': True, 'level': 'province', 'zoom': 9},
-        'municipality': {'required': True, 'level': 'municipality', 'zoom': 12},
+        "region": {"required": True, "level": "region", "zoom": 7},
+        "province": {"required": True, "level": "province", "zoom": 9},
+        "municipality": {"required": True, "level": "municipality", "zoom": 12},
     }
 
     region = forms.ModelChoiceField(
@@ -369,8 +371,8 @@ class ProvinceCoverageForm(LocationSelectionMixin, forms.ModelForm):
     """Form for recording province-level Bangsamoro coverage."""
 
     location_fields_config = {
-        'region': {'required': True, 'level': 'region', 'zoom': 7},
-        'province': {'required': True, 'level': 'province', 'zoom': 9},
+        "region": {"required": True, "level": "region", "zoom": 7},
+        "province": {"required": True, "level": "province", "zoom": 9},
     }
 
     region = forms.ModelChoiceField(
@@ -461,10 +463,10 @@ class OBCCommunityForm(LocationSelectionMixin, forms.ModelForm):
 
     # Configure location fields - all levels including barangay
     location_fields_config = {
-        'region': {'required': True, 'level': 'region', 'zoom': 7},
-        'province': {'required': True, 'level': 'province', 'zoom': 9},
-        'municipality': {'required': True, 'level': 'municipality', 'zoom': 12},
-        'barangay': {'required': True, 'level': 'barangay', 'zoom': 15},
+        "region": {"required": True, "level": "region", "zoom": 7},
+        "province": {"required": True, "level": "province", "zoom": 9},
+        "municipality": {"required": True, "level": "municipality", "zoom": 12},
+        "barangay": {"required": True, "level": "barangay", "zoom": 15},
     }
 
     region = forms.ModelChoiceField(
@@ -485,10 +487,7 @@ class OBCCommunityForm(LocationSelectionMixin, forms.ModelForm):
 
     class Meta:
         model = OBCCommunity
-        fields = [
-            "barangay",
-            *COMMUNITY_PROFILE_FIELDS
-        ]
+        fields = ["barangay", *COMMUNITY_PROFILE_FIELDS]
         widgets = {
             **COMMUNITY_PROFILE_WIDGETS,
         }

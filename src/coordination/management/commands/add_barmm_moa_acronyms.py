@@ -1,6 +1,7 @@
 """
 Management command to add official acronyms to BARMM MOA organizations
 """
+
 from django.core.management.base import BaseCommand
 from coordination.models import Organization
 
@@ -27,24 +28,24 @@ BARMM_MOA_ACRONYMS = {
 
 
 class Command(BaseCommand):
-    help = 'Add official acronyms to BARMM MOA organizations'
+    help = "Add official acronyms to BARMM MOA organizations"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--force',
-            action='store_true',
-            help='Force update even if organization already has an acronym',
+            "--force",
+            action="store_true",
+            help="Force update even if organization already has an acronym",
         )
 
     def handle(self, *args, **options):
-        force = options['force']
+        force = options["force"]
 
         updated_count = 0
         skipped_count = 0
         not_found_count = 0
 
-        self.stdout.write(self.style.SUCCESS('Adding BARMM MOA acronyms...'))
-        self.stdout.write('')
+        self.stdout.write(self.style.SUCCESS("Adding BARMM MOA acronyms..."))
+        self.stdout.write("")
 
         for moa_name, acronym in BARMM_MOA_ACRONYMS.items():
             try:
@@ -73,35 +74,35 @@ class Command(BaseCommand):
                     )
                 else:
                     self.stdout.write(
-                        self.style.SUCCESS(f'  ✓ Added: {org.name} ({acronym})')
+                        self.style.SUCCESS(f"  ✓ Added: {org.name} ({acronym})")
                     )
                 updated_count += 1
 
             except Organization.DoesNotExist:
                 self.stdout.write(
-                    self.style.ERROR(f'  ✗ Not found in database: {moa_name}')
+                    self.style.ERROR(f"  ✗ Not found in database: {moa_name}")
                 )
                 not_found_count += 1
             except Organization.MultipleObjectsReturned:
                 self.stdout.write(
                     self.style.WARNING(
-                        f'  ⚠ Multiple organizations found with name: {moa_name}'
+                        f"  ⚠ Multiple organizations found with name: {moa_name}"
                     )
                 )
                 not_found_count += 1
 
-        self.stdout.write('')
-        self.stdout.write(self.style.SUCCESS(f'Summary:'))
-        self.stdout.write(self.style.SUCCESS(f'  • Updated: {updated_count}'))
+        self.stdout.write("")
+        self.stdout.write(self.style.SUCCESS(f"Summary:"))
+        self.stdout.write(self.style.SUCCESS(f"  • Updated: {updated_count}"))
         if skipped_count > 0:
-            self.stdout.write(self.style.WARNING(f'  • Skipped: {skipped_count}'))
+            self.stdout.write(self.style.WARNING(f"  • Skipped: {skipped_count}"))
         if not_found_count > 0:
-            self.stdout.write(self.style.ERROR(f'  • Not found: {not_found_count}'))
+            self.stdout.write(self.style.ERROR(f"  • Not found: {not_found_count}"))
 
         if not_found_count > 0:
-            self.stdout.write('')
+            self.stdout.write("")
             self.stdout.write(
                 self.style.WARNING(
-                    'Organizations not found in database. Please create them first.'
+                    "Organizations not found in database. Please create them first."
                 )
             )

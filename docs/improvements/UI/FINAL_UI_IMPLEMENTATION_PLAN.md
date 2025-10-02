@@ -2,8 +2,8 @@
 
 **Document Status**: Approved Implementation Roadmap - **FULLY IMPLEMENTED** ✅
 **Date Created**: January 2, 2025
-**Version**: 3.0 (Complete Implementation - January 10, 2025)
-**Last Updated**: January 10, 2025 - All phases completed via parallel agent deployment
+**Version**: 3.1 (Navigation Architecture Updated - October 2, 2025)
+**Last Updated**: October 2, 2025 - Project Central navigation consolidated into MOA PPAs Management
 **Related Documents**:
 - [Integrated Calendar System Evaluation Plan](../integrated_calendar_system_evaluation_plan.md) (88 tasks)
 - [Integrated Staff Task Management Evaluation Plan](../integrated_staff_task_management_evaluation_plan.md) (40 tasks)
@@ -123,8 +123,12 @@ All systems verified operational:
 2. ✅ **URLs**: All 24 Project Central + 4 Dashboard URLs registered and accessible
 3. ✅ **Migrations**: All database migrations applied successfully
 4. ✅ **Django Check**: System check passes with 0 issues
-5. ✅ **Navigation**: Project Central dropdown integrated in navbar (desktop + mobile)
-6. ✅ **Context Processors**: Alert count badge showing in navigation
+5. ✅ **Navigation Architecture (Updated Oct 2, 2025)**:
+   - **Project Central standalone navigation removed from navbar**
+   - **Integration point**: MOA PPAs Management (`/monitoring/moa-ppas/`) now serves as gateway
+   - **Quick access panel**: Portfolio Dashboard, Budget Approvals, Alerts, and Reports accessible via dedicated CTA section
+   - **URL paths unchanged**: All Project Central URLs remain functional, accessed through new entry point
+6. ✅ **Context Processors**: Alert count badge available for embedding where needed
 7. ✅ **Coordination**: Resource booking with conflict detection, QR attendance scanning
 8. ✅ **Component Library**: 4 reusable components + comprehensive documentation
 
@@ -311,16 +315,11 @@ All systems verified operational:
    - Registered in: `settings/base.py` TEMPLATES configuration
 
 2. ✅ **Navigation Enhancement**
-   - File: `src/templates/common/navbar.html` (modified)
-   - Desktop: Project Central dropdown with 5 submenu items
-   - Mobile: Collapsible Project Central section
-   - Alert Badge: Red circle showing unacknowledged count
-   - Submenu Items:
-     - Portfolio Dashboard
-     - Budget Approvals
-     - M&E Analytics
-     - Alerts (with badge)
-     - Reports
+   - File: `src/templates/common/navbar.html` (streamlined)
+   - Removed Project Central dropdown from global navigation
+   - Project Central shortcuts relocated to MOA PPAs Management quick snapshot panel
+   - Quick snapshot provides buttons for Portfolio Dashboard, Budget Approvals, Alerts, and Reports
+   - Alert badge support remains available for future placements
 
 3. ✅ **URL Verification Script**
    - File: `scripts/verify_urls.py` (created, 108 lines)
@@ -422,7 +421,7 @@ src/templates/
 │       └── project_row.html            (Table row partial)
 ├── common/
 │   ├── dashboard.html                  (Enhanced with HTMX)
-│   └── navbar.html                     (Project Central dropdown)
+│   └── navbar.html                     (Project Central links streamlined)
 └── components/
     ├── kanban_board.html               (Reusable kanban)
     ├── calendar_full.html              (FullCalendar wrapper)
@@ -3429,11 +3428,87 @@ python manage.py migrate coordination
 
 ---
 
+## 🔄 NAVIGATION ARCHITECTURE UPDATE (October 2, 2025)
+
+### Change Summary
+**Project Central navigation has been consolidated into the MOA PPAs Management page** for better information architecture and user flow.
+
+### What Changed
+
+#### **Before (Removed)**
+- Standalone "Project Central" dropdown in main navbar
+- Direct access to Portfolio Dashboard, Budget Approvals, Alerts, Reports from navbar
+
+#### **After (Current)**
+- **Entry Point**: MOA PPAs Management page (`/monitoring/moa-ppas/`)
+- **Integration Method**: Dedicated "Project Management Platform" CTA section with quick access panel
+- **Links Available**:
+  - PPA Management (Portfolio Dashboard) - `project_central:portfolio_dashboard`
+  - Budget Approvals - `project_central:budget_approval_dashboard`
+  - Alerts - `project_central:alert_list`
+  - Reports - `project_central:report_list`
+
+### Implementation Details
+
+#### Files Modified
+1. **`src/templates/common/navbar.html`**
+   - Removed: Project Central dropdown (desktop & mobile)
+   - Kept: M&E Analytics link in M&E dropdown (still accessible)
+
+2. **`src/templates/monitoring/moa_ppas_dashboard.html`**
+   - Added: "Project Management Platform CTA" section (lines 75-114)
+   - Features: Gradient card with 4 quick access buttons
+   - Design: Emerald-to-sky gradient with glassmorphism effects
+
+#### Navigation Flow
+```
+Main Navbar → M&E → MOA PPAs Management
+                      ↓
+            [Project Management Platform CTA]
+                      ↓
+    ┌─────────────────┼─────────────────┐
+    ↓                 ↓                 ↓
+Portfolio      Budget Approvals    Alerts & Reports
+Dashboard
+```
+
+#### Rationale
+- **Context-aware access**: Project management tools are most relevant when viewing MOA PPAs
+- **Reduced navbar clutter**: Consolidated related functions into single workflow
+- **Improved discoverability**: CTA section highlights platform capabilities
+- **Maintained functionality**: All URLs and features remain accessible
+
+### Code Reference
+
+**CTA Section** ([moa_ppas_dashboard.html:75-114](src/templates/monitoring/moa_ppas_dashboard.html#L75))
+```html
+<!-- Project Management Platform CTA -->
+<section class="relative overflow-hidden rounded-3xl border border-emerald-200/60 bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-500 text-white shadow-xl">
+    <!-- Quick Snapshot Panel with 4 buttons -->
+    <a href="{% url 'project_central:portfolio_dashboard' %}" ...>PPA Management</a>
+    <a href="{% url 'project_central:budget_approval_dashboard' %}" ...>Budget Approvals</a>
+    <a href="{% url 'project_central:alert_list' %}" ...>Alerts</a>
+    <a href="{% url 'project_central:report_list' %}" ...>Reports</a>
+</section>
+```
+
+**Navbar Update** ([navbar.html:189-224](src/templates/common/navbar.html#L189))
+- Project Central dropdown removed entirely
+- M&E Analytics link preserved in M&E section
+
+### Impact Assessment
+- ✅ **No broken links**: All Project Central URLs remain functional
+- ✅ **Improved UX**: Contextual access from relevant workflow page
+- ✅ **Cleaner navbar**: Reduced from 6 to 5 main sections
+- ✅ **Better mobile experience**: Less dropdown nesting in mobile menu
+
+---
+
 ## 🎯 COMPLETION SUMMARY
 
-**Document Version**: 3.0 (Full Implementation Complete)
+**Document Version**: 3.1 (Navigation Architecture Updated)
 **Status**: ✅ **FULLY IMPLEMENTED** - 100% complete (38/38 priority items)
-**Last Updated**: January 10, 2025
+**Last Updated**: October 2, 2025
 **Implementation Method**: Parallel agent deployment (6 specialized htmx-ui-engineer agents)
 **Implementation Time**: 1 day (20-30x faster than traditional development)
 

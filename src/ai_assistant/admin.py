@@ -5,8 +5,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import (AIConversation, AIGeneratedDocument, AIInsight,
-                     AIUsageMetrics)
+from .models import AIConversation, AIGeneratedDocument, AIInsight, AIUsageMetrics
 
 
 @admin.register(AIConversation)

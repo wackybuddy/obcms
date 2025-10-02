@@ -3,15 +3,28 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import (ActionItem, Communication, CommunicationSchedule,
-                     CommunicationTemplate, ConsultationFeedback,
-                     EngagementFacilitator, EngagementTracking, Event,
-                     EventDocument, EventParticipant, MAOFocalPerson,
-                     MAOQuarterlyReport,
-                     Organization, OrganizationContact, Partnership,
-                     PartnershipDocument, PartnershipMilestone,
-                     PartnershipSignatory, StakeholderEngagement,
-                     StakeholderEngagementType)
+from .models import (
+    ActionItem,
+    Communication,
+    CommunicationSchedule,
+    CommunicationTemplate,
+    ConsultationFeedback,
+    EngagementFacilitator,
+    EngagementTracking,
+    Event,
+    EventDocument,
+    EventParticipant,
+    MAOFocalPerson,
+    MAOQuarterlyReport,
+    Organization,
+    OrganizationContact,
+    Partnership,
+    PartnershipDocument,
+    PartnershipMilestone,
+    PartnershipSignatory,
+    StakeholderEngagement,
+    StakeholderEngagementType,
+)
 
 
 # Organization Admin
@@ -421,7 +434,11 @@ class EventAdmin(admin.ModelAdmin):
     def quarterly_coordination_badge(self, obj):
         """Display quarterly coordination status."""
         if obj.is_quarterly_coordination:
-            display_text = f"{obj.quarter} FY{obj.fiscal_year}" if obj.quarter and obj.fiscal_year else "QCM"
+            display_text = (
+                f"{obj.quarter} FY{obj.fiscal_year}"
+                if obj.quarter and obj.fiscal_year
+                else "QCM"
+            )
             return format_html(
                 '<span style="background-color: #6f42c1; color: white; padding: 2px 6px; '
                 'border-radius: 3px; font-size: 11px;">{}</span>',

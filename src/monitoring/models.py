@@ -93,9 +93,13 @@ class MonitoringEntry(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=255, help_text="Name of the project, activity, or request")
+    title = models.CharField(
+        max_length=255, help_text="Name of the project, activity, or request"
+    )
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-    summary = models.TextField(blank=True, help_text="Overview of objectives, beneficiaries, and scope")
+    summary = models.TextField(
+        blank=True, help_text="Overview of objectives, beneficiaries, and scope"
+    )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -306,7 +310,19 @@ class MonitoringEntry(models.Model):
         blank=True,
         help_text=(
             "Structured milestone entries: "
-            "[{""date"": ""2025-10-15"", ""title"": ""Technical hearing"", ""status"": ""upcoming""}]"
+            "[{"
+            "date"
+            ": "
+            "2025-10-15"
+            ", "
+            "title"
+            ": "
+            "Technical hearing"
+            ", "
+            "status"
+            ": "
+            "upcoming"
+            "}]"
         ),
     )
     budget_allocation = models.DecimalField(
@@ -437,24 +453,24 @@ class MonitoringEntry(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     # ========== BUDGET APPROVAL WORKFLOW (Project Central Integration) ==========
-    APPROVAL_STATUS_DRAFT = 'draft'
-    APPROVAL_STATUS_TECHNICAL_REVIEW = 'technical_review'
-    APPROVAL_STATUS_BUDGET_REVIEW = 'budget_review'
-    APPROVAL_STATUS_STAKEHOLDER_CONSULTATION = 'stakeholder_consultation'
-    APPROVAL_STATUS_EXECUTIVE_APPROVAL = 'executive_approval'
-    APPROVAL_STATUS_APPROVED = 'approved'
-    APPROVAL_STATUS_ENACTED = 'enacted'
-    APPROVAL_STATUS_REJECTED = 'rejected'
+    APPROVAL_STATUS_DRAFT = "draft"
+    APPROVAL_STATUS_TECHNICAL_REVIEW = "technical_review"
+    APPROVAL_STATUS_BUDGET_REVIEW = "budget_review"
+    APPROVAL_STATUS_STAKEHOLDER_CONSULTATION = "stakeholder_consultation"
+    APPROVAL_STATUS_EXECUTIVE_APPROVAL = "executive_approval"
+    APPROVAL_STATUS_APPROVED = "approved"
+    APPROVAL_STATUS_ENACTED = "enacted"
+    APPROVAL_STATUS_REJECTED = "rejected"
 
     APPROVAL_STATUS_CHOICES = [
-        (APPROVAL_STATUS_DRAFT, 'Draft'),
-        (APPROVAL_STATUS_TECHNICAL_REVIEW, 'Technical Review'),
-        (APPROVAL_STATUS_BUDGET_REVIEW, 'Budget Review'),
-        (APPROVAL_STATUS_STAKEHOLDER_CONSULTATION, 'Stakeholder Consultation'),
-        (APPROVAL_STATUS_EXECUTIVE_APPROVAL, 'Executive Approval'),
-        (APPROVAL_STATUS_APPROVED, 'Approved'),
-        (APPROVAL_STATUS_ENACTED, 'Enacted'),
-        (APPROVAL_STATUS_REJECTED, 'Rejected'),
+        (APPROVAL_STATUS_DRAFT, "Draft"),
+        (APPROVAL_STATUS_TECHNICAL_REVIEW, "Technical Review"),
+        (APPROVAL_STATUS_BUDGET_REVIEW, "Budget Review"),
+        (APPROVAL_STATUS_STAKEHOLDER_CONSULTATION, "Stakeholder Consultation"),
+        (APPROVAL_STATUS_EXECUTIVE_APPROVAL, "Executive Approval"),
+        (APPROVAL_STATUS_APPROVED, "Approved"),
+        (APPROVAL_STATUS_ENACTED, "Enacted"),
+        (APPROVAL_STATUS_REJECTED, "Rejected"),
     ]
 
     approval_status = models.CharField(
@@ -534,17 +550,23 @@ class MonitoringEntry(models.Model):
     @property
     def total_allocations(self) -> Decimal:
         """Total allocation tranches recorded."""
-        return Decimal(str(self.funding_total(MonitoringEntryFunding.TRANCHE_ALLOCATION)))
+        return Decimal(
+            str(self.funding_total(MonitoringEntryFunding.TRANCHE_ALLOCATION))
+        )
 
     @property
     def total_obligations(self) -> Decimal:
         """Total obligation tranches recorded."""
-        return Decimal(str(self.funding_total(MonitoringEntryFunding.TRANCHE_OBLIGATION)))
+        return Decimal(
+            str(self.funding_total(MonitoringEntryFunding.TRANCHE_OBLIGATION))
+        )
 
     @property
     def total_disbursements(self) -> Decimal:
         """Total disbursement tranches recorded."""
-        return Decimal(str(self.funding_total(MonitoringEntryFunding.TRANCHE_DISBURSEMENT)))
+        return Decimal(
+            str(self.funding_total(MonitoringEntryFunding.TRANCHE_DISBURSEMENT))
+        )
 
     @property
     def allocation_variance(self) -> Decimal:
@@ -812,6 +834,7 @@ class MonitoringEntryWorkflowStage(models.Model):
     def __str__(self):
         return f"{self.entry.title} - {self.get_stage_display()}"
 
+
 class MonitoringUpdate(models.Model):
     """Log granular progress updates for a monitoring entry."""
 
@@ -946,7 +969,7 @@ class MonitoringEntryWorkflowDocument(models.Model):
 
     def save(self, *args, **kwargs):
         """Auto-populate file size before saving."""
-        if self.file and hasattr(self.file, 'size'):
+        if self.file and hasattr(self.file, "size"):
             self.file_size = self.file.size
         super().save(*args, **kwargs)
 

@@ -147,7 +147,9 @@ class MunicipalOBCProfile(TimeStampedModel):
             else {}
         )
 
-        current_sections = normalise_reported_metrics((aggregated_payload or {}).get("sections"))
+        current_sections = normalise_reported_metrics(
+            (aggregated_payload or {}).get("sections")
+        )
         current_flat = flatten_metrics(current_sections)
         current_metadata = (
             aggregated_payload.get("metadata")
@@ -167,7 +169,9 @@ class MunicipalOBCProfile(TimeStampedModel):
                 }
 
         metadata_diff: Dict[str, Dict[str, Any]] = {}
-        metadata_keys = sorted(set(previous_metadata.keys()) | set(current_metadata.keys()))
+        metadata_keys = sorted(
+            set(previous_metadata.keys()) | set(current_metadata.keys())
+        )
         for key in metadata_keys:
             before_value = previous_metadata.get(key)
             after_value = current_metadata.get(key)
@@ -181,12 +185,14 @@ class MunicipalOBCProfile(TimeStampedModel):
         self.aggregated_metrics = aggregated_payload or {}
         self.last_aggregated_at = now
         self.aggregation_version = self.aggregation_version + 1
-        self.save(update_fields=[
-            "aggregated_metrics",
-            "last_aggregated_at",
-            "aggregation_version",
-            "updated_at",
-        ])
+        self.save(
+            update_fields=[
+                "aggregated_metrics",
+                "last_aggregated_at",
+                "aggregation_version",
+                "updated_at",
+            ]
+        )
 
         history_payload = history_payload or {}
         history_payload.setdefault("before", previous_payload)
@@ -232,9 +238,9 @@ class MunicipalOBCProfile(TimeStampedModel):
 
         sections_payload = normalise_reported_metrics(payload.get("sections"))
         provided_fields_raw = payload.get("provided_fields", [])
-        provided_fields = sorted({
-            field for field in provided_fields_raw if isinstance(field, str)
-        })
+        provided_fields = sorted(
+            {field for field in provided_fields_raw if isinstance(field, str)}
+        )
 
         metadata = payload.get("metadata")
         if not isinstance(metadata, dict):
@@ -254,7 +260,11 @@ class MunicipalOBCProfile(TimeStampedModel):
             for entry in signatories_payload:
                 if isinstance(entry, dict):
                     sanitised_signatories.append(
-                        {key: value for key, value in entry.items() if isinstance(key, str)}
+                        {
+                            key: value
+                            for key, value in entry.items()
+                            if isinstance(key, str)
+                        }
                     )
             self.reported_signatories = sanitised_signatories
             update_fields.add("reported_signatories")
@@ -397,7 +407,9 @@ class AggregationResult:
     communities_considered: Iterable[int]
     aggregated_flat: Dict[str, int]
 
-    def as_payload(self, *, discrepancies: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def as_payload(
+        self, *, discrepancies: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         return {
             "municipality": self.municipality.pk,
             "barangay_count": self.barangay_count,

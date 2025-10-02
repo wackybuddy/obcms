@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
-from .models import (PolicyDocument, PolicyEvidence, PolicyImpact,
-                     PolicyRecommendation)
+from .models import PolicyDocument, PolicyEvidence, PolicyImpact, PolicyRecommendation
 
 
 class PolicyEvidenceSerializer(serializers.ModelSerializer):

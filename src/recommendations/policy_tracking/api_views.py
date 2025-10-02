@@ -3,15 +3,17 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import (PolicyDocument, PolicyEvidence, PolicyImpact,
-                     PolicyRecommendation)
-from .serializers import (PolicyDocumentListSerializer,
-                          PolicyDocumentSerializer,
-                          PolicyEvidenceListSerializer,
-                          PolicyEvidenceSerializer, PolicyImpactListSerializer,
-                          PolicyImpactSerializer,
-                          PolicyRecommendationListSerializer,
-                          PolicyRecommendationSerializer)
+from .models import PolicyDocument, PolicyEvidence, PolicyImpact, PolicyRecommendation
+from .serializers import (
+    PolicyDocumentListSerializer,
+    PolicyDocumentSerializer,
+    PolicyEvidenceListSerializer,
+    PolicyEvidenceSerializer,
+    PolicyImpactListSerializer,
+    PolicyImpactSerializer,
+    PolicyRecommendationListSerializer,
+    PolicyRecommendationSerializer,
+)
 
 
 class PolicyRecommendationViewSet(viewsets.ModelViewSet):

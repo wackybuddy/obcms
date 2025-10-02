@@ -27,176 +27,176 @@ class WorkflowService:
 
     # Task templates for each workflow stage
     STAGE_TASK_TEMPLATES = {
-        'need_validation': [
+        "need_validation": [
             {
-                'title': 'Review and validate community need',
-                'description': 'Verify need data, evidence sources, and community validation. Update priority score if needed.',
-                'priority': 'high',
-                'days_to_complete': 7,
+                "title": "Review and validate community need",
+                "description": "Verify need data, evidence sources, and community validation. Update priority score if needed.",
+                "priority": "high",
+                "days_to_complete": 7,
             },
             {
-                'title': 'Confirm need is not duplicate',
-                'description': 'Check existing needs and PPAs to ensure this is not a duplicate request.',
-                'priority': 'medium',
-                'days_to_complete': 3,
-            },
-        ],
-        'policy_linkage': [
-            {
-                'title': 'Identify related policy recommendations',
-                'description': 'Search policy tracking system for relevant recommendations that address this need.',
-                'priority': 'medium',
-                'days_to_complete': 5,
-            },
-            {
-                'title': 'Link need to applicable policies',
-                'description': 'Create M2M relationships between need and policy recommendations in admin.',
-                'priority': 'medium',
-                'days_to_complete': 2,
+                "title": "Confirm need is not duplicate",
+                "description": "Check existing needs and PPAs to ensure this is not a duplicate request.",
+                "priority": "medium",
+                "days_to_complete": 3,
             },
         ],
-        'mao_coordination': [
+        "policy_linkage": [
             {
-                'title': 'Identify appropriate MAO',
-                'description': 'Determine which Bangsamoro Ministerial Agency/Office has mandate for this need.',
-                'priority': 'high',
-                'days_to_complete': 3,
+                "title": "Identify related policy recommendations",
+                "description": "Search policy tracking system for relevant recommendations that address this need.",
+                "priority": "medium",
+                "days_to_complete": 5,
             },
             {
-                'title': 'Contact MAO focal person',
-                'description': 'Reach out to MAO focal person to discuss need and confirm MAO will address it.',
-                'priority': 'high',
-                'days_to_complete': 7,
-            },
-            {
-                'title': 'Obtain MAO commitment',
-                'description': 'Get formal or informal commitment from MAO to include this in their planning.',
-                'priority': 'high',
-                'days_to_complete': 14,
+                "title": "Link need to applicable policies",
+                "description": "Create M2M relationships between need and policy recommendations in admin.",
+                "priority": "medium",
+                "days_to_complete": 2,
             },
         ],
-        'budget_planning': [
+        "mao_coordination": [
             {
-                'title': 'Create PPA (MonitoringEntry) for this need',
-                'description': 'Create a Program/Project/Activity entry in monitoring system with budget details.',
-                'priority': 'critical',
-                'days_to_complete': 7,
+                "title": "Identify appropriate MAO",
+                "description": "Determine which Bangsamoro Ministerial Agency/Office has mandate for this need.",
+                "priority": "high",
+                "days_to_complete": 3,
             },
             {
-                'title': 'Prepare budget justification',
-                'description': 'Compile evidence from MANA assessment, community needs, and policy alignment to justify budget request.',
-                'priority': 'high',
-                'days_to_complete': 10,
+                "title": "Contact MAO focal person",
+                "description": "Reach out to MAO focal person to discuss need and confirm MAO will address it.",
+                "priority": "high",
+                "days_to_complete": 7,
             },
             {
-                'title': 'Determine funding source',
-                'description': 'Identify appropriate funding source (GAA, Block Grant, LGU, Donor) for this PPA.',
-                'priority': 'high',
-                'days_to_complete': 5,
-            },
-            {
-                'title': 'Check budget ceiling compliance',
-                'description': 'Verify budget allocation does not exceed sector/funding source ceiling.',
-                'priority': 'high',
-                'days_to_complete': 2,
-            },
-            {
-                'title': 'Calculate cost per beneficiary',
-                'description': 'Determine cost-effectiveness metrics and compare to similar PPAs.',
-                'priority': 'medium',
-                'days_to_complete': 3,
+                "title": "Obtain MAO commitment",
+                "description": "Get formal or informal commitment from MAO to include this in their planning.",
+                "priority": "high",
+                "days_to_complete": 14,
             },
         ],
-        'approval': [
+        "budget_planning": [
             {
-                'title': 'Submit PPA for technical review',
-                'description': 'Prepare technical documentation and submit PPA to technical review committee.',
-                'priority': 'critical',
-                'days_to_complete': 3,
+                "title": "Create PPA (MonitoringEntry) for this need",
+                "description": "Create a Program/Project/Activity entry in monitoring system with budget details.",
+                "priority": "critical",
+                "days_to_complete": 7,
             },
             {
-                'title': 'Address technical review feedback',
-                'description': 'Respond to any questions or concerns raised during technical review.',
-                'priority': 'high',
-                'days_to_complete': 5,
+                "title": "Prepare budget justification",
+                "description": "Compile evidence from MANA assessment, community needs, and policy alignment to justify budget request.",
+                "priority": "high",
+                "days_to_complete": 10,
             },
             {
-                'title': 'Submit for budget review',
-                'description': 'Forward PPA to finance office for budget allocation review.',
-                'priority': 'critical',
-                'days_to_complete': 3,
+                "title": "Determine funding source",
+                "description": "Identify appropriate funding source (GAA, Block Grant, LGU, Donor) for this PPA.",
+                "priority": "high",
+                "days_to_complete": 5,
             },
             {
-                'title': 'Coordinate stakeholder consultation (if required)',
-                'description': 'Schedule and conduct consultation with community and MAO if consultation required.',
-                'priority': 'high',
-                'days_to_complete': 14,
+                "title": "Check budget ceiling compliance",
+                "description": "Verify budget allocation does not exceed sector/funding source ceiling.",
+                "priority": "high",
+                "days_to_complete": 2,
             },
             {
-                'title': 'Prepare executive approval package',
-                'description': 'Compile all documentation for Chief Minister\'s Office review.',
-                'priority': 'critical',
-                'days_to_complete': 5,
-            },
-        ],
-        'implementation': [
-            {
-                'title': 'Create detailed implementation plan',
-                'description': 'Develop timeline, milestones, and activity schedule for PPA implementation.',
-                'priority': 'high',
-                'days_to_complete': 7,
-            },
-            {
-                'title': 'Assign implementation responsibilities',
-                'description': 'Identify staff and partners responsible for each activity.',
-                'priority': 'high',
-                'days_to_complete': 5,
-            },
-            {
-                'title': 'Record initial funding obligation',
-                'description': 'Create FundingFlow record for initial budget obligation.',
-                'priority': 'high',
-                'days_to_complete': 2,
+                "title": "Calculate cost per beneficiary",
+                "description": "Determine cost-effectiveness metrics and compare to similar PPAs.",
+                "priority": "medium",
+                "days_to_complete": 3,
             },
         ],
-        'monitoring': [
+        "approval": [
             {
-                'title': 'Set up M&E data collection',
-                'description': 'Establish system for collecting progress data, outcome indicators, and beneficiary information.',
-                'priority': 'high',
-                'days_to_complete': 7,
+                "title": "Submit PPA for technical review",
+                "description": "Prepare technical documentation and submit PPA to technical review committee.",
+                "priority": "critical",
+                "days_to_complete": 3,
             },
             {
-                'title': 'Schedule quarterly progress reviews',
-                'description': 'Calendar regular check-ins to assess progress, challenges, and budget utilization.',
-                'priority': 'medium',
-                'days_to_complete': 3,
+                "title": "Address technical review feedback",
+                "description": "Respond to any questions or concerns raised during technical review.",
+                "priority": "high",
+                "days_to_complete": 5,
+            },
+            {
+                "title": "Submit for budget review",
+                "description": "Forward PPA to finance office for budget allocation review.",
+                "priority": "critical",
+                "days_to_complete": 3,
+            },
+            {
+                "title": "Coordinate stakeholder consultation (if required)",
+                "description": "Schedule and conduct consultation with community and MAO if consultation required.",
+                "priority": "high",
+                "days_to_complete": 14,
+            },
+            {
+                "title": "Prepare executive approval package",
+                "description": "Compile all documentation for Chief Minister's Office review.",
+                "priority": "critical",
+                "days_to_complete": 5,
             },
         ],
-        'completion': [
+        "implementation": [
             {
-                'title': 'Conduct final evaluation',
-                'description': 'Assess overall project success, outcome achievement, and impact on community.',
-                'priority': 'high',
-                'days_to_complete': 14,
+                "title": "Create detailed implementation plan",
+                "description": "Develop timeline, milestones, and activity schedule for PPA implementation.",
+                "priority": "high",
+                "days_to_complete": 7,
             },
             {
-                'title': 'Complete financial reconciliation',
-                'description': 'Verify all budget obligations and disbursements, document savings or overruns.',
-                'priority': 'high',
-                'days_to_complete': 10,
+                "title": "Assign implementation responsibilities",
+                "description": "Identify staff and partners responsible for each activity.",
+                "priority": "high",
+                "days_to_complete": 5,
             },
             {
-                'title': 'Document lessons learned',
-                'description': 'Capture key insights for future projects, including budget and cost-effectiveness lessons.',
-                'priority': 'medium',
-                'days_to_complete': 7,
+                "title": "Record initial funding obligation",
+                "description": "Create FundingFlow record for initial budget obligation.",
+                "priority": "high",
+                "days_to_complete": 2,
+            },
+        ],
+        "monitoring": [
+            {
+                "title": "Set up M&E data collection",
+                "description": "Establish system for collecting progress data, outcome indicators, and beneficiary information.",
+                "priority": "high",
+                "days_to_complete": 7,
             },
             {
-                'title': 'Update cost-effectiveness database',
-                'description': 'Record final cost per beneficiary and effectiveness ratings for future reference.',
-                'priority': 'medium',
-                'days_to_complete': 3,
+                "title": "Schedule quarterly progress reviews",
+                "description": "Calendar regular check-ins to assess progress, challenges, and budget utilization.",
+                "priority": "medium",
+                "days_to_complete": 3,
+            },
+        ],
+        "completion": [
+            {
+                "title": "Conduct final evaluation",
+                "description": "Assess overall project success, outcome achievement, and impact on community.",
+                "priority": "high",
+                "days_to_complete": 14,
+            },
+            {
+                "title": "Complete financial reconciliation",
+                "description": "Verify all budget obligations and disbursements, document savings or overruns.",
+                "priority": "high",
+                "days_to_complete": 10,
+            },
+            {
+                "title": "Document lessons learned",
+                "description": "Capture key insights for future projects, including budget and cost-effectiveness lessons.",
+                "priority": "medium",
+                "days_to_complete": 7,
+            },
+            {
+                "title": "Update cost-effectiveness database",
+                "description": "Record final cost per beneficiary and effectiveness ratings for future reference.",
+                "priority": "medium",
+                "days_to_complete": 3,
             },
         ],
     }
@@ -212,7 +212,9 @@ class WorkflowService:
             user: User who triggered the stage transition
         """
         try:
-            logger.info(f"Triggering stage actions for workflow {workflow.id}: {new_stage}")
+            logger.info(
+                f"Triggering stage actions for workflow {workflow.id}: {new_stage}"
+            )
 
             # Generate tasks for this stage
             cls.generate_stage_tasks(workflow, new_stage, user)
@@ -221,21 +223,26 @@ class WorkflowService:
             cls.send_stage_notification(workflow, new_stage, user)
 
             # Execute stage-specific logic
-            if new_stage == 'mao_coordination':
+            if new_stage == "mao_coordination":
                 cls._handle_mao_coordination_stage(workflow)
-            elif new_stage == 'budget_planning':
+            elif new_stage == "budget_planning":
                 cls._handle_budget_planning_stage(workflow)
-            elif new_stage == 'approval':
+            elif new_stage == "approval":
                 cls._handle_approval_stage(workflow)
-            elif new_stage == 'implementation':
+            elif new_stage == "implementation":
                 cls._handle_implementation_stage(workflow)
-            elif new_stage == 'completion':
+            elif new_stage == "completion":
                 cls._handle_completion_stage(workflow)
 
-            logger.info(f"Stage actions completed successfully for workflow {workflow.id}")
+            logger.info(
+                f"Stage actions completed successfully for workflow {workflow.id}"
+            )
 
         except Exception as e:
-            logger.error(f"Error in trigger_stage_actions for workflow {workflow.id}: {e}", exc_info=True)
+            logger.error(
+                f"Error in trigger_stage_actions for workflow {workflow.id}: {e}",
+                exc_info=True,
+            )
             # Don't raise - we don't want to block stage advancement
 
     @classmethod
@@ -253,27 +260,31 @@ class WorkflowService:
         templates = cls.STAGE_TASK_TEMPLATES.get(stage, [])
 
         for template in templates:
-            due_date = timezone.now().date() + timedelta(days=template['days_to_complete'])
+            due_date = timezone.now().date() + timedelta(
+                days=template["days_to_complete"]
+            )
 
             task = StaffTask.objects.create(
-                title=template['title'],
-                description=template['description'],
-                priority=template['priority'],
-                status='not_started',
+                title=template["title"],
+                description=template["description"],
+                priority=template["priority"],
+                status="not_started",
                 due_date=due_date,
                 created_by=user,
                 linked_workflow=workflow,
                 linked_ppa=workflow.ppa if workflow.ppa else None,
                 workflow_stage=stage,
                 auto_generated=True,
-                domain='project_central',
+                domain="project_central",
             )
 
             # Assign to project lead if available
             if workflow.project_lead:
                 task.assignees.add(workflow.project_lead)
 
-            logger.info(f"Generated task '{task.title}' for workflow {workflow.id}, stage {stage}")
+            logger.info(
+                f"Generated task '{task.title}' for workflow {workflow.id}, stage {stage}"
+            )
 
         return len(templates)
 
@@ -293,22 +304,24 @@ class WorkflowService:
         if workflow.project_lead and workflow.project_lead.email:
             recipients.append(workflow.project_lead.email)
 
-        if workflow.mao_focal_person and hasattr(workflow.mao_focal_person, 'email'):
+        if workflow.mao_focal_person and hasattr(workflow.mao_focal_person, "email"):
             if workflow.mao_focal_person.email:
                 recipients.append(workflow.mao_focal_person.email)
 
         if not recipients:
-            logger.warning(f"No email recipients for workflow {workflow.id} stage notification")
+            logger.warning(
+                f"No email recipients for workflow {workflow.id} stage notification"
+            )
             return
 
         # Prepare email
         subject = f"[OBCMS] Project Workflow Advanced: {workflow.primary_need.title}"
 
         context = {
-            'workflow': workflow,
-            'new_stage': workflow.get_current_stage_display(),
-            'user': user,
-            'workflow_url': workflow.get_absolute_url(),
+            "workflow": workflow,
+            "new_stage": workflow.get_current_stage_display(),
+            "user": user,
+            "workflow_url": workflow.get_absolute_url(),
         }
 
         # For now, simple text email (Phase 2 can add HTML templates)
@@ -332,7 +345,9 @@ Tasks have been automatically generated for this stage.
                 recipient_list=recipients,
                 fail_silently=True,
             )
-            logger.info(f"Sent stage notification for workflow {workflow.id} to {len(recipients)} recipients")
+            logger.info(
+                f"Sent stage notification for workflow {workflow.id} to {len(recipients)} recipients"
+            )
         except Exception as e:
             logger.error(f"Failed to send email for workflow {workflow.id}: {e}")
 
@@ -347,10 +362,10 @@ Tasks have been automatically generated for this stage.
     def _handle_budget_planning_stage(cls, workflow):
         """Stage-specific logic for budget planning."""
         # Update workflow estimated budget from need if available
-        if workflow.primary_need and hasattr(workflow.primary_need, 'estimated_cost'):
+        if workflow.primary_need and hasattr(workflow.primary_need, "estimated_cost"):
             if not workflow.estimated_budget and workflow.primary_need.estimated_cost:
                 workflow.estimated_budget = workflow.primary_need.estimated_cost
-                workflow.save(update_fields=['estimated_budget'])
+                workflow.save(update_fields=["estimated_budget"])
 
     @classmethod
     def _handle_approval_stage(cls, workflow):
@@ -358,17 +373,20 @@ Tasks have been automatically generated for this stage.
         # Set PPA approval_status to technical_review if still in draft
         if workflow.ppa:
             from monitoring.models import MonitoringEntry
+
             if workflow.ppa.approval_status == MonitoringEntry.APPROVAL_STATUS_DRAFT:
-                workflow.ppa.approval_status = MonitoringEntry.APPROVAL_STATUS_TECHNICAL_REVIEW
-                workflow.ppa.save(update_fields=['approval_status'])
+                workflow.ppa.approval_status = (
+                    MonitoringEntry.APPROVAL_STATUS_TECHNICAL_REVIEW
+                )
+                workflow.ppa.save(update_fields=["approval_status"])
 
     @classmethod
     def _handle_implementation_stage(cls, workflow):
         """Stage-specific logic for implementation."""
         # Update PPA status to ongoing
-        if workflow.ppa and workflow.ppa.status != 'ongoing':
-            workflow.ppa.status = 'ongoing'
-            workflow.ppa.save(update_fields=['status'])
+        if workflow.ppa and workflow.ppa.status != "ongoing":
+            workflow.ppa.status = "ongoing"
+            workflow.ppa.save(update_fields=["status"])
 
     @classmethod
     def _handle_completion_stage(cls, workflow):
@@ -376,17 +394,17 @@ Tasks have been automatically generated for this stage.
         # Update workflow completion date
         if not workflow.actual_completion_date:
             workflow.actual_completion_date = timezone.now().date()
-            workflow.save(update_fields=['actual_completion_date'])
+            workflow.save(update_fields=["actual_completion_date"])
 
         # Mark need as completed
-        if workflow.primary_need and workflow.primary_need.status != 'completed':
-            workflow.primary_need.status = 'completed'
-            workflow.primary_need.save(update_fields=['status'])
+        if workflow.primary_need and workflow.primary_need.status != "completed":
+            workflow.primary_need.status = "completed"
+            workflow.primary_need.save(update_fields=["status"])
 
         # Update PPA status
-        if workflow.ppa and workflow.ppa.status != 'completed':
-            workflow.ppa.status = 'completed'
-            workflow.ppa.save(update_fields=['status'])
+        if workflow.ppa and workflow.ppa.status != "completed":
+            workflow.ppa.status = "completed"
+            workflow.ppa.save(update_fields=["status"])
 
     @classmethod
     def validate_stage_requirements(cls, workflow, target_stage):
@@ -409,15 +427,17 @@ Tasks have been automatically generated for this stage.
             return False, errors
 
         # Additional validation based on stage
-        if target_stage == 'mao_coordination':
+        if target_stage == "mao_coordination":
             if not workflow.primary_need.is_validated:
                 errors.append("Need must be validated before MAO coordination.")
 
-        elif target_stage == 'budget_planning':
+        elif target_stage == "budget_planning":
             if not workflow.mao_focal_person:
-                errors.append("MAO focal person must be assigned before budget planning.")
+                errors.append(
+                    "MAO focal person must be assigned before budget planning."
+                )
 
-        elif target_stage == 'approval':
+        elif target_stage == "approval":
             if not workflow.ppa:
                 errors.append("PPA must be created before approval stage.")
             elif not workflow.ppa.budget_allocation:
@@ -425,12 +445,13 @@ Tasks have been automatically generated for this stage.
             elif not workflow.ppa.funding_source:
                 errors.append("PPA must have funding source specified.")
 
-        elif target_stage == 'implementation':
+        elif target_stage == "implementation":
             if workflow.ppa:
                 from monitoring.models import MonitoringEntry
+
                 if workflow.ppa.approval_status not in [
                     MonitoringEntry.APPROVAL_STATUS_APPROVED,
-                    MonitoringEntry.APPROVAL_STATUS_ENACTED
+                    MonitoringEntry.APPROVAL_STATUS_ENACTED,
                 ]:
                     errors.append("PPA must be approved before implementation.")
 
@@ -451,11 +472,7 @@ Tasks have been automatically generated for this stage.
         """
         from project_central.models import ProjectWorkflow
 
-        results = {
-            'succeeded': 0,
-            'failed': 0,
-            'errors': []
-        }
+        results = {"succeeded": 0, "failed": 0, "errors": []}
 
         workflows = ProjectWorkflow.objects.filter(id__in=workflow_ids)
 
@@ -465,13 +482,13 @@ Tasks have been automatically generated for this stage.
             if is_valid:
                 try:
                     workflow.advance_stage(target_stage, user)
-                    results['succeeded'] += 1
+                    results["succeeded"] += 1
                 except Exception as e:
-                    results['failed'] += 1
-                    results['errors'].append(f"Workflow {workflow.id}: {str(e)}")
+                    results["failed"] += 1
+                    results["errors"].append(f"Workflow {workflow.id}: {str(e)}")
             else:
-                results['failed'] += 1
-                results['errors'].append(f"Workflow {workflow.id}: {', '.join(errors)}")
+                results["failed"] += 1
+                results["errors"].append(f"Workflow {workflow.id}: {', '.join(errors)}")
 
         return results
 
@@ -493,20 +510,28 @@ Tasks have been automatically generated for this stage.
 
         if fiscal_year:
             workflows = workflows.filter(
-                Q(initiated_date__year=fiscal_year) |
-                Q(ppa__fiscal_year=fiscal_year)
+                Q(initiated_date__year=fiscal_year) | Q(ppa__fiscal_year=fiscal_year)
             )
 
         metrics = {
-            'total_workflows': workflows.count(),
-            'by_stage': dict(workflows.values('current_stage').annotate(count=Count('id')).values_list('current_stage', 'count')),
-            'by_priority': dict(workflows.values('priority_level').annotate(count=Count('id')).values_list('priority_level', 'count')),
-            'on_track': workflows.filter(is_on_track=True).count(),
-            'blocked': workflows.filter(is_blocked=True).count(),
-            'avg_days_in_stage': workflows.annotate(
-                days_in_stage=Count('stage_history')
-            ).aggregate(avg=Avg('days_in_stage'))['avg'] or 0,
-            'overdue_count': sum(1 for w in workflows if w.is_overdue()),
+            "total_workflows": workflows.count(),
+            "by_stage": dict(
+                workflows.values("current_stage")
+                .annotate(count=Count("id"))
+                .values_list("current_stage", "count")
+            ),
+            "by_priority": dict(
+                workflows.values("priority_level")
+                .annotate(count=Count("id"))
+                .values_list("priority_level", "count")
+            ),
+            "on_track": workflows.filter(is_on_track=True).count(),
+            "blocked": workflows.filter(is_blocked=True).count(),
+            "avg_days_in_stage": workflows.annotate(
+                days_in_stage=Count("stage_history")
+            ).aggregate(avg=Avg("days_in_stage"))["avg"]
+            or 0,
+            "overdue_count": sum(1 for w in workflows if w.is_overdue()),
         }
 
         return metrics

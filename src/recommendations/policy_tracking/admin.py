@@ -3,9 +3,13 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import (PolicyDocument, PolicyEvidence,
-                     PolicyImplementationMilestone, PolicyImpact,
-                     PolicyRecommendation)
+from .models import (
+    PolicyDocument,
+    PolicyEvidence,
+    PolicyImplementationMilestone,
+    PolicyImpact,
+    PolicyRecommendation,
+)
 
 
 class PolicyEvidenceInline(admin.TabularInline):
@@ -586,12 +590,16 @@ class PolicyImplementationMilestoneAdmin(admin.ModelAdmin):
     def progress_bar(self, obj):
         """Visual progress bar."""
         percentage = obj.progress_percentage
-        color = "#28a745" if percentage >= 100 else "#17a2b8" if percentage >= 50 else "#ffc107"
+        color = (
+            "#28a745"
+            if percentage >= 100
+            else "#17a2b8" if percentage >= 50 else "#ffc107"
+        )
         return format_html(
             '<div style="width: 100px; background-color: #e9ecef; border-radius: 3px;">'
             '<div style="width: {}%; background-color: {}; height: 15px; border-radius: 3px; '
             'text-align: center; color: white; font-size: 10px; line-height: 15px;">{}%</div>'
-            '</div>',
+            "</div>",
             min(percentage, 100),
             color,
             percentage,
@@ -614,6 +622,8 @@ class PolicyImplementationMilestoneAdmin(admin.ModelAdmin):
                 '<span style="color: orange;">⏰ {} days left</span>',
                 obj.days_until_due,
             )
-        return format_html('<span style="color: gray;">{} days left</span>', obj.days_until_due)
+        return format_html(
+            '<span style="color: gray;">{} days left</span>', obj.days_until_due
+        )
 
     overdue_indicator.short_description = "Due Status"

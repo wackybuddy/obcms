@@ -17,18 +17,21 @@ from recommendations.policy_tracking.models import PolicyRecommendation
 from recommendations.policy_tracking.serializers import PolicyRecommendationSerializer
 
 from .ai_engine import GeminiAIEngine
-from .models import (AIConversation, AIGeneratedDocument, AIInsight,
-                     AIUsageMetrics)
-from .serializers import (AIConversationCreateSerializer,
-                          AIConversationSerializer,
-                          AIGeneratedDocumentSerializer,
-                          AIInsightCreateSerializer, AIInsightSerializer,
-                          AIResponseSerializer, AIUsageMetricsSerializer,
-                          ChatMessageSerializer,
-                          CulturalGuidanceRequestSerializer,
-                          DocumentGenerationRequestSerializer,
-                          EvidenceReviewRequestSerializer,
-                          PolicyAnalysisRequestSerializer)
+from .models import AIConversation, AIGeneratedDocument, AIInsight, AIUsageMetrics
+from .serializers import (
+    AIConversationCreateSerializer,
+    AIConversationSerializer,
+    AIGeneratedDocumentSerializer,
+    AIInsightCreateSerializer,
+    AIInsightSerializer,
+    AIResponseSerializer,
+    AIUsageMetricsSerializer,
+    ChatMessageSerializer,
+    CulturalGuidanceRequestSerializer,
+    DocumentGenerationRequestSerializer,
+    EvidenceReviewRequestSerializer,
+    PolicyAnalysisRequestSerializer,
+)
 
 logger = logging.getLogger(__name__)
 User = get_user_model()

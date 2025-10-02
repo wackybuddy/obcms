@@ -19,16 +19,21 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Deployment Implementation Status](deployment/DEPLOYMENT_IMPLEMENTATION_STATUS.md)
   - [Critical Blockers Fixed](deployment/CRITICAL_BLOCKERS_FIXED.md) ✅
   - [Pre-Deployment Implementation Summary](deployment/pre-deployment-implementation-summary.md)
+  - [Pre-Staging Complete](deployment/PRE_STAGING_COMPLETE.md) ✅ **NEW - Ready for Staging**
 
 - **Platform-Specific Guides:**
   - [Coolify Deployment Plan](deployment/coolify-deployment-plan.md)
   - [Coolify Deployment Checklist](deployment/deployment-coolify.md)
   - [Docker Guide](deployment/docker-guide.md)
+
+- **Database Migration:**
+  - [PostgreSQL Migration Review](deployment/POSTGRESQL_MIGRATION_REVIEW.md) ✅ **NEW - Migration Ready**
   - [PostgreSQL Migration Guide](deployment/postgres-migration-guide.md)
   - [Regional MANA Deployment Checklist](deployment/regional_mana_deployment_checklist.md)
 
 ### 🌍 Environment Configuration
 - [Development Environment](env/development.md)
+- [Staging Environment - Complete Guide](env/staging-complete.md) ⭐ **NEW - 12-Step Deployment**
 - [Staging Environment](env/staging.md)
 - [Production Environment](env/production.md)
 - [Testing Environment](env/testing.md)
@@ -44,6 +49,7 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Calendar Performance Test Plan](testing/calendar_performance_plan.md) ⭐ **NEW - Scope & Metrics**
 - **Test Reports:**
   - [Full Suite Test Report](testing/FULL_SUITE_TEST_REPORT.md) - Comprehensive system test results
+  - [Performance Test Results](testing/PERFORMANCE_TEST_RESULTS.md) ⭐ **NEW - 83% Passing**
   - [MANA Test Verification](testing/MANA_TEST_VERIFICATION.md)
   - [Production Test Results](testing/PRODUCTION_TEST_RESULTS.md)
 - **Test Environments:**
@@ -127,15 +133,25 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - [Staff Task Board Research](reports/staff_task_board_research.md)
 
 ### 🎨 UI & Experience
+- **Dashboard Consistency:** ⭐ **NEW - Standardization Initiative**
+  - [Consistent Dashboard Implementation Plan](improvements/UI/CONSISTENT_DASHBOARD_IMPLEMENTATION_PLAN.md) - 7-module standardization
+  - [Hero Section Specifications](improvements/UI/HERO_SECTION_SPECIFICATIONS.md) - Module-specific designs
+  - [Color Scheme Implementation Plan](improvements/UI/COLOR_SCHEME_IMPLEMENTATION_PLAN.md) ⭐ **NEW - Primary & Module Colors**
+  - [Dashboard Hero Implementation Summary](improvements/UI/DASHBOARD_HERO_IMPLEMENTATION_SUMMARY.md) - Phase 1 complete
+  - [UI Refinements Complete](improvements/UI/UI_REFINEMENTS_COMPLETE.md) ✅ **NEW - Production Ready**
+  - [OBCMS UI Structure Analysis](improvements/UI/OBCMS_UI_STRUCTURE_ANALYSIS.md) - Audit results
+
 - **Admin Panel:**
   - [Admin Panel UI Evaluation](ui/admin_panel_ui_evaluation.md) ⭐ **NEW - Comprehensive Analysis**
   - [Admin Panel UI Improvement Plan](ui/admin_panel_ui_improvement_plan.md) ⭐ **NEW - Implementation Roadmap**
   - [Admin Interface Guide](ui/admin-interface-guide.md)
   - [Critical UI Fixes Implementation Complete](ui/critical_ui_fixes_implementation_complete.md) ✅ **NEW - Bug Fixes & Accessibility**
   - [Comprehensive UI/UX Evaluation](ui/comprehensive_ui_ux_evaluation.md) ⭐ **NEW - Full System Analysis**
+
 - **Color System & Design:**
   - [OBCMS Color System](ui/obcms_color_system.md) ⭐ **NEW - Official Color Palette** (WCAG AA Compliant)
   - [Color Migration Guide](ui/color_migration_guide.md) ⭐ **NEW - Purple to Ocean/Emerald/Gold**
+
 - **Design Resources:**
   - [Component Library](ui/component-library.md)
   - [UI Design System](ui/ui-design-system.md)

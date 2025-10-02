@@ -15,7 +15,9 @@ NOMINATIM_URL = getattr(
     "GEOCODING_NOMINATIM_URL",
     "https://nominatim.openstreetmap.org/search",
 )
-USER_AGENT = getattr(settings, "GEOCODING_USER_AGENT", "OBCMS/1.0 (+https://obcms.local)")
+USER_AGENT = getattr(
+    settings, "GEOCODING_USER_AGENT", "OBCMS/1.0 (+https://obcms.local)"
+)
 TIMEOUT_SECONDS = getattr(settings, "GEOCODING_TIMEOUT", 10)
 
 
@@ -51,7 +53,9 @@ def _format_query(obj) -> Optional[str]:
     return ", ".join(part for part in parts if part)
 
 
-def _request_geocode(query: str) -> Tuple[Optional[float], Optional[float], Optional[list]]:
+def _request_geocode(
+    query: str,
+) -> Tuple[Optional[float], Optional[float], Optional[list]]:
     params = {
         "q": query,
         "format": "jsonv2",
@@ -125,4 +129,3 @@ def ensure_location_coordinates(obj) -> Tuple[Optional[float], Optional[float], 
         obj.save(update_fields=update_fields)
 
     return lat, lng, True
-

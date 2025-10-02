@@ -91,7 +91,10 @@ def monitoring_dashboard(request):
         "gradient": "from-blue-500 via-blue-600 to-blue-700",
         "total": moa_year_qs.count(),
         "metrics": [
-            {"label": "Completed", "value": moa_year_qs.filter(status="completed").count()},
+            {
+                "label": "Completed",
+                "value": moa_year_qs.filter(status="completed").count(),
+            },
             {
                 "label": "Ongoing",
                 "value": moa_year_qs.filter(status__in=["ongoing", "on_hold"]).count(),
@@ -110,7 +113,10 @@ def monitoring_dashboard(request):
         "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
         "total": oobc_year_qs.count(),
         "metrics": [
-            {"label": "Completed", "value": oobc_year_qs.filter(status="completed").count()},
+            {
+                "label": "Completed",
+                "value": oobc_year_qs.filter(status="completed").count(),
+            },
             {
                 "label": "Ongoing",
                 "value": oobc_year_qs.filter(status__in=["ongoing", "on_hold"]).count(),
@@ -150,7 +156,9 @@ def monitoring_dashboard(request):
             {
                 "label": "Not Started",
                 "value": request_year_qs.filter(
-                    Q(request_status="submitted") | Q(request_status="") | Q(request_status__isnull=True)
+                    Q(request_status="submitted")
+                    | Q(request_status="")
+                    | Q(request_status__isnull=True)
                 ).count(),
             },
         ],
@@ -199,7 +207,8 @@ def monitoring_dashboard(request):
     request_status_labels = dict(MonitoringEntry.REQUEST_STATUS_CHOICES)
 
     category_order = {
-        key: index for index, (key, _label) in enumerate(MonitoringEntry.CATEGORY_CHOICES)
+        key: index
+        for index, (key, _label) in enumerate(MonitoringEntry.CATEGORY_CHOICES)
     }
 
     category_summary = [
@@ -323,9 +332,7 @@ def monitoring_entry_detail(request, pk):
         )
 
     related_entries = (
-        MonitoringEntry.objects.filter(
-            communities__in=entry.communities.all()
-        )
+        MonitoringEntry.objects.filter(communities__in=entry.communities.all())
         .exclude(pk=entry.pk)
         .distinct()
         .select_related("lead_organization")
@@ -393,7 +400,8 @@ def create_moa_entry(request):
             {
                 "id": str(community.pk),
                 "type": "community",
-                "name": community.display_name or (barangay.name if barangay else "OBC"),
+                "name": community.display_name
+                or (barangay.name if barangay else "OBC"),
                 "latitude": latitude,
                 "longitude": longitude,
                 "barangay_id": str(barangay.pk) if barangay else None,
@@ -555,21 +563,29 @@ def moa_ppas_dashboard(request):
     # Statistics cards
     total_moa_ppas = moa_entries.count()
     total_budget = moa_entries.aggregate(
-        total=Sum("budget_allocation"),
-        obc_total=Sum("budget_obc_allocation")
+        total=Sum("budget_allocation"), obc_total=Sum("budget_obc_allocation")
     )
 
     # Geographic coverage
     geographic_coverage = {
-        'regions': moa_entries.exclude(coverage_region__isnull=True).values('coverage_region__name').distinct().count(),
-        'provinces': moa_entries.exclude(coverage_province__isnull=True).values('coverage_province__name').distinct().count(),
-        'municipalities': moa_entries.exclude(coverage_municipality__isnull=True).values('coverage_municipality__name').distinct().count(),
+        "regions": moa_entries.exclude(coverage_region__isnull=True)
+        .values("coverage_region__name")
+        .distinct()
+        .count(),
+        "provinces": moa_entries.exclude(coverage_province__isnull=True)
+        .values("coverage_province__name")
+        .distinct()
+        .count(),
+        "municipalities": moa_entries.exclude(coverage_municipality__isnull=True)
+        .values("coverage_municipality__name")
+        .distinct()
+        .count(),
     }
 
     # Timeline analysis
     upcoming_deadlines = moa_entries.filter(
         target_end_date__gte=timezone.now().date(),
-        target_end_date__lte=timezone.now().date() + timezone.timedelta(days=30)
+        target_end_date__lte=timezone.now().date() + timezone.timedelta(days=30),
     ).count()
 
     stats_cards = [
@@ -580,9 +596,18 @@ def moa_ppas_dashboard(request):
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "total": total_moa_ppas,
             "metrics": [
-                {"label": "Completed", "value": moa_entries.filter(status="completed").count()},
-                {"label": "Ongoing", "value": moa_entries.filter(status="ongoing").count()},
-                {"label": "Planning", "value": moa_entries.filter(status="planning").count()},
+                {
+                    "label": "Completed",
+                    "value": moa_entries.filter(status="completed").count(),
+                },
+                {
+                    "label": "Ongoing",
+                    "value": moa_entries.filter(status="ongoing").count(),
+                },
+                {
+                    "label": "Planning",
+                    "value": moa_entries.filter(status="planning").count(),
+                },
             ],
         },
         {
@@ -592,9 +617,20 @@ def moa_ppas_dashboard(request):
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
             "total": f"₱{total_budget['total'] or 0:,.0f}",
             "metrics": [
-                {"label": "OBC Budget", "value": f"₱{total_budget['obc_total'] or 0:,.0f}"},
-                {"label": "With Budget", "value": moa_entries.exclude(budget_allocation__isnull=True).count()},
-                {"label": "Pending", "value": moa_entries.filter(budget_allocation__isnull=True).count()},
+                {
+                    "label": "OBC Budget",
+                    "value": f"₱{total_budget['obc_total'] or 0:,.0f}",
+                },
+                {
+                    "label": "With Budget",
+                    "value": moa_entries.exclude(
+                        budget_allocation__isnull=True
+                    ).count(),
+                },
+                {
+                    "label": "Pending",
+                    "value": moa_entries.filter(budget_allocation__isnull=True).count(),
+                },
             ],
         },
         {
@@ -602,11 +638,14 @@ def moa_ppas_dashboard(request):
             "subtitle": f"Implementation Areas",
             "icon": "fas fa-map-marked-alt",
             "gradient": "from-purple-500 via-purple-600 to-purple-700",
-            "total": geographic_coverage['regions'],
+            "total": geographic_coverage["regions"],
             "metrics": [
-                {"label": "Regions", "value": geographic_coverage['regions']},
-                {"label": "Provinces", "value": geographic_coverage['provinces']},
-                {"label": "Municipalities", "value": geographic_coverage['municipalities']},
+                {"label": "Regions", "value": geographic_coverage["regions"]},
+                {"label": "Provinces", "value": geographic_coverage["provinces"]},
+                {
+                    "label": "Municipalities",
+                    "value": geographic_coverage["municipalities"],
+                },
             ],
         },
         {
@@ -617,8 +656,19 @@ def moa_ppas_dashboard(request):
             "total": upcoming_deadlines,
             "metrics": [
                 {"label": "Due Soon", "value": upcoming_deadlines},
-                {"label": "On Time", "value": moa_entries.filter(status="ongoing", progress__gte=50).count()},
-                {"label": "Delayed", "value": moa_entries.filter(target_end_date__lt=timezone.now().date(), status__in=["ongoing", "planning"]).count()},
+                {
+                    "label": "On Time",
+                    "value": moa_entries.filter(
+                        status="ongoing", progress__gte=50
+                    ).count(),
+                },
+                {
+                    "label": "Delayed",
+                    "value": moa_entries.filter(
+                        target_end_date__lt=timezone.now().date(),
+                        status__in=["ongoing", "planning"],
+                    ).count(),
+                },
             ],
         },
     ]
@@ -673,7 +723,9 @@ def moa_ppas_dashboard(request):
     status_breakdown = [
         {
             "key": item["status"],
-            "label": dict(MonitoringEntry.STATUS_CHOICES).get(item["status"], item["status"]),
+            "label": dict(MonitoringEntry.STATUS_CHOICES).get(
+                item["status"], item["status"]
+            ),
             "total": item["total"],
         }
         for item in (
@@ -685,9 +737,11 @@ def moa_ppas_dashboard(request):
     ]
 
     # Recent updates
-    recent_updates = MonitoringUpdate.objects.filter(
-        entry__category="moa_ppa"
-    ).select_related("entry", "created_by").order_by("-created_at")[:10]
+    recent_updates = (
+        MonitoringUpdate.objects.filter(entry__category="moa_ppa")
+        .select_related("entry", "created_by")
+        .order_by("-created_at")[:10]
+    )
 
     # Progress snapshot
     progress_snapshot = moa_entries.aggregate(
@@ -696,9 +750,12 @@ def moa_ppas_dashboard(request):
     )
 
     # Implementing organizations
-    implementing_orgs = moa_entries.exclude(implementing_moa__isnull=True).values(
-        'implementing_moa__name'
-    ).annotate(total=Count('id')).order_by('-total')[:10]
+    implementing_orgs = (
+        moa_entries.exclude(implementing_moa__isnull=True)
+        .values("implementing_moa__name")
+        .annotate(total=Count("id"))
+        .order_by("-total")[:10]
+    )
 
     context = {
         "stats_cards": stats_cards,
@@ -719,18 +776,18 @@ def import_moa_data(request):
     """Import MOA PPAs data from CSV or Excel file."""
 
     if request.method == "POST":
-        if 'csv_file' not in request.FILES:
+        if "csv_file" not in request.FILES:
             messages.error(request, "Please select a CSV file to upload.")
             return redirect("monitoring:moa_ppas")
 
-        csv_file = request.FILES['csv_file']
+        csv_file = request.FILES["csv_file"]
 
-        if not csv_file.name.endswith('.csv'):
+        if not csv_file.name.endswith(".csv"):
             messages.error(request, "Please upload a valid CSV file.")
             return redirect("monitoring:moa_ppas")
 
         try:
-            decoded_file = csv_file.read().decode('utf-8')
+            decoded_file = csv_file.read().decode("utf-8")
             csv_reader = csv.DictReader(decoded_file.splitlines())
 
             imported_count = 0
@@ -740,14 +797,22 @@ def import_moa_data(request):
                 try:
                     # Create MOA PPA entry from CSV data
                     entry = MonitoringEntry.objects.create(
-                        title=row.get('title', '').strip(),
-                        category='moa_ppa',
-                        summary=row.get('summary', '').strip(),
-                        status=row.get('status', 'planning').lower(),
-                        progress=int(row.get('progress', 0)),
-                        budget_allocation=float(row.get('budget_allocation', 0)) if row.get('budget_allocation') else None,
-                        budget_obc_allocation=float(row.get('budget_obc_allocation', 0)) if row.get('budget_obc_allocation') else None,
-                        oobc_unit=row.get('oobc_unit', '').strip(),
+                        title=row.get("title", "").strip(),
+                        category="moa_ppa",
+                        summary=row.get("summary", "").strip(),
+                        status=row.get("status", "planning").lower(),
+                        progress=int(row.get("progress", 0)),
+                        budget_allocation=(
+                            float(row.get("budget_allocation", 0))
+                            if row.get("budget_allocation")
+                            else None
+                        ),
+                        budget_obc_allocation=(
+                            float(row.get("budget_obc_allocation", 0))
+                            if row.get("budget_obc_allocation")
+                            else None
+                        ),
+                        oobc_unit=row.get("oobc_unit", "").strip(),
                         created_by=request.user,
                         updated_by=request.user,
                     )
@@ -757,9 +822,14 @@ def import_moa_data(request):
                     continue
 
             if imported_count > 0:
-                messages.success(request, f"Successfully imported {imported_count} MOA PPAs.")
+                messages.success(
+                    request, f"Successfully imported {imported_count} MOA PPAs."
+                )
             if error_count > 0:
-                messages.warning(request, f"{error_count} entries could not be imported due to data errors.")
+                messages.warning(
+                    request,
+                    f"{error_count} entries could not be imported due to data errors.",
+                )
 
         except Exception as e:
             messages.error(request, f"Error processing file: {str(e)}")
@@ -768,8 +838,13 @@ def import_moa_data(request):
 
     context = {
         "sample_csv_headers": [
-            "title", "summary", "status", "progress", "budget_allocation",
-            "budget_obc_allocation", "oobc_unit"
+            "title",
+            "summary",
+            "status",
+            "progress",
+            "budget_allocation",
+            "budget_obc_allocation",
+            "oobc_unit",
         ]
     }
     return render(request, "monitoring/import_moa_data.html", context)
@@ -780,40 +855,65 @@ def export_moa_data(request):
     """Export MOA PPAs data to CSV format."""
 
     moa_entries = MonitoringEntry.objects.filter(category="moa_ppa").select_related(
-        "implementing_moa", "coverage_region", "coverage_province", "coverage_municipality"
+        "implementing_moa",
+        "coverage_region",
+        "coverage_province",
+        "coverage_municipality",
     )
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="moa_ppas_export_{datetime.now().strftime("%Y%m%d")}.csv"'
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="moa_ppas_export_{datetime.now().strftime("%Y%m%d")}.csv"'
+    )
 
     writer = csv.writer(response)
 
     # Write header
-    writer.writerow([
-        'Title', 'Status', 'Progress (%)', 'Implementing MOA', 'Budget Allocation (PHP)',
-        'OBC Budget Allocation (PHP)', 'Start Date', 'Target End Date', 'Region',
-        'Province', 'Municipality', 'Summary', 'OOBC Unit', 'Created Date', 'Last Updated'
-    ])
+    writer.writerow(
+        [
+            "Title",
+            "Status",
+            "Progress (%)",
+            "Implementing MOA",
+            "Budget Allocation (PHP)",
+            "OBC Budget Allocation (PHP)",
+            "Start Date",
+            "Target End Date",
+            "Region",
+            "Province",
+            "Municipality",
+            "Summary",
+            "OOBC Unit",
+            "Created Date",
+            "Last Updated",
+        ]
+    )
 
     # Write data rows
     for entry in moa_entries:
-        writer.writerow([
-            entry.title,
-            entry.get_status_display(),
-            entry.progress,
-            entry.implementing_moa.name if entry.implementing_moa else '',
-            entry.budget_allocation or '',
-            entry.budget_obc_allocation or '',
-            entry.start_date.strftime('%Y-%m-%d') if entry.start_date else '',
-            entry.target_end_date.strftime('%Y-%m-%d') if entry.target_end_date else '',
-            entry.coverage_region.name if entry.coverage_region else '',
-            entry.coverage_province.name if entry.coverage_province else '',
-            entry.coverage_municipality.name if entry.coverage_municipality else '',
-            entry.summary,
-            entry.oobc_unit,
-            entry.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            entry.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-        ])
+        writer.writerow(
+            [
+                entry.title,
+                entry.get_status_display(),
+                entry.progress,
+                entry.implementing_moa.name if entry.implementing_moa else "",
+                entry.budget_allocation or "",
+                entry.budget_obc_allocation or "",
+                entry.start_date.strftime("%Y-%m-%d") if entry.start_date else "",
+                (
+                    entry.target_end_date.strftime("%Y-%m-%d")
+                    if entry.target_end_date
+                    else ""
+                ),
+                entry.coverage_region.name if entry.coverage_region else "",
+                entry.coverage_province.name if entry.coverage_province else "",
+                entry.coverage_municipality.name if entry.coverage_municipality else "",
+                entry.summary,
+                entry.oobc_unit,
+                entry.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                entry.updated_at.strftime("%Y-%m-%d %H:%M:%S"),
+            ]
+        )
 
     return response
 
@@ -834,26 +934,31 @@ def generate_moa_report(request):
     # Budget analysis
     total_budget = moa_entries.aggregate(
         total_budget=Sum("budget_allocation"),
-        total_obc_budget=Sum("budget_obc_allocation")
+        total_obc_budget=Sum("budget_obc_allocation"),
     )
 
     # Geographic distribution
-    regional_distribution = moa_entries.exclude(coverage_region__isnull=True).values(
-        'coverage_region__name'
-    ).annotate(count=Count('id')).order_by('-count')
+    regional_distribution = (
+        moa_entries.exclude(coverage_region__isnull=True)
+        .values("coverage_region__name")
+        .annotate(count=Count("id"))
+        .order_by("-count")
+    )
 
     # Implementation timeline
     upcoming_deadlines = moa_entries.filter(
         target_end_date__gte=timezone.now().date(),
-        target_end_date__lte=timezone.now().date() + timedelta(days=30)
-    ).order_by('target_end_date')
+        target_end_date__lte=timezone.now().date() + timedelta(days=30),
+    ).order_by("target_end_date")
 
     # Progress analysis
     progress_analysis = {
-        'high_progress': moa_entries.filter(progress__gte=75).count(),
-        'medium_progress': moa_entries.filter(progress__gte=50, progress__lt=75).count(),
-        'low_progress': moa_entries.filter(progress__lt=50).count(),
-        'avg_progress': moa_entries.aggregate(avg=Avg('progress'))['avg'] or 0
+        "high_progress": moa_entries.filter(progress__gte=75).count(),
+        "medium_progress": moa_entries.filter(
+            progress__gte=50, progress__lt=75
+        ).count(),
+        "low_progress": moa_entries.filter(progress__lt=50).count(),
+        "avg_progress": moa_entries.aggregate(avg=Avg("progress"))["avg"] or 0,
     }
 
     context = {
@@ -877,9 +982,9 @@ def bulk_update_moa_status(request):
     """Bulk update status for multiple MOA PPAs."""
 
     if request.method == "POST":
-        selected_ids = request.POST.getlist('selected_entries')
-        new_status = request.POST.get('new_status')
-        new_progress = request.POST.get('new_progress')
+        selected_ids = request.POST.getlist("selected_entries")
+        new_status = request.POST.get("new_status")
+        new_progress = request.POST.get("new_progress")
 
         if not selected_ids:
             messages.error(request, "Please select at least one MOA PPA to update.")
@@ -887,8 +992,7 @@ def bulk_update_moa_status(request):
 
         try:
             entries = MonitoringEntry.objects.filter(
-                id__in=selected_ids,
-                category="moa_ppa"
+                id__in=selected_ids, category="moa_ppa"
             )
 
             updated_count = 0
@@ -909,9 +1013,11 @@ def bulk_update_moa_status(request):
         return redirect("monitoring:moa_ppas")
 
     # Get MOA PPAs for selection
-    moa_entries = MonitoringEntry.objects.filter(category="moa_ppa").order_by("-updated_at")
+    moa_entries = MonitoringEntry.objects.filter(category="moa_ppa").order_by(
+        "-updated_at"
+    )
     paginator = Paginator(moa_entries, 20)
-    page_number = request.GET.get('page')
+    page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
     context = {
@@ -927,12 +1033,12 @@ def schedule_moa_review(request):
     """Schedule coordination meeting for MOA PPAs review."""
 
     if request.method == "POST":
-        meeting_title = request.POST.get('meeting_title')
-        meeting_date = request.POST.get('meeting_date')
-        meeting_time = request.POST.get('meeting_time')
-        participants = request.POST.get('participants')
-        agenda = request.POST.get('agenda')
-        selected_ppas = request.POST.getlist('selected_ppas')
+        meeting_title = request.POST.get("meeting_title")
+        meeting_date = request.POST.get("meeting_date")
+        meeting_time = request.POST.get("meeting_time")
+        participants = request.POST.get("participants")
+        agenda = request.POST.get("agenda")
+        selected_ppas = request.POST.getlist("selected_ppas")
 
         try:
             # Here you would typically create a coordination event
@@ -940,7 +1046,7 @@ def schedule_moa_review(request):
             messages.success(
                 request,
                 f"Review meeting '{meeting_title}' scheduled for {meeting_date} at {meeting_time}. "
-                f"Selected {len(selected_ppas)} MOA PPAs for review."
+                f"Selected {len(selected_ppas)} MOA PPAs for review.",
             )
             return redirect("monitoring:moa_ppas")
 
@@ -948,14 +1054,17 @@ def schedule_moa_review(request):
             messages.error(request, f"Error scheduling meeting: {str(e)}")
 
     # Get MOA PPAs that need review (low progress or overdue)
-    review_candidates = MonitoringEntry.objects.filter(
-        category="moa_ppa",
-        status__in=["ongoing", "planning"]
-    ).filter(
-        Q(progress__lt=50) |
-        Q(target_end_date__lt=timezone.now().date()) |
-        Q(last_status_update__lt=timezone.now().date() - timedelta(days=30))
-    ).order_by('target_end_date', 'progress')
+    review_candidates = (
+        MonitoringEntry.objects.filter(
+            category="moa_ppa", status__in=["ongoing", "planning"]
+        )
+        .filter(
+            Q(progress__lt=50)
+            | Q(target_end_date__lt=timezone.now().date())
+            | Q(last_status_update__lt=timezone.now().date() - timedelta(days=30))
+        )
+        .order_by("target_end_date", "progress")
+    )
 
     context = {
         "review_candidates": review_candidates,
@@ -981,18 +1090,22 @@ def oobc_initiatives_dashboard(request):
     # Statistics cards
     total_oobc_initiatives = oobc_entries.count()
     total_budget = oobc_entries.aggregate(
-        total=Sum("budget_allocation"),
-        obc_total=Sum("budget_obc_allocation")
+        total=Sum("budget_allocation"), obc_total=Sum("budget_obc_allocation")
     )
 
     # Community impact
-    total_communities_served = oobc_entries.exclude(communities__isnull=True).distinct().count()
-    unique_communities = oobc_entries.values('communities__name').distinct().count()
+    total_communities_served = (
+        oobc_entries.exclude(communities__isnull=True).distinct().count()
+    )
+    unique_communities = oobc_entries.values("communities__name").distinct().count()
 
     # OOBC units analysis
-    oobc_units = oobc_entries.exclude(oobc_unit='').values('oobc_unit').annotate(
-        count=Count('id')
-    ).order_by('-count')[:10]
+    oobc_units = (
+        oobc_entries.exclude(oobc_unit="")
+        .values("oobc_unit")
+        .annotate(count=Count("id"))
+        .order_by("-count")[:10]
+    )
 
     stats_cards = [
         {
@@ -1002,9 +1115,18 @@ def oobc_initiatives_dashboard(request):
             "gradient": "from-emerald-500 via-emerald-600 to-emerald-700",
             "total": total_oobc_initiatives,
             "metrics": [
-                {"label": "Completed", "value": oobc_entries.filter(status="completed").count()},
-                {"label": "Ongoing", "value": oobc_entries.filter(status="ongoing").count()},
-                {"label": "Planning", "value": oobc_entries.filter(status="planning").count()},
+                {
+                    "label": "Completed",
+                    "value": oobc_entries.filter(status="completed").count(),
+                },
+                {
+                    "label": "Ongoing",
+                    "value": oobc_entries.filter(status="ongoing").count(),
+                },
+                {
+                    "label": "Planning",
+                    "value": oobc_entries.filter(status="planning").count(),
+                },
             ],
         },
         {
@@ -1014,9 +1136,22 @@ def oobc_initiatives_dashboard(request):
             "gradient": "from-blue-500 via-blue-600 to-blue-700",
             "total": f"₱{total_budget['total'] or 0:,.0f}",
             "metrics": [
-                {"label": "OBC Budget", "value": f"₱{total_budget['obc_total'] or 0:,.0f}"},
-                {"label": "With Budget", "value": oobc_entries.exclude(budget_allocation__isnull=True).count()},
-                {"label": "Pending", "value": oobc_entries.filter(budget_allocation__isnull=True).count()},
+                {
+                    "label": "OBC Budget",
+                    "value": f"₱{total_budget['obc_total'] or 0:,.0f}",
+                },
+                {
+                    "label": "With Budget",
+                    "value": oobc_entries.exclude(
+                        budget_allocation__isnull=True
+                    ).count(),
+                },
+                {
+                    "label": "Pending",
+                    "value": oobc_entries.filter(
+                        budget_allocation__isnull=True
+                    ).count(),
+                },
             ],
         },
         {
@@ -1027,8 +1162,18 @@ def oobc_initiatives_dashboard(request):
             "total": unique_communities,
             "metrics": [
                 {"label": "Direct", "value": total_communities_served},
-                {"label": "Partners", "value": oobc_entries.exclude(supporting_organizations__isnull=True).distinct().count()},
-                {"label": "Multi-Unit", "value": oobc_entries.filter(supporting_organizations__isnull=False).distinct().count()},
+                {
+                    "label": "Partners",
+                    "value": oobc_entries.exclude(supporting_organizations__isnull=True)
+                    .distinct()
+                    .count(),
+                },
+                {
+                    "label": "Multi-Unit",
+                    "value": oobc_entries.filter(supporting_organizations__isnull=False)
+                    .distinct()
+                    .count(),
+                },
             ],
         },
         {
@@ -1038,9 +1183,20 @@ def oobc_initiatives_dashboard(request):
             "gradient": "from-orange-500 via-orange-600 to-orange-700",
             "total": f"{oobc_entries.aggregate(avg=Avg('progress'))['avg'] or 0:.0f}%",
             "metrics": [
-                {"label": "High (75%+)", "value": oobc_entries.filter(progress__gte=75).count()},
-                {"label": "Medium", "value": oobc_entries.filter(progress__gte=50, progress__lt=75).count()},
-                {"label": "Low (<50%)", "value": oobc_entries.filter(progress__lt=50).count()},
+                {
+                    "label": "High (75%+)",
+                    "value": oobc_entries.filter(progress__gte=75).count(),
+                },
+                {
+                    "label": "Medium",
+                    "value": oobc_entries.filter(
+                        progress__gte=50, progress__lt=75
+                    ).count(),
+                },
+                {
+                    "label": "Low (<50%)",
+                    "value": oobc_entries.filter(progress__lt=50).count(),
+                },
             ],
         },
     ]
@@ -1095,7 +1251,9 @@ def oobc_initiatives_dashboard(request):
     status_breakdown = [
         {
             "key": item["status"],
-            "label": dict(MonitoringEntry.STATUS_CHOICES).get(item["status"], item["status"]),
+            "label": dict(MonitoringEntry.STATUS_CHOICES).get(
+                item["status"], item["status"]
+            ),
             "total": item["total"],
         }
         for item in (
@@ -1107,9 +1265,11 @@ def oobc_initiatives_dashboard(request):
     ]
 
     # Recent updates
-    recent_updates = MonitoringUpdate.objects.filter(
-        entry__category="oobc_ppa"
-    ).select_related("entry", "created_by").order_by("-created_at")[:10]
+    recent_updates = (
+        MonitoringUpdate.objects.filter(entry__category="oobc_ppa")
+        .select_related("entry", "created_by")
+        .order_by("-created_at")[:10]
+    )
 
     # Progress snapshot
     progress_snapshot = oobc_entries.aggregate(
@@ -1142,9 +1302,7 @@ def obc_requests_dashboard(request):
     current_year = timezone.now().year
 
     # Filter for current year entries
-    obc_year_qs = obc_entries.filter(
-        Q(created_at__year=current_year)
-    )
+    obc_year_qs = obc_entries.filter(Q(created_at__year=current_year))
 
     # Statistics cards
     total_obc_requests = obc_entries.count()
@@ -1154,21 +1312,29 @@ def obc_requests_dashboard(request):
     in_progress_statuses = ["endorsed", "approved", "in_progress"]
     completed_requests = obc_entries.filter(request_status="completed").count()
     pending_requests = obc_entries.filter(request_status__in=pending_statuses).count()
-    active_requests = obc_entries.filter(request_status__in=in_progress_statuses).count()
+    active_requests = obc_entries.filter(
+        request_status__in=in_progress_statuses
+    ).count()
 
     # Priority analysis
     high_priority = obc_entries.filter(priority="high").count()
     urgent_priority = obc_entries.filter(priority="urgent").count()
 
     # Community analysis
-    requesting_communities = obc_entries.exclude(submitted_by_community__isnull=True).values(
-        'submitted_by_community__name'
-    ).distinct().count()
+    requesting_communities = (
+        obc_entries.exclude(submitted_by_community__isnull=True)
+        .values("submitted_by_community__name")
+        .distinct()
+        .count()
+    )
 
     # Receiving organizations
-    receiving_orgs = obc_entries.exclude(submitted_to_organization__isnull=True).values(
-        'submitted_to_organization__name'
-    ).annotate(count=Count('id')).order_by('-count')[:10]
+    receiving_orgs = (
+        obc_entries.exclude(submitted_to_organization__isnull=True)
+        .values("submitted_to_organization__name")
+        .annotate(count=Count("id"))
+        .order_by("-count")[:10]
+    )
 
     stats_cards = [
         {
@@ -1192,7 +1358,10 @@ def obc_requests_dashboard(request):
             "metrics": [
                 {"label": "Urgent", "value": urgent_priority},
                 {"label": "High", "value": high_priority},
-                {"label": "Standard", "value": obc_entries.filter(priority__in=["medium", "low"]).count()},
+                {
+                    "label": "Standard",
+                    "value": obc_entries.filter(priority__in=["medium", "low"]).count(),
+                },
             ],
         },
         {
@@ -1202,9 +1371,27 @@ def obc_requests_dashboard(request):
             "gradient": "from-green-500 via-emerald-500 to-teal-500",
             "total": requesting_communities,
             "metrics": [
-                {"label": "Active", "value": obc_entries.filter(request_status__in=in_progress_statuses).values('submitted_by_community').distinct().count()},
-                {"label": "Pending", "value": obc_entries.filter(request_status__in=pending_statuses).values('submitted_by_community').distinct().count()},
-                {"label": "Completed", "value": obc_entries.filter(request_status="completed").values('submitted_by_community').distinct().count()},
+                {
+                    "label": "Active",
+                    "value": obc_entries.filter(request_status__in=in_progress_statuses)
+                    .values("submitted_by_community")
+                    .distinct()
+                    .count(),
+                },
+                {
+                    "label": "Pending",
+                    "value": obc_entries.filter(request_status__in=pending_statuses)
+                    .values("submitted_by_community")
+                    .distinct()
+                    .count(),
+                },
+                {
+                    "label": "Completed",
+                    "value": obc_entries.filter(request_status="completed")
+                    .values("submitted_by_community")
+                    .distinct()
+                    .count(),
+                },
             ],
         },
         {
@@ -1215,8 +1402,14 @@ def obc_requests_dashboard(request):
             "total": f"{(completed_requests + active_requests) / max(total_obc_requests, 1) * 100:.0f}%",
             "metrics": [
                 {"label": "Resolved", "value": completed_requests + active_requests},
-                {"label": "Under Review", "value": obc_entries.filter(request_status="under_review").count()},
-                {"label": "Awaiting", "value": obc_entries.filter(request_status="submitted").count()},
+                {
+                    "label": "Under Review",
+                    "value": obc_entries.filter(request_status="under_review").count(),
+                },
+                {
+                    "label": "Awaiting",
+                    "value": obc_entries.filter(request_status="submitted").count(),
+                },
             ],
         },
     ]
@@ -1285,15 +1478,17 @@ def obc_requests_dashboard(request):
     ]
 
     # Recent updates
-    recent_updates = MonitoringUpdate.objects.filter(
-        entry__category="obc_request"
-    ).select_related("entry", "created_by").order_by("-created_at")[:10]
+    recent_updates = (
+        MonitoringUpdate.objects.filter(entry__category="obc_request")
+        .select_related("entry", "created_by")
+        .order_by("-created_at")[:10]
+    )
 
     # Progress snapshot
     progress_snapshot = {
-        'latest_update': obc_entries.aggregate(latest=Max("updated_at"))['latest'],
-        'pending_review': pending_requests,
-        'avg_response_days': 7  # This would be calculated from actual data
+        "latest_update": obc_entries.aggregate(latest=Max("updated_at"))["latest"],
+        "pending_review": pending_requests,
+        "avg_response_days": 7,  # This would be calculated from actual data
     }
 
     context = {
@@ -1317,11 +1512,13 @@ def oobc_impact_report(request):
     messages.info(request, "Impact Assessment feature coming soon!")
     return redirect("monitoring:oobc_initiatives")
 
+
 @login_required
 def oobc_unit_performance(request):
     """Placeholder for OOBC unit performance comparison."""
     messages.info(request, "Unit Performance feature coming soon!")
     return redirect("monitoring:oobc_initiatives")
+
 
 @login_required
 def export_oobc_data(request):
@@ -1329,17 +1526,20 @@ def export_oobc_data(request):
     messages.info(request, "OOBC Data Export feature coming soon!")
     return redirect("monitoring:oobc_initiatives")
 
+
 @login_required
 def oobc_budget_review(request):
     """Placeholder for OOBC budget review."""
     messages.info(request, "Budget Review feature coming soon!")
     return redirect("monitoring:oobc_initiatives")
 
+
 @login_required
 def oobc_community_feedback(request):
     """Placeholder for OOBC community feedback."""
     messages.info(request, "Community Feedback feature coming soon!")
     return redirect("monitoring:oobc_initiatives")
+
 
 # Placeholder views for OBC Requests quick actions
 @login_required
@@ -1348,11 +1548,13 @@ def obc_priority_queue(request):
     messages.info(request, "Priority Queue feature coming soon!")
     return redirect("monitoring:obc_requests")
 
+
 @login_required
 def obc_community_dashboard(request):
     """Placeholder for OBC community dashboard."""
     messages.info(request, "Community Dashboard feature coming soon!")
     return redirect("monitoring:obc_requests")
+
 
 @login_required
 def generate_obc_report(request):
@@ -1360,11 +1562,13 @@ def generate_obc_report(request):
     messages.info(request, "OBC Reports feature coming soon!")
     return redirect("monitoring:obc_requests")
 
+
 @login_required
 def bulk_update_obc_status(request):
     """Placeholder for OBC bulk status update."""
     messages.info(request, "Bulk Status Update feature coming soon!")
     return redirect("monitoring:obc_requests")
+
 
 @login_required
 def export_obc_data(request):

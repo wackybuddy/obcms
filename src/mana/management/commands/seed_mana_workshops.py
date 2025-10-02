@@ -99,7 +99,9 @@ class Command(BaseCommand):
             else None
         )
         if not start_date_str:
-            raise CommandError("Provide --start-date or set assessment.planned_start_date")
+            raise CommandError(
+                "Provide --start-date or set assessment.planned_start_date"
+            )
 
         try:
             start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
@@ -108,7 +110,9 @@ class Command(BaseCommand):
 
         if options.get("overwrite"):
             deleted, _ = WorkshopActivity.objects.filter(assessment=assessment).delete()
-            self.stdout.write(self.style.WARNING(f"Removed {deleted} existing workshops."))
+            self.stdout.write(
+                self.style.WARNING(f"Removed {deleted} existing workshops.")
+            )
 
         created = 0
         for blueprint in WORKSHOP_BLUEPRINT:

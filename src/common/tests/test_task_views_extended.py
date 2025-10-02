@@ -17,7 +17,11 @@ from common.models import (
     TaskTemplateItem,
     User,
 )
-from common.tests.factories import create_assessment, create_event, create_policy_recommendation
+from common.tests.factories import (
+    create_assessment,
+    create_event,
+    create_policy_recommendation,
+)
 
 
 class DomainTasksViewTests(TestCase):
@@ -124,7 +128,9 @@ class DomainTasksViewTests(TestCase):
     def test_domain_task_analytics_returns_stats(self):
         """Domain analytics view provides aggregate stats."""
         request = self.factory.get(
-            reverse("common:domain_task_analytics", kwargs={"domain": StaffTask.DOMAIN_MANA})
+            reverse(
+                "common:domain_task_analytics", kwargs={"domain": StaffTask.DOMAIN_MANA}
+            )
         )
         request.user = self.admin
 
@@ -193,7 +199,9 @@ class AssessmentTasksViewTests(TestCase):
 
     def test_assessment_tasks_view_groups_by_phase(self):
         """Test that assessment tasks are grouped by phase."""
-        url = reverse("common:assessment_tasks", kwargs={"assessment_id": self.assessment.id})
+        url = reverse(
+            "common:assessment_tasks", kwargs={"assessment_id": self.assessment.id}
+        )
         with patch("common.views.tasks.render") as mock_render:
             mock_render.return_value = HttpResponse()
             response = self.client.get(url)
@@ -331,8 +339,14 @@ class TaskAnalyticsViewTests(TestCase):
             task = StaffTask.objects.create(
                 title=f"MANA Task {i}",
                 domain=StaffTask.DOMAIN_MANA,
-                priority=StaffTask.PRIORITY_HIGH if i % 2 == 0 else StaffTask.PRIORITY_MEDIUM,
-                status=StaffTask.STATUS_COMPLETED if i < 3 else StaffTask.STATUS_IN_PROGRESS,
+                priority=(
+                    StaffTask.PRIORITY_HIGH if i % 2 == 0 else StaffTask.PRIORITY_MEDIUM
+                ),
+                status=(
+                    StaffTask.STATUS_COMPLETED
+                    if i < 3
+                    else StaffTask.STATUS_IN_PROGRESS
+                ),
                 estimated_hours=4 + i,
                 created_by=self.admin,
             )
@@ -366,7 +380,9 @@ class TaskAnalyticsViewTests(TestCase):
 
         self.assertGreater(len(domain_breakdown), 0)
 
-        mana_entry = next((d for d in domain_breakdown if d["domain"] == StaffTask.DOMAIN_MANA), None)
+        mana_entry = next(
+            (d for d in domain_breakdown if d["domain"] == StaffTask.DOMAIN_MANA), None
+        )
         self.assertIsNotNone(mana_entry)
 
     def test_analytics_view_calculates_completion_rate(self):
@@ -378,7 +394,15 @@ class TaskAnalyticsViewTests(TestCase):
         completion_rates = response.context["completion_rates"]
 
         self.assertGreater(len(completion_rates), 0)
-        mana_rate = next((entry for entry in completion_rates if entry["domain"] == dict(StaffTask.DOMAIN_CHOICES)[StaffTask.DOMAIN_MANA]), None)
+        mana_rate = next(
+            (
+                entry
+                for entry in completion_rates
+                if entry["domain"]
+                == dict(StaffTask.DOMAIN_CHOICES)[StaffTask.DOMAIN_MANA]
+            ),
+            None,
+        )
         self.assertIsNotNone(mana_rate)
 
     def test_analytics_view_calculates_priority_distribution(self):
@@ -584,7 +608,9 @@ class TaskTemplateDetailViewTests(TestCase):
 
     def test_template_detail_shows_template_info(self):
         """Test that template detail shows template information."""
-        url = reverse("common:task_template_detail", kwargs={"template_id": self.template.id})
+        url = reverse(
+            "common:task_template_detail", kwargs={"template_id": self.template.id}
+        )
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
@@ -592,7 +618,9 @@ class TaskTemplateDetailViewTests(TestCase):
 
     def test_template_detail_shows_all_items(self):
         """Test that template detail shows all template items."""
-        url = reverse("common:task_template_detail", kwargs={"template_id": self.template.id})
+        url = reverse(
+            "common:task_template_detail", kwargs={"template_id": self.template.id}
+        )
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
@@ -604,7 +632,9 @@ class TaskTemplateDetailViewTests(TestCase):
 
     def test_template_detail_items_ordered_by_sequence(self):
         """Test that template items are ordered by sequence."""
-        url = reverse("common:task_template_detail", kwargs={"template_id": self.template.id})
+        url = reverse(
+            "common:task_template_detail", kwargs={"template_id": self.template.id}
+        )
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
@@ -652,7 +682,9 @@ class TaskTemplateInstantiateViewTests(TestCase):
         """Test that instantiating a template creates tasks."""
         initial_count = StaffTask.objects.count()
 
-        url = reverse("common:instantiate_template", kwargs={"template_id": self.template.id})
+        url = reverse(
+            "common:instantiate_template", kwargs={"template_id": self.template.id}
+        )
         response = self.client.post(url, {"context": json.dumps({})})
 
         self.assertEqual(response.status_code, 200)

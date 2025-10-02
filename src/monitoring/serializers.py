@@ -86,7 +86,7 @@ class MonitoringEntryWorkflowDocumentSerializer(serializers.ModelSerializer):
     def get_file_url(self, obj):
         """Return full URL for file download."""
         if obj.file:
-            request = self.context.get('request')
+            request = self.context.get("request")
             if request:
                 return request.build_absolute_uri(obj.file.url)
             return obj.file.url
@@ -98,9 +98,7 @@ class MonitoringEntryWorkflowStageSerializer(serializers.ModelSerializer):
 
     stage_display = serializers.CharField(source="get_stage_display", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
-    owner_team_name = serializers.CharField(
-        source="owner_team.name", read_only=True
-    )
+    owner_team_name = serializers.CharField(source="owner_team.name", read_only=True)
     owner_organization_name = serializers.CharField(
         source="owner_organization.name", read_only=True
     )
@@ -138,7 +136,9 @@ class MonitoringEntryStaffTaskSerializer(serializers.ModelSerializer):
     """Serialize StaffTask records linked to monitoring entries."""
 
     status_display = serializers.CharField(source="get_status_display", read_only=True)
-    priority_display = serializers.CharField(source="get_priority_display", read_only=True)
+    priority_display = serializers.CharField(
+        source="get_priority_display", read_only=True
+    )
     created_by_name = serializers.CharField(
         source="created_by.get_full_name", read_only=True
     )
@@ -199,9 +199,7 @@ class MonitoringUpdateSerializer(serializers.ModelSerializer):
     update_type_display = serializers.CharField(
         source="get_update_type_display", read_only=True
     )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
     request_status_display = serializers.CharField(
         source="get_request_status_display", read_only=True
     )
@@ -241,9 +239,7 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
     category_display = serializers.CharField(
         source="get_category_display", read_only=True
     )
-    status_display = serializers.CharField(
-        source="get_status_display", read_only=True
-    )
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
     request_status_display = serializers.CharField(
         source="get_request_status_display", read_only=True
     )
@@ -373,6 +369,10 @@ class MonitoringEntrySerializer(serializers.ModelSerializer):
         ]
 
     def get_task_assignments(self, obj):
-        tasks = obj.tasks.filter(domain=StaffTask.DOMAIN_MONITORING).order_by("due_date", "title")
-        serializer = MonitoringEntryStaffTaskSerializer(tasks, many=True, context=self.context)
+        tasks = obj.tasks.filter(domain=StaffTask.DOMAIN_MONITORING).order_by(
+            "due_date", "title"
+        )
+        serializer = MonitoringEntryStaffTaskSerializer(
+            tasks, many=True, context=self.context
+        )
         return serializer.data

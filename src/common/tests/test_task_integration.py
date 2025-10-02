@@ -92,21 +92,29 @@ class AssessmentTaskWorkflowIntegrationTests(TestCase):
         )
 
         # Step 2: Verify tasks were auto-created
-        tasks = StaffTask.objects.filter(related_assessment=assessment).order_by("due_date")
+        tasks = StaffTask.objects.filter(related_assessment=assessment).order_by(
+            "due_date"
+        )
         self.assertEqual(tasks.count(), 3)
 
         # Verify task details
         planning_task = tasks[0]
         self.assertIn("Region IX Education Assessment", planning_task.title)
-        self.assertEqual(planning_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_PLANNING)
+        self.assertEqual(
+            planning_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_PLANNING
+        )
         self.assertEqual(planning_task.due_date, date(2025, 11, 1))
 
         data_task = tasks[1]
-        self.assertEqual(data_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION)
+        self.assertEqual(
+            data_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION
+        )
         self.assertEqual(data_task.due_date, date(2025, 11, 8))
 
         analysis_task = tasks[2]
-        self.assertEqual(analysis_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_ANALYSIS)
+        self.assertEqual(
+            analysis_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_ANALYSIS
+        )
         self.assertEqual(analysis_task.due_date, date(2025, 11, 15))
 
         # Step 3: Assign tasks to team and staff
@@ -167,8 +175,7 @@ class AssessmentTaskWorkflowIntegrationTests(TestCase):
 
         # Step 10: Verify all tasks completed
         completed_count = StaffTask.objects.filter(
-            related_assessment=assessment,
-            status=StaffTask.STATUS_COMPLETED
+            related_assessment=assessment, status=StaffTask.STATUS_COMPLETED
         ).count()
         self.assertEqual(completed_count, 3)
 
@@ -245,8 +252,7 @@ class EventTaskWorkflowIntegrationTests(TestCase):
 
         # Verify all completed
         completed = StaffTask.objects.filter(
-            linked_event=event,
-            status=StaffTask.STATUS_COMPLETED
+            linked_event=event, status=StaffTask.STATUS_COMPLETED
         ).count()
         self.assertEqual(completed, 2)
 
@@ -381,8 +387,8 @@ class TemplateInstantiationWorkflowTests(TestCase):
                 template=self.template,
                 title=f"Project Task {i+1}",
                 description=f"Complete task {i+1}",
-                sequence=i+1,
-                days_from_start=i*3,
+                sequence=i + 1,
+                days_from_start=i * 3,
                 priority=StaffTask.PRIORITY_MEDIUM,
                 estimated_hours=4,
             )
@@ -400,7 +406,9 @@ class TemplateInstantiationWorkflowTests(TestCase):
         self.assertIn(self.template, templates)
 
         # Step 2: View template details
-        detail_url = reverse("common:task_template_detail", kwargs={"template_id": self.template.pk})
+        detail_url = reverse(
+            "common:task_template_detail", kwargs={"template_id": self.template.pk}
+        )
         response = self.client.get(detail_url)
         self.assertEqual(response.status_code, 200)
 
@@ -435,7 +443,7 @@ class TemplateInstantiationWorkflowTests(TestCase):
         # Step 5: Verify due dates calculated correctly
         start = date.today()
         for i, task in enumerate(created_tasks):
-            expected_due = start + timedelta(days=i*3)
+            expected_due = start + timedelta(days=i * 3)
             self.assertEqual(task.due_date, expected_due)
 
         # Step 6: Assign and complete tasks
@@ -447,8 +455,7 @@ class TemplateInstantiationWorkflowTests(TestCase):
 
         # Step 7: Verify all completed
         completed_count = StaffTask.objects.filter(
-            created_from_template=self.template,
-            status=StaffTask.STATUS_COMPLETED
+            created_from_template=self.template, status=StaffTask.STATUS_COMPLETED
         ).count()
         self.assertEqual(completed_count, 5)
 
@@ -496,11 +503,8 @@ class TaskBoardKanbanWorkflowTests(TestCase):
         update_url = reverse("common:staff_task_update")
         response = self.client.post(
             update_url,
-            data='{"task_id": %d, "group": "status", "value": "%s", "order": [%d]}' % (
-                self.task1.id,
-                StaffTask.STATUS_IN_PROGRESS,
-                self.task1.id
-            ),
+            data='{"task_id": %d, "group": "status", "value": "%s", "order": [%d]}'
+            % (self.task1.id, StaffTask.STATUS_IN_PROGRESS, self.task1.id),
             content_type="application/json",
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
@@ -512,11 +516,8 @@ class TaskBoardKanbanWorkflowTests(TestCase):
         # Step 3: Move task to completed
         response = self.client.post(
             update_url,
-            data='{"task_id": %d, "group": "status", "value": "%s", "order": [%d]}' % (
-                self.task1.id,
-                StaffTask.STATUS_COMPLETED,
-                self.task1.id
-            ),
+            data='{"task_id": %d, "group": "status", "value": "%s", "order": [%d]}'
+            % (self.task1.id, StaffTask.STATUS_COMPLETED, self.task1.id),
             content_type="application/json",
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
@@ -558,14 +559,16 @@ class MultiDomainAnalyticsWorkflowTests(TestCase):
                 status = [
                     StaffTask.STATUS_COMPLETED,
                     StaffTask.STATUS_IN_PROGRESS,
-                    StaffTask.STATUS_NOT_STARTED
+                    StaffTask.STATUS_NOT_STARTED,
                 ][j]
 
                 task = StaffTask.objects.create(
                     title=f"{domain} task {j}",
                     domain=domain,
                     status=status,
-                    priority=StaffTask.PRIORITY_HIGH if j == 0 else StaffTask.PRIORITY_MEDIUM,
+                    priority=(
+                        StaffTask.PRIORITY_HIGH if j == 0 else StaffTask.PRIORITY_MEDIUM
+                    ),
                     estimated_hours=4,
                     created_by=self.admin,
                 )

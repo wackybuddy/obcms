@@ -37,21 +37,15 @@ class E2EWorkflowTestCase(TestCase):
         """Create test data for workflows."""
         # Create users
         self.user = User.objects.create_user(
-            username="testuser",
-            email="test@example.com",
-            password="testpass123"
+            username="testuser", email="test@example.com", password="testpass123"
         )
         self.coordinator = User.objects.create_user(
-            username="coordinator",
-            email="coord@example.com",
-            password="testpass123"
+            username="coordinator", email="coord@example.com", password="testpass123"
         )
 
         # Create team
         self.team = Team.objects.create(
-            name="Test Team",
-            slug="test-team",
-            description="Test team for workflows"
+            name="Test Team", slug="test-team", description="Test team for workflows"
         )
         self.team.members.add(self.user)
 
@@ -61,7 +55,7 @@ class E2EWorkflowTestCase(TestCase):
             barangay_name="Test Barangay",
             municipality_name="Test Municipality",
             province_name="Test Province",
-            region="Region IX"
+            region="Region IX",
         )
 
     def test_need_to_ppa_workflow(self):
@@ -80,7 +74,7 @@ class E2EWorkflowTestCase(TestCase):
             urgency_level="high",
             status="identified",
             community=self.community,
-            identified_by=self.user
+            identified_by=self.user,
         )
         self.assertEqual(need.status, "identified")
 
@@ -98,7 +92,7 @@ class E2EWorkflowTestCase(TestCase):
             budget_allocation=Decimal("5000000.00"),
             start_date=date(2025, 10, 1),
             end_date=date(2026, 9, 30),
-            created_by=self.coordinator
+            created_by=self.coordinator,
         )
         ppa.needs_addressed.add(need)
 
@@ -108,11 +102,7 @@ class E2EWorkflowTestCase(TestCase):
         # Should have auto-generated tasks from template
         # Note: Actual count depends on template configuration
         # We just verify that some tasks were created
-        self.assertGreater(
-            tasks.count(),
-            0,
-            "PPA creation should auto-generate tasks"
-        )
+        self.assertGreater(tasks.count(), 0, "PPA creation should auto-generate tasks")
 
         # Verify task properties
         for task in tasks:
@@ -121,35 +111,25 @@ class E2EWorkflowTestCase(TestCase):
             self.assertIsNotNone(task.title)
 
         # 5. Verify PPA milestones on calendar
-        payload = build_calendar_payload(
-            filter_modules=["monitoring"]
-        )
+        payload = build_calendar_payload(filter_modules=["monitoring"])
 
         entries = payload["entries"]
 
         # Check for PPA-related entries on calendar
-        ppa_entries = [
-            e for e in entries
-            if "planning-entry" in e.get("id", "")
-        ]
+        ppa_entries = [e for e in entries if "planning-entry" in e.get("id", "")]
 
-        self.assertGreater(
-            len(ppa_entries),
-            0,
-            "PPA should appear on calendar"
-        )
+        self.assertGreater(len(ppa_entries), 0, "PPA should appear on calendar")
 
         # 6. Verify task due dates on calendar
         task_entries = [
-            e for e in entries
-            if e.get("extendedProps", {}).get("category") == "task"
+            e for e in entries if e.get("extendedProps", {}).get("category") == "task"
         ]
 
         # At least some tasks should have due dates and appear
         self.assertGreaterEqual(
             len(task_entries),
             0,
-            "Tasks should appear on calendar when they have due dates"
+            "Tasks should appear on calendar when they have due dates",
         )
 
         # 7. Complete all tasks and verify PPA progress updates
@@ -186,16 +166,14 @@ class E2EWorkflowTestCase(TestCase):
             data_collection_end_date=date(2025, 12, 15),
             analysis_completion_date=date(2026, 1, 15),
             report_due_date=date(2026, 2, 1),
-            lead_facilitator=self.coordinator
+            lead_facilitator=self.coordinator,
         )
 
         # 2. Verify tasks created by signal handler
         tasks = StaffTask.objects.filter(related_assessment=assessment)
 
         self.assertGreater(
-            tasks.count(),
-            0,
-            "Assessment creation should auto-generate tasks"
+            tasks.count(), 0, "Assessment creation should auto-generate tasks"
         )
 
         # Verify tasks span different assessment phases
@@ -206,44 +184,38 @@ class E2EWorkflowTestCase(TestCase):
         phase_overlap = task_phases.intersection(expected_phases)
 
         self.assertGreater(
-            len(phase_overlap),
-            0,
-            "Tasks should cover multiple assessment phases"
+            len(phase_overlap), 0, "Tasks should cover multiple assessment phases"
         )
 
         # 3. Verify assessment milestones on calendar
-        payload = build_calendar_payload(
-            filter_modules=["mana"]
-        )
+        payload = build_calendar_payload(filter_modules=["mana"])
 
         # Check for assessment milestones
         milestone_entries = [
-            e for e in payload["entries"]
-            if "assessment-milestone" in e.get("id", "") or
-               e.get("extendedProps", {}).get("category", "").startswith("mana_")
+            e
+            for e in payload["entries"]
+            if "assessment-milestone" in e.get("id", "")
+            or e.get("extendedProps", {}).get("category", "").startswith("mana_")
         ]
 
         # Should have milestone entries for the assessment dates
         self.assertGreater(
-            len(milestone_entries),
-            0,
-            "Assessment milestones should appear on calendar"
+            len(milestone_entries), 0, "Assessment milestones should appear on calendar"
         )
 
         # 4. Verify task entries on calendar
         task_entries = [
-            e for e in payload["entries"]
-            if e.get("extendedProps", {}).get("module") == "staff" or
-               e.get("extendedProps", {}).get("category") == "task"
+            e
+            for e in payload["entries"]
+            if e.get("extendedProps", {}).get("module") == "staff"
+            or e.get("extendedProps", {}).get("category") == "task"
         ]
 
         # Tasks with due dates should appear
         tasks_with_dates = tasks.filter(due_date__isnull=False)
         if tasks_with_dates.exists():
             self.assertGreater(
-                len(task_entries),
-                0,
-                "Assessment tasks should appear on calendar"
+                len(task_entries), 0, "Assessment tasks should appear on calendar"
             )
 
     def test_event_to_task_integration(self):
@@ -267,29 +239,21 @@ class E2EWorkflowTestCase(TestCase):
             organizer=self.coordinator,
             is_quarterly_coordination=True,
             quarter=4,
-            fiscal_year=2025
+            fiscal_year=2025,
         )
 
         # 2. Verify event appears on calendar
-        payload = build_calendar_payload(
-            filter_modules=["coordination"]
-        )
+        payload = build_calendar_payload(filter_modules=["coordination"])
 
         event_entries = [
-            e for e in payload["entries"]
-            if "coordination-event" in e.get("id", "")
+            e for e in payload["entries"] if "coordination-event" in e.get("id", "")
         ]
 
-        self.assertGreater(
-            len(event_entries),
-            0,
-            "Event should appear on calendar"
-        )
+        self.assertGreater(len(event_entries), 0, "Event should appear on calendar")
 
         # Verify event details
         matching_events = [
-            e for e in event_entries
-            if event.title in e.get("title", "")
+            e for e in event_entries if event.title in e.get("title", "")
         ]
         self.assertGreater(len(matching_events), 0)
 
@@ -306,21 +270,21 @@ class E2EWorkflowTestCase(TestCase):
             # 4. Verify linked tasks DON'T duplicate on calendar
             # (They should only show the event, not separate task entries)
             task_entries = [
-                e for e in payload["entries"]
+                e
+                for e in payload["entries"]
                 if e.get("extendedProps", {}).get("category") == "task"
             ]
 
             # Tasks linked to events should be filtered out
             linked_task_ids = [f"staff-task-{t.id}" for t in event_tasks]
             duplicate_tasks = [
-                e for e in task_entries
-                if e.get("id") in linked_task_ids
+                e for e in task_entries if e.get("id") in linked_task_ids
             ]
 
             self.assertEqual(
                 len(duplicate_tasks),
                 0,
-                "Tasks linked to events should not duplicate on calendar"
+                "Tasks linked to events should not duplicate on calendar",
             )
 
     def test_task_completion_updates_ppa_progress(self):
@@ -338,7 +302,7 @@ class E2EWorkflowTestCase(TestCase):
             budget_allocation=Decimal("10000000.00"),
             start_date=date(2025, 10, 1),
             end_date=date(2026, 9, 30),
-            created_by=self.coordinator
+            created_by=self.coordinator,
         )
 
         # 2. Create exactly 5 tasks manually (for precise progress calculation)
@@ -349,7 +313,7 @@ class E2EWorkflowTestCase(TestCase):
                 related_ppa=ppa,
                 domain="monitoring",
                 status=StaffTask.STATUS_NOT_STARTED,
-                created_by=self.user
+                created_by=self.user,
             )
 
         tasks = StaffTask.objects.filter(related_ppa=ppa)
@@ -394,7 +358,7 @@ class E2EWorkflowTestCase(TestCase):
             title="Test Assessment for Signal Safety",
             methodology="survey",
             status="planning",
-            lead_facilitator=self.coordinator
+            lead_facilitator=self.coordinator,
         )
 
         # 2. Count tasks created
@@ -406,7 +370,7 @@ class E2EWorkflowTestCase(TestCase):
         self.assertLess(
             initial_task_count,
             100,
-            "Signal handler should create reasonable number of tasks, not infinite loop"
+            "Signal handler should create reasonable number of tasks, not infinite loop",
         )
 
         # 3. Update assessment (should not create more tasks)
@@ -421,7 +385,7 @@ class E2EWorkflowTestCase(TestCase):
         self.assertEqual(
             initial_task_count,
             final_task_count,
-            "Updating assessment should not create additional tasks"
+            "Updating assessment should not create additional tasks",
         )
 
         # 4. Create PPA (triggers task creation signal)
@@ -429,7 +393,7 @@ class E2EWorkflowTestCase(TestCase):
             title="Test PPA for Signal Safety",
             category="oobc_ppa",
             status="planning",
-            created_by=self.coordinator
+            created_by=self.coordinator,
         )
 
         ppa_task_count = StaffTask.objects.filter(related_ppa=ppa).count()
@@ -438,7 +402,7 @@ class E2EWorkflowTestCase(TestCase):
         self.assertLess(
             ppa_task_count,
             100,
-            "PPA signal handler should create reasonable number of tasks"
+            "PPA signal handler should create reasonable number of tasks",
         )
 
     def test_cross_module_data_consistency(self):
@@ -458,7 +422,7 @@ class E2EWorkflowTestCase(TestCase):
             urgency_level="high",
             status="prioritized",
             community=self.community,
-            identified_by=self.user
+            identified_by=self.user,
         )
 
         assessment = Assessment.objects.create(
@@ -467,7 +431,7 @@ class E2EWorkflowTestCase(TestCase):
             status="planning",
             planning_completion_date=date(2025, 11, 15),
             report_due_date=date(2026, 1, 15),
-            lead_facilitator=self.coordinator
+            lead_facilitator=self.coordinator,
         )
 
         # 2. Create PPA addressing the need
@@ -477,7 +441,7 @@ class E2EWorkflowTestCase(TestCase):
             budget_allocation=Decimal("8000000.00"),
             start_date=date(2025, 12, 1),
             end_date=date(2026, 11, 30),
-            created_by=self.coordinator
+            created_by=self.coordinator,
         )
         ppa.needs_addressed.add(need)
 
@@ -491,34 +455,29 @@ class E2EWorkflowTestCase(TestCase):
         self.assertEqual(
             len(entry_ids),
             len(unique_ids),
-            "Calendar should not have duplicate entry IDs"
+            "Calendar should not have duplicate entry IDs",
         )
 
         # 5. Verify all modules represented
         modules = set(
-            e.get("extendedProps", {}).get("module")
-            for e in payload["entries"]
+            e.get("extendedProps", {}).get("module") for e in payload["entries"]
         )
 
         # Should have entries from multiple modules
         self.assertGreater(
-            len(modules),
-            1,
-            "Calendar should aggregate from multiple modules"
+            len(modules), 1, "Calendar should aggregate from multiple modules"
         )
 
         # 6. Verify related entities appear correctly
         # Assessment milestones
         assessment_entries = [
-            e for e in payload["entries"]
-            if "assessment" in e.get("id", "").lower()
+            e for e in payload["entries"] if "assessment" in e.get("id", "").lower()
         ]
         self.assertGreater(len(assessment_entries), 0)
 
         # PPA milestones
         ppa_entries = [
-            e for e in payload["entries"]
-            if "planning-entry" in e.get("id", "")
+            e for e in payload["entries"] if "planning-entry" in e.get("id", "")
         ]
         self.assertGreater(len(ppa_entries), 0)
 
@@ -543,8 +502,8 @@ class E2EWorkflowTestCase(TestCase):
                 title=f"Assessment {i+1}",
                 methodology="mixed",
                 status="planning",
-                planning_completion_date=date(2025, 10, 1) + timedelta(days=i*30),
-                lead_facilitator=self.coordinator
+                planning_completion_date=date(2025, 10, 1) + timedelta(days=i * 30),
+                lead_facilitator=self.coordinator,
             )
             assessments.append(assessment)
 
@@ -555,9 +514,9 @@ class E2EWorkflowTestCase(TestCase):
                 title=f"PPA {i+1}",
                 category="oobc_ppa" if i % 2 == 0 else "moa_ppa",
                 budget_allocation=Decimal("1000000.00"),
-                start_date=date(2025, 10, 1) + timedelta(days=i*15),
-                end_date=date(2026, 10, 1) + timedelta(days=i*15),
-                created_by=self.coordinator
+                start_date=date(2025, 10, 1) + timedelta(days=i * 15),
+                end_date=date(2026, 10, 1) + timedelta(days=i * 15),
+                created_by=self.coordinator,
             )
             ppas.append(ppa)
 
@@ -567,9 +526,9 @@ class E2EWorkflowTestCase(TestCase):
             event = Event.objects.create(
                 title=f"Event {i+1}",
                 event_type="meeting" if i % 2 == 0 else "workshop",
-                start_date=date(2025, 10, 1) + timedelta(days=i*7),
+                start_date=date(2025, 10, 1) + timedelta(days=i * 7),
                 start_time=time(9, 0),
-                organizer=self.coordinator
+                organizer=self.coordinator,
             )
             events.append(event)
 
@@ -594,9 +553,7 @@ class E2EWorkflowTestCase(TestCase):
 
         # Should complete in under 5 seconds
         self.assertLess(
-            duration,
-            5.0,
-            "Calendar aggregation should complete in under 5 seconds"
+            duration, 5.0, "Calendar aggregation should complete in under 5 seconds"
         )
 
         # Should have reasonable number of entries
@@ -606,9 +563,7 @@ class E2EWorkflowTestCase(TestCase):
         # Verify query efficiency (should not have N+1 issues)
         # With proper select_related/prefetch_related, should be < 50 queries
         self.assertLess(
-            query_count,
-            100,
-            "Calendar aggregation should not have excessive queries"
+            query_count, 100, "Calendar aggregation should not have excessive queries"
         )
 
 
@@ -618,9 +573,7 @@ class WorkflowStageTestCase(TestCase):
     def setUp(self):
         """Create test data."""
         self.user = User.objects.create_user(
-            username="approver",
-            email="approver@example.com",
-            password="testpass123"
+            username="approver", email="approver@example.com", password="testpass123"
         )
 
     def test_budget_workflow_stages_on_calendar(self):
@@ -633,7 +586,7 @@ class WorkflowStageTestCase(TestCase):
             category="oobc_ppa",
             budget_allocation=Decimal("5000000.00"),
             status="planning",
-            created_by=self.user
+            created_by=self.user,
         )
 
         # 2. Create workflow stages
@@ -644,7 +597,7 @@ class WorkflowStageTestCase(TestCase):
             start_date=date(2025, 11, 1),
             due_date=date(2025, 11, 5),
             status=MonitoringEntryWorkflowStage.STATUS_PENDING,
-            assigned_to=self.user
+            assigned_to=self.user,
         )
 
         budget_hearing = MonitoringEntryWorkflowStage.objects.create(
@@ -654,19 +607,18 @@ class WorkflowStageTestCase(TestCase):
             start_date=date(2025, 11, 10),
             due_date=date(2025, 11, 15),
             status=MonitoringEntryWorkflowStage.STATUS_PENDING,
-            assigned_to=self.user
+            assigned_to=self.user,
         )
 
         # 3. Get calendar payload
-        payload = build_calendar_payload(
-            filter_modules=["monitoring"]
-        )
+        payload = build_calendar_payload(filter_modules=["monitoring"])
 
         # 4. Verify workflow stages appear
         workflow_entries = [
-            e for e in payload["entries"]
-            if "workflow" in e.get("id", "").lower() or
-               e.get("extendedProps", {}).get("category", "").endswith("_stage")
+            e
+            for e in payload["entries"]
+            if "workflow" in e.get("id", "").lower()
+            or e.get("extendedProps", {}).get("category", "").endswith("_stage")
         ]
 
         # Should have entries for the workflow stages
@@ -674,7 +626,7 @@ class WorkflowStageTestCase(TestCase):
         self.assertGreaterEqual(
             len(workflow_entries),
             0,
-            "Workflow stages should be available for calendar display"
+            "Workflow stages should be available for calendar display",
         )
 
 
@@ -684,9 +636,7 @@ class RecurringEventIntegrationTestCase(TestCase):
     def setUp(self):
         """Create test data."""
         self.user = User.objects.create_user(
-            username="recurring",
-            email="recurring@example.com",
-            password="testpass123"
+            username="recurring", email="recurring@example.com", password="testpass123"
         )
 
     def test_recurring_event_generates_instances(self):
@@ -705,17 +655,14 @@ class RecurringEventIntegrationTestCase(TestCase):
             start_date=date(2025, 11, 4),  # Monday
             start_time=time(10, 0),
             end_time=time(11, 0),
-            organizer=self.user
+            organizer=self.user,
         )
 
         # Verify event appears on calendar
-        payload = build_calendar_payload(
-            filter_modules=["coordination"]
-        )
+        payload = build_calendar_payload(filter_modules=["coordination"])
 
         event_entries = [
-            e for e in payload["entries"]
-            if event.title in e.get("title", "")
+            e for e in payload["entries"] if event.title in e.get("title", "")
         ]
 
         self.assertGreater(len(event_entries), 0)

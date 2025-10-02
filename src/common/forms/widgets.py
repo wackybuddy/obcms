@@ -44,28 +44,52 @@ class LocationHierarchyWidget(forms.MultiWidget):
             )
     """
 
-    template_name = 'components/location_hierarchy_widget.html'
+    template_name = "components/location_hierarchy_widget.html"
 
-    def __init__(self, include_barangay=True, include_coordinates=True, include_map=True, attrs=None):
+    def __init__(
+        self,
+        include_barangay=True,
+        include_coordinates=True,
+        include_map=True,
+        attrs=None,
+    ):
         self.include_barangay = include_barangay
         self.include_coordinates = include_coordinates
         self.include_map = include_map
 
         # Define the child widgets based on configuration
         widgets = [
-            forms.Select(attrs={'class': 'location-select region-select'}),  # Region
-            forms.Select(attrs={'class': 'location-select province-select'}),  # Province
-            forms.Select(attrs={'class': 'location-select municipality-select'}),  # Municipality
+            forms.Select(attrs={"class": "location-select region-select"}),  # Region
+            forms.Select(
+                attrs={"class": "location-select province-select"}
+            ),  # Province
+            forms.Select(
+                attrs={"class": "location-select municipality-select"}
+            ),  # Municipality
         ]
 
         if include_barangay:
-            widgets.append(forms.Select(attrs={'class': 'location-select barangay-select'}))
+            widgets.append(
+                forms.Select(attrs={"class": "location-select barangay-select"})
+            )
 
         if include_coordinates:
-            widgets.extend([
-                forms.NumberInput(attrs={'class': 'coordinate-input latitude-input', 'step': 'any'}),  # Latitude
-                forms.NumberInput(attrs={'class': 'coordinate-input longitude-input', 'step': 'any'}),  # Longitude
-            ])
+            widgets.extend(
+                [
+                    forms.NumberInput(
+                        attrs={
+                            "class": "coordinate-input latitude-input",
+                            "step": "any",
+                        }
+                    ),  # Latitude
+                    forms.NumberInput(
+                        attrs={
+                            "class": "coordinate-input longitude-input",
+                            "step": "any",
+                        }
+                    ),  # Longitude
+                ]
+            )
 
         super().__init__(widgets, attrs)
 
@@ -78,17 +102,17 @@ class LocationHierarchyWidget(forms.MultiWidget):
 
         # Handle different input types
         if isinstance(value, dict):
-            result[0] = value.get('region')
-            result[1] = value.get('province')
-            result[2] = value.get('municipality')
+            result[0] = value.get("region")
+            result[1] = value.get("province")
+            result[2] = value.get("municipality")
             if self.include_barangay:
-                result[3] = value.get('barangay')
+                result[3] = value.get("barangay")
                 if self.include_coordinates:
-                    result[4] = value.get('latitude')
-                    result[5] = value.get('longitude')
+                    result[4] = value.get("latitude")
+                    result[5] = value.get("longitude")
             elif self.include_coordinates:
-                result[3] = value.get('latitude')
-                result[4] = value.get('longitude')
+                result[3] = value.get("latitude")
+                result[4] = value.get("longitude")
 
         elif isinstance(value, (list, tuple)):
             for i, val in enumerate(value):
@@ -104,38 +128,48 @@ class LocationHierarchyWidget(forms.MultiWidget):
             '<div class="location-selects">'
             '<div class="location-field region-field">'
             '<label class="location-label">Region</label>'
-            '{region}'
-            '</div>'
+            "{region}"
+            "</div>"
             '<div class="location-field province-field">'
             '<label class="location-label">Province</label>'
-            '{province}'
-            '</div>'
+            "{province}"
+            "</div>"
             '<div class="location-field municipality-field">'
             '<label class="location-label">Municipality/City</label>'
-            '{municipality}'
-            '</div>'
-            '{barangay_field}'
-            '</div>'
-            '{coordinate_fields}'
-            '{map_widget}'
-            '</div>',
-            config=json.dumps({
-                'include_barangay': self.include_barangay,
-                'include_coordinates': self.include_coordinates,
-                'include_map': self.include_map,
-                'centroid_url': reverse('common:location_centroid'),
-            }),
+            "{municipality}"
+            "</div>"
+            "{barangay_field}"
+            "</div>"
+            "{coordinate_fields}"
+            "{map_widget}"
+            "</div>",
+            config=json.dumps(
+                {
+                    "include_barangay": self.include_barangay,
+                    "include_coordinates": self.include_coordinates,
+                    "include_map": self.include_map,
+                    "centroid_url": reverse("common:location_centroid"),
+                }
+            ),
             region=rendered_widgets[0],
             province=rendered_widgets[1],
             municipality=rendered_widgets[2],
-            barangay_field=format_html(
-                '<div class="location-field barangay-field">'
-                '<label class="location-label">Barangay</label>'
-                '{}</div>',
-                rendered_widgets[3]
-            ) if self.include_barangay else '',
-            coordinate_fields=self._render_coordinate_fields(rendered_widgets) if self.include_coordinates else '',
-            map_widget=self._render_map_widget() if self.include_map else '',
+            barangay_field=(
+                format_html(
+                    '<div class="location-field barangay-field">'
+                    '<label class="location-label">Barangay</label>'
+                    "{}</div>",
+                    rendered_widgets[3],
+                )
+                if self.include_barangay
+                else ""
+            ),
+            coordinate_fields=(
+                self._render_coordinate_fields(rendered_widgets)
+                if self.include_coordinates
+                else ""
+            ),
+            map_widget=self._render_map_widget() if self.include_map else "",
         )
 
     def _render_coordinate_fields(self, rendered_widgets):
@@ -147,17 +181,21 @@ class LocationHierarchyWidget(forms.MultiWidget):
             '<div class="coordinate-fields">'
             '<div class="coordinate-field latitude-field">'
             '<label class="coordinate-label">Latitude</label>'
-            '{latitude}'
+            "{latitude}"
             '<small class="coordinate-help">Decimal degrees (e.g., 7.0858)</small>'
-            '</div>'
+            "</div>"
             '<div class="coordinate-field longitude-field">'
             '<label class="coordinate-label">Longitude</label>'
-            '{longitude}'
+            "{longitude}"
             '<small class="coordinate-help">Decimal degrees (e.g., 125.6161)</small>'
-            '</div>'
-            '</div>',
-            latitude=rendered_widgets[lat_index] if lat_index < len(rendered_widgets) else '',
-            longitude=rendered_widgets[lng_index] if lng_index < len(rendered_widgets) else '',
+            "</div>"
+            "</div>",
+            latitude=(
+                rendered_widgets[lat_index] if lat_index < len(rendered_widgets) else ""
+            ),
+            longitude=(
+                rendered_widgets[lng_index] if lng_index < len(rendered_widgets) else ""
+            ),
         )
 
     def _render_map_widget(self):
@@ -168,32 +206,39 @@ class LocationHierarchyWidget(forms.MultiWidget):
             '<div class="obc-map-header">'
             '<h4 class="map-title">Location Map</h4>'
             '<span class="obc-map-status">Select location to pin coordinates</span>'
-            '</div>'
+            "</div>"
             '<div class="obc-map-canvas" data-obc-map-target></div>'
             '<div class="obc-map-footer">'
             '<small class="map-help">Click map to manually set coordinates</small>'
-            '</div>'
-            '</div>'
-            '</div>'
+            "</div>"
+            "</div>"
+            "</div>"
         )
 
     def get_context(self, name, value, attrs):
         """Get template context for widget rendering."""
         context = super().get_context(name, value, attrs)
-        context['widget'].update({
-            'include_barangay': self.include_barangay,
-            'include_coordinates': self.include_coordinates,
-            'include_map': self.include_map,
-            'location_data': build_location_data(include_barangays=self.include_barangay),
-            'centroid_url': reverse('common:location_centroid'),
-        })
+        context["widget"].update(
+            {
+                "include_barangay": self.include_barangay,
+                "include_coordinates": self.include_coordinates,
+                "include_map": self.include_map,
+                "location_data": build_location_data(
+                    include_barangays=self.include_barangay
+                ),
+                "centroid_url": reverse("common:location_centroid"),
+            }
+        )
         return context
 
     class Media:
         css = {
-            'all': ('common/css/obc_location_map.css', 'common/css/location_hierarchy_widget.css')
+            "all": (
+                "common/css/obc_location_map.css",
+                "common/css/location_hierarchy_widget.css",
+            )
         }
-        js = ('common/js/obc_location_map.js', 'common/js/location_hierarchy_widget.js')
+        js = ("common/js/obc_location_map.js", "common/js/location_hierarchy_widget.js")
 
 
 class CoordinateWidget(forms.MultiWidget):
@@ -211,16 +256,20 @@ class CoordinateWidget(forms.MultiWidget):
         self.include_map = include_map
 
         widgets = [
-            forms.NumberInput(attrs={
-                'class': 'coordinate-input latitude-input',
-                'step': 'any',
-                'placeholder': 'Latitude (e.g., 7.0858)'
-            }),
-            forms.NumberInput(attrs={
-                'class': 'coordinate-input longitude-input',
-                'step': 'any',
-                'placeholder': 'Longitude (e.g., 125.6161)'
-            }),
+            forms.NumberInput(
+                attrs={
+                    "class": "coordinate-input latitude-input",
+                    "step": "any",
+                    "placeholder": "Latitude (e.g., 7.0858)",
+                }
+            ),
+            forms.NumberInput(
+                attrs={
+                    "class": "coordinate-input longitude-input",
+                    "step": "any",
+                    "placeholder": "Longitude (e.g., 125.6161)",
+                }
+            ),
         ]
 
         super().__init__(widgets, attrs)
@@ -231,10 +280,10 @@ class CoordinateWidget(forms.MultiWidget):
             return [None, None]
 
         if isinstance(value, dict):
-            return [value.get('lat'), value.get('lng')]
+            return [value.get("lat"), value.get("lng")]
         elif isinstance(value, (list, tuple)) and len(value) >= 2:
             return [value[0], value[1]]
-        elif hasattr(value, 'latitude') and hasattr(value, 'longitude'):
+        elif hasattr(value, "latitude") and hasattr(value, "longitude"):
             return [value.latitude, value.longitude]
 
         return [None, None]
@@ -246,20 +295,20 @@ class CoordinateWidget(forms.MultiWidget):
             '<div class="coordinate-inputs">'
             '<div class="coordinate-field latitude-field">'
             '<label class="coordinate-label">Latitude</label>'
-            '{latitude}'
+            "{latitude}"
             '<small class="coordinate-help">Decimal degrees</small>'
-            '</div>'
+            "</div>"
             '<div class="coordinate-field longitude-field">'
             '<label class="coordinate-label">Longitude</label>'
-            '{longitude}'
+            "{longitude}"
             '<small class="coordinate-help">Decimal degrees</small>'
-            '</div>'
-            '</div>'
-            '{map_widget}'
-            '</div>',
+            "</div>"
+            "</div>"
+            "{map_widget}"
+            "</div>",
             latitude=rendered_widgets[0],
             longitude=rendered_widgets[1],
-            map_widget=self._render_coordinate_map() if self.include_map else '',
+            map_widget=self._render_coordinate_map() if self.include_map else "",
         )
 
     def _render_coordinate_map(self):
@@ -269,17 +318,15 @@ class CoordinateWidget(forms.MultiWidget):
             '<div class="obc-map-container" data-obc-map data-mode="coordinate">'
             '<div class="obc-map-canvas" data-obc-map-target></div>'
             '<div class="coordinate-map-help">'
-            '<small>Click map to set coordinates</small>'
-            '</div>'
-            '</div>'
-            '</div>'
+            "<small>Click map to set coordinates</small>"
+            "</div>"
+            "</div>"
+            "</div>"
         )
 
     class Media:
-        css = {
-            'all': ('common/css/obc_location_map.css',)
-        }
-        js = ('common/js/obc_location_map.js',)
+        css = {"all": ("common/css/obc_location_map.css",)}
+        js = ("common/js/obc_location_map.js",)
 
 
 class LocationSelectWidget(forms.Select):
@@ -292,13 +339,13 @@ class LocationSelectWidget(forms.Select):
     - Geocoding status indicators
     """
 
-    def __init__(self, location_level='municipality', show_metadata=True, attrs=None):
+    def __init__(self, location_level="municipality", show_metadata=True, attrs=None):
         self.location_level = location_level
         self.show_metadata = show_metadata
 
         default_attrs = {
-            'class': f'location-select {location_level}-select',
-            'data-location-level': location_level,
+            "class": f"location-select {location_level}-select",
+            "data-location-level": location_level,
         }
 
         if attrs:
@@ -306,45 +353,58 @@ class LocationSelectWidget(forms.Select):
 
         super().__init__(attrs=default_attrs)
 
-    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+    def create_option(
+        self, name, value, label, selected, index, subindex=None, attrs=None
+    ):
         """Create option with additional metadata."""
-        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        option = super().create_option(
+            name, value, label, selected, index, subindex, attrs
+        )
 
         if self.show_metadata and value:
             # Add metadata attributes to option
             try:
-                if self.location_level == 'region':
+                if self.location_level == "region":
                     obj = Region.objects.get(pk=value)
-                elif self.location_level == 'province':
+                elif self.location_level == "province":
                     obj = Province.objects.get(pk=value)
-                elif self.location_level == 'municipality':
+                elif self.location_level == "municipality":
                     obj = Municipality.objects.get(pk=value)
-                elif self.location_level == 'barangay':
+                elif self.location_level == "barangay":
                     obj = Barangay.objects.get(pk=value)
                 else:
                     obj = None
 
                 if obj:
-                    option['attrs'].update({
-                        'data-population': getattr(obj, 'population_total', ''),
-                        'data-has-coordinates': 'true' if getattr(obj, 'center_coordinates', None) else 'false',
-                        'data-code': getattr(obj, 'code', ''),
-                    })
+                    option["attrs"].update(
+                        {
+                            "data-population": getattr(obj, "population_total", ""),
+                            "data-has-coordinates": (
+                                "true"
+                                if getattr(obj, "center_coordinates", None)
+                                else "false"
+                            ),
+                            "data-code": getattr(obj, "code", ""),
+                        }
+                    )
 
-            except (Region.DoesNotExist, Province.DoesNotExist, Municipality.DoesNotExist, Barangay.DoesNotExist):
+            except (
+                Region.DoesNotExist,
+                Province.DoesNotExist,
+                Municipality.DoesNotExist,
+                Barangay.DoesNotExist,
+            ):
                 pass
 
         return option
 
     class Media:
-        css = {
-            'all': ('common/css/location_select_widget.css',)
-        }
-        js = ('common/js/location_select_widget.js',)
+        css = {"all": ("common/css/location_select_widget.css",)}
+        js = ("common/js/location_select_widget.js",)
 
 
 __all__ = [
-    'LocationHierarchyWidget',
-    'CoordinateWidget',
-    'LocationSelectWidget',
+    "LocationHierarchyWidget",
+    "CoordinateWidget",
+    "LocationSelectWidget",
 ]

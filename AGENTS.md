@@ -6,17 +6,30 @@
 
 With powerful AI coding agents, a year's worth of traditional development work can be completed in a single day. Time estimates create false constraints and are obsolete in AI-assisted development.
 
+**This applies to:**
+- ❌ Conversational responses: "This will take 8 hours"
+- ❌ Documentation files: "Week 1-2: Implement feature"
+- ❌ Phase headers: "Phase 1 (Week 1-2)" or "Phase 2 (Days 3-5)"
+- ❌ Implementation plans: Any timeline labels, week ranges, or date estimates
+- ❌ Roadmaps: "Q1 2024", "Month 1", "Sprint 1-2"
+
 **Instead, focus on:**
-- **Dependencies**: What must be done before this task (e.g., "Requires dashboard metrics view")
+- **Priority**: CRITICAL, HIGH, MEDIUM, or LOW (all caps in phase headers)
 - **Complexity**: Simple, Moderate, or Complex
-- **Priority**: Critical, High, Medium, or Low
+- **Dependencies**: What must be done before this task (e.g., "Requires dashboard metrics view")
 - **Prerequisites**: What needs to exist first (e.g., "Model must exist", "API endpoint required")
 
 **Examples:**
 - ❌ Bad: "This will take 8 hours to implement"
 - ❌ Bad: "Week 1, Days 2-3: Enhanced dashboard"
+- ❌ Bad: "Phase 1 (Week 1-2): Hero Sections"
+- ❌ Bad: "Estimated Effort: 2-3 days"
+- ✅ Good: "Phase 1 | PRIORITY: CRITICAL"
 - ✅ Good: "Priority: HIGH | Complexity: Moderate | Requires: dashboard_metrics view"
-- ✅ Good: "Prerequisites: Fix task deletion bug first (dependency)"
+- ✅ Good: "Dependencies: Dashboard metrics view must exist first"
+- ✅ Good: "Prerequisites: Fix task deletion bug (dependency)"
+
+**Critical:** This policy applies to ALL documentation files under `docs/`, including implementation plans, feature specifications, and phased rollout plans. Never use week ranges, day counts, hour estimates, or any time-based labels.
 
 ## Project Structure & Module Organization
 The Django project lives in `src/`; `obc_management` supplies settings/URLs while feature apps (`communities`, `coordination`, `mana`, `policies`, `documents`, `policy_tracking`, `ai_assistant`) handle domain logic. Shared utilities belong in `src/common`, imports in `src/data_imports`, and templates in `src/templates`. Author tests in `src/<app>/tests.py` (split into `tests/` when needed); docs sit in `docs/`, deployment manifests in `deployment/`, and briefs in `tasks/`.

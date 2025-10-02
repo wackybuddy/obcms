@@ -2,10 +2,19 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from .models import (CommunityEvent, CommunityInfrastructure, CommunityLivelihood,
-                     GeographicDataLayer, MapVisualization, MunicipalityCoverage,
-                     OBCCommunity, ProvinceCoverage, SpatialDataPoint, Stakeholder,
-                     StakeholderEngagement)
+from .models import (
+    CommunityEvent,
+    CommunityInfrastructure,
+    CommunityLivelihood,
+    GeographicDataLayer,
+    MapVisualization,
+    MunicipalityCoverage,
+    OBCCommunity,
+    ProvinceCoverage,
+    SpatialDataPoint,
+    Stakeholder,
+    StakeholderEngagement,
+)
 
 
 class CommunityLivelihoodInline(admin.TabularInline):
@@ -133,7 +142,13 @@ class OBCCommunityAdmin(admin.ModelAdmin):
                         "percentage_obc_in_barangay",
                     ),
                     ("households", "families", "average_household_size"),
-                    ("children_0_9", "adolescents_10_14", "youth_15_30", "adults_31_59", "seniors_60_plus"),
+                    (
+                        "children_0_9",
+                        "adolescents_10_14",
+                        "youth_15_30",
+                        "adults_31_59",
+                        "seniors_60_plus",
+                    ),
                     ("total_age_demographics",),
                     ("primary_ethnolinguistic_group", "other_ethnolinguistic_groups"),
                     ("languages_spoken",),
@@ -146,9 +161,21 @@ class OBCCommunityAdmin(admin.ModelAdmin):
                 "fields": (
                     ("women_count", "solo_parents_count", "pwd_count"),
                     ("farmers_count", "fisherfolk_count", "unemployed_count"),
-                    ("indigenous_peoples_count", "idps_count", "migrants_transients_count"),
-                    ("csos_count", "associations_count", "number_of_peoples_organizations"),
-                    ("number_of_cooperatives", "number_of_social_enterprises", "number_of_micro_enterprises"),
+                    (
+                        "indigenous_peoples_count",
+                        "idps_count",
+                        "migrants_transients_count",
+                    ),
+                    (
+                        "csos_count",
+                        "associations_count",
+                        "number_of_peoples_organizations",
+                    ),
+                    (
+                        "number_of_cooperatives",
+                        "number_of_social_enterprises",
+                        "number_of_micro_enterprises",
+                    ),
                     ("other_vulnerable_sectors",),
                 ),
                 "classes": ("collapse",),
@@ -189,7 +216,12 @@ class OBCCommunityAdmin(admin.ModelAdmin):
                     ("established_year", "origin_story", "migration_history"),
                     ("cultural_practices_traditions", "religious_affiliation"),
                     ("traditional_leaders_role", "cultural_preservation_efforts"),
-                    ("mosques_count", "madrasah_count", "asatidz_count", "religious_leaders_count"),
+                    (
+                        "mosques_count",
+                        "madrasah_count",
+                        "asatidz_count",
+                        "religious_leaders_count",
+                    ),
                     ("other_cultural_facilities",),
                 ),
                 "classes": ("collapse",),
@@ -316,19 +348,25 @@ class OBCCommunityAdmin(admin.ModelAdmin):
 
     def mark_unemployment_low(self, request, queryset):
         updated = queryset.update(unemployment_rate="low")
-        self.message_user(request, f"{updated} communities marked with low unemployment.")
+        self.message_user(
+            request, f"{updated} communities marked with low unemployment."
+        )
 
     mark_unemployment_low.short_description = "Mark unemployment rate as Low"
 
     def mark_unemployment_moderate(self, request, queryset):
         updated = queryset.update(unemployment_rate="moderate")
-        self.message_user(request, f"{updated} communities marked with moderate unemployment.")
+        self.message_user(
+            request, f"{updated} communities marked with moderate unemployment."
+        )
 
     mark_unemployment_moderate.short_description = "Mark unemployment rate as Moderate"
 
     def mark_unemployment_high(self, request, queryset):
         updated = queryset.update(unemployment_rate="high")
-        self.message_user(request, f"{updated} communities marked with high unemployment.")
+        self.message_user(
+            request, f"{updated} communities marked with high unemployment."
+        )
 
     mark_unemployment_high.short_description = "Mark unemployment rate as High"
 
@@ -854,7 +892,13 @@ class MunicipalityCoverageAdmin(admin.ModelAdmin):
                 "fields": (
                     ("estimated_obc_population", "total_barangay_population"),
                     ("households", "families", "average_household_size"),
-                    ("children_0_9", "adolescents_10_14", "youth_15_30", "adults_31_59", "seniors_60_plus"),
+                    (
+                        "children_0_9",
+                        "adolescents_10_14",
+                        "youth_15_30",
+                        "adults_31_59",
+                        "seniors_60_plus",
+                    ),
                     ("primary_ethnolinguistic_group", "other_ethnolinguistic_groups"),
                     ("languages_spoken",),
                 )
@@ -866,9 +910,21 @@ class MunicipalityCoverageAdmin(admin.ModelAdmin):
                 "fields": (
                     ("women_count", "solo_parents_count", "pwd_count"),
                     ("farmers_count", "fisherfolk_count", "unemployed_count"),
-                    ("indigenous_peoples_count", "idps_count", "migrants_transients_count"),
-                    ("csos_count", "associations_count", "number_of_peoples_organizations"),
-                    ("number_of_cooperatives", "number_of_social_enterprises", "number_of_micro_enterprises"),
+                    (
+                        "indigenous_peoples_count",
+                        "idps_count",
+                        "migrants_transients_count",
+                    ),
+                    (
+                        "csos_count",
+                        "associations_count",
+                        "number_of_peoples_organizations",
+                    ),
+                    (
+                        "number_of_cooperatives",
+                        "number_of_social_enterprises",
+                        "number_of_micro_enterprises",
+                    ),
                     ("other_vulnerable_sectors",),
                 ),
                 "classes": ("collapse",),
@@ -910,7 +966,12 @@ class MunicipalityCoverageAdmin(admin.ModelAdmin):
                     ("established_year", "origin_story", "migration_history"),
                     ("cultural_practices_traditions", "religious_affiliation"),
                     ("traditional_leaders_role", "cultural_preservation_efforts"),
-                    ("mosques_count", "madrasah_count", "asatidz_count", "religious_leaders_count"),
+                    (
+                        "mosques_count",
+                        "madrasah_count",
+                        "asatidz_count",
+                        "religious_leaders_count",
+                    ),
                     ("other_cultural_facilities",),
                 ),
                 "classes": ("collapse",),
@@ -1031,7 +1092,12 @@ class GeographicDataLayerAdmin(admin.ModelAdmin):
         "barangay",
         "created_by",
     ]
-    readonly_fields = ["created_at", "updated_at", "administrative_level", "full_administrative_path"]
+    readonly_fields = [
+        "created_at",
+        "updated_at",
+        "administrative_level",
+        "full_administrative_path",
+    ]
 
     fieldsets = (
         (
@@ -1099,7 +1165,9 @@ class GeographicDataLayerAdmin(admin.ModelAdmin):
         """Display the administrative level with path."""
         level = obj.administrative_level
         if level == "none":
-            return format_html('<span style="color: orange;">No administrative assignment</span>')
+            return format_html(
+                '<span style="color: orange;">No administrative assignment</span>'
+            )
 
         colors = {
             "region": "#007bff",
@@ -1122,7 +1190,9 @@ class GeographicDataLayerAdmin(admin.ModelAdmin):
     def community_link(self, obj):
         """Link to community if available."""
         if obj.community:
-            url = reverse("admin:communities_obccommunity_change", args=[obj.community.pk])
+            url = reverse(
+                "admin:communities_obccommunity_change", args=[obj.community.pk]
+            )
             return format_html('<a href="{}">{}</a>', url, obj.community.display_name)
         return "-"
 
@@ -1228,7 +1298,9 @@ class MapVisualizationAdmin(admin.ModelAdmin):
     def community_link(self, obj):
         """Link to community if available."""
         if obj.community:
-            url = reverse("admin:communities_obccommunity_change", args=[obj.community.pk])
+            url = reverse(
+                "admin:communities_obccommunity_change", args=[obj.community.pk]
+            )
             return format_html('<a href="{}">{}</a>', url, obj.community.display_name)
         return "-"
 
@@ -1300,7 +1372,13 @@ class SpatialDataPointAdmin(admin.ModelAdmin):
     ]
     date_hierarchy = "created_at"
     ordering = ["-created_at"]
-    autocomplete_fields = ["data_layer", "community", "assessment", "collected_by", "verified_by"]
+    autocomplete_fields = [
+        "data_layer",
+        "community",
+        "assessment",
+        "collected_by",
+        "verified_by",
+    ]
     readonly_fields = ["created_at", "updated_at", "coordinates_display"]
 
     fieldsets = (
@@ -1359,7 +1437,9 @@ class SpatialDataPointAdmin(admin.ModelAdmin):
     def data_layer_link(self, obj):
         """Link to geographic data layer."""
         if obj.data_layer:
-            url = reverse("admin:communities_geographicdatalayer_change", args=[obj.data_layer.pk])
+            url = reverse(
+                "admin:communities_geographicdatalayer_change", args=[obj.data_layer.pk]
+            )
             return format_html('<a href="{}">{}</a>', url, obj.data_layer.name)
         return "-"
 
@@ -1421,9 +1501,21 @@ class ProvinceCoverageAdmin(admin.ModelAdmin):
                     ("households", "families"),
                     ("women_count", "solo_parents_count", "pwd_count"),
                     ("farmers_count", "fisherfolk_count", "unemployed_count"),
-                    ("indigenous_peoples_count", "idps_count", "migrants_transients_count"),
-                    ("csos_count", "associations_count", "number_of_peoples_organizations"),
-                    ("number_of_cooperatives", "number_of_social_enterprises", "number_of_micro_enterprises"),
+                    (
+                        "indigenous_peoples_count",
+                        "idps_count",
+                        "migrants_transients_count",
+                    ),
+                    (
+                        "csos_count",
+                        "associations_count",
+                        "number_of_peoples_organizations",
+                    ),
+                    (
+                        "number_of_cooperatives",
+                        "number_of_social_enterprises",
+                        "number_of_micro_enterprises",
+                    ),
                 ),
                 "classes": ("collapse",),
             },
@@ -1454,7 +1546,16 @@ class ProvinceCoverageAdmin(admin.ModelAdmin):
 class CommunityEventAdmin(admin.ModelAdmin):
     """Admin interface for Community Events."""
 
-    list_display = ("title", "community", "event_type", "start_date", "end_date", "is_public", "is_recurring", "created_by")
+    list_display = (
+        "title",
+        "community",
+        "event_type",
+        "start_date",
+        "end_date",
+        "is_public",
+        "is_recurring",
+        "created_by",
+    )
     list_filter = ("event_type", "is_public", "is_recurring", "start_date")
     search_fields = ("title", "description", "community__name", "location", "organizer")
     readonly_fields = ("created_at", "updated_at")
@@ -1463,15 +1564,29 @@ class CommunityEventAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Community", {"fields": ("community",)}),
         ("Event Details", {"fields": ("title", "description", "event_type")}),
-        ("Schedule", {"fields": ("start_date", "end_date", "all_day", "start_time", "end_time")}),
+        (
+            "Schedule",
+            {"fields": ("start_date", "end_date", "all_day", "start_time", "end_time")},
+        ),
         ("Location & Organizer", {"fields": ("location", "organizer")}),
         ("Visibility", {"fields": ("is_public",)}),
         (
             "Recurrence",
             {
-                "fields": ("is_recurring", "recurrence_pattern", "recurrence_parent", "is_recurrence_exception"),
+                "fields": (
+                    "is_recurring",
+                    "recurrence_pattern",
+                    "recurrence_parent",
+                    "is_recurrence_exception",
+                ),
                 "classes": ("collapse",),
             },
         ),
-        ("Metadata", {"fields": ("created_by", "created_at", "updated_at"), "classes": ("collapse",)}),
+        (
+            "Metadata",
+            {
+                "fields": ("created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
     )

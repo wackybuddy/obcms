@@ -1,4 +1,5 @@
 """Template tags for task management views."""
+
 from django import template
 
 register = template.Library()
@@ -26,14 +27,14 @@ def domain_color(domain_code):
         {{ task.domain|domain_color }}
     """
     colors = {
-        'mana': 'emerald',
-        'coordination': 'blue',
-        'policy': 'purple',
-        'monitoring': 'amber',
-        'services': 'rose',
-        'general': 'gray',
+        "mana": "emerald",
+        "coordination": "blue",
+        "policy": "purple",
+        "monitoring": "amber",
+        "services": "rose",
+        "general": "gray",
     }
-    return colors.get(domain_code, 'gray')
+    return colors.get(domain_code, "gray")
 
 
 @register.filter
@@ -45,14 +46,14 @@ def status_color(status_code):
         {{ task.status|status_color }}
     """
     colors = {
-        'not_started': 'gray',
-        'in_progress': 'blue',
-        'on_hold': 'amber',
-        'at_risk': 'rose',
-        'completed': 'emerald',
-        'cancelled': 'gray',
+        "not_started": "gray",
+        "in_progress": "blue",
+        "on_hold": "amber",
+        "at_risk": "rose",
+        "completed": "emerald",
+        "cancelled": "gray",
     }
-    return colors.get(status_code, 'gray')
+    return colors.get(status_code, "gray")
 
 
 @register.filter
@@ -64,9 +65,9 @@ def priority_color(priority_code):
         {{ task.priority|priority_color }}
     """
     colors = {
-        'critical': 'rose',
-        'high': 'amber',
-        'medium': 'blue',
-        'low': 'gray',
+        "critical": "rose",
+        "high": "amber",
+        "medium": "blue",
+        "low": "gray",
     }
-    return colors.get(priority_code, 'gray')
+    return colors.get(priority_code, "gray")

@@ -35,11 +35,21 @@ class MunicipalOBCProfileHistorySerializer(serializers.ModelSerializer):
 class MunicipalOBCProfileSerializer(serializers.ModelSerializer):
     """Serializer driving the municipal OBC form."""
 
-    municipality_name = serializers.CharField(source="municipality.name", read_only=True)
-    province_name = serializers.CharField(source="municipality.province.name", read_only=True)
-    region_name = serializers.CharField(source="municipality.province.region.name", read_only=True)
-    history = MunicipalOBCProfileHistorySerializer(source="history_entries", many=True, read_only=True)
-    history_note = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    municipality_name = serializers.CharField(
+        source="municipality.name", read_only=True
+    )
+    province_name = serializers.CharField(
+        source="municipality.province.name", read_only=True
+    )
+    region_name = serializers.CharField(
+        source="municipality.province.region.name", read_only=True
+    )
+    history = MunicipalOBCProfileHistorySerializer(
+        source="history_entries", many=True, read_only=True
+    )
+    history_note = serializers.CharField(
+        write_only=True, required=False, allow_blank=True
+    )
 
     class Meta:
         model = MunicipalOBCProfile
@@ -74,7 +84,9 @@ class MunicipalOBCProfileSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def update(self, instance: MunicipalOBCProfile, validated_data: Dict[str, Any]) -> MunicipalOBCProfile:
+    def update(
+        self, instance: MunicipalOBCProfile, validated_data: Dict[str, Any]
+    ) -> MunicipalOBCProfile:
         request = self.context.get("request")
         user = getattr(request, "user", None)
         if user is not None and not getattr(user, "is_authenticated", False):

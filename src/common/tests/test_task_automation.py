@@ -108,7 +108,9 @@ class TaskAutomationServiceTests(TestCase):
         self.assertEqual(len(tasks), 3)
         self.assertEqual(tasks[0].title, "Task 1: Region IX Baseline Assessment")
         self.assertIn("Region IX Baseline Assessment", tasks[0].description)
-        self.assertEqual(tasks[2].title, "Task 3: Region IX Baseline Assessment analysis")
+        self.assertEqual(
+            tasks[2].title, "Task 3: Region IX Baseline Assessment analysis"
+        )
 
     def test_create_tasks_with_custom_start_date(self):
         """Test due dates calculated from custom start date."""
@@ -153,7 +155,9 @@ class TaskAutomationServiceTests(TestCase):
         self.assertEqual(tasks[1].priority, StaffTask.PRIORITY_MEDIUM)
         self.assertEqual(tasks[1].task_category, "data_collection")
         self.assertEqual(tasks[1].estimated_hours, 8)
-        self.assertEqual(tasks[1].assessment_phase, StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION)
+        self.assertEqual(
+            tasks[1].assessment_phase, StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION
+        )
 
     def test_create_tasks_inactive_template_returns_empty(self):
         """Test that inactive templates don't create tasks."""
@@ -227,12 +231,12 @@ class TaskAutomationServiceTests(TestCase):
             created_by=self.admin,
             start_date=start_date,
             resource_bookings={
-                'default': [
+                "default": [
                     {
-                        'resource_id': resource.id,
-                        'start_offset_hours': 1,
-                        'duration_hours': 3,
-                        'notes': 'Automation booking',
+                        "resource_id": resource.id,
+                        "start_offset_hours": 1,
+                        "duration_hours": 3,
+                        "notes": "Automation booking",
                     }
                 ]
             },
@@ -242,14 +246,16 @@ class TaskAutomationServiceTests(TestCase):
         first_task = tasks[0]
 
         booking = CalendarResourceBooking.objects.get(
-            content_type__model='stafftask',
+            content_type__model="stafftask",
             object_id=first_task.pk,
         )
         self.assertEqual(booking.resource, resource)
-        self.assertEqual(booking.notes, 'Automation booking')
+        self.assertEqual(booking.notes, "Automation booking")
         self.assertEqual(booking.booked_by, self.admin)
         tz = timezone.get_current_timezone()
-        expected_start = timezone.make_aware(datetime.combine(start_date, time(hour=8)), tz) + timedelta(hours=1)
+        expected_start = timezone.make_aware(
+            datetime.combine(start_date, time(hour=8)), tz
+        ) + timedelta(hours=1)
         expected_end = expected_start + timedelta(hours=3)
         self.assertEqual(booking.start_datetime, expected_start)
         self.assertEqual(booking.end_datetime, expected_end)
@@ -261,7 +267,7 @@ class TaskAutomationServiceTests(TestCase):
             create_tasks_from_template(
                 "test_template",
                 created_by=self.admin,
-                resource_bookings={'default': [{'resource_name': 'Unknown'}]},
+                resource_bookings={"default": [{"resource_name": "Unknown"}]},
             )
 
     def test_create_tasks_resource_booking_conflict_raises(self):
@@ -290,7 +296,15 @@ class TaskAutomationServiceTests(TestCase):
                 "test_template",
                 created_by=self.admin,
                 start_date=start_date,
-                resource_bookings={'default': [{'resource_id': resource.id, 'start_offset_hours': 1, 'duration_hours': 2}]},
+                resource_bookings={
+                    "default": [
+                        {
+                            "resource_id": resource.id,
+                            "start_offset_hours": 1,
+                            "duration_hours": 2,
+                        }
+                    ]
+                },
             )
 
     def test_tasks_created_with_not_started_status(self):

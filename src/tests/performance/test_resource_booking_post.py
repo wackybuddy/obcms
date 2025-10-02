@@ -30,7 +30,9 @@ def test_resource_booking_post(perf_booking_dataset, perf_http_runner):
     form_data = {
         "resource": resource.pk,
         "start_datetime": submission_start.strftime("%Y-%m-%dT%H:%M"),
-        "end_datetime": (submission_start + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M"),
+        "end_datetime": (submission_start + timedelta(hours=2)).strftime(
+            "%Y-%m-%dT%H:%M"
+        ),
         "notes": "Performance benchmark submission",
     }
 
@@ -44,7 +46,10 @@ def test_resource_booking_post(perf_booking_dataset, perf_http_runner):
     )
 
     assert result.status_code in {200, 302}
-    assert CalendarResourceBooking.objects.filter(resource=resource).count() == initial_count + 1
+    assert (
+        CalendarResourceBooking.objects.filter(resource=resource).count()
+        == initial_count + 1
+    )
     assert result.query_count <= 18, result.query_count
     assert result.duration_ms < 650, f"Booking POST took {result.duration_ms:.2f} ms"
     record_perf_metric(

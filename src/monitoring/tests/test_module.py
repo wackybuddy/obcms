@@ -188,9 +188,7 @@ class MonitoringModelTests(MonitoringBaseTestCase):
         self.assertEqual(entry.plan_year, 2024)
         self.assertEqual(entry.fiscal_year, 2024)
         self.assertEqual(entry.budget_ceiling, Decimal("250000.00"))
-        self.assertEqual(
-            entry.funding_source, MonitoringEntry.FUNDING_SOURCE_INTERNAL
-        )
+        self.assertEqual(entry.funding_source, MonitoringEntry.FUNDING_SOURCE_INTERNAL)
         self.assertEqual(
             entry.workflow_stages.count(),
             len(MonitoringEntryWorkflowStage.STAGE_CHOICES),
@@ -288,7 +286,9 @@ class MonitoringFormTests(MonitoringBaseTestCase):
 
         self.assertEqual(entry.goal_alignment, ["PDP 2023 Health", "SDG 3"])
         self.assertEqual(entry.funding_source, MonitoringEntry.FUNDING_SOURCE_GAA)
-        self.assertEqual(entry.appropriation_class, MonitoringEntry.APPROPRIATION_CLASS_MOOE)
+        self.assertEqual(
+            entry.appropriation_class, MonitoringEntry.APPROPRIATION_CLASS_MOOE
+        )
 
 
 class MonitoringViewTests(MonitoringBaseTestCase):

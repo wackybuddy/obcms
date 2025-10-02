@@ -305,14 +305,12 @@ def initialise_section_payload() -> Dict[str, Dict[str, int]]:
 
     payload: Dict[str, Dict[str, int]] = {}
     for section_key, section in AGGREGATION_SECTIONS.items():
-        payload[section_key] = {
-            metric_key: 0 for metric_key in section.metrics.keys()
-        }
+        payload[section_key] = {metric_key: 0 for metric_key in section.metrics.keys()}
     return payload
 
 
 def normalise_reported_metrics(
-    metrics: Optional[Mapping[str, Mapping[str, int]]]
+    metrics: Optional[Mapping[str, Mapping[str, int]]],
 ) -> Dict[str, Dict[str, int]]:
     """Ensure reported metrics follow the schema with default values."""
 
@@ -322,9 +320,7 @@ def normalise_reported_metrics(
 
     if isinstance(metrics, Mapping):
         section_keys = set(AGGREGATION_SECTIONS.keys())
-        provided_section_keys = {
-            key for key in metrics.keys() if key in section_keys
-        }
+        provided_section_keys = {key for key in metrics.keys() if key in section_keys}
 
         if provided_section_keys:
             for section_key in provided_section_keys:
@@ -332,7 +328,9 @@ def normalise_reported_metrics(
                 if not isinstance(section_payload, Mapping):
                     continue
                 for metric_key, value in section_payload.items():
-                    if metric_key in base[section_key] and isinstance(value, (int, float)):
+                    if metric_key in base[section_key] and isinstance(
+                        value, (int, float)
+                    ):
                         numeric_value = float(value)
                         if numeric_value.is_integer():
                             base[section_key][metric_key] = int(numeric_value)

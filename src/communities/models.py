@@ -204,7 +204,6 @@ class CommunityProfileBase(models.Model):
         null=True, blank=True, help_text="Number of solo parents"
     )
 
-
     pwd_count = models.PositiveIntegerField(
         null=True, blank=True, help_text="Number of Persons with Disabilities (PWDs)"
     )
@@ -226,7 +225,6 @@ class CommunityProfileBase(models.Model):
     idps_count = models.PositiveIntegerField(
         null=True, blank=True, help_text="Number of Internally Displaced Persons (IDPs)"
     )
-
 
     csos_count = models.PositiveIntegerField(
         null=True,
@@ -358,7 +356,9 @@ class CommunityProfileBase(models.Model):
     )
 
     number_of_peoples_organizations = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Number of People's Organizations in the community"
+        null=True,
+        blank=True,
+        help_text="Number of People's Organizations in the community",
     )
 
     number_of_cooperatives = models.PositiveIntegerField(
@@ -716,7 +716,9 @@ class CommunityProfileBase(models.Model):
         self.deleted_at = timezone.now()
         if user is not None:
             self.deleted_by = user
-        self.save(update_fields=["is_deleted", "deleted_at", "deleted_by", "updated_at"])
+        self.save(
+            update_fields=["is_deleted", "deleted_at", "deleted_by", "updated_at"]
+        )
 
     def restore(self):
         """Reinstate a soft-deleted record."""
@@ -1519,7 +1521,10 @@ class MunicipalityCoverage(CommunityProfileBase):
             )
 
             aggregates = communities.aggregate(
-                **{f"{field}__sum": models.Sum(field) for field in AGGREGATED_NUMERIC_FIELDS}
+                **{
+                    f"{field}__sum": models.Sum(field)
+                    for field in AGGREGATED_NUMERIC_FIELDS
+                }
             )
             key_barangays = (
                 communities.values_list("barangay__name", flat=True)
@@ -1667,11 +1672,16 @@ class ProvinceCoverage(CommunityProfileBase):
         )
 
         aggregates = municipal_coverages.aggregate(
-            **{f"{field}__sum": models.Sum(field) for field in AGGREGATED_NUMERIC_FIELDS}
+            **{
+                f"{field}__sum": models.Sum(field)
+                for field in AGGREGATED_NUMERIC_FIELDS
+            }
         )
 
         total_barangay_communities = (
-            municipal_coverages.aggregate(total=models.Sum("total_obc_communities"))["total"]
+            municipal_coverages.aggregate(total=models.Sum("total_obc_communities"))[
+                "total"
+            ]
             or 0
         )
 
@@ -1913,10 +1923,18 @@ class GeographicDataLayer(models.Model):
         super().clean()
 
         # Check administrative hierarchy consistency
-        if self.barangay and self.municipality and self.barangay.municipality != self.municipality:
+        if (
+            self.barangay
+            and self.municipality
+            and self.barangay.municipality != self.municipality
+        ):
             raise ValidationError("Barangay must belong to the specified municipality")
 
-        if self.municipality and self.province and self.municipality.province != self.province:
+        if (
+            self.municipality
+            and self.province
+            and self.municipality.province != self.province
+        ):
             raise ValidationError("Municipality must belong to the specified province")
 
         if self.province and self.region and self.province.region != self.region:
@@ -1959,9 +1977,13 @@ class GeographicDataLayer(models.Model):
         elif self.municipality:
             return OBCCommunity.objects.filter(barangay__municipality=self.municipality)
         elif self.province:
-            return OBCCommunity.objects.filter(barangay__municipality__province=self.province)
+            return OBCCommunity.objects.filter(
+                barangay__municipality__province=self.province
+            )
         elif self.region:
-            return OBCCommunity.objects.filter(barangay__municipality__province__region=self.region)
+            return OBCCommunity.objects.filter(
+                barangay__municipality__province__region=self.region
+            )
         elif self.community:
             return [self.community]
         return []

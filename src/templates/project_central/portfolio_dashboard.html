@@ -1,298 +1,406 @@
-{% extends "base.html" %}
+{% extends "project_central/base.html" %}
 {% load static humanize %}
 
-{% block title %}Portfolio Dashboard - Project Central{% endblock %}
+{% block title %}Portfolio Dashboard - PPA Management{% endblock %}
 
-{% block extra_css %}
-<style>
-    .metric-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .metric-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #047857;
-    }
-    .metric-label {
-        font-size: 0.875rem;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .pipeline-stage {
-        background: #f3f4f6;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-    }
-    .pipeline-count {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    .pipeline-label {
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-top: 0.25rem;
-    }
-    .alert-badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    .alert-critical { background: #fee2e2; color: #991b1b; }
-    .alert-high { background: #fed7aa; color: #9a3412; }
-    .alert-medium { background: #fef3c7; color: #92400e; }
-    .alert-low { background: #dbeafe; color: #1e40af; }
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">
-                <i class="fas fa-project-diagram text-emerald-600"></i>
-                Portfolio Dashboard
-            </h1>
-            <p class="text-muted mb-0">Integrated project lifecycle and budget monitoring</p>
-        </div>
-        <div>
-            <span class="badge bg-emerald-100 text-emerald-800 px-3 py-2">
-                <i class="far fa-calendar"></i> FY {{ current_year }}
-            </span>
-        </div>
-    </div>
-
-    <!-- Key Metrics -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="metric-card">
-                <div class="metric-label">Total Budget (FY {{ current_year }})</div>
-                <div class="metric-value">₱{{ total_budget|floatformat:0|intcomma }}</div>
-                <div class="text-muted small mt-1">
-                    <i class="fas fa-wallet"></i> Budget Allocation
+{% block project_central_content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <section class="relative overflow-hidden rounded-3xl border border-emerald-200/60 bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-500 text-white shadow-xl">
+        <div class="absolute inset-0 bg-white/10 opacity-20 mix-blend-overlay"></div>
+        <div class="relative px-6 sm:px-10 py-8 sm:py-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div class="space-y-4 max-w-2xl">
+                <div class="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur">
+                    <i class="fa-solid fa-chart-simple mr-2"></i>
+                    PPA Management
                 </div>
+                <h1 class="text-3xl sm:text-4xl font-semibold leading-tight">
+                    Integrated project lifecycle, budget, and alert monitoring for FY {{ current_year }}
+                </h1>
+                <p class="text-white/80 text-base sm:text-lg">
+                    Track how community needs mature into funded PPAs, see where budgets concentrate, and respond to system alerts without leaving PPA Management.
+                </p>
             </div>
-        </div>
-        <div class="col-md-3">
-            <div class="metric-card">
-                <div class="metric-label">Active Projects</div>
-                <div class="metric-value">{{ active_projects }}</div>
-                <div class="text-muted small mt-1">
-                    <i class="fas fa-tasks"></i> Ongoing Implementation
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="metric-card">
-                <div class="metric-label">Unfunded Needs</div>
-                <div class="metric-value text-warning">{{ unfunded_needs }}</div>
-                <div class="text-muted small mt-1">
-                    <i class="fas fa-exclamation-triangle"></i> High Priority
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="metric-card">
-                <div class="metric-label">Total Beneficiaries</div>
-                <div class="metric-value text-emerald-600">{{ total_beneficiaries|intcomma }}</div>
-                <div class="text-muted small mt-1">
-                    <i class="fas fa-users"></i> OBC Slots
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Project Pipeline -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-stream"></i> Project Pipeline
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <div class="pipeline-stage" style="border-left: 4px solid #3b82f6;">
-                                <div class="pipeline-count">{{ needs_identified }}</div>
-                                <div class="pipeline-label">Needs Identified</div>
-                            </div>
+            <div class="w-full max-w-sm">
+                <div class="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 p-6 shadow-lg">
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-white/70 mb-3">Quick Snapshot</h2>
+                    <dl class="space-y-3 text-white">
+                        <div class="flex items-center justify-between text-sm">
+                            <dt class="flex items-center gap-2"><i class="fa-solid fa-money-bill-wave"></i> Budget Allocation</dt>
+                            <dd class="text-base font-semibold">₱{{ total_budget|default:0|floatformat:0|intcomma }}</dd>
                         </div>
-                        <div class="col-md-3">
-                            <div class="pipeline-stage" style="border-left: 4px solid #8b5cf6;">
-                                <div class="pipeline-count">{{ ppas_planning }}</div>
-                                <div class="pipeline-label">Planning</div>
-                            </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <dt class="flex items-center gap-2"><i class="fa-solid fa-diagram-project"></i> Active PPAs</dt>
+                            <dd class="text-base font-semibold">{{ active_projects|default:0|intcomma }}</dd>
                         </div>
-                        <div class="col-md-3">
-                            <div class="pipeline-stage" style="border-left: 4px solid #10b981;">
-                                <div class="pipeline-count">{{ ppas_ongoing }}</div>
-                                <div class="pipeline-label">Ongoing</div>
-                            </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <dt class="flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> Unfunded Needs</dt>
+                            <dd class="text-base font-semibold">{{ unfunded_needs|default:0|intcomma }}</dd>
                         </div>
-                        <div class="col-md-3">
-                            <div class="pipeline-stage" style="border-left: 4px solid #059669;">
-                                <div class="pipeline-count">{{ ppas_completed }}</div>
-                                <div class="pipeline-label">Completed</div>
-                            </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <dt class="flex items-center gap-2"><i class="fa-solid fa-circle-info"></i> Active Alerts</dt>
+                            <dd class="text-base font-semibold">{{ recent_alerts|length }}</dd>
                         </div>
+                    </dl>
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <a href="{% url 'project_central:alert_list' %}"
+                           class="inline-flex items-center justify-center rounded-xl bg-white text-emerald-600 font-semibold px-4 py-2.5 shadow hover:bg-emerald-50 transition-all duration-200">
+                            <i class="fa-solid fa-bell mr-2"></i>
+                            Review Alerts
+                        </a>
+                        <a href="{% url 'project_central:project_list' %}"
+                           class="inline-flex items-center justify-center rounded-xl bg-emerald-500/70 hover:bg-emerald-500 text-white font-semibold px-4 py-2.5 transition-all duration-200">
+                            <i class="fa-solid fa-route mr-2"></i>
+                            View Workflows
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Alerts & Recent Workflows -->
-    <div class="row">
-        <!-- Active Alerts -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bell text-warning"></i> Active Alerts
-                    </h5>
-                    <a href="{% url 'project_central:alert_list' %}" class="btn btn-sm btn-outline-emerald-600">
-                        View All <i class="fas fa-arrow-right"></i>
-                    </a>
-                </div>
-                <div class="card-body p-0">
-                    {% if recent_alerts %}
-                        <div class="list-group list-group-flush">
-                            {% for alert in recent_alerts %}
-                            <a href="{% url 'project_central:alert_detail' alert.id %}" class="list-group-item list-group-item-action">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <span class="alert-badge alert-{{ alert.severity }}">
-                                            {{ alert.get_severity_display|upper }}
-                                        </span>
-                                        <p class="mb-1 mt-2">
-                                            <strong>{{ alert.title }}</strong>
-                                        </p>
-                                        <p class="mb-1 text-muted small">
-                                            {{ alert.description|truncatewords:20 }}
-                                        </p>
-                                        <small class="text-muted">
-                                            <i class="far fa-clock"></i> {{ alert.created_at|timesince }} ago
-                                        </small>
-                                    </div>
-                                </div>
-                            </a>
-                            {% endfor %}
+    <section>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {% for card in summary_cards %}
+            <article class="relative overflow-hidden rounded-2xl border border-white/20 bg-gradient-to-br {{ card.gradient }} text-white shadow-xl">
+                <div class="absolute inset-0 bg-black/10"></div>
+                <div class="relative p-6 space-y-6">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.2em] text-white/70 font-semibold">{{ card.title }}</p>
+                            <p class="mt-3 text-3xl font-semibold">
+                                {% if card.value_type == 'currency' %}
+                                    ₱{{ card.value|default:0|floatformat:0|intcomma }}
+                                {% else %}
+                                    {{ card.value|default:0|intcomma }}
+                                {% endif %}
+                            </p>
+                            {% if card.subtitle %}
+                            <p class="mt-2 text-sm text-white/80">{{ card.subtitle }}</p>
+                            {% endif %}
                         </div>
-                    {% else %}
-                        <div class="p-4 text-center text-muted">
-                            <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
-                            <p>No active alerts</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Workflows -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-project-diagram"></i> Recent Workflows
-                    </h5>
-                    <a href="{% url 'project_central:project_list' %}" class="btn btn-sm btn-outline-emerald-600">
-                        View All <i class="fas fa-arrow-right"></i>
-                    </a>
-                </div>
-                <div class="card-body p-0">
-                    {% if recent_workflows %}
-                        <div class="list-group list-group-flush">
-                            {% for workflow in recent_workflows %}
-                            <a href="{% url 'project_central:project_workflow_detail' workflow.id %}" class="list-group-item list-group-item-action">
-                                <div class="d-flex w-100 justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <p class="mb-1">
-                                            <strong>{{ workflow.primary_need.title }}</strong>
-                                        </p>
-                                        <div class="d-flex gap-2 align-items-center mb-1">
-                                            <span class="badge bg-primary">{{ workflow.get_current_stage_display }}</span>
-                                            <span class="badge bg-{{ workflow.get_priority_level_display|lower }}">
-                                                {{ workflow.get_priority_level_display }}
-                                            </span>
-                                            {% if workflow.is_on_track %}
-                                                <span class="badge bg-success">On Track</span>
-                                            {% elif workflow.is_blocked %}
-                                                <span class="badge bg-danger">Blocked</span>
-                                            {% endif %}
-                                        </div>
-                                        <small class="text-muted">
-                                            Initiated {{ workflow.initiated_date|date:"M d, Y" }}
-                                        </small>
-                                    </div>
-                                </div>
-                            </a>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="p-4 text-center text-muted">
-                            <i class="fas fa-inbox fa-3x mb-3"></i>
-                            <p>No workflows yet</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-rocket"></i> Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <a href="{% url 'project_central:me_analytics_dashboard' %}" class="btn btn-outline-emerald-600 w-100 py-3">
-                                <i class="fas fa-chart-line d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Analytics Dashboard
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'project_central:budget_planning_dashboard' %}" class="btn btn-outline-emerald-600 w-100 py-3">
-                                <i class="fas fa-calculator d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Budget Planning
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'project_central:budget_approval_dashboard' %}" class="btn btn-outline-emerald-600 w-100 py-3">
-                                <i class="fas fa-check-double d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Budget Approvals
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'project_central:report_list' %}" class="btn btn-outline-emerald-600 w-100 py-3">
-                                <i class="fas fa-file-alt d-block mb-2" style="font-size: 1.5rem;"></i>
-                                Reports
-                            </a>
+                        <div class="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center shadow-inner">
+                            <i class="fa-solid {{ card.icon }} text-2xl"></i>
                         </div>
                     </div>
+                    {% if card.pill %}
+                    <span class="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80">
+                        {{ card.pill }}
+                    </span>
+                    {% endif %}
                 </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 rounded-2xl bg-white border border-gray-200 shadow-xl">
+            <header class="px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <i class="fa-solid fa-timeline text-emerald-600"></i>
+                        Project Pipeline
+                    </h2>
+                    <p class="text-sm text-gray-500">Lifecycle stages from community identification through completion</p>
+                </div>
+                <a href="{% url 'project_central:project_list' %}"
+                   class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-all duration-200">
+                    Manage Workflows
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </header>
+            <div class="px-6 py-5 space-y-5">
+                {% for step in pipeline_steps %}
+                <div class="flex gap-4 items-start">
+                    <div class="mt-1 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shadow-sm">
+                        <i class="fa-solid {{ step.icon }} text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-semibold text-gray-900">{{ step.label }}</p>
+                            <p class="text-sm font-semibold text-gray-600">{{ step.count|default:0|intcomma }}</p>
+                        </div>
+                        <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
+                            <div class="h-full rounded-full transition-all duration-300 {{ step.bar_class }}" style="width: {{ step.percentage }}%;"></div>
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500">{{ step.description }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500">No pipeline data available yet.</p>
+                {% endfor %}
             </div>
         </div>
-    </div>
+
+        <aside class="rounded-2xl bg-white border border-gray-200 shadow-xl p-6 space-y-5">
+            <header class="flex items-center gap-3">
+                <div class="shrink-0 rounded-xl bg-emerald-100 text-emerald-600 p-3">
+                    <i class="fa-solid fa-bolt text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Action Center</h3>
+                    <p class="text-sm text-gray-500">Quick jumps into the most active modules</p>
+                </div>
+            </header>
+            <ul class="space-y-3">
+                <li>
+                    <a href="{% url 'project_central:alert_list' %}"
+                       class="group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 hover:border-emerald-200 hover:bg-emerald-50 transition-all duration-200">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                                <i class="fa-solid fa-bell-exclamation"></i>
+                            </span>
+                            <div>
+                                <p>Active alerts</p>
+                                <p class="text-xs font-normal text-gray-500">{{ recent_alerts|length }} awaiting review</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right text-gray-400 group-hover:text-emerald-600"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'project_central:project_list' %}"
+                       class="group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 hover:border-emerald-200 hover:bg-emerald-50 transition-all duration-200">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                                <i class="fa-solid fa-diagram-project"></i>
+                            </span>
+                            <div>
+                                <p>Tracked workflows</p>
+                                <p class="text-xs font-normal text-gray-500">{{ recent_workflows|length }} recent updates</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right text-gray-400 group-hover:text-emerald-600"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'project_central:budget_approval_dashboard' %}"
+                       class="group flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 hover:border-emerald-200 hover:bg-emerald-50 transition-all duration-200">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                                <i class="fa-solid fa-calculator"></i>
+                            </span>
+                            <div>
+                                <p>Budget approvals</p>
+                                <p class="text-xs font-normal text-gray-500">Check ceiling allocations and routes</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right text-gray-400 group-hover:text-emerald-600"></i>
+                    </a>
+                </li>
+            </ul>
+        </aside>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <article class="rounded-2xl bg-white border border-gray-200 shadow-xl p-6">
+            <header class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Budget Allocation by Sector</h2>
+                    <p class="text-sm text-gray-500">Identifying where FY {{ current_year }} funds concentrate</p>
+                </div>
+            </header>
+            {% if budget_by_sector %}
+            <canvas id="sectorChart" class="mt-6 h-80"></canvas>
+            {% else %}
+            <div class="mt-8 flex h-48 flex-col items-center justify-center text-center text-sm text-gray-500">
+                <i class="fa-solid fa-chart-pie text-2xl mb-3 text-gray-400"></i>
+                No budget records available yet.
+            </div>
+            {% endif %}
+        </article>
+
+        <article class="rounded-2xl bg-white border border-gray-200 shadow-xl p-6">
+            <header class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Budget Allocation by Funding Source</h2>
+                    <p class="text-sm text-gray-500">Compare support from BARMM, LGUs, partners, and others</p>
+                </div>
+            </header>
+            {% if budget_by_source %}
+            <canvas id="sourceChart" class="mt-6 h-80"></canvas>
+            {% else %}
+            <div class="mt-8 flex h-48 flex-col items-center justify-center text-center text-sm text-gray-500">
+                <i class="fa-solid fa-chart-column text-2xl mb-3 text-gray-400"></i>
+                Funding source data will appear once budgets are loaded.
+            </div>
+            {% endif %}
+        </article>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <article class="lg:col-span-2 rounded-2xl bg-white border border-gray-200 shadow-xl p-6">
+            <header class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Strategic Goal Progress</h2>
+                    <p class="text-sm text-gray-500">Alignment of PPAs to Bangsamoro strategic pillars</p>
+                </div>
+            </header>
+            <div class="mt-6 space-y-4">
+                {% for goal in strategic_goals %}
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-sm font-medium text-gray-700">
+                        <span>{{ goal.name }}</span>
+                        <span>{{ goal.progress }}%</span>
+                    </div>
+                    <div class="h-3 overflow-hidden rounded-full bg-gray-200">
+                        <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500 transition-all duration-300" style="width: {{ goal.progress }}%;"></div>
+                    </div>
+                    <p class="text-xs text-gray-500">Target: {{ goal.target }}%</p>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500">Strategic goals are not yet configured.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="rounded-2xl bg-white border border-gray-200 shadow-xl p-6">
+            <header class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Alerts Overview</h2>
+                    <p class="text-sm text-gray-500">Recent signals requiring attention</p>
+                </div>
+                <a href="{% url 'project_central:alert_list' %}" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">View all →</a>
+            </header>
+            <div class="mt-6 space-y-4">
+                {% for alert in recent_alerts %}
+                <div class="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 hover:border-emerald-200 hover:bg-emerald-50 transition-all duration-200">
+                    <div class="flex items-start justify-between">
+                        <div class="space-y-1">
+                            <p class="text-sm font-semibold text-gray-900">{{ alert.title }}</p>
+                            <p class="text-xs text-gray-500">{{ alert.description|default:"No description"|truncatewords:16 }}</p>
+                        </div>
+                        <span class="ml-3 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide {% if alert.severity == 'critical' %}bg-rose-100 text-rose-700{% elif alert.severity == 'high' %}bg-orange-100 text-orange-700{% elif alert.severity == 'medium' %}bg-amber-100 text-amber-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ alert.get_severity_display }}
+                        </span>
+                    </div>
+                    <a href="{% url 'project_central:alert_detail' alert.id %}"
+                       class="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+                        Inspect alert
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="flex h-40 flex-col items-center justify-center text-center text-sm text-gray-500">
+                    <i class="fa-solid fa-circle-check text-2xl mb-3 text-emerald-500"></i>
+                    All clear—no active alerts.
+                </div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+
+    <section class="rounded-2xl bg-white border border-gray-200 shadow-xl p-6">
+        <header class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">Recent Project Workflows</h2>
+                <p class="text-sm text-gray-500">Latest lifecycle updates from field operations</p>
+            </div>
+            <a href="{% url 'project_central:project_list' %}" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">View all →</a>
+        </header>
+        <div class="mt-6 space-y-4">
+            {% for workflow in recent_workflows %}
+            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 hover:border-emerald-200 hover:bg-emerald-50 transition-all duration-200">
+                <div>
+                    <p class="text-sm font-semibold text-gray-900">{{ workflow.primary_need.title }}</p>
+                    <p class="text-xs text-gray-500">Current stage: {{ workflow.get_current_stage_display }}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    {% if workflow.primary_need and workflow.primary_need.priority_score %}
+                    <span class="inline-flex items-center rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
+                        Priority {{ workflow.primary_need.priority_score|floatformat:1 }}
+                    </span>
+                    {% endif %}
+                    <a href="{% url 'project_central:project_workflow_detail' workflow.id %}"
+                       class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-600 hover:bg-emerald-50 transition-all duration-200">
+                        Open
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="flex h-32 flex-col items-center justify-center text-center text-sm text-gray-500">
+                <i class="fa-solid fa-clipboard-list text-2xl mb-3 text-gray-400"></i>
+                No workflows in the system yet. <a href="{% url 'project_central:create_project_workflow' %}" class="text-emerald-600 hover:text-emerald-700 font-semibold">Create one</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const sectorLabels = JSON.parse('{{ sector_labels_json|safe }}');
+    const sectorValues = JSON.parse('{{ sector_values_json|safe }}');
+    const sourceLabels = JSON.parse('{{ source_labels_json|safe }}');
+    const sourceValues = JSON.parse('{{ source_values_json|safe }}');
+
+    const chartDefaults = {
+        type: 'doughnut',
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 12 },
+                        padding: 16,
+                    },
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed || 0;
+                            return `${context.label}: ₱${value.toLocaleString()}`;
+                        }
+                    }
+                }
+            },
+            cutout: '65%',
+        }
+    };
+
+    const emeraldPalette = ['#047857', '#059669', '#10b981', '#34d399', '#6ee7b7', '#a7f3d0'];
+    const tealPalette = ['#0ea5e9', '#22d3ee', '#22c55e', '#14b8a6', '#2dd4bf', '#38bdf8'];
+
+    const sectorCanvas = document.getElementById('sectorChart');
+    if (sectorCanvas && sectorLabels.length) {
+        new Chart(sectorCanvas, {
+            ...chartDefaults,
+            data: {
+                labels: sectorLabels,
+                datasets: [
+                    {
+                        data: sectorValues,
+                        backgroundColor: emeraldPalette,
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                    }
+                ]
+            }
+        });
+    }
+
+    const sourceCanvas = document.getElementById('sourceChart');
+    if (sourceCanvas && sourceLabels.length) {
+        new Chart(sourceCanvas, {
+            ...chartDefaults,
+            data: {
+                labels: sourceLabels,
+                datasets: [
+                    {
+                        data: sourceValues,
+                        backgroundColor: tealPalette,
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                    }
+                ]
+            },
+        });
+    }
+});
+</script>
 {% endblock %}

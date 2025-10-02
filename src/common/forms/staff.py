@@ -139,7 +139,11 @@ class StaffTeamForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        focus = self.instance.focus_areas if self.instance and self.instance.focus_areas else []
+        focus = (
+            self.instance.focus_areas
+            if self.instance and self.instance.focus_areas
+            else []
+        )
         if isinstance(focus, list):
             self.initial.setdefault("focus_areas", "\n".join(focus))
         _apply_form_field_styles(self)
@@ -164,9 +168,9 @@ class StaffTeamMembershipForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         user_qs = User.objects.filter(user_type__in=STAFF_USER_TYPES)
         self.fields["user"].queryset = user_qs.order_by("last_name", "first_name")
-        self.fields["team"].queryset = StaffTeam.objects.filter(is_active=True).order_by(
-            "name"
-        )
+        self.fields["team"].queryset = StaffTeam.objects.filter(
+            is_active=True
+        ).order_by("name")
         if request:
             self.fields["team"].empty_label = "Select team"
             self.fields["user"].empty_label = "Select staff"
@@ -380,12 +384,22 @@ class StaffProfileForm(forms.ModelForm):
 
         for field_name in list_fields:
             current = getattr(self.instance, field_name, None)
-            if isinstance(current, list) and current and not self.initial.get(field_name):
+            if (
+                isinstance(current, list)
+                and current
+                and not self.initial.get(field_name)
+            ):
                 self.initial[field_name] = _list_to_newline(current)
             elif not current and field_name not in self.initial:
                 suggested = []
-                if field_name in {"core_competencies", "leadership_competencies", "functional_competencies"}:
-                    suggested = STAFF_COMPETENCY_CATEGORIES.get(field_name.split("_")[0], [])
+                if field_name in {
+                    "core_competencies",
+                    "leadership_competencies",
+                    "functional_competencies",
+                }:
+                    suggested = STAFF_COMPETENCY_CATEGORIES.get(
+                        field_name.split("_")[0], []
+                    )
                 self.initial[field_name] = _list_to_newline(suggested)
 
         _apply_form_field_styles(self)
@@ -474,6 +488,7 @@ class StaffProfileForm(forms.ModelForm):
     def clean_cross_functional_partners(self):
         return _newline_to_list(self.cleaned_data.get("cross_functional_partners", ""))
 
+
 class StaffTaskForm(forms.ModelForm):
     """Create or update staff tasks."""
 
@@ -511,13 +526,11 @@ class StaffTaskForm(forms.ModelForm):
         table_mode = kwargs.pop("table_mode", False)
         super().__init__(*args, **kwargs)
         self.table_mode = table_mode
-        self.fields["teams"].queryset = StaffTeam.objects.filter(is_active=True).order_by(
-            "name"
-        )
+        self.fields["teams"].queryset = StaffTeam.objects.filter(
+            is_active=True
+        ).order_by("name")
         staff_qs = User.objects.filter(user_type__in=STAFF_USER_TYPES, is_active=True)
-        self.fields["assignees"].queryset = staff_qs.order_by(
-            "last_name", "first_name"
-        )
+        self.fields["assignees"].queryset = staff_qs.order_by("last_name", "first_name")
         self.fields["assignees"].required = False
         if request:
             self.fields["teams"].help_text = "Select one or more teams."
@@ -558,7 +571,13 @@ class StaffTaskForm(forms.ModelForm):
         team_widget = self.fields["teams"].widget
         assignee_widget = self.fields["assignees"].widget
         for widget, key, placeholder, singular, empty in (
-            (team_widget, "teams", "Select one or more teams", "team", "No team selected"),
+            (
+                team_widget,
+                "teams",
+                "Select one or more teams",
+                "team",
+                "No team selected",
+            ),
             (
                 assignee_widget,
                 "assignees",
@@ -569,7 +588,9 @@ class StaffTaskForm(forms.ModelForm):
         ):
             widget.attrs.setdefault("data-enhanced-multiselect", key)
             widget.attrs.setdefault("data-placeholder", placeholder)
-            widget.attrs.setdefault("data-search-placeholder", "Search " + key.replace("_", " ") + "...")
+            widget.attrs.setdefault(
+                "data-search-placeholder", "Search " + key.replace("_", " ") + "..."
+            )
             widget.attrs.setdefault("data-singular-label", singular)
             widget.attrs.setdefault("data-empty-label", empty)
             _append_classes(widget, "task-enhanced-multiselect")
@@ -593,7 +614,11 @@ class StaffTaskForm(forms.ModelForm):
                     widget.attrs.setdefault("size", 3)
                     widget.attrs.setdefault("data-multiple", "true")
                 existing_style = widget.attrs.get("style", "").strip()
-                style_parts = [fragment for fragment in existing_style.rstrip(";").split(";") if fragment]
+                style_parts = [
+                    fragment
+                    for fragment in existing_style.rstrip(";").split(";")
+                    if fragment
+                ]
                 style_parts.append("font-family:inherit")
                 widget.attrs["style"] = ";".join(style_parts)
                 widget.attrs["data-base-class"] = widget.attrs.get("class", "")
@@ -636,7 +661,9 @@ class StaffTaskForm(forms.ModelForm):
         start = cleaned_data.get("start_date")
         due = cleaned_data.get("due_date")
         if start and due and due < start:
-            self.add_error("due_date", "Due date cannot be earlier than the start date.")
+            self.add_error(
+                "due_date", "Due date cannot be earlier than the start date."
+            )
         return cleaned_data
 
 
@@ -665,10 +692,9 @@ class PerformanceTargetForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["staff_profile"].queryset = (
-            StaffProfile.objects.select_related("user")
-            .order_by("user__last_name", "user__first_name")
-        )
+        self.fields["staff_profile"].queryset = StaffProfile.objects.select_related(
+            "user"
+        ).order_by("user__last_name", "user__first_name")
         self.fields["team"].queryset = StaffTeam.objects.order_by("name")
         self.fields["staff_profile"].required = False
         self.fields["team"].required = False
@@ -740,13 +766,12 @@ class TrainingEnrollmentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["staff_profile"].queryset = (
-            StaffProfile.objects.select_related("user")
-            .order_by("user__last_name", "user__first_name")
-        )
-        self.fields["program"].queryset = TrainingProgram.objects.filter(is_active=True).order_by(
-            "title"
-        )
+        self.fields["staff_profile"].queryset = StaffProfile.objects.select_related(
+            "user"
+        ).order_by("user__last_name", "user__first_name")
+        self.fields["program"].queryset = TrainingProgram.objects.filter(
+            is_active=True
+        ).order_by("title")
         _apply_form_field_styles(self)
 
 
@@ -776,8 +801,7 @@ class StaffDevelopmentPlanForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["staff_profile"].queryset = (
-            StaffProfile.objects.select_related("user")
-            .order_by("user__last_name", "user__first_name")
-        )
+        self.fields["staff_profile"].queryset = StaffProfile.objects.select_related(
+            "user"
+        ).order_by("user__last_name", "user__first_name")
         _apply_form_field_styles(self)

@@ -576,12 +576,56 @@
             });
 
             // Mobile menu close on item click
-            const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-            mobileNavItems.forEach(item => {
-                item.addEventListener('click', function() {
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', function() {
                     const mobileMenu = document.getElementById('mobileMenu');
                     if (mobileMenu) {
                         mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const mobileSectionToggles = document.querySelectorAll('.mobile-section-toggle');
+            mobileSectionToggles.forEach(toggle => {
+                const targetId = toggle.getAttribute('data-target');
+                const target = targetId ? document.getElementById(targetId) : null;
+
+                if (!target) {
+                    return;
+                }
+
+                toggle.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                    const newState = !expanded;
+                    toggle.setAttribute('aria-expanded', newState.toString());
+                    target.classList.toggle('hidden', !newState);
+
+                    const icon = toggle.querySelector('.mobile-section-icon');
+                    if (icon) {
+                        icon.classList.toggle('rotate-180', newState);
+                    }
+
+                    if (newState) {
+                        mobileSectionToggles.forEach(otherToggle => {
+                            if (otherToggle === toggle) {
+                                return;
+                            }
+                            const otherId = otherToggle.getAttribute('data-target');
+                            const otherTarget = otherId ? document.getElementById(otherId) : null;
+                            if (!otherTarget) {
+                                return;
+                            }
+                            otherToggle.setAttribute('aria-expanded', 'false');
+                            otherTarget.classList.add('hidden');
+                            const otherIcon = otherToggle.querySelector('.mobile-section-icon');
+                            if (otherIcon) {
+                                otherIcon.classList.remove('rotate-180');
+                            }
+                        });
                     }
                 });
             });

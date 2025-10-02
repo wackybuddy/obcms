@@ -8,7 +8,10 @@ from django.core.management.base import BaseCommand
 
 
 MANA_GROUPS = {
-    "mana_regional_participant": ["can_access_regional_mana", "can_view_provincial_obc"],
+    "mana_regional_participant": [
+        "can_access_regional_mana",
+        "can_view_provincial_obc",
+    ],
     "mana_facilitator": [
         "can_access_regional_mana",
         "can_view_provincial_obc",
@@ -44,7 +47,9 @@ class Command(BaseCommand):
                 updated_groups += 1
 
             permissions = Permission.objects.filter(codename__in=permission_codenames)
-            missing = set(permission_codenames) - set(permissions.values_list("codename", flat=True))
+            missing = set(permission_codenames) - set(
+                permissions.values_list("codename", flat=True)
+            )
             for codename in missing:
                 permission, _ = Permission.objects.get_or_create(
                     codename=codename,

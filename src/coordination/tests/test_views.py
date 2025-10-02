@@ -496,13 +496,17 @@ class PartnershipDetailUpdateDeleteTests(TestCase):
 
         self.client.force_login(self.user)
 
-        response = self.client.get(self.list_url, {"organization": str(self.organization.pk)})
+        response = self.client.get(
+            self.list_url, {"organization": str(self.organization.pk)}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Bridge Program")
         self.assertContains(response, "Shared Services")
         self.assertEqual(response.context["current_organization"], self.organization)
 
-        response = self.client.get(self.list_url, {"organization": str(auxiliary_org.pk)})
+        response = self.client.get(
+            self.list_url, {"organization": str(auxiliary_org.pk)}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Shared Services")
 
@@ -663,9 +667,7 @@ class CoordinationActivityCreateViewTests(TestCase):
         response = self.client.post(self.url, post_data)
 
         self.assertRedirects(response, reverse("common:coordination_home"))
-        engagement = StakeholderEngagement.objects.get(
-            title="Focus Group Consultation"
-        )
+        engagement = StakeholderEngagement.objects.get(title="Focus Group Consultation")
         self.assertEqual(engagement.created_by, self.user)
         self.assertEqual(engagement.community, self.community)
         self.assertEqual(engagement.engagement_type, self.engagement_type)

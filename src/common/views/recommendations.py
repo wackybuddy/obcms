@@ -53,9 +53,7 @@ def recommendations_home(request):
 
     total_recommendations = recommendations.count()
     implemented_recommendations = recommendations.filter(status="implemented").count()
-    under_review_recommendations = recommendations.filter(
-        status="under_review"
-    ).count()
+    under_review_recommendations = recommendations.filter(status="under_review").count()
     high_priority_recommendations = recommendations.filter(
         priority__in=["high", "urgent", "critical"]
     ).count()

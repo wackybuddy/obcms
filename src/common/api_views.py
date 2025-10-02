@@ -5,11 +5,18 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Barangay, Municipality, Province, Region, User
-from .serializers import (BarangayListSerializer, BarangaySerializer,
-                          MunicipalityListSerializer, MunicipalitySerializer,
-                          ProvinceListSerializer, ProvinceSerializer,
-                          RegionListSerializer, RegionSerializer,
-                          UserCreateSerializer, UserSerializer)
+from .serializers import (
+    BarangayListSerializer,
+    BarangaySerializer,
+    MunicipalityListSerializer,
+    MunicipalitySerializer,
+    ProvinceListSerializer,
+    ProvinceSerializer,
+    RegionListSerializer,
+    RegionSerializer,
+    UserCreateSerializer,
+    UserSerializer,
+)
 from .services.locations import build_location_data
 
 

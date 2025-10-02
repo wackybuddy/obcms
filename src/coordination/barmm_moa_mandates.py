@@ -12,9 +12,8 @@ BARMM_MOA_DATA = {
 4. Issue executive orders and other policies of the Bangsamoro Government
 5. Represent the Bangsamoro Government in affairs of the Bangsamoro Autonomous Region
 6. Proclaim a state of calamity when necessary
-7. Exercise powers as provided in the Code and other laws"""
+7. Exercise powers as provided in the Code and other laws""",
     },
-
     "Ministry of Agriculture, Fisheries and Agrarian Reform": {
         "mandate": "The Ministry of Agriculture, Fisheries and Agrarian Reform and its attached agencies and bureaus shall promote sustainable Agri-fishery growth and development, and equitable land distribution and tenurial security for the benefit of the landless farmers in the Bangsamoro Autonomous Region. It shall formulate a policy framework conducive to increase public investments and climate-resilient integrated support services under the direction of the Bangsamoro Government, to make land and water resources profitable to ensure food security through appropriate technologies and intensive promotion of agri-aqua-based enterprises towards the development of farmers and fisherfolks. It shall ensure the availability, adequacy, accessibility, and affordability of food supplies at all times in the Bangsamoro Autonomous Region.",
         "powers_and_functions": """a. Provide integrated services to farmers, fishermen, and other food producers on production, utilization, conservation, and disposition of agricultural livestock and fishery resources
@@ -44,9 +43,8 @@ x. Conduct continuing education and promotion programs on agrarian reform for be
 y. Institutionalize the participation of farmers, farmworkers, other beneficiaries, and agrarian reform advocates in agrarian reform policy formulation, program implementation and evaluation
 z. Exercise exclusive authority to approve or disapprove conversion of agricultural lands for residential, commercial, industrial, and other land uses as may be provided for by law
 aa. Call upon any government agency and non-government organization to extend full support and cooperation to program implementation
-bb. Exercise such other powers and functions as may be provided by law or directed by the Chief Minister to promote efficiency and effectiveness in the delivery of public services"""
+bb. Exercise such other powers and functions as may be provided by law or directed by the Chief Minister to promote efficiency and effectiveness in the delivery of public services""",
     },
-
     "Ministry of Basic, Higher, and Technical Education": {
         "mandate": "The Ministry shall be primarily responsible for the formulation, planning, implementation, and coordination of the policies, plans, programs, and projects in the areas of formal and non-formal education at all levels, supervise all educational institutions, both public and private, and provide for the establishment, maintenance and support of a complete, adequate, and integrated system of education relevant and responsive to the needs, ideals, and aspirations of the Bangsamoro People.",
         "powers_and_functions": """a. Formulate, plan, implement, and coordinate the policies, plans, programs, and projects for the following:
@@ -69,9 +67,8 @@ k. Exercise the powers of selection, recruitment, appointment, and promotion of 
 l. Determine the organizational components and approve staffing patterns of the divisions, districts and schools
 m. Promulgate rules and regulations or such guidelines as may be required for efficient and effective administration, control and supervision, and regulation of basic, higher, and technical educational institutions in the Bangsamoro Autonomous Region, including the Madaris
 n. Evaluate all schools division superintendents and assistant division superintendents in the Bangsamoro Autonomous Region
-o. Perform such other functions and powers as may be provided by law"""
+o. Perform such other functions and powers as may be provided by law""",
     },
-
     "Ministry of Environment, Natural Resources and Energy": {
         "mandate": "The Ministry shall be primarily responsible for the exploration, utilization, management, conservation, protection and sustainable development of the region's environment, natural resources and energy sources.",
         "powers_and_functions": """a. Recommend the enactment of regional laws relative to the development, utilization, regulation and conservation of the natural resources and energy and the control of pollution
@@ -102,9 +99,8 @@ o. Subject to laws to be enacted by Parliament, supervise the implementation of 
 p. Build and exercise supervision and control over energy-projects relative to power generation and distribution utilities, as may be provided in a law passed by Parliament
 q. Promulgate policies rules and regulations for the conservation of the Bangsamoro Autonomous Region's genetic resources and biological diversity, and endangered habitats
 r. Formulate an integrated, multi-sectoral and multi-disciplinary regional conservation strategy
-s. Perform such other acts as may be necessary, proper or incidental to the attainment of its mandates and objectives and as directed and/or assigned by the Chief Minister"""
+s. Perform such other acts as may be necessary, proper or incidental to the attainment of its mandates and objectives and as directed and/or assigned by the Chief Minister""",
     },
-
     "Ministry of Finance, and Budget and Management": {
         "mandate": "The Ministry of Finance, and Budget and Management is primarily mandated to evolve sound, efficient and responsive fiscal management and utilization of resources. It shall be responsible for the formulation, institutionalization and administration of fiscal policies in coordination with other concerned ministries, agencies and instrumentalities of the Bangsamoro Government.",
         "powers_and_functions": """a. Formulate medium-term expenditure and annual plans covering the Bangsamoro Government's resources mobilization efforts, in coordination with other concerned ministries and offices, and supervise the implementation of such plans
@@ -121,9 +117,8 @@ k. Develop and administer standard accounting system essential to fiscal managem
 l. Conduct a continuing study of the bureaucracy and assess as well as make policy recommendation on its role, size, composition, structure and functions
 m. Establish rules and procedures for the management of government organization resources, formulate standards or organizational program performance, and undertake services in work simplification or streamlining of systems and procedures to improve efficiency and effectiveness in government operations
 n. Conceptualize and administer the Bangsamoro Government's compensation and position classification consistent with national standards
-o. Perform such other powers and functions as may be assigned by the Minister"""
+o. Perform such other powers and functions as may be assigned by the Minister""",
     },
-
     "Ministry of Health": {
         "mandate": "The Ministry shall be primarily responsible for the formulation, planning, implementation and coordination of policies and programs for health. It shall promote, protect, preserve and restore the health of the people through the provision and delivery of health services through regulation and encouragement of providers of health goods and services.",
         "powers_and_functions": """a. Define the health policy and formulate and implement a Bangsamoro health plan within the framework of the Bangsamoro Government's general policies and plans, and present proposals to appropriate ministries on Bangsamoro issues which have health implications
@@ -137,9 +132,8 @@ h. Regulate the operation and issue licenses and permits to government and priva
 i. Issue orders and regulations concerning the implementation of established health policies
 j. Formulate policies, guidelines, regulations as well as operating procedures congruent to Islamic teachings on health and sanitation
 k. Exercise control and supervision over Provincial Health Offices within the region, except in local government units where health services have been previously devolved
-l. Perform such other functions as may be provided by law"""
+l. Perform such other functions as may be provided by law""",
     },
-
     "Ministry of Human Settlements and Development": {
         "mandate": "The Ministry of Human Settlements and Development shall act as the primary agency for the management of housing, human settlement, and urban development in the Bangsamoro Autonomous Region. It shall be the main planning and policy-making, regulatory, program coordination, and performance monitoring entity for all housing, human settlements, and urban development concerns. It shall develop and adopt a regional strategy to immediately address the provision of adequate and affordable housing to all inhabitants in the Bangsamoro Autonomous Region.",
         "powers_and_functions": """a. Develop and implement comprehensive and integrated housing, human settlements, and urban and rural economic development plans and programs for the Bangsamoro people in close coordination with LGUs and consultation with local stakeholders
@@ -160,9 +154,8 @@ o. In the exercise of its oversight functions, develop and establish a sector pe
 p. Develop, in partnership with beneficiaries, People's Plans which shall contain site development plans that conform to the CLUP of the local government unit under whose jurisdiction the project site is proposed to be located, including community health, sanitation, and security plans, as well as non-physical development components such as self-help housing cooperative, livelihood, self-help development, capability building, and a system of allocation of socialized housing units that promote and protect the welfare of the elderly, persons with disability, women, children, and IDPs
 q. Establish Housing One-Stop Processing Centers (HOPCs) in the provinces of the BARMM, which shall centralize the processing and issuance of all required housing-related permits, clearances, and licenses, which will include all agencies involved in the issuance of said permits, clearances, and licenses
 r. Identify and acquire government lands and private lands through donation, expropriation, and payment of just compensation or any other form of alienation for housing and rural development in coordination with the Ministry of Interior and Local Government (MILG), constituent local government units, Land Registration Authority (LRA), and other relevant agencies
-s. Perform such other functions as may be necessary to fulfill its mandate or as may be assigned by the Cabinet or Parliament"""
+s. Perform such other functions as may be necessary to fulfill its mandate or as may be assigned by the Cabinet or Parliament""",
     },
-
     "Ministry of Indigenous Peoples' Affairs": {
         "mandate": "The Ministry of Indigenous Peoples' Affairs is mandated to protect, promote, and preserve the interest and well-being of IPs within the Bangsamoro Autonomous Region with due regard to their beliefs, customs, traditions, and institutions. The Ministry serves as the primary agency responsible for the formulation and implementation of policies, plans, and programs to promote the well-being of all indigenous peoples in the Bangsamoro Autonomous Region in recognition of their ancestral domain as well as their rights thereto.",
         "powers_and_functions": """a. Serves as the primary ministry of the Bangsamoro Government to assist IPs in the Bangsamoro Autonomous Region
@@ -174,9 +167,8 @@ f. Negotiate for funds and to accept grants, donations, gifts, and/or properties
 g. Coordinate development programs and projects for the advancement of the IPs and oversee the proper implementation thereof in coordination with other agencies, government or private if so required
 h. Convene periodic conventions, congresses, summits or assemblies of IPs to review, assess, and propose policies or plans
 i. Issue Certificates of Accreditation and Certificates of Dissolution of Marriages contracted and solemnized in accordance with the customs, culture, and tradition of IPs in the celebration and solemnization of marriages, as may be provided by law passed by the Parliament
-j. Perform such other related functions as may be provided by law"""
+j. Perform such other related functions as may be provided by law""",
     },
-
     "Ministry of Interior and Local Government": {
         "mandate": "The Ministry of the Interior and Local Government shall exercise general supervision over the constituent local governments units of the Bangsamoro Government, and ensure public safety and disaster preparedness, local autonomy, decentralization, and community empowerment.",
         "powers_and_functions": """a. Advise the Chief Minister on the Government of the Day's policies, rules, regulations, and other issuances relative to the general supervision of local government units
@@ -186,9 +178,8 @@ d. Establish and prescribe plans, policies, programs, and projects to strengthen
 e. Implement plans, policies, programs, and project to promote public order and safety and disaster preparedness within the Bangsamoro Autonomous Region in Muslim Mindanao
 f. Formulate plans, policies, and programs which will meet regional and local emergencies arising from natural and human-made calamities
 g. Enforce its disciplinary authority over elective officials in accordance with the Bangsamoro Local Governance Code enacted by the Parliament
-h. Perform other functions as maybe provided by law"""
+h. Perform other functions as maybe provided by law""",
     },
-
     "Ministry of Labor and Employment": {
         "mandate": "The Ministry of Labor and Employment shall be the primary policy-making, programming, coordinating and administrative entity of the Bangsamoro Government in the field of labor and employment. It shall assume primary responsibility for the promotion of gainful employment opportunities and the optimization of the development and utilization of the Bangsamoro manpower resources; the advancement of workers' welfare by providing for just and humane working conditions and terms of employment; and the maintenance of industrial peace by promoting harmonious, equitable, and stable employment relations that assures equal protection for the rights of all concerned parties.",
         "powers_and_functions": """a. Enforce social and labor legislation to protect the working class and regulate the relations between the worker and his/her employer
@@ -203,9 +194,8 @@ i. Formulate general guidelines for the issuance of working permit for minors in
 j. Maintain harmonious, equitable, and stable labor relations system that is supportive of national and BARMM economic policies and programs
 k. Uphold the rights of workers and employers to organize and promote free collective bargaining as the foundation of the labor relations system
 l. Provide and ensure fair and expeditious settlement and disposition of labor and industrial disputes through collective bargaining, grievance machinery, conciliation, mediation, voluntary arbitration, compulsory arbitration as may be provided by law and other modes that may be voluntary agreed upon by the parties concerned
-m. Perform such other functions as may be provided by law"""
+m. Perform such other functions as may be provided by law""",
     },
-
     "Ministry of Public Order and Safety": {
         "mandate": "The Ministry of Public Order and Safety (MPOS) shall be responsible for public safety. It shall have coordinative function with offices and agencies that maintain public order and safety in the region, and shall perform functions relating to peace building, reconciliation, and unification of all the peoples of the region.",
         "powers_and_functions": """a. Serve as member of the Regional Peace and Order Council
@@ -216,9 +206,8 @@ e. Formulate and implement programs, projects, and activities relating to religi
 f. Conduct programs, projects and activities relating to promotion of peace and sustainable development, reconciliation, unification, and peaceful co-existence
 g. Formulate and implement policies and programs for the effective settlement of family feuds (rido) and other horizontal conflicts in the region, as well as for the prevention of the recurrence of such conflicts
 h. Implement laws, policies, programs and projects of the BARMM concerning peace, public order and safety
-i. Perform such other functions as may be prescribed by law thereafter or as may be assigned by the Chief Minister"""
+i. Perform such other functions as may be prescribed by law thereafter or as may be assigned by the Chief Minister""",
     },
-
     "Ministry of Public Works": {
         "mandate": "The Ministry of Public Works shall be the Bangsamoro Government's engineering and construction arm, and is mandated to undertake (a) the planning, design and construction of infrastructures, such as, but not limited to roads and bridges, flood control, water supply projects and other public works facilities within the jurisdiction of the Bangsamoro Government; and (b) the construction, rehabilitation and maintenance of infrastructure facilities of the Autonomous Region.",
         "powers_and_functions": """a. Undertake and/or evaluate the planning, design, construction and supervision for all infrastructure located within the Bangsamoro Autonomous Region
@@ -231,9 +220,8 @@ g. Supervise all public works construction and ensure that actual constructions 
 h. Provide technical assistance to other agencies within the Bangsamoro Autonomous Region, including its constituent local government units
 i. Coordinate with other national and regional agencies, institutions and organizations, especially the local government units within the Bangsamoro Autonomous Region, in the planning and implementation of infrastructure projects
 j. Conduct continuing consultations with the local communities, take appropriate measures to make the services of the Bangsamoro Government responsive to the needs of the general public, and recommend such appropriate actions as may be necessary
-k. Perform such other acts as may be necessary, proper or incidental to the attainment of its mandates and objectives and as directed and/or assigned by the Chief Minister"""
+k. Perform such other acts as may be necessary, proper or incidental to the attainment of its mandates and objectives and as directed and/or assigned by the Chief Minister""",
     },
-
     "Ministry of Science and Technology": {
         "mandate": "The Ministry of Science and Technology, pursuant to Section IX, Article IX of RA 11054 is mandated to set the direction and leadership in science, research, inventions, technology education, and their development, and ensure the full and effective participation of all sectors in the planning, programming, coordination and implementation of scientific and technological researches.",
         "powers_and_functions": """a. Formulate and adopt a comprehensive Bangsamoro Science and Technology Plan, including specific goals, policies, plans, programs and projects, and monitor and coordinate its funding and implementation
@@ -245,9 +233,8 @@ f. Improve access to quality education through science and technology scholarshi
 g. Administer scientific and technological scholarships, awards and grants
 h. Conduct research and development on information technology and advanced fields and undertake venture financing
 i. Contribute to the development and quality standards including halal for food and non-food industry through testing, analysis and capacity-building
-j. Perform such other functions as may be provided by law"""
+j. Perform such other functions as may be provided by law""",
     },
-
     "Ministry of Social Services and Development": {
         "mandate": "The Ministry of Social Services and Development shall provide a balanced and responsive approach to social welfare whereby the rights, needs, and interests of all citizens within its jurisdiction, with special focus on the marginalized and vulnerable sectors, including women, children, senior citizens, differently-abled persons, indigenous cultural communities, internally displaced persons, and those similarly situated by analogy, are protected and addressed at all times, especially during the existence of a crisis, whether natural or human-induced, that affects their well-being and their participation in community affairs.",
         "powers_and_functions": """a. Formulate, develop and implement plans, programs and projects in the field of social welfare and development on the basis of both the rights and needs of the people
@@ -267,9 +254,8 @@ n. Set standards, accredit and monitor performance of all social welfare activit
 o. Exercise functional and technical supervision over social workers in other government settings or agencies like courts, hospitals, schools and housing projects
 p. Deputize local government units and other agencies of government as are necessary in providing disaster relief
 q. Coordinate all activities pertaining to the implementation of programs and services for the marginalized sectors including women, children, senior citizens, differently-abled persons, indigenous cultural communities, internally displaced persons, and those similarly situated by analogy
-r. Perform such other functions as may be provided by law"""
+r. Perform such other functions as may be provided by law""",
     },
-
     "Ministry of Trade, Investments, and Tourism": {
         "mandate": "The Ministry of Trade, Investments and Tourism (MTIT) is the primary government agency mandated to implement laws, programs and projects on trade, investments, and tourism. Towards this end, it shall promote and develop an industrialization program effectively controlled by inhabitants of the Bangsamoro Autonomous Region and shall act as catalyst for intensified private sector activity in order to accelerate and sustain economic growth through: (a) Comprehensive industrial growth strategy; (b) Progressive and socially responsible liberalization program; and (c) Policies designed for the expansion and diversification of trade.",
         "powers_and_functions": """a. Formulate policies, plans, programs and projects for the development of the trade, investments, and tourism in the region
@@ -297,9 +283,8 @@ v. Promote domestic trade, marketing and distributions to ensure the rational, e
 w. Propose, for the consideration of the Monetary Board, programs in the commercial banking sector for directing Shari'ah-compliant commercial lending facilities towards priority areas of commercial and industrial development, as well as coordinate government direct funding and financial guarantee programs to achieve trade and industry growth
 x. Create, in coordination with related agencies of the Bangsamoro Government, a one-stop-shop Business Development Support Center to promote the growth of micro, small and medium-scale businesses and enterprises
 y. Administratively adjudicate and impose reasonable fines and penalties for violation of existing trade, investments, tourism, and cooperative development laws
-z. Exercise such other powers and functions as necessary, proper, or incidental to the attainment of its mandate"""
+z. Exercise such other powers and functions as necessary, proper, or incidental to the attainment of its mandate""",
     },
-
     "Ministry of Transportation and Communications": {
         "mandate": "The Ministry of Transportation and Communications (MOTC) shall be the primary policy, planning, programming, coordinating, implementing, regulating, and administrative entity of the Bangsamoro Government in the promotion, development, and regulation of dependable and coordinated networks of transportation and communications systems, as well as fast, safe, efficient and reliable transportation and communications services.",
         "powers_and_functions": """a. Administer and enforce all transportation and communications laws, rules, and regulations within its jurisdiction and deputize appropriate law enforcement agencies for the purpose
@@ -317,75 +302,61 @@ l. Generate revenues and shares from the operations of public transportation and
 m. Impose duties and fees on vessels registered with the Ministry and on wharves constructed and maintained by the Bangsamoro Government
 n. Ensure, with the National Government, the free movement of vessels, goods, and people in Zones of Joint Cooperation and the interconnectivity of the islands and mainland areas comprising the Bangsamoro Autonomous Region
 o. Exercise all other functions devolved to it by the National Government
-p. Perform such other functions as may be provided by law or higher authorities"""
+p. Perform such other functions as may be provided by law or higher authorities""",
     },
-
     # Other BARMM Agencies, Offices, Commissions, Boards, and Authorities
-
     "Office of the Wali": {
         "mandate": "The Office of the Wali serves as the ceremonial head of the Bangsamoro Government. It ensures the preservation of the Bangsamoro culture and the well-being of the Bangsamoro people, acting as a unifying symbol and representative of the Bangsamoro Government in public and ceremonial functions.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Human Rights Commission": {
         "mandate": "The Bangsamoro Human Rights Commission (BHRC) is tasked with protecting and promoting human rights in the Bangsamoro Autonomous Region. It ensures compliance with international human rights standards and addresses violations and abuses, providing protection for human rights defenders and acting as the transitional justice mechanism for the region.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Ports Management Authority": {
         "mandate": "The Bangsamoro Ports Management Authority (BPMA) manages and oversees the operation of all public ports within the Bangsamoro Autonomous Region. It aims to align port facilities with the nation's overall maritime transport chain, ensuring efficient, safe, and effective port operations.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Disaster Risk Reduction and Management Council": {
         "mandate": "The Bangsamoro Disaster Risk Reduction and Management Council (Bangsamoro DRRMC) coordinates, integrates, supervises, and evaluates disaster risk reduction and management activities in the Bangsamoro Autonomous Region. It ensures disaster-sensitive regional development plans and coordinates response efforts during emergencies.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Economic and Development Council": {
         "mandate": "The Bangsamoro Economic and Development Council (BEDC) serves as the socio-economic planning, monitoring, and coordinating agency for all development plans, programs, and projects of the Bangsamoro Government. It evaluates and recommends comprehensive development plans for the region.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Regional Peace and Order Council": {
         "mandate": "The Bangsamoro Regional Peace and Order Council (BRPOC) formulates plans and recommends measures to enhance peace and order and public safety in the Bangsamoro. It monitors peace and order programs and projects at various levels and addresses complaints against government personnel.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Sustainable Development Board": {
         "mandate": "The Bangsamoro Sustainable Development Board promotes sustainable development within the Bangsamoro Autonomous Region, ensuring that environmental, social, and economic considerations are integrated into the region's development policies and projects.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Halal Board": {
         "mandate": "The Bangsamoro Halal Board is the policy-making body for the Halal industry in the Bangsamoro Autonomous Region. It sets the overall direction for the development and promotion of the Halal industry, ensuring compliance with Halal standards and promoting Halal-certified products.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Education Board": {
         "mandate": "The Bangsamoro Education Board formulates policies and standards for the education system in the Bangsamoro Autonomous Region. It ensures the delivery of quality education and promotes educational programs that are responsive to the needs of the Bangsamoro people.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Economic Zone Authority": {
         "mandate": "The Bangsamoro Economic Zone Authority (BEZA) encourages, promotes, and accelerates industrial, economic, and social development in the Bangsamoro Autonomous Region through the establishment of special economic zones and free ports. It aims to attract foreign investments and create job opportunities.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Bangsamoro Maritime Industry Authority": {
         "mandate": "The Bangsamoro Maritime Industry Authority (BMARINA) regulates maritime activities and ensures the safety and security of maritime operations within the Bangsamoro Autonomous Region. It issues licenses, registers vessels, and oversees the compliance of maritime operators with established standards.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Civil Aeronautics Board of the Bangsamoro": {
         "mandate": "The Civil Aeronautics Board of the Bangsamoro (CABB) regulates the activities of air carriers and related services within the Bangsamoro Autonomous Region. It issues certificates of public convenience, enforces air transportation laws, and ensures the safety and rights of air travelers.",
-        "powers_and_functions": ""
+        "powers_and_functions": "",
     },
-
     "Civil Aviation Authority of the Bangsamoro": {
         "mandate": "The Civil Aviation Authority of the Bangsamoro (CAAB) manages, supervises, and controls government airports within the Bangsamoro Autonomous Region. It ensures the safety and security of civil aviation operations, consistent with national and international regulations and standards.",
-        "powers_and_functions": ""
-    }
+        "powers_and_functions": "",
+    },
 }
 
 

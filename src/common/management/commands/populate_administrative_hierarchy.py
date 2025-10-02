@@ -348,7 +348,10 @@ REGION_STRUCTURE = {
                 "municipalities": [
                     {"name": "Tagum City", "municipality_type": "component_city"},
                     {"name": "Panabo City", "municipality_type": "component_city"},
-                    {"name": "Island Garden City of Samal", "municipality_type": "component_city"},
+                    {
+                        "name": "Island Garden City of Samal",
+                        "municipality_type": "component_city",
+                    },
                     {"name": "Asuncion"},
                     {"name": "Braulio E. Dujali"},
                     {"name": "Carmen"},
@@ -607,7 +610,9 @@ class Command(BaseCommand):
 
                 for municipality in province_data["municipalities"]:
                     name = municipality["name"].strip()
-                    municipality_type = municipality.get("municipality_type", "municipality")
+                    municipality_type = municipality.get(
+                        "municipality_type", "municipality"
+                    )
                     code = municipality.get("code") or self._municipality_code(
                         province.code, name
                     )
@@ -814,7 +819,9 @@ class Command(BaseCommand):
                     )
                     municipality = None
                 elif indent == 1:
-                    municipality_name = municipality_alias.get(name.upper(), name.title())
+                    municipality_name = municipality_alias.get(
+                        name.upper(), name.title()
+                    )
                     data[province]["municipalities"][municipality_name] = {
                         "population": population,
                         "barangays": {},

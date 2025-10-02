@@ -60,6 +60,7 @@ def create_participant(event, *, user=None, **overrides):
     defaults.update(overrides)
     return EventParticipant.objects.create(**defaults)
 
+
 User = get_user_model()
 
 
@@ -68,36 +69,32 @@ class RecurringEventModelTests(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser',
-            email='test@example.com',
-            password='testpass123'
+            username="testuser", email="test@example.com", password="testpass123"
         )
 
     def test_create_weekly_recurrence(self):
         """Test creating weekly recurring pattern."""
         pattern = RecurringEventPattern.objects.create(
-            recurrence_type='weekly',
+            recurrence_type="weekly",
             interval=1,
             by_weekday=[1, 3, 5],  # Mon, Wed, Fri
         )
-        self.assertEqual(pattern.recurrence_type, 'weekly')
+        self.assertEqual(pattern.recurrence_type, "weekly")
         self.assertEqual(pattern.by_weekday, [1, 3, 5])
 
     def test_recurrence_until_date(self):
         """Test recurrence with end date."""
         pattern = RecurringEventPattern.objects.create(
-            recurrence_type='daily',
+            recurrence_type="daily",
             interval=1,
-            until_date=timezone.now().date() + timedelta(days=30)
+            until_date=timezone.now().date() + timedelta(days=30),
         )
         self.assertIsNotNone(pattern.until_date)
 
     def test_recurrence_count(self):
         """Test recurrence with occurrence count."""
         pattern = RecurringEventPattern.objects.create(
-            recurrence_type='daily',
-            interval=1,
-            count=10
+            recurrence_type="daily", interval=1, count=10
         )
         self.assertEqual(pattern.count, 10)
 
@@ -106,9 +103,9 @@ class CalendarResourceTests(TestCase):
     """Test calendar resource management."""
 
     def setUp(self):
-        self.user = User.objects.create_user('admin', 'admin@test.com', 'pass')
+        self.user = User.objects.create_user("admin", "admin@test.com", "pass")
         self.client = Client()
-        self.client.login(username='admin', password='pass')
+        self.client.login(username="admin", password="pass")
 
     def test_create_resource(self):
         """Test creating a calendar resource."""
@@ -124,8 +121,7 @@ class CalendarResourceTests(TestCase):
     def test_resource_booking_conflict(self):
         """Test booking conflict detection."""
         resource = CalendarResource.objects.create(
-            name="Meeting Room",
-            resource_type="room"
+            name="Meeting Room", resource_type="room"
         )
 
         # First booking
@@ -134,14 +130,14 @@ class CalendarResourceTests(TestCase):
             start_datetime=timezone.now(),
             end_datetime=timezone.now() + timedelta(hours=2),
             booked_by=self.user,
-            status='approved'
+            status="approved",
         )
 
         # Overlapping booking (should detect conflict)
         overlapping = CalendarResourceBooking.objects.filter(
             resource=resource,
             start_datetime__lt=booking1.end_datetime,
-            end_datetime__gt=booking1.start_datetime
+            end_datetime__gt=booking1.start_datetime,
         )
 
         self.assertEqual(overlapping.count(), 1)
@@ -151,29 +147,29 @@ class StaffLeaveTests(TestCase):
     """Test staff leave management."""
 
     def setUp(self):
-        self.user = User.objects.create_user('staff', 'staff@test.com', 'pass')
+        self.user = User.objects.create_user("staff", "staff@test.com", "pass")
 
     def test_create_leave_request(self):
         """Test creating leave request."""
         leave = StaffLeave.objects.create(
             staff=self.user,
-            leave_type='vacation',
+            leave_type="vacation",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timedelta(days=5),
             reason="Annual vacation",
-            status='pending'
+            status="pending",
         )
-        self.assertEqual(leave.status, 'pending')
+        self.assertEqual(leave.status, "pending")
 
     def test_leave_overlap_detection(self):
         """Test detecting overlapping leave."""
         # Create first leave
         leave1 = StaffLeave.objects.create(
             staff=self.user,
-            leave_type='vacation',
+            leave_type="vacation",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timedelta(days=5),
-            status='approved'
+            status="approved",
         )
 
         # Check for overlaps
@@ -181,7 +177,7 @@ class StaffLeaveTests(TestCase):
             staff=self.user,
             start_date__lte=leave1.end_date,
             end_date__gte=leave1.start_date,
-            status__in=['pending', 'approved']
+            status__in=["pending", "approved"],
         )
 
         self.assertTrue(overlapping.exists())
@@ -191,7 +187,7 @@ class CalendarPreferencesTests(TestCase):
     """Test user calendar preferences."""
 
     def setUp(self):
-        self.user = User.objects.create_user('user', 'user@test.com', 'pass')
+        self.user = User.objects.create_user("user", "user@test.com", "pass")
 
     def test_create_preferences(self):
         """Test creating user preferences."""
@@ -199,7 +195,7 @@ class CalendarPreferencesTests(TestCase):
             user=self.user,
             default_reminder_times=[15, 60, 1440],
             email_enabled=True,
-            daily_digest=True
+            daily_digest=True,
         )
         self.assertEqual(len(prefs.default_reminder_times), 3)
         self.assertTrue(prefs.email_enabled)
@@ -207,10 +203,11 @@ class CalendarPreferencesTests(TestCase):
     def test_quiet_hours(self):
         """Test quiet hours settings."""
         from datetime import time
+
         prefs = UserCalendarPreferences.objects.create(
             user=self.user,
             quiet_hours_start=time(22, 0),  # 10 PM
-            quiet_hours_end=time(7, 0)  # 7 AM
+            quiet_hours_end=time(7, 0),  # 7 AM
         )
         self.assertIsNotNone(prefs.quiet_hours_start)
 
@@ -219,14 +216,14 @@ class CalendarSharingTests(TestCase):
     """Test calendar sharing functionality."""
 
     def setUp(self):
-        self.user = User.objects.create_user('user', 'user@test.com', 'pass')
+        self.user = User.objects.create_user("user", "user@test.com", "pass")
 
     def test_create_share_link(self):
         """Test creating shareable calendar link."""
         share = SharedCalendarLink.objects.create(
             created_by=self.user,
             expires_at=timezone.now() + timedelta(days=30),
-            filter_modules=['coordination', 'mana']
+            filter_modules=["coordination", "mana"],
         )
         self.assertIsNotNone(share.token)
         self.assertEqual(len(share.filter_modules), 2)
@@ -234,8 +231,7 @@ class CalendarSharingTests(TestCase):
     def test_share_link_expiration(self):
         """Test share link expiration."""
         expired_share = SharedCalendarLink.objects.create(
-            created_by=self.user,
-            expires_at=timezone.now() - timedelta(days=1)
+            created_by=self.user, expires_at=timezone.now() - timedelta(days=1)
         )
         self.assertTrue(expired_share.expires_at < timezone.now())
 
@@ -244,7 +240,7 @@ class CalendarSharingTests(TestCase):
         share = SharedCalendarLink.objects.create(
             created_by=self.user,
             expires_at=timezone.now() + timedelta(days=30),
-            max_views=10
+            max_views=10,
         )
         share.view_count += 1
         share.save()
@@ -255,7 +251,7 @@ class CalendarServiceTests(TestCase):
     """Test calendar service integration."""
 
     def setUp(self):
-        self.user = User.objects.create_user('user', 'user@test.com', 'pass')
+        self.user = User.objects.create_user("user", "user@test.com", "pass")
 
     def test_build_calendar_payload(self):
         """Test calendar payload generation."""
@@ -270,13 +266,13 @@ class CalendarServiceTests(TestCase):
 
         payload = build_calendar_payload()
 
-        self.assertIn('entries', payload)
-        self.assertIn('module_stats', payload)
-        self.assertIsInstance(payload['entries'], list)
+        self.assertIn("entries", payload)
+        self.assertIn("module_stats", payload)
+        self.assertIsInstance(payload["entries"], list)
 
     def test_module_filtering(self):
         """Test calendar filtering by module."""
-        payload = build_calendar_payload(filter_modules=['coordination'])
+        payload = build_calendar_payload(filter_modules=["coordination"])
         self.assertIsNotNone(payload)
 
 
@@ -284,25 +280,25 @@ class CalendarViewTests(TestCase):
     """Test calendar views."""
 
     def setUp(self):
-        self.user = User.objects.create_user('user', 'user@test.com', 'pass')
+        self.user = User.objects.create_user("user", "user@test.com", "pass")
         self.client = Client()
-        self.client.login(username='user', password='pass')
+        self.client.login(username="user", password="pass")
 
     def test_calendar_preferences_view(self):
         """Test calendar preferences page."""
-        url = reverse('common:calendar_preferences')
+        url = reverse("common:calendar_preferences")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_resource_list_view(self):
         """Test resource list page."""
-        url = reverse('common:calendar_resource_list')
+        url = reverse("common:calendar_resource_list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_share_calendar_create(self):
         """Test share creation page."""
-        url = reverse('common:calendar_share_create')
+        url = reverse("common:calendar_share_create")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
@@ -311,29 +307,28 @@ class AttendanceTests(TestCase):
     """Test attendance tracking."""
 
     def setUp(self):
-        self.user = User.objects.create_user('user', 'user@test.com', 'pass')
+        self.user = User.objects.create_user("user", "user@test.com", "pass")
         self.event = Event.objects.create(**build_event_kwargs(self.user))
         self.participant = create_participant(
             self.event,
             user=self.user,
-            attendance_status='not_checked_in',
+            attendance_status="not_checked_in",
         )
 
     def test_check_in(self):
         """Test participant check-in."""
         self.participant.check_in_time = timezone.now()
-        self.participant.attendance_status = 'checked_in'
+        self.participant.attendance_status = "checked_in"
         self.participant.save()
 
         self.assertIsNotNone(self.participant.check_in_time)
-        self.assertEqual(self.participant.attendance_status, 'checked_in')
+        self.assertEqual(self.participant.attendance_status, "checked_in")
 
     def test_attendance_rate_calculation(self):
         """Test attendance rate."""
         total = EventParticipant.objects.filter(event=self.event).count()
         present = EventParticipant.objects.filter(
-            event=self.event,
-            attendance_status='checked_in'
+            event=self.event, attendance_status="checked_in"
         ).count()
 
         rate = (present / total * 100) if total > 0 else 0
@@ -345,16 +340,14 @@ class AttendanceTests(TestCase):
 @pytest.fixture
 def user(db):
     """Create test user."""
-    return User.objects.create_user('pytest_user', 'pytest@test.com', 'pass')
+    return User.objects.create_user("pytest_user", "pytest@test.com", "pass")
 
 
 @pytest.fixture
 def calendar_resource(db, user):
     """Create test resource."""
     return CalendarResource.objects.create(
-        name="Test Room",
-        resource_type="room",
-        capacity=10
+        name="Test Room", resource_type="room", capacity=10
     )
 
 
@@ -365,21 +358,19 @@ def test_booking_creation(user, calendar_resource):
         resource=calendar_resource,
         start_datetime=timezone.now(),
         end_datetime=timezone.now() + timedelta(hours=1),
-        booked_by=user
+        booked_by=user,
     )
-    assert booking.status == 'pending'
+    assert booking.status == "pending"
 
 
 @pytest.mark.django_db
 def test_share_link_token_uniqueness(user):
     """Test share link tokens are unique."""
     share1 = SharedCalendarLink.objects.create(
-        created_by=user,
-        expires_at=timezone.now() + timedelta(days=30)
+        created_by=user, expires_at=timezone.now() + timedelta(days=30)
     )
     share2 = SharedCalendarLink.objects.create(
-        created_by=user,
-        expires_at=timezone.now() + timedelta(days=30)
+        created_by=user, expires_at=timezone.now() + timedelta(days=30)
     )
     assert share1.token != share2.token
 

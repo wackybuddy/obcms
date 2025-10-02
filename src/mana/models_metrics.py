@@ -82,9 +82,7 @@ class WorkshopMetricsSnapshot(models.Model):
         help_text="Additional context (timings, counts, breakdowns)",
     )
 
-    notes = models.TextField(
-        blank=True, help_text="Facilitator notes or observations"
-    )
+    notes = models.TextField(blank=True, help_text="Facilitator notes or observations")
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

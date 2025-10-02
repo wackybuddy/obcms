@@ -34,7 +34,10 @@ def ensure_default_staff_teams() -> Sequence[StaffTeam]:
         )
         fields_to_update: list[str] = []
         if not created:
-            if definition.get("description") and team.description != definition["description"]:
+            if (
+                definition.get("description")
+                and team.description != definition["description"]
+            ):
                 team.description = definition["description"]
                 fields_to_update.append("description")
             if definition.get("mission") and team.mission != definition["mission"]:
@@ -71,7 +74,9 @@ def assign_board_position(task: StaffTask) -> StaffTask:
     return task
 
 
-def ensure_membership(team: StaffTeam, user: User, assigned_by: User | None = None) -> StaffTeamMembership:
+def ensure_membership(
+    team: StaffTeam, user: User, assigned_by: User | None = None
+) -> StaffTeamMembership:
     """Ensure a staff user is linked to a team."""
 
     membership, created = StaffTeamMembership.objects.get_or_create(
@@ -141,7 +146,10 @@ def seed_tasks(
         )
         task.teams.add(team)
         task.assignees.set([assignee])
-        if blueprint.get("status") == StaffTask.STATUS_COMPLETED and task.completed_at is None:
+        if (
+            blueprint.get("status") == StaffTask.STATUS_COMPLETED
+            and task.completed_at is None
+        ):
             task.completed_at = timezone.now()
             task.progress = 100
             task.save(update_fields=["completed_at", "progress", "updated_at"])

@@ -1,12 +1,25 @@
 from rest_framework import serializers
 
-from .models import (ActionItem, Communication, CommunicationSchedule,
-                     CommunicationTemplate, ConsultationFeedback,
-                     EngagementFacilitator, EngagementTracking, Event,
-                     EventDocument, EventParticipant, Organization,
-                     OrganizationContact, Partnership, PartnershipDocument,
-                     PartnershipMilestone, PartnershipSignatory,
-                     StakeholderEngagement, StakeholderEngagementType)
+from .models import (
+    ActionItem,
+    Communication,
+    CommunicationSchedule,
+    CommunicationTemplate,
+    ConsultationFeedback,
+    EngagementFacilitator,
+    EngagementTracking,
+    Event,
+    EventDocument,
+    EventParticipant,
+    Organization,
+    OrganizationContact,
+    Partnership,
+    PartnershipDocument,
+    PartnershipMilestone,
+    PartnershipSignatory,
+    StakeholderEngagement,
+    StakeholderEngagementType,
+)
 
 
 class StakeholderEngagementTypeSerializer(serializers.ModelSerializer):

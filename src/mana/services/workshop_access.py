@@ -50,7 +50,7 @@ class WorkshopAccessManager:
             max_index = 0  # Default to workshop_1
 
         # Can only access workshops up to facilitator's max
-        allowed_workshops = self.WORKSHOP_SEQUENCE[:max_index + 1]
+        allowed_workshops = self.WORKSHOP_SEQUENCE[: max_index + 1]
 
         return allowed_workshops
 
@@ -221,7 +221,13 @@ class WorkshopAccessManager:
                 # First workshop, always set as current
                 participant.current_workshop = workshop_type
 
-            participant.save(update_fields=["facilitator_advanced_to", "current_workshop", "updated_at"])
+            participant.save(
+                update_fields=[
+                    "facilitator_advanced_to",
+                    "current_workshop",
+                    "updated_at",
+                ]
+            )
 
             # Log advancement
             if workshop:
@@ -230,7 +236,11 @@ class WorkshopAccessManager:
                     workshop=workshop,
                     action_type="unlock",
                     metadata={
-                        "advanced_by": by_user.get_full_name() if hasattr(by_user, 'get_full_name') else str(by_user),
+                        "advanced_by": (
+                            by_user.get_full_name()
+                            if hasattr(by_user, "get_full_name")
+                            else str(by_user)
+                        ),
                         "to_workshop": workshop_type,
                         "bulk_advancement": True,
                     },
@@ -251,7 +261,9 @@ class WorkshopAccessManager:
         """
         participant.completed_workshops = []
         participant.current_workshop = "workshop_1"
-        participant.save(update_fields=["completed_workshops", "current_workshop", "updated_at"])
+        participant.save(
+            update_fields=["completed_workshops", "current_workshop", "updated_at"]
+        )
 
         # Log the reset
         workshop = WorkshopActivity.objects.filter(
@@ -290,7 +302,10 @@ class WorkshopAccessManager:
 
         # Find next workshop
         next_workshop = None
-        if participant.current_workshop and participant.current_workshop in self.WORKSHOP_SEQUENCE:
+        if (
+            participant.current_workshop
+            and participant.current_workshop in self.WORKSHOP_SEQUENCE
+        ):
             current_index = self.WORKSHOP_SEQUENCE.index(participant.current_workshop)
             if current_index < len(self.WORKSHOP_SEQUENCE) - 1:
                 next_workshop = self.WORKSHOP_SEQUENCE[current_index + 1]

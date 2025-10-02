@@ -18,6 +18,7 @@ def _invalidate_calendar_cache() -> None:
 
     calendar_service.invalidate_calendar_cache()
 
+
 User = get_user_model()
 
 
@@ -661,11 +662,13 @@ class Organization(models.Model):
 
     # Mandate and Functions (particularly for government agencies)
     mandate = models.TextField(
-        blank=True, help_text="Official mandate of the organization (particularly for government agencies)"
+        blank=True,
+        help_text="Official mandate of the organization (particularly for government agencies)",
     )
 
     powers_and_functions = models.TextField(
-        blank=True, help_text="Powers and functions of the organization (particularly for government agencies)"
+        blank=True,
+        help_text="Powers and functions of the organization (particularly for government agencies)",
     )
 
     # Contact Information
@@ -913,9 +916,7 @@ class MAOFocalPerson(models.Model):
         default=True, help_text="Whether this focal person is currently active"
     )
 
-    appointed_date = models.DateField(
-        help_text="Date when appointed as focal person"
-    )
+    appointed_date = models.DateField(help_text="Date when appointed as focal person")
 
     end_date = models.DateField(
         null=True,
@@ -1593,7 +1594,11 @@ class Event(models.Model):
 
         if end_dt:
             kwargs.setdefault("end_time", end_dt.time())
-            if not kwargs.get("end_date") and start_dt and end_dt.date() != start_dt.date():
+            if (
+                not kwargs.get("end_date")
+                and start_dt
+                and end_dt.date() != start_dt.date()
+            ):
                 kwargs["end_date"] = end_dt.date()
             if start_dt and not kwargs.get("duration_hours"):
                 duration_seconds = (end_dt - start_dt).total_seconds()

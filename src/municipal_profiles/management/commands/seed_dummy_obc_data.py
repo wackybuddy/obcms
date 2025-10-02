@@ -33,10 +33,7 @@ class Command(BaseCommand):
         region_code = prefix[:10]
         province_code = f"{prefix}-P1"[:64]
         municipality_code = f"{prefix}-M1"[:64]
-        barangay_codes = [
-            f"{prefix}-B{i}"[:64]
-            for i in range(1, 4)
-        ]
+        barangay_codes = [f"{prefix}-B{i}"[:64] for i in range(1, 4)]
 
         with transaction.atomic():
             region, _ = Region.objects.get_or_create(

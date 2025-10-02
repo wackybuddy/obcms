@@ -71,6 +71,48 @@
         {% endfor %}
     </section>
 
+    <!-- Project Management Platform CTA -->
+    <section class="relative overflow-hidden rounded-3xl border border-emerald-200/60 bg-gradient-to-r from-emerald-600 via-teal-500 to-sky-500 text-white shadow-xl">
+        <div class="absolute inset-0 bg-white/10 opacity-20 mix-blend-overlay"></div>
+        <div class="relative px-6 sm:px-10 py-8 sm:py-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div class="space-y-4 max-w-2xl">
+                <div class="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-sm font-semibold backdrop-blur">
+                    <i class="fa-solid fa-diagram-project mr-2"></i>
+                    Project Management Platform
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-semibold leading-tight">
+                    Coordinate MOA PPAs with portfolio-wide planning and monitoring tools
+                </h2>
+                <p class="text-white/80 text-base sm:text-lg">
+                    Navigate to PPA Management to validate budgets, track alerts, and pull cross-module reports that keep MOA programs aligned with the wider Bangsamoro portfolio.
+                </p>
+            </div>
+            <div class="w-full max-w-sm">
+                <div class="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 p-6 shadow-lg space-y-3">
+                    <h3 class="text-sm font-semibold uppercase tracking-wide text-white/70">Quick Snapshot</h3>
+                    <div class="space-y-3">
+                        <a href="{% url 'project_central:portfolio_dashboard' %}" class="flex items-center justify-between rounded-xl bg-white text-emerald-600 font-semibold px-4 py-3 shadow hover:bg-emerald-50 transition-all duration-200">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-chart-simple"></i> PPA Management</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="{% url 'project_central:budget_approval_dashboard' %}" class="flex items-center justify-between rounded-xl bg-emerald-500/70 hover:bg-emerald-500 text-white font-semibold px-4 py-3 transition-all duration-200">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-calculator"></i> Budget Approvals</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="{% url 'project_central:alert_list' %}" class="flex items-center justify-between rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-3 border border-white/20 transition-all duration-200">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-bell"></i> Alerts</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                        <a href="{% url 'project_central:report_list' %}" class="flex items-center justify-between rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold px-4 py-3 border border-white/20 transition-all duration-200">
+                            <span class="flex items-center gap-2"><i class="fa-solid fa-file-lines"></i> Reports</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Quick Actions Section -->
     <section id="quick-actions">
         <h2 class="text-xl font-semibold text-neutral-800 mb-6 flex items-center">

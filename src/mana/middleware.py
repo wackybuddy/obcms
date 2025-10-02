@@ -30,7 +30,11 @@ class ManaWorkshopContextMiddleware(MiddlewareMixin):
         if len(segments) < 4:
             return None
 
-        if segments[0] != "mana" or segments[1] != "workshops" or segments[2] != "assessments":
+        if (
+            segments[0] != "mana"
+            or segments[1] != "workshops"
+            or segments[2] != "assessments"
+        ):
             return None
 
         assessment_id = segments[3]
@@ -46,10 +50,14 @@ class ManaWorkshopContextMiddleware(MiddlewareMixin):
         request.mana_assessment = assessment
 
         if request.path.startswith("/mana/workshops/assessments/"):
-            participant = WorkshopParticipantAccount.objects.filter(
-                assessment=assessment,
-                user=request.user,
-            ).select_related("user").first()
+            participant = (
+                WorkshopParticipantAccount.objects.filter(
+                    assessment=assessment,
+                    user=request.user,
+                )
+                .select_related("user")
+                .first()
+            )
             if participant:
                 request.mana_participant_account = participant
 
@@ -81,12 +89,7 @@ class ManaParticipantAccessMiddleware(MiddlewareMixin):
     def process_request(self, request):
         user = getattr(request, "user", None)
 
-        if (
-            not user
-            or not user.is_authenticated
-            or user.is_staff
-            or user.is_superuser
-        ):
+        if not user or not user.is_authenticated or user.is_staff or user.is_superuser:
             return None
 
         if not user.has_perm("mana.can_access_regional_mana"):
@@ -116,11 +119,16 @@ class ManaParticipantAccessMiddleware(MiddlewareMixin):
         if path.startswith("/static/") or path.startswith("/media/"):
             return None
 
-        if not participant_account.profile_completed or not participant_account.consent_given:
+        if (
+            not participant_account.profile_completed
+            or not participant_account.consent_given
+        ):
             return redirect(onboarding_url)
 
         if path in self.ALLOWED_PATHS or path.startswith(self.ALLOWED_PREFIXES):
             return None
 
-        participant_dashboard = reverse("mana:participant_dashboard", args=[participant_account.assessment_id])
+        participant_dashboard = reverse(
+            "mana:participant_dashboard", args=[participant_account.assessment_id]
+        )
         return redirect(participant_dashboard)

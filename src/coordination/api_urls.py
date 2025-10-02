@@ -1,18 +1,26 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .api_views import (ActionItemViewSet, CommunicationScheduleViewSet,
-                        CommunicationTemplateViewSet, CommunicationViewSet,
-                        ConsultationFeedbackViewSet,
-                        EngagementFacilitatorViewSet,
-                        EngagementTrackingViewSet, EventDocumentViewSet,
-                        EventParticipantViewSet, EventViewSet,
-                        OrganizationContactViewSet, OrganizationViewSet,
-                        PartnershipDocumentViewSet,
-                        PartnershipMilestoneViewSet,
-                        PartnershipSignatoryViewSet, PartnershipViewSet,
-                        StakeholderEngagementTypeViewSet,
-                        StakeholderEngagementViewSet)
+from .api_views import (
+    ActionItemViewSet,
+    CommunicationScheduleViewSet,
+    CommunicationTemplateViewSet,
+    CommunicationViewSet,
+    ConsultationFeedbackViewSet,
+    EngagementFacilitatorViewSet,
+    EngagementTrackingViewSet,
+    EventDocumentViewSet,
+    EventParticipantViewSet,
+    EventViewSet,
+    OrganizationContactViewSet,
+    OrganizationViewSet,
+    PartnershipDocumentViewSet,
+    PartnershipMilestoneViewSet,
+    PartnershipSignatoryViewSet,
+    PartnershipViewSet,
+    StakeholderEngagementTypeViewSet,
+    StakeholderEngagementViewSet,
+)
 
 app_name = "coordination_api"
 

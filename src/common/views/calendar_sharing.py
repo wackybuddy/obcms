@@ -42,12 +42,15 @@ def calendar_share_create(request):
 
             # Build share URL
             share_url = request.build_absolute_uri(
-                reverse("common:calendar_share_view", kwargs={"token": str(share_link.token)})
+                reverse(
+                    "common:calendar_share_view",
+                    kwargs={"token": str(share_link.token)},
+                )
             )
 
             messages.success(
                 request,
-                f"Shareable calendar link created successfully! Share URL: {share_url}"
+                f"Shareable calendar link created successfully! Share URL: {share_url}",
             )
 
             return redirect("common:calendar_share_manage")
@@ -77,9 +80,9 @@ def calendar_share_manage(request):
     """
     Manage existing calendar shares.
     """
-    shares = SharedCalendarLink.objects.filter(
-        created_by=request.user
-    ).order_by("-created_at")
+    shares = SharedCalendarLink.objects.filter(created_by=request.user).order_by(
+        "-created_at"
+    )
 
     # Build share URLs
     for share in shares:
@@ -107,20 +110,32 @@ def calendar_share_view(request, token):
 
     # Check if link is active and not expired
     if not share_link.is_active:
-        return render(request, "common/calendar/share_expired.html", {
-            "share_link": share_link,
-        })
+        return render(
+            request,
+            "common/calendar/share_expired.html",
+            {
+                "share_link": share_link,
+            },
+        )
 
     if share_link.expires_at < timezone.now():
-        return render(request, "common/calendar/share_expired.html", {
-            "share_link": share_link,
-        })
+        return render(
+            request,
+            "common/calendar/share_expired.html",
+            {
+                "share_link": share_link,
+            },
+        )
 
     # Check access count limit
     if share_link.max_views and share_link.view_count >= share_link.max_views:
-        return render(request, "common/calendar/share_limit_reached.html", {
-            "share_link": share_link,
-        })
+        return render(
+            request,
+            "common/calendar/share_limit_reached.html",
+            {
+                "share_link": share_link,
+            },
+        )
 
     # Increment view count
     share_link.view_count += 1

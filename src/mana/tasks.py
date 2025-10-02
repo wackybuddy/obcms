@@ -5,6 +5,7 @@ from __future__ import annotations
 try:
     from celery import shared_task
 except ImportError:  # pragma: no cover
+
     def shared_task(*dargs, **dkwargs):  # type: ignore
         def decorator(func):
             setattr(func, "delay", func)
@@ -13,6 +14,7 @@ except ImportError:  # pragma: no cover
         if dargs and callable(dargs[0]):
             return decorator(dargs[0])
         return decorator
+
 
 from django.contrib.auth import get_user_model
 

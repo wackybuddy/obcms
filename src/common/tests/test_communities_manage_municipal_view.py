@@ -50,9 +50,7 @@ class ManageMunicipalStatCardsTests(TestCase):
             auto_sync=True,
         )
 
-        response = self.client.get(
-            reverse("common:communities_manage_municipal")
-        )
+        response = self.client.get(reverse("common:communities_manage_municipal"))
 
         self.assertEqual(response.status_code, 200)
 

@@ -142,7 +142,9 @@ class AssessmentSignalTests(TestCase):
 
         # Check that tasks were created with correct templates
         survey_tasks = StaffTask.objects.filter(related_assessment=survey_assessment)
-        workshop_tasks = StaffTask.objects.filter(related_assessment=workshop_assessment)
+        workshop_tasks = StaffTask.objects.filter(
+            related_assessment=workshop_assessment
+        )
 
         # Both should have created tasks
         self.assertGreater(survey_tasks.count(), 0)

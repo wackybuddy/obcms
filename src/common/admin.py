@@ -290,7 +290,13 @@ class StaffTaskAdmin(admin.ModelAdmin):
         "related_service",
         "related_community",
     )
-    readonly_fields = ("created_at", "updated_at", "completed_at", "primary_domain_object", "domain_display")
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "completed_at",
+        "primary_domain_object",
+        "domain_display",
+    )
     fieldsets = (
         (
             "Basic Information",
@@ -427,9 +433,7 @@ class TaskTemplateAdmin(admin.ModelAdmin):
     fieldsets = (
         (
             None,
-            {
-                "fields": ("name", "domain", "description", "is_active")
-            },
+            {"fields": ("name", "domain", "description", "is_active")},
         ),
         (
             "Timestamps",
@@ -472,7 +476,14 @@ class TaskTemplateItemAdmin(admin.ModelAdmin):
         "estimated_hours",
         "days_from_start",
     )
-    list_filter = ("template", "priority", "assessment_phase", "policy_phase", "service_phase", "task_role")
+    list_filter = (
+        "template",
+        "priority",
+        "assessment_phase",
+        "policy_phase",
+        "service_phase",
+        "task_role",
+    )
     search_fields = ("title", "description")
     autocomplete_fields = ("template",)
     fieldsets = (
@@ -490,9 +501,7 @@ class TaskTemplateItemAdmin(admin.ModelAdmin):
         ),
         (
             "Effort & Timing",
-            {
-                "fields": ("priority", "estimated_hours", "days_from_start")
-            },
+            {"fields": ("priority", "estimated_hours", "days_from_start")},
         ),
         (
             "Workflow Phases",
@@ -518,7 +527,14 @@ class TaskTemplateItemAdmin(admin.ModelAdmin):
 class RecurringEventPatternAdmin(admin.ModelAdmin):
     """Admin interface for Recurring Event Patterns."""
 
-    list_display = ("id", "recurrence_type", "interval", "until_date", "count", "created_at")
+    list_display = (
+        "id",
+        "recurrence_type",
+        "interval",
+        "until_date",
+        "count",
+        "created_at",
+    )
     list_filter = ("recurrence_type", "created_at")
     search_fields = ("recurrence_type",)
     readonly_fields = ("created_at", "modified_at")
@@ -526,10 +542,16 @@ class RecurringEventPatternAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Recurrence Type", {"fields": ("recurrence_type", "interval")}),
         ("Weekly Options", {"fields": ("by_weekday",), "classes": ("collapse",)}),
-        ("Monthly Options", {"fields": ("by_monthday", "by_setpos"), "classes": ("collapse",)}),
+        (
+            "Monthly Options",
+            {"fields": ("by_monthday", "by_setpos"), "classes": ("collapse",)},
+        ),
         ("End Conditions", {"fields": ("count", "until_date")}),
         ("Exceptions", {"fields": ("exception_dates",), "classes": ("collapse",)}),
-        ("Timestamps", {"fields": ("created_at", "modified_at"), "classes": ("collapse",)}),
+        (
+            "Timestamps",
+            {"fields": ("created_at", "modified_at"), "classes": ("collapse",)},
+        ),
     )
 
 
@@ -537,7 +559,14 @@ class RecurringEventPatternAdmin(admin.ModelAdmin):
 class CalendarResourceAdmin(admin.ModelAdmin):
     """Admin interface for Calendar Resources."""
 
-    list_display = ("name", "resource_type", "is_available", "booking_requires_approval", "capacity", "created_at")
+    list_display = (
+        "name",
+        "resource_type",
+        "is_available",
+        "booking_requires_approval",
+        "capacity",
+        "created_at",
+    )
     list_filter = ("resource_type", "is_available", "booking_requires_approval")
     search_fields = ("name", "description", "location")
     readonly_fields = ("created_at", "modified_at")
@@ -547,7 +576,10 @@ class CalendarResourceAdmin(admin.ModelAdmin):
         ("Capacity & Location", {"fields": ("capacity", "location")}),
         ("Availability", {"fields": ("is_available", "booking_requires_approval")}),
         ("Cost", {"fields": ("cost_per_use",)}),
-        ("Timestamps", {"fields": ("created_at", "modified_at"), "classes": ("collapse",)}),
+        (
+            "Timestamps",
+            {"fields": ("created_at", "modified_at"), "classes": ("collapse",)},
+        ),
     )
 
 
@@ -555,7 +587,14 @@ class CalendarResourceAdmin(admin.ModelAdmin):
 class CalendarResourceBookingAdmin(admin.ModelAdmin):
     """Admin interface for Calendar Resource Bookings."""
 
-    list_display = ("resource", "start_datetime", "end_datetime", "status", "booked_by", "approved_by")
+    list_display = (
+        "resource",
+        "start_datetime",
+        "end_datetime",
+        "status",
+        "booked_by",
+        "approved_by",
+    )
     list_filter = ("status", "start_datetime", "resource__resource_type")
     search_fields = ("resource__name", "booked_by__username", "notes")
     readonly_fields = ("created_at",)
@@ -575,7 +614,14 @@ class CalendarResourceBookingAdmin(admin.ModelAdmin):
 class CalendarNotificationAdmin(admin.ModelAdmin):
     """Admin interface for Calendar Notifications."""
 
-    list_display = ("recipient", "notification_type", "delivery_method", "scheduled_for", "status", "sent_at")
+    list_display = (
+        "recipient",
+        "notification_type",
+        "delivery_method",
+        "scheduled_for",
+        "status",
+        "sent_at",
+    )
     list_filter = ("notification_type", "delivery_method", "status", "scheduled_for")
     search_fields = ("recipient__username", "recipient__email", "error_message")
     readonly_fields = ("created_at", "sent_at")
@@ -595,19 +641,39 @@ class CalendarNotificationAdmin(admin.ModelAdmin):
 class UserCalendarPreferencesAdmin(admin.ModelAdmin):
     """Admin interface for User Calendar Preferences."""
 
-    list_display = ("user", "email_enabled", "sms_enabled", "push_enabled", "daily_digest", "weekly_digest", "timezone")
-    list_filter = ("email_enabled", "sms_enabled", "push_enabled", "daily_digest", "weekly_digest")
+    list_display = (
+        "user",
+        "email_enabled",
+        "sms_enabled",
+        "push_enabled",
+        "daily_digest",
+        "weekly_digest",
+        "timezone",
+    )
+    list_filter = (
+        "email_enabled",
+        "sms_enabled",
+        "push_enabled",
+        "daily_digest",
+        "weekly_digest",
+    )
     search_fields = ("user__username", "user__email")
     readonly_fields = ("created_at", "updated_at")
 
     fieldsets = (
         ("User", {"fields": ("user",)}),
         ("Default Reminders", {"fields": ("default_reminder_times",)}),
-        ("Notification Channels", {"fields": ("email_enabled", "sms_enabled", "push_enabled")}),
+        (
+            "Notification Channels",
+            {"fields": ("email_enabled", "sms_enabled", "push_enabled")},
+        ),
         ("Digest Emails", {"fields": ("daily_digest", "weekly_digest")}),
         ("Quiet Hours", {"fields": ("quiet_hours_start", "quiet_hours_end")}),
         ("Timezone", {"fields": ("timezone",)}),
-        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+        (
+            "Timestamps",
+            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
+        ),
     )
 
 
@@ -622,7 +688,13 @@ class ExternalCalendarSyncAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("User & Provider", {"fields": ("user", "provider")}),
-        ("OAuth Tokens", {"fields": ("access_token", "refresh_token", "token_expires_at"), "classes": ("collapse",)}),
+        (
+            "OAuth Tokens",
+            {
+                "fields": ("access_token", "refresh_token", "token_expires_at"),
+                "classes": ("collapse",),
+            },
+        ),
         ("Sync Settings", {"fields": ("sync_direction", "sync_modules")}),
         ("Status", {"fields": ("last_sync_at", "sync_status", "is_active")}),
         ("Timestamps", {"fields": ("created_at",), "classes": ("collapse",)}),
@@ -633,7 +705,14 @@ class ExternalCalendarSyncAdmin(admin.ModelAdmin):
 class SharedCalendarLinkAdmin(admin.ModelAdmin):
     """Admin interface for Shared Calendar Links."""
 
-    list_display = ("token", "created_by", "expires_at", "view_count", "max_views", "is_active")
+    list_display = (
+        "token",
+        "created_by",
+        "expires_at",
+        "view_count",
+        "max_views",
+        "is_active",
+    )
     list_filter = ("is_active", "expires_at")
     search_fields = ("token", "created_by__username")
     readonly_fields = ("token", "created_at", "view_count")
@@ -641,8 +720,14 @@ class SharedCalendarLinkAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Link Details", {"fields": ("token", "created_by")}),
-        ("Access Control", {"fields": ("expires_at", "max_views", "view_count", "is_active")}),
-        ("Filters", {"fields": ("filter_modules", "filter_date_from", "filter_date_to")}),
+        (
+            "Access Control",
+            {"fields": ("expires_at", "max_views", "view_count", "is_active")},
+        ),
+        (
+            "Filters",
+            {"fields": ("filter_modules", "filter_date_from", "filter_date_to")},
+        ),
         ("Timestamps", {"fields": ("created_at",), "classes": ("collapse",)}),
     )
 
@@ -651,7 +736,14 @@ class SharedCalendarLinkAdmin(admin.ModelAdmin):
 class StaffLeaveAdmin(admin.ModelAdmin):
     """Admin interface for Staff Leave."""
 
-    list_display = ("staff", "leave_type", "start_date", "end_date", "status", "approved_by")
+    list_display = (
+        "staff",
+        "leave_type",
+        "start_date",
+        "end_date",
+        "status",
+        "approved_by",
+    )
     list_filter = ("leave_type", "status", "start_date")
     search_fields = ("staff__username", "reason", "notes")
     readonly_fields = ("created_at", "updated_at")
@@ -662,7 +754,10 @@ class StaffLeaveAdmin(admin.ModelAdmin):
         ("Leave Details", {"fields": ("leave_type", "start_date", "end_date")}),
         ("Status", {"fields": ("status", "approved_by")}),
         ("Reason & Notes", {"fields": ("reason", "notes")}),
-        ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+        (
+            "Timestamps",
+            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
+        ),
     )
 
     actions = ["approve_leave", "reject_leave"]

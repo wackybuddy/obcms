@@ -8,7 +8,13 @@ from django.core.cache import cache
 
 from common.models import StaffTeam, StaffTask, User
 from common.services.calendar import build_calendar_payload
-from coordination.models import Communication, Event, Organization, Partnership, PartnershipMilestone
+from coordination.models import (
+    Communication,
+    Event,
+    Organization,
+    Partnership,
+    PartnershipMilestone,
+)
 from monitoring.models import MonitoringEntry
 from recommendations.policy_tracking.models import PolicyRecommendation
 
@@ -30,7 +36,11 @@ def test_oobc_calendar_view_renders_for_staff(client):
     assert "module_cards" in response.context
     assert "calendar_events_json" in response.context
     assert "follow_up_items" in response.context
-    data = json.loads(response.context["calendar_events_json"]) if response.context["calendar_events_json"] else []
+    data = (
+        json.loads(response.context["calendar_events_json"])
+        if response.context["calendar_events_json"]
+        else []
+    )
     assert isinstance(data, list)
 
 
@@ -42,7 +52,9 @@ def test_build_calendar_payload_handles_staff_tasks():
         user_type="oobc_staff",
         is_approved=True,
     )
-    team = StaffTeam.objects.create(name="Coordination Team", description="", is_active=True)
+    team = StaffTeam.objects.create(
+        name="Coordination Team", description="", is_active=True
+    )
     task = StaffTask.objects.create(
         title="Prepare briefing",
         description="",
@@ -125,7 +137,9 @@ def test_build_calendar_payload_includes_policy_and_planning():
         created_by=user,
     )
 
-    payload = build_calendar_payload(filter_modules=["coordination", "policy", "planning"])
+    payload = build_calendar_payload(
+        filter_modules=["coordination", "policy", "planning"]
+    )
 
     assert payload["module_stats"].get("policy", {}).get("total") >= 1
     assert payload["module_stats"].get("planning", {}).get("total") >= 1
@@ -142,7 +156,9 @@ def test_build_calendar_payload_includes_policy_and_planning():
         if entry["extendedProps"].get("module") == "planning"
         and entry["extendedProps"].get("category") == "planning_milestone_custom"
     ]
-    assert planning_milestones, "Custom planning milestones should appear in calendar payload"
+    assert (
+        planning_milestones
+    ), "Custom planning milestones should appear in calendar payload"
     assert any(
         milestone["extendedProps"].get("milestoneTitle") == "Procurement window"
         for milestone in planning_milestones
@@ -214,7 +230,9 @@ def test_calendar_payload_cache_invalidation_on_task_save():
 
     first_payload = build_calendar_payload(filter_modules=["staff"])
     first_staff_entries = [
-        entry for entry in first_payload["entries"] if entry["extendedProps"].get("module") == "staff"
+        entry
+        for entry in first_payload["entries"]
+        if entry["extendedProps"].get("module") == "staff"
     ]
     assert len(first_staff_entries) == 1
 
@@ -227,9 +245,13 @@ def test_calendar_payload_cache_invalidation_on_task_save():
 
     second_payload = build_calendar_payload(filter_modules=["staff"])
     second_staff_entries = [
-        entry for entry in second_payload["entries"] if entry["extendedProps"].get("module") == "staff"
+        entry
+        for entry in second_payload["entries"]
+        if entry["extendedProps"].get("module") == "staff"
     ]
-    assert len(second_staff_entries) == 2, "Calendar cache should refresh after task changes"
+    assert (
+        len(second_staff_entries) == 2
+    ), "Calendar cache should refresh after task changes"
 
 
 @pytest.mark.django_db
@@ -288,7 +310,9 @@ def test_build_calendar_payload_tracks_partnership_workflows():
     ]
     assert any("Partnership" in action.get("label", "") for action in approval_actions)
 
-    compliance_metrics = payload.get("analytics", {}).get("compliance", {}).get("modules", {})
+    compliance_metrics = (
+        payload.get("analytics", {}).get("compliance", {}).get("modules", {})
+    )
     assert compliance_metrics.get("coordination", {}).get("pending_approvals", 0) >= 1
 
 

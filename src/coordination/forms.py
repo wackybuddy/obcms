@@ -341,8 +341,8 @@ class EventForm(forms.ModelForm):
             "first_name",
             "last_name",
         )
-        self.fields["related_engagement"].queryset = StakeholderEngagement.objects.order_by(
-            "-planned_date"
+        self.fields["related_engagement"].queryset = (
+            StakeholderEngagement.objects.order_by("-planned_date")
         )
         self.fields["related_assessment"].queryset = Assessment.objects.order_by(
             "-created_at"
@@ -419,7 +419,11 @@ class StakeholderEngagementForm(forms.ModelForm):
         self.fields["related_assessment"].queryset = Assessment.objects.order_by(
             "-created_at"
         )
-        numeric_fields = ["target_participants", "actual_participants", "duration_minutes"]
+        numeric_fields = [
+            "target_participants",
+            "actual_participants",
+            "duration_minutes",
+        ]
         for field_name in numeric_fields:
             field = self.fields.get(field_name)
             if field and isinstance(field.widget, forms.NumberInput):
@@ -481,7 +485,10 @@ class RecurringEventPatternForm(forms.ModelForm):
         until_date = cleaned_data.get("until_date")
 
         # Validate that weekly recurrence has weekdays selected
-        if recurrence_type == RecurringEventPattern.RECURRENCE_WEEKLY and not by_weekday:
+        if (
+            recurrence_type == RecurringEventPattern.RECURRENCE_WEEKLY
+            and not by_weekday
+        ):
             self.add_error(
                 "by_weekday",
                 "Please select at least one day of the week for weekly recurrence.",

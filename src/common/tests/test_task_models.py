@@ -159,7 +159,9 @@ class StaffTaskValidationTests(TestCase):
         with self.assertRaises(ValidationError) as exc:
             task.full_clean()
 
-        self.assertIn("Task can only be linked to one primary domain object", str(exc.exception))
+        self.assertIn(
+            "Task can only be linked to one primary domain object", str(exc.exception)
+        )
 
     def test_recurring_task_requires_start_date(self):
         """Recurring tasks must include a start date."""
@@ -461,7 +463,9 @@ class TaskTemplateItemModelTests(TestCase):
             assessment_phase=StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION,
         )
 
-        self.assertEqual(item.assessment_phase, StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION)
+        self.assertEqual(
+            item.assessment_phase, StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION
+        )
 
     def test_template_item_with_policy_phase(self):
         """Test creating template item with policy phase."""

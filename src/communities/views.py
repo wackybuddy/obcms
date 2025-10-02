@@ -19,25 +19,35 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import (Paragraph, SimpleDocTemplate, Spacer, Table,
-                                TableStyle)
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from common.services.geodata import serialize_layers_for_map
 
-from .models import (CommunityInfrastructure, CommunityLivelihood,
-                     GeographicDataLayer, MapVisualization, MunicipalityCoverage,
-                     OBCCommunity, Stakeholder, StakeholderEngagement)
+from .models import (
+    CommunityInfrastructure,
+    CommunityLivelihood,
+    GeographicDataLayer,
+    MapVisualization,
+    MunicipalityCoverage,
+    OBCCommunity,
+    Stakeholder,
+    StakeholderEngagement,
+)
 from .forms import GeographicDataLayerForm, MapVisualizationForm
-from .serializers import (CommunityInfrastructureSerializer,
-                          CommunityLivelihoodSerializer,
-                          CommunityStatsSerializer, OBCCommunityListSerializer,
-                          OBCCommunitySerializer,
-                          StakeholderEngagementSerializer,
-                          StakeholderListSerializer, StakeholderSerializer,
-                          StakeholderStatsSerializer)
+from .serializers import (
+    CommunityInfrastructureSerializer,
+    CommunityLivelihoodSerializer,
+    CommunityStatsSerializer,
+    OBCCommunityListSerializer,
+    OBCCommunitySerializer,
+    StakeholderEngagementSerializer,
+    StakeholderListSerializer,
+    StakeholderSerializer,
+    StakeholderStatsSerializer,
+)
 
 
 class OBCCommunityViewSet(viewsets.ModelViewSet):
@@ -97,7 +107,9 @@ class OBCCommunityViewSet(viewsets.ModelViewSet):
         # Religious facilities
         religious_facilities = {
             "communities_with_mosque": communities.filter(mosques_count__gt=0).count(),
-            "communities_with_madrasah": communities.filter(madrasah_count__gt=0).count(),
+            "communities_with_madrasah": communities.filter(
+                madrasah_count__gt=0
+            ).count(),
             "total_religious_leaders": sum(
                 c.religious_leaders_count for c in communities
             ),
@@ -359,68 +371,78 @@ class CommunityInfrastructureViewSet(viewsets.ModelViewSet):
 
 # Geographic Data Views
 
+
 @login_required
 def add_data_layer(request):
     """Create a new geographic data layer."""
-    if request.method == 'POST':
+    if request.method == "POST":
         form = GeographicDataLayerForm(request.POST, user=request.user)
         if form.is_valid():
             layer = form.save()
-            messages.success(request, f'Geographic data layer "{layer.name}" has been created successfully.')
-            return redirect('communities:geographic_data_list')
+            messages.success(
+                request,
+                f'Geographic data layer "{layer.name}" has been created successfully.',
+            )
+            return redirect("communities:geographic_data_list")
     else:
         form = GeographicDataLayerForm(user=request.user)
 
     context = {
-        'form': form,
-        'title': 'Add Geographic Data Layer',
+        "form": form,
+        "title": "Add Geographic Data Layer",
     }
-    return render(request, 'communities/add_data_layer.html', context)
+    return render(request, "communities/add_data_layer.html", context)
 
 
 @login_required
 def create_visualization(request):
     """Create a new map visualization."""
-    if request.method == 'POST':
+    if request.method == "POST":
         form = MapVisualizationForm(request.POST, user=request.user)
         if form.is_valid():
             visualization = form.save()
-            messages.success(request, f'Map visualization "{visualization.title}" has been created successfully.')
-            return redirect('communities:geographic_data_list')
+            messages.success(
+                request,
+                f'Map visualization "{visualization.title}" has been created successfully.',
+            )
+            return redirect("communities:geographic_data_list")
     else:
         form = MapVisualizationForm(user=request.user)
 
     context = {
-        'form': form,
-        'title': 'Create Map Visualization',
+        "form": form,
+        "title": "Create Map Visualization",
     }
-    return render(request, 'communities/create_visualization.html', context)
+    return render(request, "communities/create_visualization.html", context)
 
 
 @login_required
 def geographic_data_list(request):
     """List geographic data layers and visualizations."""
-    data_layers = GeographicDataLayer.objects.all().order_by('-created_at')
-    visualizations = MapVisualization.objects.all().order_by('-created_at')
+    data_layers = GeographicDataLayer.objects.all().order_by("-created_at")
+    visualizations = MapVisualization.objects.all().order_by("-created_at")
 
     map_layers, map_config = serialize_layers_for_map(data_layers)
 
     # Basic statistics
     stats = {
-        'total_layers': data_layers.count(),
-        'total_visualizations': visualizations.count(),
-        'communities_mapped': OBCCommunity.objects.filter(
-            Q(geographic_layers__isnull=False) | Q(community_map_visualizations__isnull=False)
-        ).distinct().count(),
-        'active_layers': data_layers.filter(is_visible=True).count(),
+        "total_layers": data_layers.count(),
+        "total_visualizations": visualizations.count(),
+        "communities_mapped": OBCCommunity.objects.filter(
+            Q(geographic_layers__isnull=False)
+            | Q(community_map_visualizations__isnull=False)
+        )
+        .distinct()
+        .count(),
+        "active_layers": data_layers.filter(is_visible=True).count(),
     }
 
     context = {
-        'data_layers': data_layers[:10],  # Show first 10
-        'visualizations': visualizations[:10],  # Show first 10
-        'stats': stats,
-        'title': 'Geographic Data & Mapping',
-        'map_layers': map_layers,
-        'map_config': map_config,
+        "data_layers": data_layers[:10],  # Show first 10
+        "visualizations": visualizations[:10],  # Show first 10
+        "stats": stats,
+        "title": "Geographic Data & Mapping",
+        "map_layers": map_layers,
+        "map_config": map_config,
     }
-    return render(request, 'communities/geographic_data_list.html', context)
+    return render(request, "communities/geographic_data_list.html", context)

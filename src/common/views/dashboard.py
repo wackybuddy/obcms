@@ -20,9 +20,15 @@ def dashboard(request):
                 # Get participant's assessment
                 try:
                     from mana.models import WorkshopParticipantAccount
-                    participant = WorkshopParticipantAccount.objects.get(user=request.user)
+
+                    participant = WorkshopParticipantAccount.objects.get(
+                        user=request.user
+                    )
                     # Redirect to participant dashboard for their assessment
-                    return redirect("mana:participant_dashboard", assessment_id=str(participant.assessment.id))
+                    return redirect(
+                        "mana:participant_dashboard",
+                        assessment_id=str(participant.assessment.id),
+                    )
                 except WorkshopParticipantAccount.DoesNotExist:
                     # No participant account - redirect to regional overview
                     return redirect("common:mana_regional_overview")
@@ -71,7 +77,9 @@ def dashboard(request):
             "total": MonitoringEntry.objects.count(),
             "moa_ppa": MonitoringEntry.objects.filter(category="moa_ppa").count(),
             "oobc_ppa": MonitoringEntry.objects.filter(category="oobc_ppa").count(),
-            "obc_requests": MonitoringEntry.objects.filter(category="obc_request").count(),
+            "obc_requests": MonitoringEntry.objects.filter(
+                category="obc_request"
+            ).count(),
             "pending_requests": MonitoringEntry.objects.filter(
                 category="obc_request",
                 request_status__in=[
@@ -81,7 +89,9 @@ def dashboard(request):
                     "endorsed",
                 ],
             ).count(),
-            "avg_progress": MonitoringEntry.objects.aggregate(avg=Avg("progress"))["avg"]
+            "avg_progress": MonitoringEntry.objects.aggregate(avg=Avg("progress"))[
+                "avg"
+            ]
             or 0,
             "linked_assessments": MonitoringEntry.objects.filter(
                 related_assessment__isnull=False
@@ -173,32 +183,29 @@ def dashboard_metrics(request):
         from common.models.staff import StaffTask
 
         # Aggregate from all modules
-        total_budget = MonitoringEntry.objects.aggregate(
-            total=Sum('budget_allocation')
-        )['total'] or 0
+        total_budget = (
+            MonitoringEntry.objects.aggregate(total=Sum("budget_allocation"))["total"]
+            or 0
+        )
 
-        active_projects = MonitoringEntry.objects.filter(
-            status='ongoing'
-        ).count()
+        active_projects = MonitoringEntry.objects.filter(status="ongoing").count()
 
         unfunded_needs = Need.objects.filter(
-            linked_ppa__isnull=True,
-            priority_score__gte=4.0
+            linked_ppa__isnull=True, priority_score__gte=4.0
         ).count()
 
-        total_beneficiaries = MonitoringEntry.objects.aggregate(
-            total=Sum('obc_slots')
-        )['total'] or 0
+        total_beneficiaries = (
+            MonitoringEntry.objects.aggregate(total=Sum("obc_slots"))["total"] or 0
+        )
 
         upcoming_events = Event.objects.filter(
             start_date__gte=timezone.now().date(),
-            start_date__lte=timezone.now().date() + timedelta(days=7)
+            start_date__lte=timezone.now().date() + timedelta(days=7),
         ).count()
 
         current_week = timezone.now().isocalendar()[1]
         tasks_due = StaffTask.objects.filter(
-            due_date__week=current_week,
-            status__in=['not_started', 'in_progress']
+            due_date__week=current_week, status__in=["not_started", "in_progress"]
         ).count()
 
     except Exception as e:
@@ -211,7 +218,7 @@ def dashboard_metrics(request):
         tasks_due = 0
 
     # Render metric cards
-    html = f'''
+    html = f"""
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="metric-card bg-white rounded-xl shadow-md p-6">
             <div class="flex items-center justify-between">
@@ -287,7 +294,7 @@ def dashboard_metrics(request):
             </div>
         </div>
     </div>
-    '''
+    """
 
     return HttpResponse(html)
 
@@ -298,7 +305,7 @@ def dashboard_activity(request):
     from django.http import HttpResponse
     from datetime import timedelta
 
-    page = int(request.GET.get('page', 1))
+    page = int(request.GET.get("page", 1))
     per_page = 20
 
     # Aggregate recent items from all modules
@@ -313,63 +320,70 @@ def dashboard_activity(request):
         # Recent needs
         for need in Need.objects.filter(
             created_at__gte=timezone.now() - timedelta(days=30)
-        ).select_related('community')[:10]:
-            activities.append({
-                'icon': 'fa-lightbulb',
-                'color': 'blue',
-                'title': f'New need: {need.title}',
-                'subtitle': f'in {need.community}',
-                'timestamp': need.created_at,
-                'url': '#',
-            })
+        ).select_related("community")[:10]:
+            activities.append(
+                {
+                    "icon": "fa-lightbulb",
+                    "color": "blue",
+                    "title": f"New need: {need.title}",
+                    "subtitle": f"in {need.community}",
+                    "timestamp": need.created_at,
+                    "url": "#",
+                }
+            )
 
         # Recent PPAs
         for ppa in MonitoringEntry.objects.filter(
             created_at__gte=timezone.now() - timedelta(days=30)
         )[:10]:
             lead_org = ppa.lead_organization.name if ppa.lead_organization else "OOBC"
-            activities.append({
-                'icon': 'fa-project-diagram',
-                'color': 'emerald',
-                'title': f'New PPA: {ppa.title}',
-                'subtitle': f'Lead: {lead_org}',
-                'timestamp': ppa.created_at,
-                'url': f'/monitoring/entry/{ppa.id}/',
-            })
+            activities.append(
+                {
+                    "icon": "fa-project-diagram",
+                    "color": "emerald",
+                    "title": f"New PPA: {ppa.title}",
+                    "subtitle": f"Lead: {lead_org}",
+                    "timestamp": ppa.created_at,
+                    "url": f"/monitoring/entry/{ppa.id}/",
+                }
+            )
 
         # Recent tasks completed
         for task in StaffTask.objects.filter(
-            status='completed',
-            updated_at__gte=timezone.now() - timedelta(days=30)
-        ).select_related('assigned_to')[:10]:
-            activities.append({
-                'icon': 'fa-check-circle',
-                'color': 'green',
-                'title': f'Task completed: {task.title}',
-                'subtitle': f'by {task.assigned_to.get_full_name() if task.assigned_to else "Unassigned"}',
-                'timestamp': task.updated_at,
-                'url': '#',
-            })
+            status="completed", updated_at__gte=timezone.now() - timedelta(days=30)
+        ).select_related("assigned_to")[:10]:
+            activities.append(
+                {
+                    "icon": "fa-check-circle",
+                    "color": "green",
+                    "title": f"Task completed: {task.title}",
+                    "subtitle": f'by {task.assigned_to.get_full_name() if task.assigned_to else "Unassigned"}',
+                    "timestamp": task.updated_at,
+                    "url": "#",
+                }
+            )
 
         # Recent events
         for event in Event.objects.filter(
             created_at__gte=timezone.now() - timedelta(days=30)
         )[:10]:
-            activities.append({
-                'icon': 'fa-calendar',
-                'color': 'purple',
-                'title': f'Event scheduled: {event.title}',
-                'subtitle': f'{event.start_date.strftime("%b %d, %Y")}',
-                'timestamp': event.created_at,
-                'url': '#',
-            })
+            activities.append(
+                {
+                    "icon": "fa-calendar",
+                    "color": "purple",
+                    "title": f"Event scheduled: {event.title}",
+                    "subtitle": f'{event.start_date.strftime("%b %d, %Y")}',
+                    "timestamp": event.created_at,
+                    "url": "#",
+                }
+            )
 
     except Exception:
         # Fallback empty activities
         pass
 
     # Sort by timestamp
-    activities = sorted(activities, key=lambda x: x['timestamp'], reverse=True)
+    activities = sorted(activities, key=lambda x: x["timestamp"], reverse=True)
 
     # Paginate
     start = (page - 1) * per_page
@@ -380,8 +394,8 @@ def dashboard_activity(request):
     # Render HTML
     html = '<div class="space-y-3">'
     for activity in activities_page:
-        timestamp_str = activity['timestamp'].strftime("%b %d, %I:%M %p")
-        html += f'''
+        timestamp_str = activity["timestamp"].strftime("%b %d, %I:%M %p")
+        html += f"""
         <a href="{activity['url']}" class="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
             <div class="w-10 h-10 bg-{activity['color']}-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <i class="fas {activity['icon']} text-{activity['color']}-600"></i>
@@ -392,25 +406,25 @@ def dashboard_activity(request):
                 <p class="text-xs text-gray-400 mt-1">{timestamp_str}</p>
             </div>
         </a>
-        '''
+        """
 
     if not activities_page:
-        html += '''
+        html += """
         <div class="text-center py-8 text-gray-400">
             <i class="fas fa-inbox text-3xl mb-2"></i>
             <p class="text-sm">No recent activity</p>
         </div>
-        '''
+        """
 
-    html += '</div>'
+    html += "</div>"
 
     # Infinite scroll trigger
     if has_next:
-        html += f'''
+        html += f"""
         <div hx-get="/dashboard/activity/?page={page + 1}" hx-trigger="revealed" hx-swap="afterend" class="text-center py-4">
             <i class="fas fa-spinner fa-spin text-gray-400"></i>
         </div>
-        '''
+        """
 
     return HttpResponse(html)
 
@@ -428,33 +442,36 @@ def dashboard_alerts(request):
 
         # Unfunded needs
         unfunded = Need.objects.filter(
-            linked_ppa__isnull=True,
-            priority_score__gte=4.0
+            linked_ppa__isnull=True, priority_score__gte=4.0
         ).count()
 
         if unfunded > 0:
-            alerts.append({
-                'type': 'warning',
-                'icon': 'fa-exclamation-triangle',
-                'title': f'{unfunded} high-priority needs unfunded',
-                'action_url': '#',
-                'action_text': 'Review',
-            })
+            alerts.append(
+                {
+                    "type": "warning",
+                    "icon": "fa-exclamation-triangle",
+                    "title": f"{unfunded} high-priority needs unfunded",
+                    "action_url": "#",
+                    "action_text": "Review",
+                }
+            )
 
         # Overdue tasks
         overdue = StaffTask.objects.filter(
             due_date__lt=timezone.now().date(),
-            status__in=['not_started', 'in_progress']
+            status__in=["not_started", "in_progress"],
         ).count()
 
         if overdue > 0:
-            alerts.append({
-                'type': 'danger',
-                'icon': 'fa-clock',
-                'title': f'{overdue} tasks overdue',
-                'action_url': '/oobc-management/staff/tasks/',
-                'action_text': 'View',
-            })
+            alerts.append(
+                {
+                    "type": "danger",
+                    "icon": "fa-clock",
+                    "title": f"{overdue} tasks overdue",
+                    "action_url": "/oobc-management/staff/tasks/",
+                    "action_text": "View",
+                }
+            )
 
     except Exception:
         # Fallback empty alerts
@@ -462,18 +479,20 @@ def dashboard_alerts(request):
 
     # Render
     if not alerts:
-        return HttpResponse('''
+        return HttpResponse(
+            """
         <div class="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg">
             <i class="fas fa-check-circle text-green-600 mr-3"></i>
             <span class="text-sm font-medium text-green-800">All systems normal</span>
         </div>
-        ''')
+        """
+        )
 
     html = '<div class="space-y-2">'
     for alert in alerts:
-        colors = {'danger': 'red', 'warning': 'yellow'}
-        color = colors.get(alert['type'], 'yellow')
-        html += f'''
+        colors = {"danger": "red", "warning": "yellow"}
+        color = colors.get(alert["type"], "yellow")
+        html += f"""
         <div class="flex items-center justify-between p-4 bg-{color}-50 border border-{color}-200 rounded-lg">
             <div class="flex items-center space-x-3 flex-1 min-w-0">
                 <i class="fas {alert['icon']} text-{color}-600 flex-shrink-0"></i>
@@ -483,8 +502,8 @@ def dashboard_alerts(request):
                 {alert['action_text']} →
             </a>
         </div>
-        '''
-    html += '</div>'
+        """
+    html += "</div>"
 
     return HttpResponse(html)
 

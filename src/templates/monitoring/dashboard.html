@@ -19,6 +19,75 @@
         </div>
     </header>
 
+    <!-- ========================================= -->
+    <!-- HERO SECTION (Module Mission Control) -->
+    <!-- ========================================= -->
+    <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-800 via-purple-600 to-indigo-500 shadow-2xl">
+        <div class="absolute inset-0 bg-white/10 opacity-20 mix-blend-overlay"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
+
+        <div class="relative px-6 sm:px-10 py-8 sm:py-10">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+
+                <div class="flex-1 space-y-6">
+                    <div class="inline-flex items-center rounded-lg bg-white/20 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold text-white border border-white/30">
+                        <i class="fas fa-chart-pie mr-2"></i>
+                        MONITORING & EVALUATION CENTER
+                    </div>
+
+                    <h2 class="text-3xl sm:text-4xl font-bold text-white leading-tight">
+                        M&E Portfolio Dashboard
+                    </h2>
+
+                    <p class="text-white/90 text-base sm:text-lg max-w-2xl leading-relaxed">
+                        Centralized monitoring and evaluation hub tracking MOA PPAs, OOBC initiatives, and community requests. Visualize performance metrics, progress indicators, and implementation status across all programs.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4">
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">Active MOA PPAs</p>
+                            <p class="text-2xl font-bold text-white">{{ stats.moa_ppas.active|default:0 }}</p>
+                        </div>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">OOBC Initiatives</p>
+                            <p class="text-2xl font-bold text-white">{{ stats.oobc_initiatives.total|default:0 }}</p>
+                        </div>
+                        <div class="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-3 border border-white/20">
+                            <p class="text-sm text-white/70 uppercase tracking-wide">OBC Requests</p>
+                            <p class="text-2xl font-bold text-white">{{ stats.obc_requests.total|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-shrink-0">
+                    <div class="flex flex-col gap-3 min-w-[220px]">
+                        <a href="{% url 'common:dashboard' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-violet-600 font-semibold shadow-lg hover:bg-violet-50 hover:shadow-xl transition-all duration-200">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>OBCMS Dashboard</span>
+                        </a>
+                        <a href="{% url 'monitoring:moa_ppas' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-file-contract"></i>
+                            <span>MOA PPAs</span>
+                        </a>
+                        <a href="{% url 'monitoring:oobc_initiatives' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>OOBC Initiatives</span>
+                        </a>
+                        <a href="{% url 'monitoring:obc_requests' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white font-semibold border border-white/30 hover:bg-white/30 transition-all duration-200">
+                            <i class="fas fa-hands-helping"></i>
+                            <span>OBC Requests</span>
+                        </a>
+                        <a href="{% url 'monitoring:generate_moa_report' %}" class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-medium border border-white/20 hover:bg-white/20 transition-all duration-200">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Generate Report</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
     <section class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {% for card in stats_cards %}
         <article class="relative overflow-hidden bg-gradient-to-br {{ card.gradient }} rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">

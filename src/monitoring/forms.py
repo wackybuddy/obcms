@@ -65,7 +65,9 @@ class BaseMonitoringEntryForm(forms.ModelForm):
             if widget_input_type == "select-multiple":
                 field.widget.attrs.setdefault("size", 4)
             if name in coverage_placeholders:
-                field.widget.attrs.setdefault("data-placeholder", coverage_placeholders[name])
+                field.widget.attrs.setdefault(
+                    "data-placeholder", coverage_placeholders[name]
+                )
                 initial_value = (
                     self.initial.get(name)
                     if name in self.initial
@@ -75,7 +77,9 @@ class BaseMonitoringEntryForm(forms.ModelForm):
                         else ""
                     )
                 )
-                if isinstance(initial_value, (Region, Province, Municipality, Barangay)):
+                if isinstance(
+                    initial_value, (Region, Province, Municipality, Barangay)
+                ):
                     initial_value = initial_value.pk
                 if initial_value:
                     field.widget.attrs.setdefault("data-initial", str(initial_value))
@@ -90,7 +94,9 @@ class BaseMonitoringEntryForm(forms.ModelForm):
                 "class",
                 "",
             ).replace("block w-full", "block w-full")
-            if getattr(self.instance, "pk", None) and not self.initial.get("goal_alignment"):
+            if getattr(self.instance, "pk", None) and not self.initial.get(
+                "goal_alignment"
+            ):
                 existing = getattr(self.instance, "goal_alignment", []) or []
                 if isinstance(existing, list):
                     self.initial["goal_alignment"] = ", ".join(existing)
@@ -134,7 +140,9 @@ class BaseMonitoringEntryForm(forms.ModelForm):
 
         return instance
 
-    def _post_save(self, instance: MonitoringEntry) -> None:  # pragma: no cover - default no-op
+    def _post_save(
+        self, instance: MonitoringEntry
+    ) -> None:  # pragma: no cover - default no-op
         """Hook for subclasses to mutate m2m relations after save."""
 
         return None
@@ -343,7 +351,9 @@ class MonitoringRequestEntryForm(BaseMonitoringEntryForm):
     def _post_save(self, instance: MonitoringEntry) -> None:
         if (
             instance.submitted_by_community
-            and not instance.communities.filter(pk=instance.submitted_by_community.pk).exists()
+            and not instance.communities.filter(
+                pk=instance.submitted_by_community.pk
+            ).exists()
         ):
             instance.communities.add(instance.submitted_by_community)
 
@@ -353,10 +363,10 @@ class MonitoringOBCQuickCreateForm(LocationSelectionMixin, forms.ModelForm):
 
     # Configure location fields - all levels including barangay
     location_fields_config = {
-        'region': {'required': True, 'level': 'region', 'zoom': 7},
-        'province': {'required': True, 'level': 'province', 'zoom': 9},
-        'municipality': {'required': True, 'level': 'municipality', 'zoom': 12},
-        'barangay': {'required': True, 'level': 'barangay', 'zoom': 15},
+        "region": {"required": True, "level": "region", "zoom": 7},
+        "province": {"required": True, "level": "province", "zoom": 9},
+        "municipality": {"required": True, "level": "municipality", "zoom": 12},
+        "barangay": {"required": True, "level": "barangay", "zoom": 15},
     }
 
     # Override default CSS classes for this form
@@ -467,6 +477,7 @@ class MonitoringOBCQuickCreateForm(LocationSelectionMixin, forms.ModelForm):
             if field:
                 field.widget.attrs.setdefault("data-placeholder", placeholder)
 
+
 class MonitoringUpdateForm(forms.ModelForm):
     """Form for recording monitoring updates."""
 
@@ -497,7 +508,9 @@ class MonitoringUpdateForm(forms.ModelForm):
             self.add_error("progress", "Capture the new progress percentage.")
 
         if update_type == "milestone" and not cleaned_data.get("follow_up_date"):
-            self.add_error("follow_up_date", "Set the follow-up date for the milestone.")
+            self.add_error(
+                "follow_up_date", "Set the follow-up date for the milestone."
+            )
 
         return cleaned_data
 

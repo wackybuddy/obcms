@@ -56,7 +56,9 @@ Format your response in clear sections with headings."""
 
         # Apply filters
         if "province_id" in self.filters:
-            queryset = queryset.filter(participant__province_id=self.filters["province_id"])
+            queryset = queryset.filter(
+                participant__province_id=self.filters["province_id"]
+            )
 
         if "stakeholder_type" in self.filters:
             queryset = queryset.filter(

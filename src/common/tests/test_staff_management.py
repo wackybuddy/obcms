@@ -61,9 +61,7 @@ class StaffManagementViewTests(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertGreaterEqual(
-            StaffTeam.objects.count(), len(STAFF_TEAM_DEFINITIONS)
-        )
+        self.assertGreaterEqual(StaffTeam.objects.count(), len(STAFF_TEAM_DEFINITIONS))
 
     def test_create_task_and_auto_membership(self):
         """Submitting the task form creates a task and links assignee to the team."""
@@ -131,7 +129,9 @@ class StaffManagementViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(
             StaffTeamMembership.objects.filter(
-                team=team, user=self.staff_member, role=StaffTeamMembership.ROLE_COORDINATOR
+                team=team,
+                user=self.staff_member,
+                role=StaffTeamMembership.ROLE_COORDINATOR,
             ).exists()
         )
 
@@ -379,7 +379,9 @@ class StaffManagementViewTests(TestCase):
         task.refresh_from_db()
         self.assertIn(target, task.teams.all())
         self.assertTrue(
-            StaffTeamMembership.objects.filter(team=target, user=self.staff_member).exists()
+            StaffTeamMembership.objects.filter(
+                team=target, user=self.staff_member
+            ).exists()
         )
 
     def test_staff_task_update_rejects_unknown_group(self):
@@ -667,7 +669,10 @@ class StaffManagementViewTests(TestCase):
         second.refresh_from_db()
         third.refresh_from_db()
         fourth.refresh_from_db()
-        self.assertEqual([third.board_position, first.board_position, second.board_position], [1, 2, 3])
+        self.assertEqual(
+            [third.board_position, first.board_position, second.board_position],
+            [1, 2, 3],
+        )
         self.assertEqual(third.status, StaffTask.STATUS_NOT_STARTED)
         self.assertEqual(fourth.board_position, 1)
 
@@ -711,7 +716,9 @@ class StaffManagementViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         profile = StaffProfile.objects.get(user=self.staff_member)
         self.assertEqual(profile.primary_location, "Cotabato City")
-        self.assertIn("Critical, Creative, and Strategic Thinking", profile.core_competencies)
+        self.assertIn(
+            "Critical, Creative, and Strategic Thinking", profile.core_competencies
+        )
         self.assertEqual(profile.position_classification, "Supervisory")
         self.assertEqual(profile.salary_grade, "SG 24")
         self.assertIn("Legislative research", profile.key_result_areas)
@@ -774,7 +781,9 @@ class StaffManagementViewTests(TestCase):
         self.assertEqual(profile.position_classification, "Supervisory")
         self.assertEqual(profile.job_purpose, "Leads legislative affairs portfolio.")
         self.assertIn("Research", profile.key_result_areas)
-        self.assertEqual(profile.qualification_experience, "3 years relevant experience")
+        self.assertEqual(
+            profile.qualification_experience, "3 years relevant experience"
+        )
 
     def test_staff_profile_delete_flow(self):
         """Deleting a profile removes the record."""
@@ -822,9 +831,7 @@ class StaffManagementViewTests(TestCase):
         response = self.client.get(self.profile_list_url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(
-            StaffProfile.objects.filter(user=self.staff_member).exists()
-        )
+        self.assertTrue(StaffProfile.objects.filter(user=self.staff_member).exists())
         self.assertContains(response, self.staff_member.get_full_name())
 
     def test_staff_performance_dashboard_target_creation(self):
@@ -911,7 +918,9 @@ class StaffManagementViewTests(TestCase):
                 "plan-title": "Strengthen community engagement skills",
                 "plan-competency_focus": "PAO · Stakeholder Engagement, Community Organizing, and Constituency Building",
                 "plan-status": StaffDevelopmentPlan.STATUS_IN_PROGRESS,
-                "plan-target_date": (timezone.now().date() + timedelta(days=60)).isoformat(),
+                "plan-target_date": (
+                    timezone.now().date() + timedelta(days=60)
+                ).isoformat(),
                 "plan-support_needed": "Shadow experienced PAOs",
             },
             follow=True,

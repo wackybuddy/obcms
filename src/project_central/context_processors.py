@@ -23,5 +23,5 @@ def project_central_context(request):
         unacknowledged_alerts_count = 0
 
     return {
-        'unacknowledged_alerts_count': unacknowledged_alerts_count,
+        "unacknowledged_alerts_count": unacknowledged_alerts_count,
     }

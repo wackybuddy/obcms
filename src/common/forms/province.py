@@ -18,23 +18,33 @@ class ProvinceForm(forms.ModelForm):
             "is_active",
         ]
         widgets = {
-            "code": forms.TextInput(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
-                "placeholder": "e.g., R11-DDS",
-            }),
-            "name": forms.TextInput(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
-            }),
-            "capital": forms.TextInput(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
-            }),
-            "population_total": forms.NumberInput(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
-                "min": 0,
-            }),
-            "is_active": forms.CheckboxInput(attrs={
-                "class": "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500",
-            }),
+            "code": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
+                    "placeholder": "e.g., R11-DDS",
+                }
+            ),
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
+                }
+            ),
+            "capital": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
+                }
+            ),
+            "population_total": forms.NumberInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
+                    "min": 0,
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500",
+                }
+            ),
         }
 
     def clean_code(self):

@@ -4,14 +4,34 @@ from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from .models import (Assessment, AssessmentCategory, AssessmentTeamMember,
-                     BaselineDataCollection, BaselineIndicator, BaselineStudy,
-                     BaselineStudyTeamMember, MANAReport, MappingActivity, Need,
-                     NeedsCategory, NeedsPrioritization, NeedsPrioritizationItem,
-                     NeedVote, Survey, SurveyQuestion, SurveyResponse, WorkshopAccessLog,
-                     WorkshopActivity, WorkshopOutput, WorkshopParticipant,
-                     WorkshopParticipantAccount, WorkshopQuestionDefinition,
-                     WorkshopResponse, WorkshopSession, WorkshopSynthesis)
+from .models import (
+    Assessment,
+    AssessmentCategory,
+    AssessmentTeamMember,
+    BaselineDataCollection,
+    BaselineIndicator,
+    BaselineStudy,
+    BaselineStudyTeamMember,
+    MANAReport,
+    MappingActivity,
+    Need,
+    NeedsCategory,
+    NeedsPrioritization,
+    NeedsPrioritizationItem,
+    NeedVote,
+    Survey,
+    SurveyQuestion,
+    SurveyResponse,
+    WorkshopAccessLog,
+    WorkshopActivity,
+    WorkshopOutput,
+    WorkshopParticipant,
+    WorkshopParticipantAccount,
+    WorkshopQuestionDefinition,
+    WorkshopResponse,
+    WorkshopSession,
+    WorkshopSynthesis,
+)
 
 
 @admin.register(AssessmentCategory)
@@ -914,9 +934,7 @@ class NeedAdmin(admin.ModelAdmin):
     def budget_linkage_status(self, obj):
         """Budget linkage status indicator."""
         if obj.linked_ppa:
-            return format_html(
-                '<span style="color: green;">✓ Linked to PPA</span>'
-            )
+            return format_html('<span style="color: green;">✓ Linked to PPA</span>')
         elif obj.forwarded_to_mao:
             return format_html(
                 '<span style="color: blue;">→ Forwarded to {}</span>',
@@ -1437,6 +1455,7 @@ class WorkshopQuestionDefinitionAdmin(admin.ModelAdmin):
     ordering = ["workshop_type", "order"]
     readonly_fields = ["created_at", "updated_at"]
 
+
 @admin.register(WorkshopParticipantAccount)
 class WorkshopParticipantAccountAdmin(admin.ModelAdmin):
     """Admin interface for Workshop Participant Accounts."""
@@ -1468,12 +1487,22 @@ class WorkshopParticipantAccountAdmin(admin.ModelAdmin):
     ]
     date_hierarchy = "created_at"
     ordering = ["province", "user__last_name"]
-    autocomplete_fields = ["user", "assessment", "province", "municipality", "barangay", "created_by"]
+    autocomplete_fields = [
+        "user",
+        "assessment",
+        "province",
+        "municipality",
+        "barangay",
+        "created_by",
+    ]
     readonly_fields = ["created_at", "updated_at"]
 
     fieldsets = (
         ("Identity", {"fields": ("user", "assessment")}),
-        ("Stakeholder Information", {"fields": ("stakeholder_type", "office_business_name")}),
+        (
+            "Stakeholder Information",
+            {"fields": ("stakeholder_type", "office_business_name")},
+        ),
         (
             "Geography",
             {"fields": (("province", "municipality", "barangay"),)},
@@ -1488,7 +1517,10 @@ class WorkshopParticipantAccountAdmin(admin.ModelAdmin):
         ),
         (
             "Metadata",
-            {"fields": ("created_by", "created_at", "updated_at"), "classes": ("collapse",)},
+            {
+                "fields": ("created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
         ),
     )
 
@@ -1514,7 +1546,11 @@ class WorkshopParticipantAccountAdmin(admin.ModelAdmin):
         completed = len(obj.completed_workshops or [])
         total = 6  # Total workshops
         percentage = (completed / total) * 100
-        color = "#28a745" if percentage >= 75 else "#ffc107" if percentage >= 50 else "#dc3545"
+        color = (
+            "#28a745"
+            if percentage >= 75
+            else "#ffc107" if percentage >= 50 else "#dc3545"
+        )
         return format_html(
             '<div style="width: 100px; background-color: #e9ecef; border-radius: 3px;">'
             '<div style="width: {}%; background-color: {}; height: 15px; border-radius: 3px; '
@@ -1547,6 +1583,7 @@ class WorkshopParticipantAccountAdmin(admin.ModelAdmin):
     def mark_consent_given(self, request, queryset):
         """Bulk action to mark consent as given."""
         from django.utils import timezone
+
         updated = queryset.update(consent_given=True, consent_date=timezone.now())
         self.message_user(request, f"{updated} participants marked with consent given.")
 
@@ -1604,15 +1641,21 @@ class WorkshopResponseAdmin(admin.ModelAdmin):
 
     def participant_link(self, obj):
         """Link to participant admin page."""
-        url = reverse("admin:mana_workshopparticipantaccount_change", args=[obj.participant.pk])
-        return format_html('<a href="{}">{}</a>', url, obj.participant.user.get_full_name())
+        url = reverse(
+            "admin:mana_workshopparticipantaccount_change", args=[obj.participant.pk]
+        )
+        return format_html(
+            '<a href="{}">{}</a>', url, obj.participant.user.get_full_name()
+        )
 
     participant_link.short_description = "Participant"
 
     def workshop_link(self, obj):
         """Link to workshop admin page."""
         url = reverse("admin:mana_workshopactivity_change", args=[obj.workshop.pk])
-        return format_html('<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display())
+        return format_html(
+            '<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display()
+        )
 
     workshop_link.short_description = "Workshop"
 
@@ -1666,15 +1709,21 @@ class WorkshopAccessLogAdmin(admin.ModelAdmin):
 
     def participant_link(self, obj):
         """Link to participant admin page."""
-        url = reverse("admin:mana_workshopparticipantaccount_change", args=[obj.participant.pk])
-        return format_html('<a href="{}">{}</a>', url, obj.participant.user.get_full_name())
+        url = reverse(
+            "admin:mana_workshopparticipantaccount_change", args=[obj.participant.pk]
+        )
+        return format_html(
+            '<a href="{}">{}</a>', url, obj.participant.user.get_full_name()
+        )
 
     participant_link.short_description = "Participant"
 
     def workshop_link(self, obj):
         """Link to workshop admin page."""
         url = reverse("admin:mana_workshopactivity_change", args=[obj.workshop.pk])
-        return format_html('<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display())
+        return format_html(
+            '<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display()
+        )
 
     workshop_link.short_description = "Workshop"
 
@@ -1740,7 +1789,12 @@ class WorkshopSynthesisAdmin(admin.ModelAdmin):
         ("Configuration", {"fields": ("prompt_template", "filters")}),
         (
             "AI Provider",
-            {"fields": (("provider", "model"), ("tokens_used", "processing_time_seconds"))},
+            {
+                "fields": (
+                    ("provider", "model"),
+                    ("tokens_used", "processing_time_seconds"),
+                )
+            },
         ),
         ("Results", {"fields": ("synthesis_text", "key_themes")}),
         ("Status", {"fields": ("status", "error_message")}),
@@ -1753,7 +1807,10 @@ class WorkshopSynthesisAdmin(admin.ModelAdmin):
         ),
         (
             "Metadata",
-            {"fields": ("created_by", "created_at", "updated_at"), "classes": ("collapse",)},
+            {
+                "fields": ("created_by", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
         ),
     )
 
@@ -1762,7 +1819,9 @@ class WorkshopSynthesisAdmin(admin.ModelAdmin):
     def workshop_link(self, obj):
         """Link to workshop admin page."""
         url = reverse("admin:mana_workshopactivity_change", args=[obj.workshop.pk])
-        return format_html('<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display())
+        return format_html(
+            '<a href="{}">{}</a>', url, obj.workshop.get_workshop_type_display()
+        )
 
     workshop_link.short_description = "Workshop"
 
@@ -1805,6 +1864,7 @@ class WorkshopSynthesisAdmin(admin.ModelAdmin):
     def mark_as_approved(self, request, queryset):
         """Bulk action to mark syntheses as approved."""
         from django.utils import timezone
+
         updated = queryset.filter(status__in=["completed", "reviewed"]).update(
             status="approved", reviewed_by=request.user, approved_at=timezone.now()
         )
@@ -1828,108 +1888,108 @@ class NeedVoteAdmin(admin.ModelAdmin):
     """Admin interface for Need Votes (Participatory Budgeting)."""
 
     list_display = [
-        'vote_summary',
-        'need_link',
-        'user_display',
-        'vote_weight_display',
-        'voter_community_display',
-        'voted_at',
-        'has_comment',
+        "vote_summary",
+        "need_link",
+        "user_display",
+        "vote_weight_display",
+        "voter_community_display",
+        "voted_at",
+        "has_comment",
     ]
-    
+
     list_filter = [
-        'vote_weight',
-        'voted_at',
-        ('voter_community', admin.RelatedOnlyFieldListFilter),
+        "vote_weight",
+        "voted_at",
+        ("voter_community", admin.RelatedOnlyFieldListFilter),
     ]
-    
+
     search_fields = [
-        'need__title',
-        'user__username',
-        'user__first_name',
-        'user__last_name',
-        'comment',
+        "need__title",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "comment",
     ]
-    
-    readonly_fields = ['voted_at', 'updated_at', 'ip_address']
-    
-    autocomplete_fields = ['need', 'user', 'voter_community']
-    
-    date_hierarchy = 'voted_at'
-    
+
+    readonly_fields = ["voted_at", "updated_at", "ip_address"]
+
+    autocomplete_fields = ["need", "user", "voter_community"]
+
+    date_hierarchy = "voted_at"
+
     fieldsets = (
-        ('Vote Information', {
-            'fields': ('need', 'user', 'vote_weight', 'comment')
-        }),
-        ('Voter Context', {
-            'fields': ('voter_community', 'ip_address'),
-            'classes': ('collapse',)
-        }),
-        ('Metadata', {
-            'fields': ('voted_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
+        ("Vote Information", {"fields": ("need", "user", "vote_weight", "comment")}),
+        (
+            "Voter Context",
+            {"fields": ("voter_community", "ip_address"), "classes": ("collapse",)},
+        ),
+        ("Metadata", {"fields": ("voted_at", "updated_at"), "classes": ("collapse",)}),
     )
 
     def vote_summary(self, obj):
         """Display vote summary with stars."""
-        stars = '⭐' * obj.vote_weight
+        stars = "⭐" * obj.vote_weight
         return format_html(
-            '<strong>{}</strong> {}',
+            "<strong>{}</strong> {}",
             obj.user.get_full_name() or obj.user.username,
-            stars
+            stars,
         )
-    vote_summary.short_description = 'Vote'
+
+    vote_summary.short_description = "Vote"
 
     def need_link(self, obj):
         """Clickable link to the need."""
         from django.urls import reverse
-        url = reverse('admin:mana_need_change', args=[obj.need.id])
+
+        url = reverse("admin:mana_need_change", args=[obj.need.id])
         return format_html('<a href="{}">{}</a>', url, obj.need.title[:50])
-    need_link.short_description = 'Need'
+
+    need_link.short_description = "Need"
 
     def user_display(self, obj):
         """Display user with link."""
         from django.urls import reverse
-        url = reverse('admin:auth_user_change', args=[obj.user.id])
+
+        url = reverse("admin:auth_user_change", args=[obj.user.id])
         return format_html(
-            '<a href="{}">{}</a>',
-            url,
-            obj.user.get_full_name() or obj.user.username
+            '<a href="{}">{}</a>', url, obj.user.get_full_name() or obj.user.username
         )
-    user_display.short_description = 'Voter'
+
+    user_display.short_description = "Voter"
 
     def vote_weight_display(self, obj):
         """Display vote weight with visual indicator."""
-        stars = '⭐' * obj.vote_weight
+        stars = "⭐" * obj.vote_weight
         return format_html(
             '<span style="font-size: 16px;">{}</span> <span style="color: #666;">({})</span>',
             stars,
-            obj.vote_weight
+            obj.vote_weight,
         )
-    vote_weight_display.short_description = 'Weight'
+
+    vote_weight_display.short_description = "Weight"
 
     def voter_community_display(self, obj):
         """Display voter's community if set."""
         if obj.voter_community:
             return obj.voter_community.barangay.name
         return format_html('<span style="color: #999;">—</span>')
-    voter_community_display.short_description = 'Community'
+
+    voter_community_display.short_description = "Community"
 
     def has_comment(self, obj):
         """Show if vote has a comment."""
         if obj.comment:
             return format_html(
-                '<span style="color: green;" title="{}">✓ Yes</span>',
-                obj.comment[:100]
+                '<span style="color: green;" title="{}">✓ Yes</span>', obj.comment[:100]
             )
         return format_html('<span style="color: #ccc;">—</span>')
-    has_comment.short_description = 'Comment'
+
+    has_comment.short_description = "Comment"
 
     def get_queryset(self, request):
         """Optimize queries."""
-        return super().get_queryset(request).select_related(
-            'need',
-            'user',
-            'voter_community__barangay'
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("need", "user", "voter_community__barangay")
         )

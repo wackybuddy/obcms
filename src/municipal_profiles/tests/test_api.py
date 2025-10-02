@@ -100,7 +100,9 @@ class MunicipalOBCProfileAPITest(APITestCase):
 
         response = self._create_profile_via_api()
 
-        self.assertGreaterEqual(response.data["aggregation_version"], previous_version + 1)
+        self.assertGreaterEqual(
+            response.data["aggregation_version"], previous_version + 1
+        )
         demographics = response.data["aggregated_metrics"]["sections"]["demographics"]
         self.assertEqual(
             demographics["estimated_obc_population"], self.aggregated_population

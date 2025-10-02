@@ -32,21 +32,28 @@ class BudgetApprovalService:
     # Required fields per approval stage
     STAGE_REQUIREMENTS = {
         MonitoringEntry.APPROVAL_STATUS_TECHNICAL_REVIEW: [
-            'title', 'category', 'sector', 'lead_organization',
-            'description', 'target_beneficiaries'
+            "title",
+            "category",
+            "sector",
+            "lead_organization",
+            "description",
+            "target_beneficiaries",
         ],
         MonitoringEntry.APPROVAL_STATUS_BUDGET_REVIEW: [
-            'budget_allocation', 'funding_source', 'appropriation_class',
-            'obc_slots', 'cost_per_beneficiary'
+            "budget_allocation",
+            "funding_source",
+            "appropriation_class",
+            "obc_slots",
+            "cost_per_beneficiary",
         ],
         MonitoringEntry.APPROVAL_STATUS_EXECUTIVE_APPROVAL: [
-            'outcome_framework',  # Should have at least one outcome
+            "outcome_framework",  # Should have at least one outcome
         ],
     }
 
     @classmethod
     @transaction.atomic
-    def advance_approval_stage(cls, ppa, new_status, user, notes=''):
+    def advance_approval_stage(cls, ppa, new_status, user, notes=""):
         """
         Advance PPA to next approval stage with validation.
 
@@ -73,12 +80,12 @@ class BudgetApprovalService:
 
             # Record approval history
             history_entry = {
-                'previous_status': ppa.approval_status,
-                'new_status': new_status,
-                'user': user.username,
-                'user_id': user.id,
-                'timestamp': timezone.now().isoformat(),
-                'notes': notes,
+                "previous_status": ppa.approval_status,
+                "new_status": new_status,
+                "user": user.username,
+                "user_id": user.id,
+                "timestamp": timezone.now().isoformat(),
+                "notes": notes,
             }
 
             if not isinstance(ppa.approval_history, list):
@@ -107,10 +114,15 @@ class BudgetApprovalService:
             cls.send_approval_notification(ppa, old_status, new_status, user)
 
             # Update budget ceiling allocated amount
-            if new_status in [MonitoringEntry.APPROVAL_STATUS_APPROVED, MonitoringEntry.APPROVAL_STATUS_ENACTED]:
+            if new_status in [
+                MonitoringEntry.APPROVAL_STATUS_APPROVED,
+                MonitoringEntry.APPROVAL_STATUS_ENACTED,
+            ]:
                 cls._update_budget_ceilings(ppa)
 
-            logger.info(f"Advanced PPA {ppa.id} from {old_status} to {new_status} by user {user.id}")
+            logger.info(
+                f"Advanced PPA {ppa.id} from {old_status} to {new_status} by user {user.id}"
+            )
             return True, None
 
         except Exception as e:
@@ -134,13 +146,13 @@ class BudgetApprovalService:
         try:
             # Record rejection in history
             history_entry = {
-                'previous_status': ppa.approval_status,
-                'new_status': MonitoringEntry.APPROVAL_STATUS_REJECTED,
-                'user': user.username,
-                'user_id': user.id,
-                'timestamp': timezone.now().isoformat(),
-                'notes': f"REJECTED: {reason}",
-                'is_rejection': True,
+                "previous_status": ppa.approval_status,
+                "new_status": MonitoringEntry.APPROVAL_STATUS_REJECTED,
+                "user": user.username,
+                "user_id": user.id,
+                "timestamp": timezone.now().isoformat(),
+                "notes": f"REJECTED: {reason}",
+                "is_rejection": True,
             }
 
             if not isinstance(ppa.approval_history, list):
@@ -159,8 +171,8 @@ class BudgetApprovalService:
 
             # Create alert for rejection
             Alert.create_alert(
-                alert_type='approval_bottleneck',
-                severity='high',
+                alert_type="approval_bottleneck",
+                severity="high",
                 title=f"PPA Rejected: {ppa.title}",
                 description=f"PPA was rejected during {old_status} stage. Reason: {reason}",
                 related_ppa=ppa,
@@ -226,7 +238,10 @@ class BudgetApprovalService:
         for field in required_fields:
             value = getattr(ppa, field, None)
             if not value:
-                return False, f"Required field '{field}' must be filled before advancing to {new_status}"
+                return (
+                    False,
+                    f"Required field '{field}' must be filled before advancing to {new_status}",
+                )
 
         return True, None
 
@@ -258,8 +273,10 @@ class BudgetApprovalService:
             ).first()
 
             if sector_ceiling:
-                can_allocate, message = sector_ceiling.can_allocate(ppa.budget_allocation)
-                if not can_allocate and sector_ceiling.enforcement_level == 'hard':
+                can_allocate, message = sector_ceiling.can_allocate(
+                    ppa.budget_allocation
+                )
+                if not can_allocate and sector_ceiling.enforcement_level == "hard":
                     return False, f"Sector ceiling exceeded: {message}"
 
         # Check funding source ceiling
@@ -270,8 +287,10 @@ class BudgetApprovalService:
             ).first()
 
             if source_ceiling:
-                can_allocate, message = source_ceiling.can_allocate(ppa.budget_allocation)
-                if not can_allocate and source_ceiling.enforcement_level == 'hard':
+                can_allocate, message = source_ceiling.can_allocate(
+                    ppa.budget_allocation
+                )
+                if not can_allocate and source_ceiling.enforcement_level == "hard":
                     return False, f"Funding source ceiling exceeded: {message}"
 
         # Check combined sector + funding source ceiling
@@ -282,8 +301,10 @@ class BudgetApprovalService:
             ).first()
 
             if combined_ceiling:
-                can_allocate, message = combined_ceiling.can_allocate(ppa.budget_allocation)
-                if not can_allocate and combined_ceiling.enforcement_level == 'hard':
+                can_allocate, message = combined_ceiling.can_allocate(
+                    ppa.budget_allocation
+                )
+                if not can_allocate and combined_ceiling.enforcement_level == "hard":
                     return False, f"Budget ceiling exceeded: {message}"
 
         return True, None
@@ -315,16 +336,20 @@ class BudgetApprovalService:
                 # Create alert if near limit (90%)
                 if ceiling.is_near_limit(90):
                     Alert.create_alert(
-                        alert_type='budget_ceiling',
-                        severity='high' if ceiling.get_utilization_percentage() >= 95 else 'medium',
+                        alert_type="budget_ceiling",
+                        severity=(
+                            "high"
+                            if ceiling.get_utilization_percentage() >= 95
+                            else "medium"
+                        ),
                         title=f"Budget Ceiling Alert: {ceiling.name}",
                         description=f"Ceiling utilization at {ceiling.get_utilization_percentage():.1f}%. Allocated: ₱{ceiling.allocated_amount:,.2f} / ₱{ceiling.ceiling_amount:,.2f}",
                         action_url=f"/admin/project_central/budgetceiling/{ceiling.id}/change/",
                         alert_data={
-                            'ceiling_id': str(ceiling.id),
-                            'utilization_pct': ceiling.get_utilization_percentage(),
-                            'remaining': float(ceiling.get_remaining_amount()),
-                        }
+                            "ceiling_id": str(ceiling.id),
+                            "utilization_pct": ceiling.get_utilization_percentage(),
+                            "remaining": float(ceiling.get_remaining_amount()),
+                        },
                     )
 
     @classmethod
@@ -334,28 +359,28 @@ class BudgetApprovalService:
 
         task_templates = {
             MonitoringEntry.APPROVAL_STATUS_TECHNICAL_REVIEW: {
-                'title': f'Conduct technical review for: {ppa.title}',
-                'description': 'Review program design, target beneficiaries, implementation feasibility, and alignment with OOBC mandates.',
-                'priority': 'high',
-                'days': 5,
+                "title": f"Conduct technical review for: {ppa.title}",
+                "description": "Review program design, target beneficiaries, implementation feasibility, and alignment with OOBC mandates.",
+                "priority": "high",
+                "days": 5,
             },
             MonitoringEntry.APPROVAL_STATUS_BUDGET_REVIEW: {
-                'title': f'Review budget allocation for: {ppa.title}',
-                'description': 'Verify budget calculations, cost per beneficiary, funding source appropriateness, and ceiling compliance.',
-                'priority': 'high',
-                'days': 5,
+                "title": f"Review budget allocation for: {ppa.title}",
+                "description": "Verify budget calculations, cost per beneficiary, funding source appropriateness, and ceiling compliance.",
+                "priority": "high",
+                "days": 5,
             },
             MonitoringEntry.APPROVAL_STATUS_STAKEHOLDER_CONSULTATION: {
-                'title': f'Coordinate stakeholder consultation for: {ppa.title}',
-                'description': 'Schedule and facilitate consultation with community and MAO stakeholders.',
-                'priority': 'high',
-                'days': 10,
+                "title": f"Coordinate stakeholder consultation for: {ppa.title}",
+                "description": "Schedule and facilitate consultation with community and MAO stakeholders.",
+                "priority": "high",
+                "days": 10,
             },
             MonitoringEntry.APPROVAL_STATUS_EXECUTIVE_APPROVAL: {
-                'title': f'Prepare executive approval package for: {ppa.title}',
-                'description': 'Compile all documentation, approvals, and evidence for Chief Minister\'s Office review.',
-                'priority': 'critical',
-                'days': 3,
+                "title": f"Prepare executive approval package for: {ppa.title}",
+                "description": "Compile all documentation, approvals, and evidence for Chief Minister's Office review.",
+                "priority": "critical",
+                "days": 3,
             },
         }
 
@@ -363,19 +388,19 @@ class BudgetApprovalService:
         if not template:
             return
 
-        due_date = timezone.now().date() + timezone.timedelta(days=template['days'])
+        due_date = timezone.now().date() + timezone.timedelta(days=template["days"])
 
         task = StaffTask.objects.create(
-            title=template['title'],
-            description=template['description'],
-            priority=template['priority'],
-            status='not_started',
+            title=template["title"],
+            description=template["description"],
+            priority=template["priority"],
+            status="not_started",
             due_date=due_date,
             created_by=user,
             linked_ppa=ppa,
-            workflow_stage='approval',
+            workflow_stage="approval",
             auto_generated=True,
-            domain='project_central',
+            domain="project_central",
         )
 
         logger.info(f"Generated approval task '{task.title}' for PPA {ppa.id}")
@@ -394,7 +419,9 @@ class BudgetApprovalService:
             pass
 
         if not recipients:
-            logger.warning(f"No email recipients for PPA {ppa.id} approval notification")
+            logger.warning(
+                f"No email recipients for PPA {ppa.id} approval notification"
+            )
             return
 
         subject = f"[OBCMS] PPA Approval Advanced: {ppa.title}"
@@ -478,12 +505,12 @@ View PPA: {settings.BASE_URL if hasattr(settings, 'BASE_URL') else 'http://local
                 MonitoringEntry.APPROVAL_STATUS_ENACTED,
                 MonitoringEntry.APPROVAL_STATUS_REJECTED,
             ]
-        ).select_related('created_by', 'lead_organization')
+        ).select_related("created_by", "lead_organization")
 
         if stage:
             ppas = ppas.filter(approval_status=stage)
 
-        return ppas.order_by('created_at')
+        return ppas.order_by("created_at")
 
     @classmethod
     def get_approval_metrics(cls, fiscal_year=None):
@@ -506,22 +533,22 @@ View PPA: {settings.BASE_URL if hasattr(settings, 'BASE_URL') else 'http://local
             ppas = ppas.filter(fiscal_year=fiscal_year)
 
         metrics = {
-            'total_ppas': ppas.count(),
-            'by_approval_status': dict(
-                ppas.values('approval_status').annotate(
-                    count=Count('id')
-                ).values_list('approval_status', 'count')
+            "total_ppas": ppas.count(),
+            "by_approval_status": dict(
+                ppas.values("approval_status")
+                .annotate(count=Count("id"))
+                .values_list("approval_status", "count")
             ),
-            'approved_count': ppas.filter(
+            "approved_count": ppas.filter(
                 approval_status__in=[
                     MonitoringEntry.APPROVAL_STATUS_APPROVED,
                     MonitoringEntry.APPROVAL_STATUS_ENACTED,
                 ]
             ).count(),
-            'rejected_count': ppas.filter(
+            "rejected_count": ppas.filter(
                 approval_status=MonitoringEntry.APPROVAL_STATUS_REJECTED
             ).count(),
-            'in_review_count': ppas.filter(
+            "in_review_count": ppas.filter(
                 approval_status__in=[
                     MonitoringEntry.APPROVAL_STATUS_TECHNICAL_REVIEW,
                     MonitoringEntry.APPROVAL_STATUS_BUDGET_REVIEW,
@@ -532,9 +559,11 @@ View PPA: {settings.BASE_URL if hasattr(settings, 'BASE_URL') else 'http://local
         }
 
         # Calculate approval rate
-        if metrics['total_ppas'] > 0:
-            metrics['approval_rate'] = (metrics['approved_count'] / metrics['total_ppas']) * 100
+        if metrics["total_ppas"] > 0:
+            metrics["approval_rate"] = (
+                metrics["approved_count"] / metrics["total_ppas"]
+            ) * 100
         else:
-            metrics['approval_rate'] = 0
+            metrics["approval_rate"] = 0
 
         return metrics

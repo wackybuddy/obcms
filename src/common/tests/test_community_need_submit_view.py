@@ -78,10 +78,13 @@ class CommunityNeedSubmitViewTests(TestCase):
             "impact_severity": "4",
             "feasibility": "high",
             "estimated_cost": "500000",
-            "evidence_sources": "Community consultations held on %s" % date.today().isoformat(),
+            "evidence_sources": "Community consultations held on %s"
+            % date.today().isoformat(),
         }
 
-        response = self.client.post(reverse("common:community_need_submit"), data=payload)
+        response = self.client.post(
+            reverse("common:community_need_submit"), data=payload
+        )
 
         self.assertRedirects(response, reverse("common:community_needs_summary"))
         need = Need.objects.get(title="Post-harvest facility support")

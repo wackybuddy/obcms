@@ -7,7 +7,7 @@ from typing import Iterable, List, Tuple
 DEFAULT_CENTER = [7.1907, 124.2197]
 DEFAULT_TILE_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 DEFAULT_TILE_ATTRIBUTION = (
-    "&copy; <a href=\"https://www.openstreetmap.org/copyright\">"
+    '&copy; <a href="https://www.openstreetmap.org/copyright">'
     "OpenStreetMap</a> contributors"
 )
 DEFAULT_TILE_SUBDOMAINS = ["a", "b", "c"]

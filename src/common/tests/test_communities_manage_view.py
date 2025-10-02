@@ -81,7 +81,9 @@ class ManageBarangayStatCardsTests(TestCase):
         self.assertEqual(MunicipalityCoverage.objects.count(), 3)
         self.assertEqual(stat_cards[0]["title"], "Total Barangay OBCs in the Database")
         self.assertEqual(stat_cards[1]["title"], "Total OBC Population from Barangays")
-        self.assertEqual(stat_cards[2]["title"], "Total Municipalities OBCs in the Database")
+        self.assertEqual(
+            stat_cards[2]["title"], "Total Municipalities OBCs in the Database"
+        )
         self.assertIn("lg:grid-cols-3", response.context["stat_cards_grid_class"])
 
     def test_stat_cards_respect_region_filter(self):

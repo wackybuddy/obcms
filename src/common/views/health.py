@@ -4,6 +4,7 @@ Health check endpoints for monitoring and orchestration.
 These endpoints allow Docker, Kubernetes, and load balancers to monitor
 application health and readiness.
 """
+
 import logging
 from django.conf import settings
 from django.core.cache import cache
@@ -26,11 +27,13 @@ def health_check(request):
 
     This is a lightweight check that doesn't test dependencies.
     """
-    return JsonResponse({
-        "status": "healthy",
-        "service": "obcms",
-        "version": getattr(settings, 'VERSION', '1.0.0'),
-    })
+    return JsonResponse(
+        {
+            "status": "healthy",
+            "service": "obcms",
+            "version": getattr(settings, "VERSION", "1.0.0"),
+        }
+    )
 
 
 @require_GET
@@ -58,11 +61,14 @@ def readiness_check(request):
     all_healthy = all(checks.values())
     status_code = 200 if all_healthy else 503
 
-    return JsonResponse({
-        "status": "ready" if all_healthy else "not_ready",
-        "checks": checks,
-        "service": "obcms",
-    }, status=status_code)
+    return JsonResponse(
+        {
+            "status": "ready" if all_healthy else "not_ready",
+            "checks": checks,
+            "service": "obcms",
+        },
+        status=status_code,
+    )
 
 
 def check_database():
@@ -91,10 +97,10 @@ def check_cache():
         True if cache is accessible, False otherwise
     """
     try:
-        cache.set('health_check', 'ok', timeout=10)
-        result = cache.get('health_check')
-        cache.delete('health_check')
-        return result == 'ok'
+        cache.set("health_check", "ok", timeout=10)
+        result = cache.get("health_check")
+        cache.delete("health_check")
+        return result == "ok"
     except Exception as e:
         logger.error(f"Cache health check failed: {e}")
         return False
