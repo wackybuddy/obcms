@@ -4,7 +4,7 @@ Project Central Admin Configuration
 
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import ProjectWorkflow, BudgetCeiling, BudgetScenario, Alert
+from .models import ProjectWorkflow, BudgetApprovalStage, BudgetCeiling, BudgetScenario, Alert
 
 
 @admin.register(ProjectWorkflow)
@@ -13,6 +13,15 @@ class ProjectWorkflowAdmin(admin.ModelAdmin):
     list_filter = ['current_stage', 'priority_level', 'is_on_track', 'is_blocked', 'budget_approved']
     search_fields = ['primary_need__title', 'notes', 'blocker_description']
     readonly_fields = ['id', 'created_at', 'updated_at', 'stage_history']
+
+
+@admin.register(BudgetApprovalStage)
+class BudgetApprovalStageAdmin(admin.ModelAdmin):
+    list_display = ['ppa', 'stage', 'status', 'approver', 'approved_at', 'created_at']
+    list_filter = ['stage', 'status', 'approved_at']
+    search_fields = ['ppa__title', 'comments']
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    raw_id_fields = ['ppa', 'approver']
 
 
 @admin.register(BudgetCeiling)

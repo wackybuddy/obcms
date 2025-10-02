@@ -2,6 +2,24 @@
 
 Guidance for the Gemini coding agent when contributing to this repository.
 
+## Time Estimates Policy
+
+**NEVER provide time estimates in hours, days, weeks, or months for implementation tasks.**
+
+With powerful AI coding agents, a year's worth of traditional development work can be completed in a single day. Time estimates create false constraints and are obsolete in AI-assisted development.
+
+**Instead, focus on:**
+- **Dependencies**: What must be done before this task (e.g., "Requires dashboard metrics view")
+- **Complexity**: Simple, Moderate, or Complex
+- **Priority**: Critical, High, Medium, or Low
+- **Prerequisites**: What needs to exist first (e.g., "Model must exist", "API endpoint required")
+
+**Examples:**
+- ❌ Bad: "This will take 8 hours to implement"
+- ❌ Bad: "Week 1, Days 2-3: Enhanced dashboard"
+- ✅ Good: "Priority: HIGH | Complexity: Moderate | Requires: dashboard_metrics view"
+- ✅ Good: "Prerequisites: Fix task deletion bug first (dependency)"
+
 ## Environment & Tooling
 - **Virtual Environment**: Use the Python 3.12 virtualenv located in `venv/`. To set it up, run `./scripts/bootstrap_venv.sh` and then activate it with `source venv/bin/activate`.
 - **Dependencies**: Install all necessary development dependencies using `pip install -r requirements/development.txt`.

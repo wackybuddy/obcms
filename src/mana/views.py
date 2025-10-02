@@ -387,3 +387,408 @@ def generate_mana_report(request, assessment_id):
     }
 
     return render(request, "mana/mana_report.html", context)
+
+# ==================== PHASE 2: MANA INTEGRATION VIEWS ====================
+
+@login_required
+def assessment_tasks_board(request, assessment_id):
+    """Display kanban board for assessment tasks organized by phase."""
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    # Get tasks related to this assessment
+    from common.models import StaffTask
+    
+    all_tasks = StaffTask.objects.filter(
+        related_assessment=assessment
+    ).select_related('created_by').prefetch_related('assignees', 'teams')
+    
+    # Define assessment phases with display metadata
+    phases = {
+        'planning': {
+            'label': 'Planning',
+            'icon': 'fa-clipboard-list',
+            'color': 'blue',
+            'tasks': all_tasks.filter(assessment_phase='planning')
+        },
+        'data_collection': {
+            'label': 'Data Collection',
+            'icon': 'fa-database',
+            'color': 'indigo',
+            'tasks': all_tasks.filter(assessment_phase='data_collection')
+        },
+        'analysis': {
+            'label': 'Analysis',
+            'icon': 'fa-chart-line',
+            'color': 'purple',
+            'tasks': all_tasks.filter(assessment_phase='analysis')
+        },
+        'report_writing': {
+            'label': 'Report Writing',
+            'icon': 'fa-file-alt',
+            'color': 'pink',
+            'tasks': all_tasks.filter(assessment_phase='report_writing')
+        },
+        'review': {
+            'label': 'Review',
+            'icon': 'fa-check-circle',
+            'color': 'emerald',
+            'tasks': all_tasks.filter(assessment_phase='review')
+        },
+    }
+    
+    # Calculate totals
+    tasks_by_phase = {
+        'total': all_tasks.count(),
+        'completed': all_tasks.filter(status='completed').count(),
+    }
+    
+    context = {
+        'assessment': assessment,
+        'phases': phases,
+        'tasks_by_phase': tasks_by_phase,
+    }
+    
+    return render(request, 'mana/assessment_tasks_board.html', context)
+
+
+@login_required
+def assessment_calendar(request, assessment_id):
+    """Display calendar view for assessment milestones, tasks, and events."""
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    
+    context = {
+        'assessment': assessment,
+    }
+    
+    return render(request, 'mana/assessment_calendar.html', context)
+
+
+@login_required
+def assessment_calendar_feed(request, assessment_id):
+    """JSON feed for FullCalendar showing milestones, tasks, and events."""
+    assessment = get_object_or_404(Assessment, id=assessment_id)
+    events = []
+    
+    # Milestones (from assessment phase completion dates)
+    milestones = []
+    
+    if assessment.planning_completion_date:
+        milestones.append({
+            'title': '\u2713 Planning Complete',
+            'date': assessment.planning_completion_date,
+            'type': 'milestone'
+        })
+    
+    if assessment.data_collection_end_date:
+        milestones.append({
+            'title': '\u2713 Data Collection Complete',
+            'date': assessment.data_collection_end_date,
+            'type': 'milestone'
+        })
+    
+    if assessment.analysis_completion_date:
+        milestones.append({
+            'title': '\u2713 Analysis Complete',
+            'date': assessment.analysis_completion_date,
+            'type': 'milestone'
+        })
+    
+    if assessment.report_completion_date:
+        milestones.append({
+            'title': '\u2713 Report Complete',
+            'date': assessment.report_completion_date,
+            'type': 'milestone'
+        })
+    
+    if assessment.review_completion_date:
+        milestones.append({
+            'title': '\u2713 Review Complete',
+            'date': assessment.review_completion_date,
+            'type': 'milestone'
+        })
+    
+    for milestone in milestones:
+        events.append({
+            'id': f'milestone-{milestone["title"].lower().replace(" ", "-")}',
+            'title': milestone['title'],
+            'start': milestone['date'].isoformat(),
+            'allDay': True,
+            'backgroundColor': '#3b82f6',
+            'borderColor': '#3b82f6',
+            'editable': False,
+            'extendedProps': {
+                'type': 'milestone'
+            }
+        })
+    
+    # Tasks (with due dates)
+    from common.models import StaffTask
+    
+    tasks = StaffTask.objects.filter(
+        related_assessment=assessment,
+        due_date__isnull=False
+    ).select_related('created_by')
+    
+    for task in tasks:
+        events.append({
+            'id': str(task.id),
+            'title': task.title,
+            'start': task.due_date.isoformat(),
+            'allDay': True,
+            'backgroundColor': '#10b981',
+            'borderColor': '#10b981',
+            'editable': True,
+            'extendedProps': {
+                'type': 'task',
+                'status': task.status,
+                'priority': task.priority
+            }
+        })
+    
+    # Events (coordination events related to assessment)
+    from coordination.models import Event
+    
+    coordination_events = Event.objects.filter(
+        related_assessment=assessment
+    )
+    
+    for event in coordination_events:
+        event_data = {
+            'id': f'event-{event.id}',
+            'title': event.title,
+            'start': event.start_date.isoformat(),
+            'allDay': event.is_all_day if hasattr(event, 'is_all_day') else True,
+            'backgroundColor': '#f97316',
+            'borderColor': '#f97316',
+            'editable': False,
+            'extendedProps': {
+                'type': 'event'
+            }
+        }
+        
+        if event.end_date:
+            event_data['end'] = event.end_date.isoformat()
+        
+        if event.start_time and not event.is_all_day if hasattr(event, 'is_all_day') else False:
+            event_data['start'] = f"{event.start_date.isoformat()}T{event.start_time.isoformat()}"
+        
+        events.append(event_data)
+    
+    return JsonResponse(events, safe=False)
+
+
+@login_required
+def needs_prioritization_board(request):
+    """Interactive board for ranking and prioritizing community needs."""
+    from common.models import Region, Province
+    from coordination.models import PPA
+    
+    # Get all needs
+    needs_queryset = Need.objects.select_related(
+        'category',
+        'assessment',
+        'community__barangay__municipality__province__region'
+    ).prefetch_related('linked_ppa').order_by('-priority_score', '-community_votes', 'created_at')
+    
+    # Apply filters
+    filters = {}
+    
+    if request.GET.get('sector'):
+        filters['sector'] = request.GET.get('sector')
+        needs_queryset = needs_queryset.filter(category_id=filters['sector'])
+    
+    if request.GET.get('region'):
+        filters['region'] = request.GET.get('region')
+        needs_queryset = needs_queryset.filter(
+            community__barangay__municipality__province__region_id=filters['region']
+        )
+    
+    if request.GET.get('urgency'):
+        filters['urgency'] = request.GET.get('urgency')
+        needs_queryset = needs_queryset.filter(urgency_level=filters['urgency'])
+    
+    if request.GET.get('funding') == 'funded':
+        filters['funding'] = 'funded'
+        needs_queryset = needs_queryset.filter(linked_ppa__isnull=False)
+    elif request.GET.get('funding') == 'unfunded':
+        filters['funding'] = 'unfunded'
+        needs_queryset = needs_queryset.filter(linked_ppa__isnull=True)
+    
+    needs = list(needs_queryset)
+    
+    # Count funded vs unfunded
+    funded_count = sum(1 for need in needs if need.linked_ppa.exists())
+    unfunded_count = len(needs) - funded_count
+    
+    # Get filter options
+    categories = NeedsCategory.objects.all()
+    regions = Region.objects.all()
+    
+    context = {
+        'needs': needs,
+        'funded_count': funded_count,
+        'unfunded_count': unfunded_count,
+        'categories': categories,
+        'regions': regions,
+        'filters': filters,
+    }
+    
+    return render(request, 'mana/needs_prioritization_board.html', context)
+
+
+@login_required
+def needs_update_ranking(request):
+    """Update ranking order for needs via AJAX."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    
+    try:
+        import json
+        data = json.loads(request.body)
+        needs_data = data.get('needs', [])
+        
+        # Update priority_score based on new ranking
+        for item in needs_data:
+            need_id = item.get('id')
+            new_rank = item.get('rank')
+            
+            if need_id and new_rank:
+                need = Need.objects.filter(id=need_id).first()
+                if need:
+                    # Higher rank = higher priority score
+                    need.priority_score = 1000 - new_rank
+                    need.save(update_fields=['priority_score'])
+        
+        return JsonResponse({'success': True})
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def need_vote(request, need_id):
+    """Register a community vote for a need via AJAX."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+    
+    try:
+        from .models import NeedVote
+        
+        need = get_object_or_404(Need, id=need_id)
+        
+        # Check if user already voted
+        existing_vote = NeedVote.objects.filter(need=need, voted_by=request.user).first()
+        
+        if existing_vote:
+            return JsonResponse({
+                'success': False,
+                'error': 'You have already voted for this need.'
+            }, status=400)
+        
+        # Create vote
+        NeedVote.objects.create(
+            need=need,
+            voted_by=request.user,
+            vote_type='support',
+            voted_at=timezone.now()
+        )
+        
+        # Update community votes count
+        need.community_votes = NeedVote.objects.filter(need=need).count()
+        need.save(update_fields=['community_votes'])
+        
+        return JsonResponse({
+            'success': True,
+            'votes': need.community_votes
+        })
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def needs_export(request):
+    """Export needs to Excel format."""
+    import openpyxl
+    from django.http import HttpResponse
+    from openpyxl.styles import Font, PatternFill, Alignment
+    
+    # Apply same filters as prioritization board
+    needs_queryset = Need.objects.select_related(
+        'category',
+        'assessment',
+        'community__barangay__municipality__province__region'
+    ).prefetch_related('linked_ppa').order_by('-priority_score', '-community_votes')
+    
+    # Apply filters
+    if request.GET.get('sector'):
+        needs_queryset = needs_queryset.filter(category_id=request.GET.get('sector'))
+    
+    if request.GET.get('region'):
+        needs_queryset = needs_queryset.filter(
+            community__barangay__municipality__province__region_id=request.GET.get('region')
+        )
+    
+    if request.GET.get('urgency'):
+        needs_queryset = needs_queryset.filter(urgency_level=request.GET.get('urgency'))
+    
+    if request.GET.get('funding') == 'funded':
+        needs_queryset = needs_queryset.filter(linked_ppa__isnull=False)
+    elif request.GET.get('funding') == 'unfunded':
+        needs_queryset = needs_queryset.filter(linked_ppa__isnull=True)
+    
+    # Create Excel workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Community Needs"
+    
+    # Header row
+    headers = ['Rank', 'Title', 'Category', 'Community', 'Municipality', 'Province', 'Region', 
+               'Urgency', 'Votes', 'Budget Est. (PHP)', 'Funding Status']
+    
+    header_fill = PatternFill(start_color='4F81BD', end_color='4F81BD', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF')
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Data rows
+    for rank, need in enumerate(needs_queryset, start=1):
+        ws.append([
+            rank,
+            need.title,
+            need.category.name if need.category else '',
+            need.community.display_name if hasattr(need.community, 'display_name') else need.community.barangay.name,
+            need.community.barangay.municipality.name,
+            need.community.barangay.municipality.province.name,
+            need.community.barangay.municipality.province.region.name,
+            need.get_urgency_level_display(),
+            need.community_votes or 0,
+            need.estimated_cost if need.estimated_cost else '',
+            'Funded' if need.linked_ppa.exists() else 'Unfunded'
+        ])
+    
+    # Adjust column widths
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(cell.value)
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column].width = adjusted_width
+    
+    # Create response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=community_needs_{timezone.now().strftime("%Y%m%d")}.xlsx'
+    
+    wb.save(response)
+    return response

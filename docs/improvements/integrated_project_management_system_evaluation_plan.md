@@ -2225,7 +2225,7 @@ class ReportGenerator:
 
 ## Implementation Plan
 
-### Phase 1: Foundation (Weeks 1-4)
+### Phase 1: Foundation 
 
 **Goal**: Create core Project Central infrastructure **with budget tracking integration**
 
@@ -2265,7 +2265,7 @@ class ReportGenerator:
 
 ---
 
-### Phase 2: Workflow Management + Budget Approval (Weeks 5-8)
+### Phase 2: Workflow Management + Budget Approval 
 
 **Goal**: Implement full project lifecycle workflow **with 5-stage budget approval process**
 
@@ -2310,7 +2310,7 @@ class ReportGenerator:
 
 ---
 
-### Phase 3: Analytics & Financial Reporting (Weeks 9-12)
+### Phase 3: Analytics & Financial Reporting 
 
 **Goal**: Build comprehensive M&E analytics dashboard **with integrated financial tracking**
 
@@ -2357,7 +2357,7 @@ class ReportGenerator:
 
 ---
 
-### Phase 4: Alerts & Automation (Weeks 13-16)
+### Phase 4: Alerts & Automation 
 
 **Goal**: Implement automated alerts and proactive monitoring **with budget-focused alerts**
 
@@ -2403,7 +2403,7 @@ class ReportGenerator:
 
 ---
 
-### Phase 5: Integrated Reporting + Budget Reports (Weeks 17-20)
+### Phase 5: Integrated Reporting + Budget Reports 
 
 **Goal**: Create comprehensive integrated reports **with financial data throughout**
 
@@ -2447,7 +2447,7 @@ class ReportGenerator:
 
 ---
 
-### Phase 6: UI/UX Enhancement (Weeks 21-24)
+### Phase 6: UI/UX Enhancement 
 
 **Goal**: Polish user interface and experience
 
@@ -2484,7 +2484,7 @@ class ReportGenerator:
 
 ---
 
-### Phase 7: Integration Testing & Refinement (Weeks 25-28)
+### Phase 7: Integration Testing & Refinement 
 
 **Goal**: Comprehensive testing and bug fixes
 
@@ -2524,7 +2524,7 @@ class ReportGenerator:
 
 ---
 
-### Phase 8: Deployment & Training (Weeks 29-32)
+### Phase 8: Deployment & Training 
 
 **Goal**: Launch Project Central and train users
 
@@ -2868,7 +2868,7 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 
 ## Appendix: 63 Actionable Implementation Tasks
 
-### PHASE 1: Foundation (Weeks 1-4) - 11 Tasks
+### PHASE 1: Foundation - 11 Tasks
 
 1. ✅ **Create new Django app 'project_central'** with structure, URLs, and base templates
 2. ✅ **Implement ProjectWorkflow model** - tracks lifecycle, links Need→PPA, stores stage history
@@ -2882,7 +2882,7 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 10. ✅ **Create alert listing view** with filters and acknowledgment
 11. ✅ **Create basic budget planning dashboard** - budget allocation, utilization by sector/source
 
-### PHASE 2: Workflow Management + Budget Approval (Weeks 5-8) - 8 Tasks
+### PHASE 2: Workflow Management + Budget Approval - 8 Tasks
 
 12. ✅ **Implement workflow stage management** - advancement logic, validation rules, budget approval gates
 13. ✅ **Implement 5-stage budget approval workflow** - draft→technical_review→budget_review→executive_approval→approved→enacted
@@ -2893,7 +2893,7 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 18. ✅ **Build budget approval dashboard** - pending approvals queue, approval actions
 19. ✅ **Implement notification system** - email + in-app for stage transitions, budget approvals
 
-### PHASE 3: Analytics & Financial Reporting (Weeks 9-12) - 11 Tasks
+### PHASE 3: Analytics & Financial Reporting - 11 Tasks
 
 20. ✅ **Build comprehensive M&E + Budget Analytics Dashboard** - performance scorecard, budget utilization metrics
 21. ✅ **Implement needs-to-results chain visualization** with funding rates
@@ -2907,7 +2907,7 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 29. ✅ **Integrate visualizations** - Chart.js/Plotly for charts, Leaflet for budget heat maps, budget ceiling gauges
 30. ✅ **Implement export functionality** - PDF, Excel with financial tabs, charts as images
 
-### PHASE 4: Alerts & Automation (Weeks 13-16) - 10 Tasks
+### PHASE 4: Alerts & Automation - 10 Tasks
 
 31. ✅ **Create alert generation service** with daily Celery task
 32. ✅ **Implement unfunded high-priority needs alerts** - with budget estimates
@@ -2920,7 +2920,7 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 39. ✅ **Implement underspending and overspending alerts**
 40. ✅ **Build alert dashboard** with filters, detail views, bulk acknowledgment, budget alert summary
 
-### PHASE 5: Integrated Reporting (Weeks 17-20) - 10 Tasks
+### PHASE 5: Integrated Reporting - 10 Tasks
 
 41. ✅ **Create report generator service** - PDF via WeasyPrint/ReportLab, Excel via openpyxl
 42. ✅ **Implement project portfolio report** - programmatic + budget allocation, utilization, spending trends
@@ -2933,14 +2933,14 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 49. ✅ **Implement report scheduling** with Celery - quarterly budget reports auto-generated
 50. ✅ **Build report UI** - listing, preview, download, sharing, budget report dashboard
 
-### PHASE 6: UI/UX Enhancement (Weeks 21-24) - 4 Tasks
+### PHASE 6: UI/UX Enhancement - 4 Tasks
 
 51. ✅ **Implement responsive design** - mobile-optimized, tablet layouts, print-friendly views
 52. ✅ **Implement HTMX-powered interactive features** - real-time updates, inline editing
 53. ✅ **Implement dashboard customization** - user-configurable widgets, saved views, personalized dashboards
 54. ✅ **Ensure WCAG 2.1 AA accessibility compliance** - keyboard navigation, screen reader, high contrast
 
-### PHASE 7: Testing & Documentation (Weeks 25-28) - 5 Tasks
+### PHASE 7: Testing & Documentation - 5 Tasks
 
 55. ✅ **Write comprehensive unit tests** - models, services, workflows - target >80% coverage
 56. ✅ **Write integration tests** - workflow transitions, approval processes, alert generation
@@ -2949,7 +2949,7 @@ The OBCMS codebase has **exceptional foundations** for integrated project manage
 59. ✅ **Create training materials** - video tutorials, quick start guides, FAQs, training slides
 60. ✅ **Perform bug fixes, code refactoring, security hardening, and performance optimizations**
 
-### PHASE 8: Deployment & Training (Weeks 29-32) - 4 Tasks
+### PHASE 8: Deployment & Training - 4 Tasks
 
 61. ✅ **Deploy to production** - configure Celery workers, monitoring via Sentry, backups
 62. ✅ **Migrate data** - create ProjectWorkflow for existing PPAs, historical data migration

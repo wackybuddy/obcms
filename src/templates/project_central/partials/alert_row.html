@@ -1,0 +1,23 @@
+{% load static humanize %}
+
+{% if alert.severity == 'critical' %}
+    {% with border_class='border-l-4 border-rose-500' badge_class='bg-rose-50 text-rose-600' icon_class='text-rose-500' icon_name='fa-circle-exclamation' %}
+        {% include "project_central/partials/_alert_row_inner.html" %}
+    {% endwith %}
+{% elif alert.severity == 'high' %}
+    {% with border_class='border-l-4 border-orange-500' badge_class='bg-orange-50 text-orange-600' icon_class='text-orange-500' icon_name='fa-triangle-exclamation' %}
+        {% include "project_central/partials/_alert_row_inner.html" %}
+    {% endwith %}
+{% elif alert.severity == 'medium' %}
+    {% with border_class='border-l-4 border-amber-400' badge_class='bg-amber-50 text-amber-600' icon_class='text-amber-500' icon_name='fa-circle-info' %}
+        {% include "project_central/partials/_alert_row_inner.html" %}
+    {% endwith %}
+{% elif alert.severity == 'low' %}
+    {% with border_class='border-l-4 border-sky-400' badge_class='bg-sky-50 text-sky-600' icon_class='text-sky-500' icon_name='fa-flag' %}
+        {% include "project_central/partials/_alert_row_inner.html" %}
+    {% endwith %}
+{% else %}
+    {% with border_class='border-l-4 border-slate-400' badge_class='bg-slate-50 text-slate-600' icon_class='text-slate-500' icon_name='fa-bell' %}
+        {% include "project_central/partials/_alert_row_inner.html" %}
+    {% endwith %}
+{% endif %}

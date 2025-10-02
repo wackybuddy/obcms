@@ -123,6 +123,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "common.context_processors.location_api",
+                "project_central.context_processors.project_central_context",
             ],
         },
     },

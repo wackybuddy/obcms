@@ -1,0 +1,211 @@
+{#
+Reusable Modal Dialog Component
+
+Expected context:
+- modal_id: unique identifier for the modal (string, optional - defaults to random ID)
+- title: modal title text (string)
+- size: modal size - 'sm', 'md', 'lg', 'xl', 'full' (default: 'md')
+- content: HTML content as string (optional)
+- content_template: path to template to include for modal body (optional)
+- footer_template: path to template to include for modal footer (optional)
+- footer_html: HTML for footer as string (optional)
+- closeable: boolean, show close button (default: True)
+- backdrop_dismiss: boolean, allow clicking backdrop to close (default: True)
+- show_footer: boolean, render footer section (default: False unless footer_template or footer_html provided)
+
+Usage:
+{% include "components/modal.html" with
+    modal_id="task-modal"
+    title="Task Details"
+    content_template="tasks/task_detail_modal_content.html"
+    size="lg"
+%}
+
+Or with inline content:
+{% include "components/modal.html" with
+    title="Confirmation"
+    content="<p>Are you sure?</p>"
+    footer_html="<button onclick='closeModal()'>Cancel</button>"
+    size="sm"
+%}
+#}
+{% load static %}
+
+{% if not modal_id %}
+    {% now "U" as timestamp %}
+    {% with modal_id="modal-"|add:timestamp %}
+{% endif %}
+
+<div id="{{ modal_id }}"
+     class="modal-backdrop fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 p-4"
+     x-data="{ show: true }"
+     x-show="show"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     {% if backdrop_dismiss|default:True %}@click.self="show = false; setTimeout(() => $el.remove(), 200)"{% endif %}
+     @keydown.escape.window="show = false; setTimeout(() => $el.remove(), 200)"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="{{ modal_id }}-title">
+
+    <div class="modal-content bg-white rounded-xl shadow-2xl
+                {% if size == 'sm' %}max-w-md
+                {% elif size == 'lg' %}max-w-4xl
+                {% elif size == 'xl' %}max-w-6xl
+                {% elif size == 'full' %}max-w-[95vw]
+                {% else %}max-w-2xl{% endif %}
+                w-full max-h-[90vh] flex flex-col"
+         x-show="show"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         @click.stop
+         x-trap.inert.noscroll="show">
+
+        {# Modal Header #}
+        <div class="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
+            <h2 id="{{ modal_id }}-title" class="text-xl font-semibold text-gray-900">
+                {{ title }}
+            </h2>
+            {% if closeable|default:True %}
+            <button type="button"
+                    @click="show = false; setTimeout(() => $el.closest('.modal-backdrop').remove(), 200)"
+                    class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-lg p-1"
+                    aria-label="Close modal">
+                <i class="fas fa-times text-xl" aria-hidden="true"></i>
+            </button>
+            {% endif %}
+        </div>
+
+        {# Modal Body #}
+        <div class="modal-body px-6 py-4 overflow-y-auto flex-1">
+            {% if content_template %}
+                {% include content_template %}
+            {% elif content %}
+                {{ content|safe }}
+            {% else %}
+                <p class="text-gray-500 text-sm">No content provided.</p>
+            {% endif %}
+        </div>
+
+        {# Modal Footer #}
+        {% if show_footer or footer_template or footer_html %}
+        <div class="modal-footer px-6 py-4 border-t border-gray-200 flex items-center justify-end space-x-3 flex-shrink-0 bg-gray-50">
+            {% if footer_template %}
+                {% include footer_template %}
+            {% elif footer_html %}
+                {{ footer_html|safe }}
+            {% else %}
+                <button type="button"
+                        @click="show = false; setTimeout(() => $el.closest('.modal-backdrop').remove(), 200)"
+                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                    Close
+                </button>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if not modal_id %}
+    {% endwith %}
+{% endif %}
+
+{# Alpine.js initialization check #}
+<script>
+(function() {
+    // Ensure Alpine.js is loaded
+    if (typeof Alpine === 'undefined') {
+        console.warn('Alpine.js is not loaded. Modal may not function correctly.');
+        console.warn('Include Alpine.js: <script src="//unpkg.com/alpinejs" defer></script>');
+    }
+
+    // Focus trap helper
+    document.addEventListener('alpine:init', () => {
+        if (!Alpine.directive('trap')) {
+            console.log('Registering focus trap directive for modals...');
+        }
+    });
+
+    // Prevent body scroll when modal is open
+    const modals = document.querySelectorAll('.modal-backdrop');
+    if (modals.length > 0) {
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Restore body scroll when all modals are closed
+    const observer = new MutationObserver((mutations) => {
+        const remainingModals = document.querySelectorAll('.modal-backdrop');
+        if (remainingModals.length === 0) {
+            document.body.style.overflow = '';
+        }
+    });
+
+    modals.forEach(modal => {
+        observer.observe(modal.parentNode, { childList: true });
+    });
+})();
+</script>
+
+<style>
+/* Modal animations */
+.modal-backdrop {
+    animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Ensure modals appear above other content */
+.modal-backdrop {
+    z-index: 9999;
+}
+
+/* Scrollbar styling for modal body */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+    .modal-content {
+        max-height: 95vh;
+        margin: 0.5rem;
+        border-radius: 0.75rem;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+</style>

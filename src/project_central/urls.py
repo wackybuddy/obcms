@@ -30,8 +30,12 @@ urlpatterns = [
     path('analytics/geographic/', views.geographic_analytics, name='geographic_analytics'),
     path('analytics/policy/<uuid:policy_id>/', views.policy_analytics, name='policy_analytics'),
 
+    # PPA M&E Dashboard (Phase 6)
+    path('ppa/<uuid:ppa_id>/me/', views.ppa_me_dashboard, name='ppa_me_dashboard'),
+
     # Alerts
     path('alerts/', views.alert_list_view, name='alert_list'),
+    path('alerts/generate-now/', views.generate_alerts_now, name='generate_alerts_now'),
     path('alerts/<uuid:alert_id>/', views.alert_detail_view, name='alert_detail'),
     path('alerts/<uuid:alert_id>/acknowledge/', views.acknowledge_alert, name='acknowledge_alert'),
     path('alerts/bulk-acknowledge/', views.bulk_acknowledge_alerts, name='bulk_acknowledge_alerts'),

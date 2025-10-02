@@ -1,0 +1,429 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Needs Prioritization Board{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Needs Prioritization</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Header -->
+    <header class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 flex flex-col md:flex-row gap-6 md:items-start">
+        <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white text-xl">
+                    <i class="fas fa-sort-amount-down"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 leading-tight">Needs Prioritization</h1>
+                    <p class="text-sm text-gray-600">Rank community needs by urgency and impact</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                    <i class="fas fa-list-ol mr-1"></i>
+                    {{ needs|length }} Total Needs
+                </span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    {{ funded_count }} Funded
+                </span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                    <i class="fas fa-exclamation-circle mr-1"></i>
+                    {{ unfunded_count }} Unfunded
+                </span>
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button onclick="exportToExcel();"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow hover:bg-emerald-700 transition-all duration-200">
+                <i class="fas fa-file-excel"></i>
+                <span>Export to Excel</span>
+            </button>
+            <button onclick="document.getElementById('bulk-actions-menu').classList.toggle('hidden');"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
+                <i class="fas fa-cog"></i>
+                <span>Bulk Actions</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Sector</label>
+                <select name="sector" onchange="this.form.submit();" class="w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring-amber-500">
+                    <option value="">All Sectors</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if filters.sector == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Region</label>
+                <select name="region" onchange="this.form.submit();" class="w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring-amber-500">
+                    <option value="">All Regions</option>
+                    {% for region in regions %}
+                    <option value="{{ region.id }}" {% if filters.region == region.id|stringformat:"s" %}selected{% endif %}>
+                        {{ region.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Urgency</label>
+                <select name="urgency" onchange="this.form.submit();" class="w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring-amber-500">
+                    <option value="">All Urgency Levels</option>
+                    <option value="immediate" {% if filters.urgency == "immediate" %}selected{% endif %}>Immediate</option>
+                    <option value="short_term" {% if filters.urgency == "short_term" %}selected{% endif %}>Short-term</option>
+                    <option value="medium_term" {% if filters.urgency == "medium_term" %}selected{% endif %}>Medium-term</option>
+                    <option value="long_term" {% if filters.urgency == "long_term" %}selected{% endif %}>Long-term</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Funding Status</label>
+                <select name="funding" onchange="this.form.submit();" class="w-full rounded-lg border-gray-300 focus:border-amber-500 focus:ring-amber-500">
+                    <option value="">All</option>
+                    <option value="funded" {% if filters.funding == "funded" %}selected{% endif %}>Funded</option>
+                    <option value="unfunded" {% if filters.funding == "unfunded" %}selected{% endif %}>Unfunded</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <a href="{% url 'mana:mana_needs_prioritize' %}" class="w-full inline-flex justify-center items-center border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                    Reset Filters
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Needs List (Draggable Ranking) -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900">Community Needs (Drag to Reorder)</h2>
+            <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" id="select-all" class="rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+                    <span class="text-sm font-medium text-gray-700">Select All</span>
+                </label>
+            </div>
+        </div>
+
+        <div id="needs-list" class="space-y-2" data-needs-list>
+            {% for need in needs %}
+            <div class="need-card group relative flex items-center gap-4 p-4 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 hover:shadow-md transition-all duration-200 cursor-move"
+                 draggable="true"
+                 data-need-id="{{ need.id }}"
+                 data-rank="{{ forloop.counter }}">
+
+                <!-- Drag Handle -->
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-grip-vertical text-gray-400 group-hover:text-amber-500 transition-colors"></i>
+                    <div class="flex items-center justify-center w-10 h-10 rounded-full bg-amber-100 text-amber-700 font-bold text-sm">
+                        {{ forloop.counter }}
+                    </div>
+                </div>
+
+                <!-- Checkbox -->
+                <input type="checkbox" class="need-checkbox rounded border-gray-300 text-amber-600 focus:ring-amber-500" value="{{ need.id }}">
+
+                <!-- Need Content -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-base font-semibold text-gray-900 truncate">{{ need.title }}</h3>
+                            <p class="text-sm text-gray-600 mt-1">
+                                {{ need.community.barangay.municipality.name }}, {{ need.community.barangay.municipality.province.name }}
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-6 flex-shrink-0">
+                            <!-- Community Votes -->
+                            <div class="flex items-center gap-2">
+                                <button onclick="voteForNeed({{ need.id }}, this);"
+                                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 transition-colors">
+                                    <i class="fas fa-thumbs-up"></i>
+                                </button>
+                                <span class="text-sm font-semibold text-gray-700" id="votes-{{ need.id }}">{{ need.community_votes|default:0 }}</span>
+                            </div>
+
+                            <!-- Budget -->
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-gray-500">Budget Est.</p>
+                                <p class="text-base font-bold text-gray-900">
+                                    {% if need.estimated_cost %}
+                                        ₱{{ need.estimated_cost|floatformat:1 }}M
+                                    {% else %}
+                                        TBD
+                                    {% endif %}
+                                </p>
+                            </div>
+
+                            <!-- Status -->
+                            <div>
+                                {% if need.linked_ppa %}
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Funded
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>
+                                    Unfunded
+                                </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Urgency -->
+                            <div>
+                                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold
+                                    {% if need.urgency_level == 'immediate' %}bg-red-100 text-red-700
+                                    {% elif need.urgency_level == 'short_term' %}bg-orange-100 text-orange-700
+                                    {% elif need.urgency_level == 'medium_term' %}bg-yellow-100 text-yellow-700
+                                    {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                    {{ need.get_urgency_level_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-12 text-gray-400">
+                <i class="fas fa-inbox text-4xl mb-3"></i>
+                <p class="text-lg font-medium">No needs found</p>
+                <p class="text-sm">Adjust your filters or add new needs to get started.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Menu (Hidden by default) -->
+<div id="bulk-actions-menu" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 sm:px-6">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="document.getElementById('bulk-actions-menu').classList.add('hidden');"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Bulk Actions</h3>
+        <div class="space-y-3">
+            <button onclick="bulkCreatePPA();" class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                <i class="fas fa-folder-plus mr-2"></i>
+                Create PPA for Selected
+            </button>
+            <button onclick="bulkForwardToMAO();" class="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors">
+                <i class="fas fa-share mr-2"></i>
+                Forward to MAO
+            </button>
+            <button onclick="generateVotingForm();" class="w-full px-4 py-3 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                <i class="fas fa-poll mr-2"></i>
+                Generate Voting Form
+            </button>
+            <button onclick="document.getElementById('bulk-actions-menu').classList.add('hidden');" class="w-full px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    }
+
+    // Initialize drag-and-drop ranking
+    function initializeNeedsDragDrop() {
+        const list = document.querySelector('[data-needs-list]');
+        if (!list) return;
+
+        let draggedItem = null;
+
+        list.querySelectorAll('.need-card').forEach(card => {
+            card.addEventListener('dragstart', function(e) {
+                draggedItem = this;
+                this.classList.add('opacity-50');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.innerHTML);
+            });
+
+            card.addEventListener('dragend', function() {
+                this.classList.remove('opacity-50');
+            });
+
+            card.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (this === draggedItem) return;
+
+                const rect = this.getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+
+                if (e.clientY < midpoint) {
+                    this.parentNode.insertBefore(draggedItem, this);
+                } else {
+                    this.parentNode.insertBefore(draggedItem, this.nextSibling);
+                }
+
+                updateRanks();
+            });
+
+            card.addEventListener('drop', function(e) {
+                e.preventDefault();
+                saveNewRanking();
+            });
+        });
+    }
+
+    // Update displayed ranks
+    function updateRanks() {
+        document.querySelectorAll('.need-card').forEach((card, index) => {
+            const rankBadge = card.querySelector('.rounded-full.bg-amber-100');
+            if (rankBadge) {
+                rankBadge.textContent = index + 1;
+            }
+            card.dataset.rank = index + 1;
+        });
+    }
+
+    // Save new ranking to server
+    function saveNewRanking() {
+        const needs = Array.from(document.querySelectorAll('.need-card')).map((card, index) => ({
+            id: parseInt(card.dataset.needId),
+            rank: index + 1
+        }));
+
+        fetch('{% url "mana:mana_needs_update_ranking" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ needs })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Ranking updated successfully');
+            } else {
+                alert('Failed to update ranking: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update ranking. Please try again.');
+        });
+    }
+
+    // Vote for need
+    window.voteForNeed = function(needId, button) {
+        button.disabled = true;
+
+        fetch(`/mana/needs/${needId}/vote/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const votesEl = document.getElementById(`votes-${needId}`);
+                if (votesEl) {
+                    votesEl.textContent = data.votes;
+                }
+            } else {
+                alert(data.error || 'Failed to register vote');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to register vote. Please try again.');
+        })
+        .finally(() => {
+            button.disabled = false;
+        });
+    };
+
+    // Select all checkbox
+    document.getElementById('select-all')?.addEventListener('change', function() {
+        document.querySelectorAll('.need-checkbox').forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // Export to Excel
+    window.exportToExcel = function() {
+        window.location.href = '{% url "mana:mana_needs_export" %}?format=excel&' + window.location.search.substring(1);
+    };
+
+    // Bulk actions
+    window.bulkCreatePPA = function() {
+        const selected = getSelectedNeeds();
+        if (selected.length === 0) {
+            alert('Please select at least one need.');
+            return;
+        }
+
+        if (confirm(`Create PPA for ${selected.length} selected need(s)?`)) {
+            // Implementation would redirect to PPA creation with pre-filled needs
+            window.location.href = `/policies/ppas/create/?needs=${selected.join(',')}`;
+        }
+    };
+
+    window.bulkForwardToMAO = function() {
+        const selected = getSelectedNeeds();
+        if (selected.length === 0) {
+            alert('Please select at least one need.');
+            return;
+        }
+
+        if (confirm(`Forward ${selected.length} need(s) to MAO for review?`)) {
+            // Implementation would create forwarding records
+            alert('Feature coming soon!');
+        }
+    };
+
+    window.generateVotingForm = function() {
+        const selected = getSelectedNeeds();
+        if (selected.length === 0) {
+            alert('Please select at least one need.');
+            return;
+        }
+
+        // Generate PDF voting form
+        window.location.href = `/mana/needs/voting-form/?needs=${selected.join(',')}`;
+    };
+
+    function getSelectedNeeds() {
+        return Array.from(document.querySelectorAll('.need-checkbox:checked')).map(cb => cb.value);
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', initializeNeedsDragDrop);
+})();
+</script>
+{% endblock %}

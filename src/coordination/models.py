@@ -3340,3 +3340,52 @@ class PartnershipDocument(models.Model):
         if self.file:
             self.file_size = self.file.size
         super().save(*args, **kwargs)
+
+
+class EventAttendance(models.Model):
+    """Simplified attendance tracking model for events (used for QR check-in)."""
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name="attendance_records",
+        help_text="Event this attendance record belongs to",
+    )
+
+    participant = models.ForeignKey(
+        EventParticipant,
+        on_delete=models.CASCADE,
+        related_name="attendance_records",
+        help_text="Participant who checked in",
+    )
+
+    checked_in_at = models.DateTimeField(
+        null=True, blank=True, help_text="Time when participant checked in"
+    )
+
+    check_in_method = models.CharField(
+        max_length=20,
+        choices=[
+            ("manual", "Manual"),
+            ("qr_code", "QR Code"),
+            ("nfc", "NFC"),
+        ],
+        default="manual",
+        help_text="Method used for check-in",
+    )
+
+    checked_out_at = models.DateTimeField(
+        null=True, blank=True, help_text="Time when participant checked out"
+    )
+
+    notes = models.TextField(blank=True, help_text="Additional notes")
+
+    class Meta:
+        ordering = ["-checked_in_at"]
+        unique_together = [["event", "participant"]]
+        indexes = [
+            models.Index(fields=["event", "checked_in_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.participant.participant_name} - {self.event.title}"

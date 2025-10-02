@@ -35,7 +35,11 @@ from .attendance import (
     event_scan_qr,
     event_attendance_report,
 )
-from .calendar_api import calendar_event_update
+from .calendar_api import (
+    calendar_event_update,
+)
+# Import task_detail for calendar integration
+# from .tasks import task_detail  # Commented out - function does not exist
 from .communities import (
     communities_add,
     communities_add_municipality,
@@ -78,7 +82,12 @@ from .coordination import (
     partnership_update,
     partnership_delete,
 )
-from .dashboard import dashboard
+from .dashboard import (
+    dashboard,
+    dashboard_metrics,
+    dashboard_activity,
+    dashboard_alerts,
+)
 from .management import (
     oobc_management_home,
     oobc_calendar,
@@ -185,6 +194,9 @@ __all__ = [
     "profile",
     "page_restricted",
     "dashboard",
+    "dashboard_metrics",
+    "dashboard_activity",
+    "dashboard_alerts",
     "resource_list",
     "resource_create",
     "resource_detail",
@@ -310,4 +322,5 @@ __all__ = [
     "recommendations_new",
     "recommendations_manage",
     "recommendations_by_area",
+    "calendar_event_update",
 ]

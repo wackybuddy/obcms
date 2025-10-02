@@ -70,6 +70,10 @@ urlpatterns = [
     path('coordination/events/add/', views.event_create, name='coordination_event_add'),
     path('coordination/events/recurring/add/', coordination_views.event_create_recurring, name='coordination_event_recurring_add'),
     path('coordination/events/<uuid:event_id>/edit-instance/', coordination_views.event_edit_instance, name='coordination_event_edit_instance'),
+    path('coordination/events/<uuid:event_id>/attendance/', coordination_views.event_attendance_tracker, name='coordination_event_attendance'),
+    path('coordination/events/<uuid:event_id>/attendance/count/', coordination_views.event_attendance_count, name='coordination_event_attendance_count'),
+    path('coordination/events/<uuid:event_id>/attendance/participants/', coordination_views.event_participant_list, name='coordination_event_participant_list'),
+    path('coordination/events/<uuid:event_id>/check-in/', coordination_views.event_check_in, name='coordination_event_check_in'),
     path('coordination/events/', views.coordination_events, name='coordination_events'),
     path('coordination/calendar/', views.coordination_calendar, name='coordination_calendar'),
     path('coordination/activities/add/', views.coordination_activity_create, name='coordination_activity_add'),
@@ -96,6 +100,11 @@ urlpatterns = [
     path('oobc-management/calendar/bookings/', views.booking_list, name='calendar_booking_list'),
     path('oobc-management/calendar/bookings/request/', views.booking_request, name='calendar_booking_request_general'),
     path('oobc-management/calendar/bookings/<int:booking_id>/approve/', views.booking_approve, name='calendar_booking_approve'),
+
+    # Phase 3: Enhanced Resource Booking
+    path('coordination/resources/<int:resource_id>/bookings/feed/', coordination_views.resource_bookings_feed, name='coordination_resource_bookings_feed'),
+    path('coordination/resources/check-conflicts/', coordination_views.calendar_check_conflicts, name='coordination_check_conflicts'),
+    path('coordination/resources/<int:resource_id>/book-enhanced/', coordination_views.resource_booking_form, name='coordination_resource_booking_form'),
 
     # Staff Leave Management
     path('oobc-management/staff/leave/', views.staff_leave_list, name='staff_leave_list'),
@@ -163,6 +172,11 @@ urlpatterns = [
     path('oobc-management/planning-budgeting/', views.planning_budgeting, name='planning_budgeting'),
     path('oobc-management/user-approvals/', views.user_approvals, name='user_approvals'),
     path('oobc-management/user-approvals/<int:user_id>/action/', views.user_approval_action, name='user_approval_action'),
+
+    # Phase 1: Enhanced Dashboard - HTMX Endpoints
+    path('dashboard/metrics/', views.dashboard_metrics, name='dashboard_metrics'),
+    path('dashboard/activity/', views.dashboard_activity, name='dashboard_activity'),
+    path('dashboard/alerts/', views.dashboard_alerts, name='dashboard_alerts'),
 
     # Phase 2: Planning & Budgeting Integration Dashboards
     path('oobc-management/gap-analysis/', views.gap_analysis_dashboard, name='gap_analysis_dashboard'),

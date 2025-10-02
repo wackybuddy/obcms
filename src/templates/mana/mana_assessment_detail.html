@@ -56,17 +56,27 @@
             </div>
         </div>
         <div class="flex flex-col sm:flex-row gap-3">
+            <a href="{% url 'mana:mana_assessment_tasks_board' assessment.id %}"
+               class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-purple-600 text-white text-sm font-semibold shadow hover:bg-purple-700 transition-all duration-200">
+                <i class="fas fa-tasks"></i>
+                <span>Task Board</span>
+            </a>
+            <a href="{% url 'mana:mana_assessment_calendar' assessment.id %}"
+               class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700 transition-all duration-200">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendar</span>
+            </a>
             <a href="{% url 'common:mana_assessment_edit' assessment.id %}"
-               class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-blue-600 text-white text-sm font-semibold shadow hover:bg-blue-700 transition-all duration-200"
+               class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200"
                hx-boost="true">
                 <i class="fas fa-edit"></i>
-                <span>Edit Assessment</span>
+                <span>Edit</span>
             </a>
             <a href="{% url 'common:mana_manage_assessments' %}"
                class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200"
                hx-boost="true">
                 <i class="fas fa-arrow-left"></i>
-                <span>Back to Directory</span>
+                <span>Back</span>
             </a>
         </div>
     </header>

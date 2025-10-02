@@ -6,6 +6,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Always use "Ultrathink" whenever you are responding or coding in Claude Code to show your thinking process. No exception.
 
+## Time Estimates Policy
+
+**NEVER provide time estimates in hours, days, weeks, or months for implementation tasks.**
+
+With powerful AI coding agents, a year's worth of traditional development work can be completed in a single day. Time estimates create false constraints and are obsolete in AI-assisted development.
+
+**Instead, focus on:**
+- **Dependencies**: What must be done before this task (e.g., "Requires dashboard metrics view")
+- **Complexity**: Simple, Moderate, or Complex
+- **Priority**: Critical, High, Medium, or Low
+- **Prerequisites**: What needs to exist first (e.g., "Model must exist", "API endpoint required")
+
+**Examples:**
+- ❌ Bad: "This will take 8 hours to implement"
+- ❌ Bad: "Week 1, Days 2-3: Enhanced dashboard"
+- ✅ Good: "Priority: HIGH | Complexity: Moderate | Requires: dashboard_metrics view"
+- ✅ Good: "Prerequisites: Fix task deletion bug first (dependency)"
+
 ## Development Environment Setup
 
 **Virtual Environment**: Always work from Python 3.12 `venv/`

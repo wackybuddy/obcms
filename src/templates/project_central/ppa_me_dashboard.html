@@ -1,0 +1,530 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}M&E Dashboard: {{ ppa.title }} - Project Central{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-gauge {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
+
+    .progress-gauge svg {
+        transform: rotate(-90deg);
+    }
+
+    .progress-gauge-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .progress-gauge-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .progress-gauge-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+    }
+
+    .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        bottom: -1.5rem;
+        width: 2px;
+        background: #e5e7eb;
+    }
+
+    .timeline-item:last-child:before {
+        display: none;
+    }
+
+    .timeline-dot {
+        position: absolute;
+        left: 0;
+        top: 0.25rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        background: #10b981;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #e5e7eb;
+    }
+
+    .milestone-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .milestone-upcoming {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .milestone-completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .milestone-overdue {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="h3 mb-1"><i class="fas fa-chart-line text-emerald-600"></i> M&E Dashboard</h1>
+                <h2 class="h5 text-muted mb-2">{{ ppa.title }}</h2>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge bg-primary">{{ ppa.get_category_display }}</span>
+                    <span class="badge bg-info">{{ ppa.get_status_display }}</span>
+                    {% if ppa.sector %}
+                    <span class="badge bg-secondary">{{ ppa.get_sector_display }}</span>
+                    {% endif %}
+                    <span class="badge bg-success">{{ ppa.get_priority_display }} Priority</span>
+                </div>
+            </div>
+            <div>
+                <a href="{% url 'monitoring:detail' ppa.id %}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Details
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Gauges -->
+    <div class="row g-4 mb-4">
+        <!-- Budget Utilization -->
+        <div class="col-md-3">
+            <div class="metric-card">
+                <h3 class="h6 text-center mb-3">Budget Utilization</h3>
+                <div class="progress-gauge">
+                    <svg viewBox="0 0 100 100" width="150" height="150">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#10b981" stroke-width="8"
+                                stroke-dasharray="{{ budget_utilization_pct|floatformat:2 }} 251.2"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="progress-gauge-text">
+                        <div class="progress-gauge-value text-emerald-600">{{ budget_utilization_pct|floatformat:0 }}%</div>
+                        <div class="progress-gauge-label">OBC Budget</div>
+                    </div>
+                </div>
+                <div class="text-center text-sm text-muted mt-3">
+                    ₱{{ budget_obc_allocation|floatformat:1|intcomma }}M / ₱{{ budget_allocation|floatformat:1|intcomma }}M
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Progress -->
+        <div class="col-md-3">
+            <div class="metric-card">
+                <h3 class="h6 text-center mb-3">Timeline Progress</h3>
+                <div class="progress-gauge">
+                    <svg viewBox="0 0 100 100" width="150" height="150">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#3b82f6" stroke-width="8"
+                                stroke-dasharray="{{ timeline_progress_pct|floatformat:2 }} 251.2"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="progress-gauge-text">
+                        <div class="progress-gauge-value text-blue-600">{{ timeline_progress_pct|floatformat:0 }}%</div>
+                        <div class="progress-gauge-label">Elapsed</div>
+                    </div>
+                </div>
+                <div class="text-center text-sm text-muted mt-3">
+                    {{ days_elapsed }} days elapsed, {{ days_remaining }} remaining
+                </div>
+            </div>
+        </div>
+
+        <!-- Beneficiary Reach -->
+        <div class="col-md-3">
+            <div class="metric-card">
+                <h3 class="h6 text-center mb-3">Beneficiary Reach</h3>
+                <div class="progress-gauge">
+                    <svg viewBox="0 0 100 100" width="150" height="150">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="8"
+                                stroke-dasharray="{{ beneficiary_progress_pct|floatformat:2 }} 251.2"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="progress-gauge-text">
+                        <div class="progress-gauge-value text-orange-600">{{ beneficiary_progress_pct|floatformat:0 }}%</div>
+                        <div class="progress-gauge-label">OBC Slots</div>
+                    </div>
+                </div>
+                <div class="text-center text-sm text-muted mt-3">
+                    {{ obc_slots|intcomma }} / {{ total_slots|intcomma }} beneficiaries
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Progress -->
+        <div class="col-md-3">
+            <div class="metric-card">
+                <h3 class="h6 text-center mb-3">Overall Progress</h3>
+                <div class="progress-gauge">
+                    <svg viewBox="0 0 100 100" width="150" height="150">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#8b5cf6" stroke-width="8"
+                                stroke-dasharray="{{ overall_progress_pct|floatformat:2 }} 251.2"
+                                stroke-linecap="round"/>
+                    </svg>
+                    <div class="progress-gauge-text">
+                        <div class="progress-gauge-value text-purple-600">{{ overall_progress_pct }}%</div>
+                        <div class="progress-gauge-label">Complete</div>
+                    </div>
+                </div>
+                <div class="text-center text-sm text-muted mt-3">
+                    Implementation Progress
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Cost per Beneficiary</p>
+                            <h3 class="mb-0">₱{{ cost_per_beneficiary|floatformat:0|intcomma }}</h3>
+                        </div>
+                        <div class="text-emerald-600" style="font-size: 2rem;">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Communities Served</p>
+                            <h3 class="mb-0">{{ communities_served.count }}</h3>
+                        </div>
+                        <div class="text-blue-600" style="font-size: 2rem;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 small">Supporting Partners</p>
+                            <h3 class="mb-0">{{ supporting_orgs.count }}</h3>
+                        </div>
+                        <div class="text-purple-600" style="font-size: 2rem;">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Outcome Framework & Milestones Row -->
+    <div class="row g-4 mb-4">
+        <!-- Outcome Framework -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-bullseye text-emerald-600"></i> Outcome Framework</h5>
+                </div>
+                <div class="card-body">
+                    {% if outcomes %}
+                    <div class="space-y-4">
+                        {% for outcome in outcomes %}
+                        <div class="border-start border-4 border-emerald-500 ps-3 mb-3">
+                            <h6 class="fw-semibold">{{ outcome.title }}</h6>
+                            <p class="text-sm text-muted mb-2">{{ outcome.description }}</p>
+                            {% if outcome.progress_percentage %}
+                            <div class="d-flex justify-content-between text-sm mb-1">
+                                <span>Progress</span>
+                                <span>{{ outcome.progress_percentage|floatformat:0 }}%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-emerald-500" role="progressbar"
+                                     style="width: {{ outcome.progress_percentage }}%"
+                                     aria-valuenow="{{ outcome.progress_percentage }}"
+                                     aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% elif outcome_indicators %}
+                    <div class="alert alert-info">
+                        <strong>Outcome Indicators:</strong>
+                        <p class="mb-0 mt-2">{{ outcome_indicators }}</p>
+                    </div>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <p class="mb-0">No outcome framework defined yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Milestone Timeline -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check text-blue-600"></i> Milestone Timeline</h5>
+                </div>
+                <div class="card-body">
+                    {% if milestones %}
+                    <div class="timeline">
+                        {% for milestone in milestones %}
+                        <div class="timeline-item">
+                            <div class="timeline-dot {% if milestone.status == 'completed' %}bg-success{% elif milestone.status == 'overdue' %}bg-danger{% else %}bg-primary{% endif %}"></div>
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <h6 class="mb-0">{{ milestone.title }}</h6>
+                                    <span class="milestone-badge milestone-{{ milestone.status }}">
+                                        {{ milestone.status|title }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-muted mb-0">
+                                    <i class="fas fa-calendar-alt"></i> {{ milestone.date }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <p class="mb-0">No milestones defined yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accomplishments & Challenges Row -->
+    <div class="row g-4 mb-4">
+        <!-- Accomplishments -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-trophy text-orange-600"></i> Accomplishments</h5>
+                </div>
+                <div class="card-body">
+                    {% if accomplishments %}
+                    <div class="whitespace-pre-line">{{ accomplishments }}</div>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <p class="mb-0">No accomplishments reported yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenges -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle text-orange-600"></i> Challenges & Risks</h5>
+                </div>
+                <div class="card-body">
+                    {% if challenges %}
+                    <div class="whitespace-pre-line">{{ challenges }}</div>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <p class="mb-0">No challenges reported yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Required & Follow-up Actions Row -->
+    <div class="row g-4 mb-4">
+        <!-- Support Required -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-hands-helping text-purple-600"></i> Support Required</h5>
+                </div>
+                <div class="card-body">
+                    {% if support_required %}
+                    <div class="whitespace-pre-line">{{ support_required }}</div>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <p class="mb-0">No support requirements specified.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Follow-up Actions -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-tasks text-blue-600"></i> Follow-up Actions</h5>
+                </div>
+                <div class="card-body">
+                    {% if follow_up_actions %}
+                    <div class="whitespace-pre-line">{{ follow_up_actions }}</div>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle fa-2x mb-2"></i>
+                        <p class="mb-0">No follow-up actions specified.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Entities Row -->
+    <div class="row g-4">
+        <!-- Related Needs -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb text-orange-600"></i> Related Needs</h5>
+                </div>
+                <div class="card-body">
+                    {% if related_needs %}
+                    <ul class="list-group list-group-flush">
+                        {% for need in related_needs %}
+                        <li class="list-group-item px-0">
+                            <a href="{% url 'mana:need_detail' need.id %}" class="text-decoration-none">
+                                {{ need.title }}
+                            </a>
+                            <div class="text-sm text-muted">
+                                Priority: {{ need.priority_score|floatformat:1 }}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <p class="mb-0 small">No related needs linked</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Policies -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-gavel text-blue-600"></i> Related Policies</h5>
+                </div>
+                <div class="card-body">
+                    {% if related_policies %}
+                    <ul class="list-group list-group-flush">
+                        {% for policy in related_policies %}
+                        <li class="list-group-item px-0">
+                            <a href="{% url 'policy_tracking:detail' policy.id %}" class="text-decoration-none">
+                                {{ policy.title }}
+                            </a>
+                            <div class="text-sm text-muted">
+                                {{ policy.get_status_display }}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <p class="mb-0 small">No related policies linked</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Communities Served -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-map-marker-alt text-emerald-600"></i> Communities Served</h5>
+                </div>
+                <div class="card-body">
+                    {% if communities_served %}
+                    <ul class="list-group list-group-flush">
+                        {% for community in communities_served %}
+                        <li class="list-group-item px-0">
+                            <a href="{% url 'communities:obc_detail' community.id %}" class="text-decoration-none">
+                                {{ community.name }}
+                            </a>
+                            <div class="text-sm text-muted">
+                                {{ community.municipality.name }}, {{ community.province.name }}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="text-muted text-center py-4">
+                        <p class="mb-0 small">No communities specified</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -601,6 +601,18 @@
         });
     </script>
 
+    <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
+    <script>
+        // Ensure HTMX is available even if the static asset fails to load
+        window.addEventListener('DOMContentLoaded', function () {
+            if (!window.htmx) {
+                const fallback = document.createElement('script');
+                fallback.src = 'https://unpkg.com/htmx.org@1.9.12';
+                fallback.defer = true;
+                document.head.appendChild(fallback);
+            }
+        });
+    </script>
     <script src="{% static 'common/js/location_data_loader.js' %}"></script>
     <script src="{% static 'common/js/htmx-focus-management.js' %}"></script>
 

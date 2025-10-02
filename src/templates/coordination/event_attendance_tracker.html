@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - OOBC Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    #qr-reader {
+        border: 2px solid #10b981;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    #qr-reader video {
+        width: 100%;
+        height: auto;
+    }
+    .toast {
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{{ return_url }}" class="text-emerald-600 hover:text-emerald-700 flex items-center text-sm font-medium mb-2">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Events
+        </a>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">{{ page_heading }}</h1>
+                <p class="mt-2 text-sm text-gray-600">
+                    <i class="fas fa-calendar mr-1"></i>
+                    {{ event.start_date|date:"F d, Y" }}
+                    {% if event.start_time %}at {{ event.start_time|time:"g:i A" }}{% endif %}
+                </p>
+            </div>
+            <div class="text-right">
+                <span class="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium {% if event.status == 'in_progress' %}bg-blue-100 text-blue-800{% elif event.status == 'completed' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                    <i class="fas fa-circle mr-2 text-xs"></i>
+                    {{ event.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Live Counter & QR Scanner -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Live Attendance Counter (polls every 10s) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">
+                    <i class="fas fa-chart-pie text-emerald-600 mr-2"></i>
+                    Live Attendance
+                </h3>
+                <div hx-get="{% url 'common:coordination_event_attendance_count' event_id=event.id %}"
+                     hx-trigger="load, every 10s"
+                     hx-swap="innerHTML"
+                     class="min-h-[300px] flex items-center justify-center">
+                    <!-- Loading state -->
+                    <div class="text-center py-12">
+                        <i class="fas fa-spinner fa-spin text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600">Loading attendance data...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Code Scanner Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-qrcode text-emerald-600 mr-2"></i>
+                    Quick Check-in via QR
+                </h3>
+
+                <div id="qr-scanner-container">
+                    <div id="qr-reader" class="mx-auto mb-4" style="max-width: 100%;"></div>
+                    <p class="text-xs text-gray-600 text-center mb-4">
+                        Position the QR code within the frame to check in
+                    </p>
+
+                    <div id="qr-status" class="text-center">
+                        <button id="start-scanner-btn" onclick="startScanner()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium">
+                            <i class="fas fa-camera mr-2"></i>Start Scanner
+                        </button>
+                    </div>
+                </div>
+
+                <div id="scan-result" class="mt-4 hidden"></div>
+            </div>
+        </div>
+
+        <!-- Right Column: Live Participant List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-users text-emerald-600 mr-2"></i>
+                    Participants
+                    <span class="text-sm font-normal text-gray-500">(Auto-refreshes every 10s)</span>
+                </h3>
+
+                <div id="participant-list"
+                     hx-get="{% url 'common:coordination_event_participant_list' event_id=event.id %}"
+                     hx-trigger="load, every 10s"
+                     hx-swap="innerHTML"
+                     class="min-h-[400px]">
+                    <!-- Loading state -->
+                    <div class="text-center py-12">
+                        <i class="fas fa-spinner fa-spin text-3xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600">Loading participants...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+let html5QrCode = null;
+let scannerStarted = false;
+
+function startScanner() {
+    if (scannerStarted) {
+        stopScanner();
+        return;
+    }
+
+    const qrReader = document.getElementById('qr-reader');
+    const statusDiv = document.getElementById('qr-status');
+    const startBtn = document.getElementById('start-scanner-btn');
+
+    html5QrCode = new Html5Qrcode("qr-reader");
+
+    Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length > 0) {
+            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Starting camera...';
+            startBtn.disabled = true;
+
+            html5QrCode.start(
+                { facingMode: "environment" },  // Use back camera
+                {
+                    fps: 10,    // Scans per second
+                    qrbox: { width: 250, height: 250 }
+                },
+                (decodedText, decodedResult) => {
+                    // QR Code scanned successfully
+                    console.log('QR Code scanned:', decodedText);
+
+                    // Pause scanner briefly to prevent multiple scans
+                    html5QrCode.pause(true);
+
+                    // Send check-in request
+                    fetch('{% url "common:coordination_event_check_in" event_id=event.id %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: new URLSearchParams({
+                            'participant_id': decodedText,
+                            'method': 'qr_code'
+                        })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.text();
+                        }
+                        throw new Error('Check-in failed');
+                    })
+                    .then(html => {
+                        // Show success toast
+                        showToast('Check-in successful!', 'success');
+
+                        // Trigger HTMX refresh of participant list
+                        htmx.trigger('#participant-list', 'load');
+
+                        // Resume scanning after 2 seconds
+                        setTimeout(() => {
+                            if (html5QrCode) {
+                                html5QrCode.resume();
+                            }
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        console.error('Check-in error:', error);
+                        showToast('Check-in failed. Please try manual check-in.', 'error');
+
+                        // Resume scanning
+                        setTimeout(() => {
+                            if (html5QrCode) {
+                                html5QrCode.resume();
+                            }
+                        }, 2000);
+                    });
+                },
+                (errorMessage) => {
+                    // Parse errors - ignore continuous scan errors
+                    // console.log('QR scan error:', errorMessage);
+                }
+            ).then(() => {
+                scannerStarted = true;
+                startBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>Stop Scanner';
+                startBtn.disabled = false;
+                startBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                startBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            }).catch(err => {
+                console.error('Unable to start QR scanner:', err);
+                statusDiv.innerHTML = '<div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm"><i class="fas fa-exclamation-triangle mr-2"></i>Unable to access camera. Please check permissions or use manual check-in.</div>';
+                startBtn.innerHTML = '<i class="fas fa-camera mr-2"></i>Start Scanner';
+                startBtn.disabled = false;
+            });
+        } else {
+            statusDiv.innerHTML = '<div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm"><i class="fas fa-exclamation-triangle mr-2"></i>No cameras found. Please use manual check-in.</div>';
+        }
+    }).catch(err => {
+        console.error('Error getting cameras:', err);
+        statusDiv.innerHTML = '<div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm"><i class="fas fa-times-circle mr-2"></i>Camera access denied. Please enable camera permissions.</div>';
+    });
+}
+
+function stopScanner() {
+    if (html5QrCode && scannerStarted) {
+        html5QrCode.stop().then(() => {
+            scannerStarted = false;
+            const startBtn = document.getElementById('start-scanner-btn');
+            startBtn.innerHTML = '<i class="fas fa-camera mr-2"></i>Start Scanner';
+            startBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            startBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+        }).catch(err => {
+            console.error('Error stopping scanner:', err);
+        });
+    }
+}
+
+function showToast(message, type) {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+
+    const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+    toast.className = `toast px-6 py-4 rounded-lg shadow-lg ${bgColor} text-white flex items-center space-x-3`;
+    toast.innerHTML = `
+        <i class="fas ${icon} text-xl"></i>
+        <span class="font-medium">${message}</span>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Clean up scanner when leaving page
+window.addEventListener('beforeunload', function() {
+    stopScanner();
+});
+
+// Listen for HTMX events to show feedback
+document.body.addEventListener('htmx:beforeRequest', function(evt) {
+    if (evt.detail.elt.hasAttribute('hx-post')) {
+        // Disable button during request
+        evt.detail.elt.disabled = true;
+    }
+});
+
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+    if (evt.detail.elt.hasAttribute('hx-post')) {
+        // Re-enable button after request
+        evt.detail.elt.disabled = false;
+
+        // Trigger refresh of attendance counter
+        htmx.trigger('[hx-get*="attendance/count"]', 'load');
+    }
+});
+</script>
+{% endblock %}

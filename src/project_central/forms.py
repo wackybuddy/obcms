@@ -10,7 +10,15 @@ from django.contrib.auth import get_user_model
 from .models import ProjectWorkflow, Alert, BudgetCeiling, BudgetScenario
 from mana.models import Need
 from monitoring.models import MonitoringEntry
-from coordination.models import MAO
+from coordination.models import MAOFocalPerson
+
+
+def _tailwind_select_attrs():
+    """Return base Tailwind classes for select widgets."""
+    return (
+        "block w-full rounded-xl border border-gray-200 bg-white py-3 px-4 text-sm "
+        "focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200"
+    )
 
 User = get_user_model()
 
@@ -84,9 +92,11 @@ class ProjectWorkflowForm(forms.ModelForm):
         self.fields['project_lead'].required = False
 
         # Filter MAOs
-        self.fields['mao_focal_person'].queryset = MAO.objects.filter(
+        self.fields['mao_focal_person'].queryset = MAOFocalPerson.objects.select_related(
+            'mao', 'user'
+        ).filter(
             is_active=True
-        ).order_by('name')
+        ).order_by('mao__name', 'user__first_name', 'user__last_name')
         self.fields['mao_focal_person'].required = False
 
 
@@ -176,6 +186,41 @@ class AcknowledgeAlertForm(forms.Form):
     )
 
 
+class AlertFilterForm(forms.Form):
+    """Filter form for alert listing."""
+
+    alert_type = forms.ChoiceField(required=False)
+    severity = forms.ChoiceField(required=False)
+    active = forms.ChoiceField(
+        required=False,
+        choices=[
+            ('true', 'Active Only'),
+            ('false', 'All Alerts'),
+        ],
+        initial='true',
+    )
+    acknowledgment = forms.ChoiceField(
+        required=False,
+        choices=[
+            ('', 'All Alerts'),
+            ('pending', 'Unacknowledged Only'),
+        ],
+        initial='',
+        label='Acknowledgment Status',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['alert_type'].choices = [('', 'All Types')] + list(Alert.ALERT_TYPES)
+        self.fields['severity'].choices = [('', 'All Severities')] + list(Alert.SEVERITY_LEVELS)
+
+        select_class = _tailwind_select_attrs()
+        for field_name in ['alert_type', 'severity', 'active', 'acknowledgment']:
+            widget = self.fields[field_name].widget
+            existing = widget.attrs.get('class', '')
+            widget.attrs['class'] = f"{existing} {select_class}".strip()
+
 class BudgetCeilingForm(forms.ModelForm):
     """Form for creating and editing budget ceilings."""
 
@@ -184,13 +229,12 @@ class BudgetCeilingForm(forms.ModelForm):
         fields = [
             'name',
             'fiscal_year',
-            'ceiling_amount',
             'sector',
             'funding_source',
-            'region',
+            'ceiling_amount',
             'enforcement_level',
-            'description',
             'is_active',
+            'notes',
         ]
         widgets = {
             'name': forms.TextInput(attrs={
@@ -201,22 +245,18 @@ class BudgetCeilingForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': '2025',
             }),
+            'sector': forms.Select(attrs={'class': 'form-select'}),
+            'funding_source': forms.Select(attrs={'class': 'form-select'}),
             'ceiling_amount': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': '0.00',
                 'step': '0.01',
             }),
-            'sector': forms.Select(attrs={'class': 'form-select'}),
-            'funding_source': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g., GAA, Local Funds',
-            }),
-            'region': forms.Select(attrs={'class': 'form-select'}),
             'enforcement_level': forms.Select(attrs={'class': 'form-select'}),
-            'description': forms.Textarea(attrs={
+            'notes': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': 'Description of this budget ceiling...',
+                'placeholder': 'Notes or context for this budget ceiling...',
             }),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

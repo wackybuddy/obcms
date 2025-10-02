@@ -1542,17 +1542,17 @@ def mao_focal_persons_registry(request):
 def community_needs_summary(request):
     """
     Community Needs Summary - Overview of all community needs.
-    
+
     Part of Phase 2 implementation for community participation tracking.
     """
     from mana.models import Need
     from django.db.models import Count, Sum, Q, Avg
-    
+
     # Get filter parameters
     status = request.GET.get('status')
     submission_type = request.GET.get('submission_type')
     community_id = request.GET.get('community')
-    
+
     # Base query
     needs = Need.objects.select_related(
         'community__barangay__municipality__province__region',
@@ -1561,7 +1561,7 @@ def community_needs_summary(request):
         'forwarded_to_mao',
         'linked_ppa',
     )
-    
+
     # Apply filters
     if status:
         needs = needs.filter(status=status)
@@ -1569,14 +1569,14 @@ def community_needs_summary(request):
         needs = needs.filter(submission_type=submission_type)
     if community_id:
         needs = needs.filter(community_id=community_id)
-    
+
     # Calculate statistics
     total_needs = needs.count()
-    
+
     # By submission type
     assessment_driven = needs.filter(submission_type='assessment_driven').count()
     community_submitted = needs.filter(submission_type='community_submitted').count()
-    
+
     # By funding status
     funded = needs.filter(linked_ppa__isnull=False).count()
     forwarded = needs.filter(
@@ -1588,42 +1588,42 @@ def community_needs_summary(request):
         forwarded_to_mao__isnull=True,
         status__in=['validated', 'prioritized']
     ).count()
-    
+
     # Financial summary
     total_estimated_cost = needs.aggregate(Sum('estimated_cost'))['estimated_cost__sum'] or 0
     funded_cost = needs.filter(
         linked_ppa__isnull=False
     ).aggregate(Sum('estimated_cost'))['estimated_cost__sum'] or 0
     gap_cost = total_estimated_cost - funded_cost
-    
+
     # Impact summary
     total_affected_population = needs.aggregate(
         Sum('affected_population')
     )['affected_population__sum'] or 0
     avg_priority_score = needs.aggregate(Avg('priority_score'))['priority_score__avg'] or 0
-    
+
     # Community votes (participatory budgeting)
     total_votes = needs.aggregate(Sum('community_votes'))['community_votes__sum'] or 0
-    
+
     # Breakdown by status
     status_breakdown = needs.values('status').annotate(
         count=Count('id')
     ).order_by('-count')
-    
+
     # Breakdown by urgency
     urgency_breakdown = needs.values('urgency_level').annotate(
         count=Count('id')
     ).order_by('-count')
-    
+
     # Recent needs
     recent_needs = needs.order_by('-created_at')[:15]
-    
+
     # Top priority unfunded
     top_priority_unfunded = needs.filter(
         linked_ppa__isnull=True,
         status__in=['validated', 'prioritized']
     ).order_by('-priority_score', '-impact_severity')[:10]
-    
+
     context = {
         'total_needs': total_needs,
         'assessment_driven': assessment_driven,
@@ -1648,5 +1648,340 @@ def community_needs_summary(request):
             'community': community_id,
         },
     }
-    
+
     return render(request, 'common/community_needs_summary.html', context)
+
+
+# ========================================
+# PHASE 1: ENHANCED DASHBOARD VIEWS
+# ========================================
+
+@login_required
+def dashboard_metrics(request):
+    """Live metrics HTML (updates every 60s)."""
+    from django.http import HttpResponse
+    from django.db.models import Sum
+    from datetime import timedelta
+
+    try:
+        # Import models safely
+        from monitoring.models import MonitoringEntry
+        from mana.models import Need
+        from coordination.models import Event
+        from common.models.staff import StaffTask
+
+        # Aggregate from all modules
+        total_budget = MonitoringEntry.objects.aggregate(
+            total=Sum('budget_allocation')
+        )['total'] or 0
+
+        active_projects = MonitoringEntry.objects.filter(
+            status='ongoing'
+        ).count()
+
+        unfunded_needs = Need.objects.filter(
+            linked_ppa__isnull=True,
+            priority_score__gte=4.0
+        ).count()
+
+        total_beneficiaries = MonitoringEntry.objects.aggregate(
+            total=Sum('obc_slots')
+        )['total'] or 0
+
+        upcoming_events = Event.objects.filter(
+            start_date__gte=timezone.now().date(),
+            start_date__lte=timezone.now().date() + timedelta(days=7)
+        ).count()
+
+        current_week = timezone.now().isocalendar()[1]
+        tasks_due = StaffTask.objects.filter(
+            due_date__week=current_week,
+            status__in=['not_started', 'in_progress']
+        ).count()
+
+    except Exception as e:
+        # Fallback values if models don't exist
+        total_budget = 0
+        active_projects = 0
+        unfunded_needs = 0
+        total_beneficiaries = 0
+        upcoming_events = 0
+        tasks_due = 0
+
+    # Render metric cards
+    html = f'''
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Budget</p>
+                    <p class="text-3xl font-bold text-emerald-600">₱{total_budget/1_000_000:.1f}M</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-money-bill-wave text-emerald-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Active Projects</p>
+                    <p class="text-3xl font-bold text-blue-600">{active_projects}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-project-diagram text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">High-Priority Needs</p>
+                    <p class="text-3xl font-bold text-red-600">{unfunded_needs}</p>
+                    <p class="text-xs text-gray-500">Unfunded</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">OBC Beneficiaries</p>
+                    <p class="text-3xl font-bold text-purple-600">{total_beneficiaries:,}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-users text-purple-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Upcoming Events</p>
+                    <p class="text-3xl font-bold text-orange-600">{upcoming_events}</p>
+                    <p class="text-xs text-gray-500">Next 7 days</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar text-orange-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Tasks Due This Week</p>
+                    <p class="text-3xl font-bold text-yellow-600">{tasks_due}</p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-tasks text-yellow-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    '''
+
+    return HttpResponse(html)
+
+
+@login_required
+def dashboard_activity(request):
+    """Recent activity feed (infinite scroll)."""
+    from django.http import HttpResponse
+    from datetime import timedelta
+
+    page = int(request.GET.get('page', 1))
+    per_page = 20
+
+    # Aggregate recent items from all modules
+    activities = []
+
+    try:
+        from mana.models import Need
+        from monitoring.models import MonitoringEntry
+        from common.models.staff import StaffTask
+        from coordination.models import Event
+
+        # Recent needs
+        for need in Need.objects.filter(
+            created_at__gte=timezone.now() - timedelta(days=30)
+        ).select_related('community')[:10]:
+            activities.append({
+                'icon': 'fa-lightbulb',
+                'color': 'blue',
+                'title': f'New need: {need.title}',
+                'subtitle': f'in {need.community}',
+                'timestamp': need.created_at,
+                'url': '#',
+            })
+
+        # Recent PPAs
+        for ppa in MonitoringEntry.objects.filter(
+            created_at__gte=timezone.now() - timedelta(days=30)
+        )[:10]:
+            lead_org = ppa.lead_organization.name if ppa.lead_organization else "OOBC"
+            activities.append({
+                'icon': 'fa-project-diagram',
+                'color': 'emerald',
+                'title': f'New PPA: {ppa.title}',
+                'subtitle': f'Lead: {lead_org}',
+                'timestamp': ppa.created_at,
+                'url': f'/monitoring/entry/{ppa.id}/',
+            })
+
+        # Recent tasks completed
+        for task in StaffTask.objects.filter(
+            status='completed',
+            updated_at__gte=timezone.now() - timedelta(days=30)
+        ).select_related('assigned_to')[:10]:
+            activities.append({
+                'icon': 'fa-check-circle',
+                'color': 'green',
+                'title': f'Task completed: {task.title}',
+                'subtitle': f'by {task.assigned_to.get_full_name() if task.assigned_to else "Unassigned"}',
+                'timestamp': task.updated_at,
+                'url': '#',
+            })
+
+        # Recent events
+        for event in Event.objects.filter(
+            created_at__gte=timezone.now() - timedelta(days=30)
+        )[:10]:
+            activities.append({
+                'icon': 'fa-calendar',
+                'color': 'purple',
+                'title': f'Event scheduled: {event.title}',
+                'subtitle': f'{event.start_date.strftime("%b %d, %Y")}',
+                'timestamp': event.created_at,
+                'url': '#',
+            })
+
+    except Exception:
+        # Fallback empty activities
+        pass
+
+    # Sort by timestamp
+    activities = sorted(activities, key=lambda x: x['timestamp'], reverse=True)
+
+    # Paginate
+    start = (page - 1) * per_page
+    end = start + per_page
+    activities_page = activities[start:end]
+    has_next = len(activities) > end
+
+    # Render HTML
+    html = '<div class="space-y-3">'
+    for activity in activities_page:
+        timestamp_str = activity['timestamp'].strftime("%b %d, %I:%M %p")
+        html += f'''
+        <a href="{activity['url']}" class="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+            <div class="w-10 h-10 bg-{activity['color']}-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fas {activity['icon']} text-{activity['color']}-600"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{activity['title']}</p>
+                <p class="text-xs text-gray-500 truncate">{activity['subtitle']}</p>
+                <p class="text-xs text-gray-400 mt-1">{timestamp_str}</p>
+            </div>
+        </a>
+        '''
+
+    if not activities_page:
+        html += '''
+        <div class="text-center py-8 text-gray-400">
+            <i class="fas fa-inbox text-3xl mb-2"></i>
+            <p class="text-sm">No recent activity</p>
+        </div>
+        '''
+
+    html += '</div>'
+
+    # Infinite scroll trigger
+    if has_next:
+        html += f'''
+        <div hx-get="/common/dashboard/activity/?page={page + 1}" hx-trigger="revealed" hx-swap="afterend" class="text-center py-4">
+            <i class="fas fa-spinner fa-spin text-gray-400"></i>
+        </div>
+        '''
+
+    return HttpResponse(html)
+
+
+@login_required
+def dashboard_alerts(request):
+    """Critical alerts (updates every 30s)."""
+    from django.http import HttpResponse
+
+    alerts = []
+
+    try:
+        from mana.models import Need
+        from common.models.staff import StaffTask
+
+        # Unfunded needs
+        unfunded = Need.objects.filter(
+            linked_ppa__isnull=True,
+            priority_score__gte=4.0
+        ).count()
+
+        if unfunded > 0:
+            alerts.append({
+                'type': 'warning',
+                'icon': 'fa-exclamation-triangle',
+                'title': f'{unfunded} high-priority needs unfunded',
+                'action_url': '#',
+                'action_text': 'Review',
+            })
+
+        # Overdue tasks
+        overdue = StaffTask.objects.filter(
+            due_date__lt=timezone.now().date(),
+            status__in=['not_started', 'in_progress']
+        ).count()
+
+        if overdue > 0:
+            alerts.append({
+                'type': 'danger',
+                'icon': 'fa-clock',
+                'title': f'{overdue} tasks overdue',
+                'action_url': '/oobc-management/staff/tasks/',
+                'action_text': 'View',
+            })
+
+    except Exception:
+        # Fallback empty alerts
+        pass
+
+    # Render
+    if not alerts:
+        return HttpResponse('''
+        <div class="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg">
+            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+            <span class="text-sm font-medium text-green-800">All systems normal</span>
+        </div>
+        ''')
+
+    html = '<div class="space-y-2">'
+    for alert in alerts:
+        colors = {'danger': 'red', 'warning': 'yellow'}
+        color = colors.get(alert['type'], 'yellow')
+        html += f'''
+        <div class="flex items-center justify-between p-4 bg-{color}-50 border border-{color}-200 rounded-lg">
+            <div class="flex items-center space-x-3 flex-1 min-w-0">
+                <i class="fas {alert['icon']} text-{color}-600 flex-shrink-0"></i>
+                <span class="text-sm font-medium text-{color}-800 truncate">{alert['title']}</span>
+            </div>
+            <a href="{alert['action_url']}" class="ml-3 text-sm font-medium text-{color}-700 hover:text-{color}-800 flex-shrink-0">
+                {alert['action_text']} →
+            </a>
+        </div>
+        '''
+    html += '</div>'
+
+    return HttpResponse(html)

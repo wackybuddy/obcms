@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - OOBC Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'common/vendor/fullcalendar/main.min.css' %}">
+<style>
+    .fc-event {
+        cursor: pointer;
+    }
+    .fc-event-title {
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <a href="{{ return_url }}" class="text-emerald-600 hover:text-emerald-700 flex items-center text-sm font-medium mb-2">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Coordination
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">{{ page_heading }}</h1>
+                <p class="mt-2 text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Check availability and submit your booking request
+                </p>
+            </div>
+            <div class="text-right">
+                <div class="inline-flex items-center px-4 py-2 bg-blue-50 rounded-lg">
+                    <i class="fas fa-{{ resource.resource_type|default:'cube' }} text-blue-600 text-2xl mr-3"></i>
+                    <div>
+                        <div class="text-sm font-medium text-gray-600">Resource Type</div>
+                        <div class="text-lg font-bold text-blue-600">{{ resource.get_resource_type_display }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Info Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ resource.name }}</h2>
+                <p class="text-gray-600 mb-4">{{ resource.description }}</p>
+                <div class="flex flex-wrap gap-4 text-sm">
+                    {% if resource.location %}
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-map-marker-alt mr-2 text-gray-400"></i>
+                        <span>{{ resource.location }}</span>
+                    </div>
+                    {% endif %}
+                    {% if resource.capacity %}
+                    <div class="flex items-center text-gray-600">
+                        <i class="fas fa-users mr-2 text-gray-400"></i>
+                        <span>Capacity: {{ resource.capacity }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex flex-col items-end space-y-2">
+                <span class="px-3 py-1 rounded-full text-xs font-medium {% if resource.is_available %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                    {% if resource.is_available %}<i class="fas fa-check-circle mr-1"></i>Available{% else %}<i class="fas fa-times-circle mr-1"></i>Unavailable{% endif %}
+                </span>
+                {% if resource.requires_approval %}
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <i class="fas fa-user-check mr-1"></i>Requires Approval
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Left Column: Availability Calendar -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-calendar-alt text-emerald-600 mr-2"></i>
+                Resource Availability
+            </h3>
+            <div id="resource-calendar" class="mb-4"></div>
+            <div class="text-xs text-gray-500 space-y-1">
+                <div class="flex items-center">
+                    <div class="w-4 h-4 rounded bg-green-500 mr-2"></div>
+                    <span>Approved Bookings</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-4 h-4 rounded bg-yellow-500 mr-2"></div>
+                    <span>Pending Bookings</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Booking Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-clipboard-list text-emerald-600 mr-2"></i>
+                Booking Details
+            </h3>
+
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="rounded-lg p-4 {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                    <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" name="resource_id" value="{{ resource.id }}">
+
+                <!-- Start DateTime -->
+                <div>
+                    <label for="start-datetime" class="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date & Time<span class="text-red-500">*</span>
+                    </label>
+                    <input type="datetime-local"
+                           id="start-datetime"
+                           name="start_datetime"
+                           required
+                           class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
+                           hx-get="{% url 'common:coordination_check_conflicts' %}"
+                           hx-trigger="change delay:500ms"
+                           hx-target="#conflict-warnings"
+                           hx-include="[name='end_datetime'], [name='resource_id']">
+                </div>
+
+                <!-- End DateTime -->
+                <div>
+                    <label for="end-datetime" class="block text-sm font-medium text-gray-700 mb-2">
+                        End Date & Time<span class="text-red-500">*</span>
+                    </label>
+                    <input type="datetime-local"
+                           id="end-datetime"
+                           name="end_datetime"
+                           required
+                           class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
+                           hx-get="{% url 'common:coordination_check_conflicts' %}"
+                           hx-trigger="change delay:500ms"
+                           hx-target="#conflict-warnings"
+                           hx-include="[name='start_datetime'], [name='resource_id']">
+                </div>
+
+                <!-- Conflict Warnings (populated by HTMX) -->
+                <div id="conflict-warnings"></div>
+
+                <!-- Purpose -->
+                <div>
+                    <label for="purpose" class="block text-sm font-medium text-gray-700 mb-2">
+                        Purpose<span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="purpose"
+                              name="purpose"
+                              required
+                              rows="3"
+                              placeholder="Please describe the purpose of this booking..."
+                              class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"></textarea>
+                </div>
+
+                <!-- Recurring Booking Option -->
+                <div class="border-t border-gray-200 pt-4">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" name="is_recurring" id="is-recurring-check" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                        <span class="text-sm font-medium text-gray-700">Recurring Booking</span>
+                    </label>
+
+                    <div id="recurrence-options" class="hidden mt-4 pl-6 space-y-3 border-l-2 border-emerald-200">
+                        <div>
+                            <label for="recurrence-pattern" class="block text-sm font-medium text-gray-700 mb-2">
+                                Repeat
+                            </label>
+                            <div class="relative">
+                                <select id="recurrence-pattern"
+                                        name="recurrence_pattern"
+                                        class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 appearance-none pr-12 bg-white">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly" selected>Weekly</option>
+                                    <option value="biweekly">Bi-weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                                <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                                    <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="recurrence-end" class="block text-sm font-medium text-gray-700 mb-2">
+                                Until
+                            </label>
+                            <input type="date"
+                                   id="recurrence-end"
+                                   name="recurrence_end_date"
+                                   class="block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex items-center justify-end space-x-3 pt-4">
+                    <a href="{{ return_url }}" class="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium">
+                        <i class="fas fa-check mr-2"></i>Submit Booking Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'common/vendor/fullcalendar/index.global.min.js' %}"></script>
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // FullCalendar initialization
+    var calendarEl = document.getElementById('resource-calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'timeGridWeek',
+        slotMinTime: '06:00:00',
+        slotMaxTime: '20:00:00',
+        height: 'auto',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'timeGridWeek,timeGridDay'
+        },
+        events: '{% url "common:coordination_resource_bookings_feed" resource_id=resource.id %}',
+
+        // Color-code by status
+        eventDidMount: function(info) {
+            // Already colored by backend, but we can add tooltips
+            info.el.title = info.event.extendedProps.bookedBy + ' - ' + info.event.extendedProps.status;
+        },
+
+        // Make events clickable for details
+        eventClick: function(info) {
+            alert(
+                'Booked by: ' + info.event.extendedProps.bookedBy + '\n' +
+                'Status: ' + info.event.extendedProps.status + '\n' +
+                'Time: ' + info.event.start.toLocaleString() + ' - ' + info.event.end.toLocaleString() +
+                (info.event.extendedProps.notes ? '\nNotes: ' + info.event.extendedProps.notes : '')
+            );
+        }
+    });
+
+    calendar.render();
+
+    // Toggle recurring options
+    document.getElementById('is-recurring-check').addEventListener('change', function(e) {
+        document.getElementById('recurrence-options').classList.toggle('hidden', !e.target.checked);
+    });
+
+    // Set minimum datetime to now
+    var now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('start-datetime').min = now.toISOString().slice(0, 16);
+    document.getElementById('end-datetime').min = now.toISOString().slice(0, 16);
+
+    // Auto-set end time to 1 hour after start time
+    document.getElementById('start-datetime').addEventListener('change', function(e) {
+        var startTime = new Date(e.target.value);
+        startTime.setHours(startTime.getHours() + 1);
+        document.getElementById('end-datetime').value = startTime.toISOString().slice(0, 16);
+    });
+});
+</script>
+{% endblock %}

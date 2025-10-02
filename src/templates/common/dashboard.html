@@ -45,6 +45,64 @@
     </div>
     {% endif %}
 
+    <!-- Live Metrics Section (HTMX Auto-refresh every 60s) -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Live Metrics</h2>
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-sync-alt"></i> Updates every 60s
+            </span>
+        </div>
+        <div hx-get="{% url 'common:dashboard_metrics' %}"
+             hx-trigger="load, every 60s"
+             hx-swap="innerHTML"
+             class="min-h-[120px]">
+            <!-- Loading state -->
+            <div class="flex items-center justify-center py-12">
+                <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Critical Alerts (HTMX Auto-refresh every 30s) -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Alerts</h2>
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-sync-alt"></i> Updates every 30s
+            </span>
+        </div>
+        <div hx-get="{% url 'common:dashboard_alerts' %}"
+             hx-trigger="load, every 30s"
+             hx-swap="innerHTML">
+            <!-- Loading state -->
+            <div class="flex items-center p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <i class="fas fa-spinner fa-spin text-gray-400 mr-3"></i>
+                <span class="text-sm text-gray-600">Loading alerts...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity Feed (HTMX Infinite Scroll) -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold text-gray-900">Recent Activity</h2>
+            <span class="text-xs text-gray-500">
+                <i class="fas fa-history"></i> Last 30 days
+            </span>
+        </div>
+        <div class="bg-white rounded-xl shadow-md p-6 max-h-96 overflow-y-auto">
+            <div hx-get="{% url 'common:dashboard_activity' %}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <!-- Loading state -->
+                <div class="flex items-center justify-center py-8">
+                    <i class="fas fa-spinner fa-spin text-gray-400 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- System Overview Statistics -->
     <div class="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total OBC Communities -->

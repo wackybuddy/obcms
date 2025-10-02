@@ -7,7 +7,7 @@ Data aggregation and analysis for project management and budget monitoring.
 import logging
 from datetime import timedelta
 from django.utils import timezone
-from django.db.models import Sum, Count, Avg, Q, F, Case, When, Value, DecimalField
+from django.db.models import Sum, Count, Avg, Q, F, Case, When, Value, DecimalField, ExpressionWrapper
 from decimal import Decimal
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class AnalyticsService:
         Returns:
             dict: Sector allocation data
         """
-        from monitoring.models import MonitoringEntry
+        from monitoring.models import MonitoringEntry, MonitoringEntryFunding
 
         queryset = MonitoringEntry.objects.filter(
             approval_status__in=[
@@ -50,17 +50,36 @@ class AnalyticsService:
             queryset = queryset.filter(fiscal_year=fiscal_year)
 
         if region:
-            queryset = queryset.filter(
-                Q(implementing_community__municipality__province__region=region) |
-                Q(lead_organization__region=region)
-            )
+            region_filters = None
+            if hasattr(region, 'pk'):
+                region_filters = Q(coverage_region=region) | Q(coverage_region_id=region.pk)
+            else:
+                region_filters = Q()
+                try:
+                    region_id = int(region)
+                except (TypeError, ValueError):
+                    region_id = None
+
+                if region_id is not None:
+                    region_filters |= Q(coverage_region_id=region_id)
+                else:
+                    region_filters |= Q(coverage_region__code=region) | Q(coverage_region__name=region)
+
+            if region_filters is not None:
+                queryset = queryset.filter(region_filters)
 
         # Aggregate by sector
         sector_data = queryset.values('sector').annotate(
             total_budget=Sum('budget_allocation'),
             project_count=Count('id'),
             avg_budget=Avg('budget_allocation'),
-            total_disbursed=Sum('total_disbursed'),
+            total_disbursed=Sum(
+                'funding_flows__amount',
+                filter=Q(
+                    funding_flows__tranche_type=MonitoringEntryFunding.TRANCHE_DISBURSEMENT
+                ),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            ),
         ).order_by('-total_budget')
 
         # Calculate utilization rates
@@ -163,14 +182,14 @@ class AnalyticsService:
                 MonitoringEntry.APPROVAL_STATUS_APPROVED,
                 MonitoringEntry.APPROVAL_STATUS_ENACTED,
             ]
-        ).select_related('implementing_community__municipality__province__region')
+        ).select_related('coverage_region')
 
         if fiscal_year:
             queryset = queryset.filter(fiscal_year=fiscal_year)
 
         # Aggregate by region
         region_data = queryset.values(
-            'implementing_community__municipality__province__region__name'
+            'coverage_region__name'
         ).annotate(
             total_budget=Sum('budget_allocation'),
             project_count=Count('id'),
@@ -180,7 +199,7 @@ class AnalyticsService:
         result = []
         for item in region_data:
             result.append({
-                'region': item['implementing_community__municipality__province__region__name'] or 'Unspecified',
+                'region': item['coverage_region__name'] or 'Unspecified',
                 'total_budget': float(item['total_budget'] or 0),
                 'project_count': item['project_count'],
                 'avg_budget': float(item['avg_budget'] or 0),
@@ -203,7 +222,7 @@ class AnalyticsService:
         Returns:
             dict: Utilization metrics
         """
-        from monitoring.models import MonitoringEntry
+        from monitoring.models import MonitoringEntry, MonitoringEntryFunding
         from project_central.models import BudgetCeiling
 
         # Overall PPA utilization
@@ -213,8 +232,20 @@ class AnalyticsService:
 
         ppa_stats = ppa_queryset.aggregate(
             total_allocated=Sum('budget_allocation'),
-            total_obligated=Sum('total_obligated'),
-            total_disbursed=Sum('total_disbursed'),
+            total_obligated=Sum(
+                'funding_flows__amount',
+                filter=Q(
+                    funding_flows__tranche_type=MonitoringEntryFunding.TRANCHE_OBLIGATION
+                ),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            ),
+            total_disbursed=Sum(
+                'funding_flows__amount',
+                filter=Q(
+                    funding_flows__tranche_type=MonitoringEntryFunding.TRANCHE_DISBURSEMENT
+                ),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            ),
             project_count=Count('id'),
         )
 
@@ -280,11 +311,18 @@ class AnalyticsService:
         if fiscal_year:
             queryset = queryset.filter(fiscal_year=fiscal_year)
 
+        beneficiary_field = 'obc_slots'
+
         # Calculate cost per beneficiary
-        projects_with_beneficiaries = queryset.exclude(
+        projects_with_beneficiaries = queryset.annotate(
+            beneficiary_count=F(beneficiary_field)
+        ).exclude(
             Q(beneficiary_count__isnull=True) | Q(beneficiary_count=0)
         ).annotate(
-            cost_per_beneficiary=F('budget_allocation') / F('beneficiary_count')
+            cost_per_beneficiary=ExpressionWrapper(
+                F('budget_allocation') / F('beneficiary_count'),
+                output_field=DecimalField(max_digits=18, decimal_places=2),
+            )
         )
 
         cost_stats = projects_with_beneficiaries.aggregate(
@@ -310,7 +348,7 @@ class AnalyticsService:
         if not sector:
             sector_data = queryset.values('sector').annotate(
                 total_budget=Sum('budget_allocation'),
-                total_beneficiaries=Sum('beneficiary_count'),
+                total_beneficiaries=Sum(beneficiary_field),
                 project_count=Count('id'),
             )
 
@@ -447,6 +485,8 @@ class AnalyticsService:
         # Choose truncation function
         trunc_func = TruncMonth if interval == 'month' else TruncQuarter
 
+        beneficiary_field = 'obc_slots'
+
         if metric == 'budget':
             trend_data = queryset.annotate(
                 period=trunc_func('created_at')
@@ -465,7 +505,7 @@ class AnalyticsService:
             trend_data = queryset.annotate(
                 period=trunc_func('created_at')
             ).values('period').annotate(
-                value=Sum('beneficiary_count')
+                value=Sum(beneficiary_field)
             ).order_by('period')
 
         else:

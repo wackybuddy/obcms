@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ assessment.title }} · Task Board{% endblock %}
+
+{% block breadcrumb %}
+<li>
+    <a href="{% url 'common:dashboard' %}" class="text-neutral-500 hover:text-neutral-700">Dashboard</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_home' %}" class="text-neutral-500 hover:text-neutral-700">MANA</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li>
+    <a href="{% url 'common:mana_assessment_detail' assessment.id %}" class="text-neutral-500 hover:text-neutral-700">{{ assessment.title|truncatechars:30 }}</a>
+</li>
+<li><span class="text-neutral-400 mx-1">/</span></li>
+<li class="text-neutral-800 font-semibold">Task Board</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Header -->
+    <header class="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 flex flex-col md:flex-row gap-6 md:items-start">
+        <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-xl">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 leading-tight">Assessment Tasks</h1>
+                    <p class="text-sm text-gray-600">{{ assessment.title }}</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
+                    <i class="fas fa-layer-group mr-1"></i>
+                    {{ tasks_by_phase.total }} Total Tasks
+                </span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    {{ tasks_by_phase.completed }} Completed
+                </span>
+            </div>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <button hx-get="{% url 'common:staff_task_modal_create' %}?assessment={{ assessment.id }}"
+                    hx-target="#task-modal-container"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-purple-600 text-white text-sm font-semibold shadow hover:bg-purple-700 transition-all duration-200">
+                <i class="fas fa-plus"></i>
+                <span>Add Task</span>
+            </button>
+            <a href="{% url 'common:mana_assessment_detail' assessment.id %}"
+               class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all duration-200">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Assessment</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="bg-white rounded-xl border border-gray-200 shadow-sm px-6 py-4">
+        <div class="flex items-center gap-4 overflow-x-auto">
+            <a href="{% url 'mana:mana_assessment_tasks_board' assessment.id %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 text-purple-700 text-sm font-semibold">
+                <i class="fas fa-tasks"></i>
+                <span>Task Board</span>
+            </a>
+            <a href="{% url 'mana:mana_assessment_calendar' assessment.id %}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 text-sm font-semibold hover:bg-gray-100 transition-colors">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendar</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Kanban Board -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6" id="assessment-kanban-board" data-board data-board-type="assessment" data-group-by="phase" data-assessment-id="{{ assessment.id }}" data-update-url="{% url 'common:staff_task_update_board' %}">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            {% for phase_key, phase_data in phases.items %}
+            <div class="kanban-column bg-gray-50 rounded-xl p-4 min-h-[400px]" data-board-column data-column-value="{{ phase_key }}">
+                <!-- Column Header -->
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-300">
+                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wide flex items-center gap-2">
+                        <i class="fas {{ phase_data.icon }} text-{{ phase_data.color }}-600"></i>
+                        <span>{{ phase_data.label }}</span>
+                    </h3>
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-{{ phase_data.color }}-100 text-{{ phase_data.color }}-700 text-xs font-bold" data-column-count>
+                        {{ phase_data.tasks|length }}
+                    </span>
+                </div>
+
+                <!-- Drop Zone -->
+                <div class="space-y-3 min-h-[320px]" data-drop-zone data-task-list ondrop="return false;" ondragover="return false;">
+                    {% for task in phase_data.tasks %}
+                    <div class="task-card bg-white rounded-lg border border-gray-200 p-4 cursor-move hover:shadow-md transition-shadow duration-200"
+                         draggable="true"
+                         data-task-id="{{ task.id }}"
+                         data-phase="{{ task.assessment_phase }}"
+                         data-modal-url="{% url 'common:staff_task_modal_detail' task.id %}">
+
+                        <!-- Task Title -->
+                        <h4 class="text-sm font-semibold text-gray-900 mb-2 line-clamp-2">{{ task.title }}</h4>
+
+                        <!-- Task Metadata -->
+                        <div class="space-y-2">
+                            <!-- Assignee -->
+                            {% if task.assignees.all %}
+                            <div class="flex items-center gap-2 text-xs text-gray-600">
+                                <i class="fas fa-user text-gray-400"></i>
+                                <div class="flex -space-x-2">
+                                    {% for assignee in task.assignees.all|slice:":3" %}
+                                    <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-[10px] font-medium border-2 border-white" title="{{ assignee.get_full_name }}">
+                                        {{ assignee.first_name.0|default:assignee.username.0|upper }}{{ assignee.last_name.0|default:""|upper }}
+                                    </div>
+                                    {% endfor %}
+                                    {% if task.assignees.count > 3 %}
+                                    <div class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 text-[10px] font-medium border-2 border-white">
+                                        +{{ task.assignees.count|add:"-3" }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Due Date -->
+                            {% if task.due_date %}
+                            <div class="flex items-center gap-2 text-xs {% if task.is_overdue %}text-red-600{% else %}text-gray-600{% endif %}">
+                                <i class="fas fa-calendar text-gray-400"></i>
+                                <span>{{ task.due_date|date:"M d, Y" }}</span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Priority Badge -->
+                            {% if task.priority == 'high' or task.priority == 'critical' %}
+                            <div class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold {% if task.priority == 'critical' %}bg-red-100 text-red-700{% else %}bg-orange-100 text-orange-700{% endif %}">
+                                <i class="fas fa-exclamation-circle mr-1"></i>
+                                {{ task.get_priority_display }}
+                            </div>
+                            {% endif %}
+
+                            <!-- Progress Bar -->
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-{{ phase_data.color }}-500 transition-all duration-300" style="width: {{ task.progress }}%"></div>
+                                </div>
+                                <span class="text-xs font-medium text-gray-600">{{ task.progress }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-12 text-gray-400" data-empty-placeholder>
+                        <i class="fas fa-inbox text-3xl mb-2"></i>
+                        <p class="text-sm">No tasks</p>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Add Task Button -->
+                <button hx-get="{% url 'common:staff_task_modal_create' %}?assessment={{ assessment.id }}&assessment_phase={{ phase_key }}"
+                        hx-target="#task-modal-container"
+                        class="w-full mt-4 py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-gray-600 hover:border-{{ phase_data.color }}-400 hover:text-{{ phase_data.color }}-600 hover:bg-{{ phase_data.color }}-50 transition-all duration-200">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Task
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Task Modal Container -->
+<div id="task-modal-container" class="fixed inset-0 hidden z-50 flex items-center justify-center px-4 sm:px-6" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="document.getElementById('task-modal-container').classList.add('hidden');"></div>
+    <div class="relative max-h-[90vh] w-full sm:w-auto overflow-y-auto bg-white rounded-2xl shadow-2xl" hx-target="this" hx-swap="innerHTML"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    'use strict';
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    }
+
+    // Initialize Kanban Board
+    function initializeAssessmentKanban() {
+        const board = document.querySelector('[data-board-type="assessment"]');
+        if (!board || board.dataset.initialized === 'true') return;
+
+        board.dataset.initialized = 'true';
+        const updateUrl = board.dataset.updateUrl;
+        const csrftoken = getCookie('csrftoken');
+
+        // Attach drag handlers to all task cards
+        board.querySelectorAll('.task-card').forEach(card => {
+            card.addEventListener('dragstart', function(e) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', card.dataset.taskId);
+                card.classList.add('opacity-50');
+                board.dataset.draggingTaskId = card.dataset.taskId;
+            });
+
+            card.addEventListener('dragend', function() {
+                card.classList.remove('opacity-50');
+                delete board.dataset.draggingTaskId;
+            });
+
+            // Click to open modal (if not dragging)
+            card.addEventListener('click', function(e) {
+                if (e.target.closest('button')) return; // Ignore button clicks
+                const modalUrl = card.dataset.modalUrl;
+                if (modalUrl) {
+                    htmx.ajax('GET', modalUrl, {
+                        target: '#task-modal-container > div:last-child',
+                        swap: 'innerHTML'
+                    }).then(() => {
+                        document.getElementById('task-modal-container').classList.remove('hidden');
+                    });
+                }
+            });
+        });
+
+        // Setup drop zones
+        board.querySelectorAll('[data-drop-zone]').forEach(zone => {
+            zone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                this.classList.add('ring-2', 'ring-purple-400', 'bg-purple-50');
+            });
+
+            zone.addEventListener('dragleave', function(e) {
+                if (!this.contains(e.relatedTarget)) {
+                    this.classList.remove('ring-2', 'ring-purple-400', 'bg-purple-50');
+                }
+            });
+
+            zone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('ring-2', 'ring-purple-400', 'bg-purple-50');
+
+                const column = this.closest('[data-board-column]');
+                const targetPhase = column.dataset.columnValue;
+                const taskId = board.dataset.draggingTaskId || e.dataTransfer.getData('text/plain');
+
+                if (!taskId) return;
+
+                const card = board.querySelector(`[data-task-id="${taskId}"]`);
+                if (!card) return;
+
+                const sourcePhase = card.dataset.phase;
+
+                // Optimistically move the card
+                this.appendChild(card);
+                updateColumnCounts();
+
+                // Update server
+                fetch(updateUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        task_id: parseInt(taskId),
+                        group: 'assessment_phase',
+                        value: targetPhase
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        card.dataset.phase = targetPhase;
+                        updateColumnCounts();
+                    } else {
+                        // Revert on error
+                        alert(data.error || 'Failed to update task');
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to update task. Please try again.');
+                    location.reload();
+                });
+            });
+        });
+
+        function updateColumnCounts() {
+            board.querySelectorAll('[data-board-column]').forEach(column => {
+                const count = column.querySelectorAll('.task-card').length;
+                const counter = column.querySelector('[data-column-count]');
+                const placeholder = column.querySelector('[data-empty-placeholder]');
+
+                if (counter) counter.textContent = count;
+                if (placeholder) {
+                    placeholder.classList.toggle('hidden', count > 0);
+                }
+            });
+        }
+    }
+
+    // Initialize on load and after HTMX swaps
+    document.addEventListener('DOMContentLoaded', initializeAssessmentKanban);
+    document.body.addEventListener('htmx:afterSwap', function(e) {
+        if (e.target.id === 'assessment-kanban-board' || e.target.closest('[data-board-type="assessment"]')) {
+            initializeAssessmentKanban();
+        }
+    });
+
+    // Handle modal close
+    document.body.addEventListener('click', function(e) {
+        if (e.target.closest('[data-close-modal]')) {
+            e.preventDefault();
+            document.getElementById('task-modal-container').classList.add('hidden');
+        }
+    });
+
+    // HTMX event handlers
+    document.body.addEventListener('htmx:afterRequest', function(e) {
+        if (e.detail.successful && e.detail.xhr.getResponseHeader('HX-Trigger')) {
+            const triggers = JSON.parse(e.detail.xhr.getResponseHeader('HX-Trigger'));
+            if (triggers['task-updated'] || triggers['task-created']) {
+                // Reload board to reflect changes
+                htmx.ajax('GET', window.location.href, {
+                    target: '#assessment-kanban-board',
+                    swap: 'outerHTML'
+                });
+            }
+            if (triggers['close-modal']) {
+                document.getElementById('task-modal-container').classList.add('hidden');
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

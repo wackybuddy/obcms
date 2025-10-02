@@ -1,75 +1,58 @@
 {% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}{{ workflow.primary_need.title }} - Workflow Detail{% endblock %}
+{% block title %}Workflow: {{ workflow.primary_need.title }}{% endblock %}
 
 {% block extra_css %}
 <style>
-    .workflow-stage {
+    .stage-node {
         position: relative;
-        padding: 1.5rem;
-        border-radius: 8px;
-        background: white;
-        border: 2px solid #e5e7eb;
-        margin-bottom: 1rem;
-        transition: all 0.3s;
+        z-index: 10;
+        transition: all 0.3s ease;
     }
-    .workflow-stage.active {
-        border-color: #10b981;
-        background: #f0fdf4;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-    }
-    .workflow-stage.completed {
-        border-color: #059669;
-        background: #ecfdf5;
-    }
-    .workflow-stage.pending {
-        border-color: #e5e7eb;
-        background: #f9fafb;
-        opacity: 0.7;
-    }
-    .stage-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-        margin-right: 1rem;
-    }
-    .stage-icon.active {
+    .stage-node.completed {
         background: #10b981;
         color: white;
     }
-    .stage-icon.completed {
-        background: #059669;
+    .stage-node.current {
+        background: #3b82f6;
         color: white;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+        animation: pulse 2s infinite;
     }
-    .stage-icon.pending {
+    .stage-node.pending {
         background: #e5e7eb;
-        color: #9ca3af;
-    }
-    .timeline-connector {
-        width: 2px;
-        height: 30px;
-        background: #e5e7eb;
-        margin-left: 23px;
-    }
-    .timeline-connector.completed {
-        background: #10b981;
-    }
-    .info-label {
-        font-size: 0.75rem;
         color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.25rem;
     }
-    .info-value {
-        font-size: 1rem;
-        color: #1f2937;
-        font-weight: 500;
+    @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3); }
+        50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.2); }
+    }
+    .progress-bar-custom {
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    .progress-bar-fill {
+        height: 100%;
+        background: #10b981;
+        transition: width 0.8s ease;
+    }
+    .history-item {
+        border-left: 3px solid #3b82f6;
+        padding-left: 1.5rem;
+        position: relative;
+    }
+    .history-item::before {
+        content: '';
+        position: absolute;
+        left: -7px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        background: #3b82f6;
+        border-radius: 50%;
     }
 </style>
 {% endblock %}
@@ -77,158 +60,210 @@
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Header -->
-    <div class="mb-4">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{% url 'project_central:portfolio_dashboard' %}">Portfolio</a></li>
-                <li class="breadcrumb-item"><a href="{% url 'project_central:project_list' %}">Workflows</a></li>
-                <li class="breadcrumb-item active">{{ workflow.primary_need.title|truncatewords:5 }}</li>
-            </ol>
-        </nav>
-
-        <div class="d-flex justify-content-between align-items-start">
-            <div>
-                <h1 class="h3 mb-2">{{ workflow.primary_need.title }}</h1>
-                <div class="d-flex gap-2">
-                    <span class="badge bg-primary">{{ workflow.get_current_stage_display }}</span>
-                    <span class="badge bg-{{ workflow.priority_level }}">
-                        Priority: {{ workflow.get_priority_level_display }}
-                    </span>
-                    {% if workflow.is_on_track %}
-                        <span class="badge bg-success">On Track</span>
-                    {% elif workflow.is_blocked %}
-                        <span class="badge bg-danger">Blocked</span>
-                    {% endif %}
-                </div>
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'project_central:portfolio_dashboard' %}">Portfolio</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'project_central:project_list' %}">Projects</a></li>
+                    <li class="breadcrumb-item active">Workflow Detail</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-2">{{ workflow.primary_need.title }}</h1>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="badge bg-primary">{{ workflow.get_current_stage_display }}</span>
+                <span class="badge bg-{{ workflow.get_priority_level_display|lower }}">
+                    Priority: {{ workflow.get_priority_level_display }}
+                </span>
+                {% if workflow.is_on_track %}
+                    <span class="badge bg-success">On Track</span>
+                {% elif workflow.is_blocked %}
+                    <span class="badge bg-danger">Blocked</span>
+                {% endif %}
             </div>
-            <div>
-                <a href="{% url 'project_central:edit_project_workflow' workflow.id %}" class="btn btn-emerald-600">
-                    <i class="fas fa-edit"></i> Edit Workflow
-                </a>
+        </div>
+        <div class="text-end">
+            <div class="display-6 text-emerald-600 fw-bold">{{ progress_percentage }}%</div>
+            <p class="text-muted mb-0">Complete</p>
+        </div>
+    </div>
+
+    <!-- Progress Timeline -->
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-tasks"></i> Workflow Progress
+            </h5>
+        </div>
+        <div class="card-body p-4">
+            <!-- Progress bar -->
+            <div class="progress-bar-custom mb-4">
+                <div class="progress-bar-fill" style="width: {{ progress_percentage }}%"></div>
+            </div>
+
+            <!-- Stage nodes -->
+            <div class="row g-2">
+                {% for stage in stages %}
+                <div class="col">
+                    <div class="text-center">
+                        <div class="stage-node {{ stage.status }} d-inline-flex align-items-center justify-content-center rounded-circle"
+                             style="width: 60px; height: 60px; margin-bottom: 0.75rem;">
+                            <i class="fas {{ stage.icon }} fa-lg"></i>
+                        </div>
+                        <p class="small fw-medium mb-1" style="font-size: 0.75rem; line-height: 1.2;">
+                            {{ stage.label }}
+                        </p>
+                        {% if stage.status == 'current' %}
+                        <span class="badge bg-blue-100 text-blue-800" style="font-size: 0.65rem;">Current</span>
+                        {% elif stage.status == 'completed' %}
+                        <span class="badge bg-green-100 text-green-800" style="font-size: 0.65rem;">Done</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 
+    <!-- Two Column Layout -->
     <div class="row">
-        <!-- Main Content -->
-        <div class="col-lg-8">
-            <!-- Workflow Overview -->
+        <!-- Left Column: Actions & Details -->
+        <div class="col-md-8">
+            <!-- Action Section -->
             <div class="card mb-4">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Workflow Information
+                        <i class="fas fa-play-circle"></i> Actions
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="info-label">Initiated Date</div>
-                            <div class="info-value">{{ workflow.initiated_date|date:"F d, Y" }}</div>
+                    {% if current_stage_index < stages|length|add:"-1" %}
+                    <form method="POST" action="{% url 'project_central:advance_project_stage' workflow.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="notes" class="form-label fw-medium">
+                                Stage Completion Notes
+                            </label>
+                            <textarea id="notes" name="notes" rows="3"
+                                      class="form-control"
+                                      placeholder="Enter notes about completing {{ workflow.get_current_stage_display }} stage..."></textarea>
+                            <small class="text-muted">Document key decisions, outcomes, or blockers encountered.</small>
                         </div>
-                        <div class="col-md-6">
-                            <div class="info-label">Target Completion</div>
-                            <div class="info-value">
-                                {% if workflow.target_completion_date %}
-                                    {{ workflow.target_completion_date|date:"F d, Y" }}
-                                    {% if workflow.is_overdue %}
-                                        <span class="badge bg-danger ms-2">Overdue</span>
-                                    {% endif %}
-                                {% else %}
-                                    Not set
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-label">Project Lead</div>
-                            <div class="info-value">
-                                {% if workflow.project_lead %}
-                                    {{ workflow.project_lead.get_full_name }}
-                                {% else %}
-                                    Not assigned
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-label">MAO Focal Person</div>
-                            <div class="info-value">
-                                {% if workflow.mao_focal_person %}
-                                    {{ workflow.mao_focal_person.name }}
-                                {% else %}
-                                    Not assigned
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% if workflow.estimated_budget %}
-                        <div class="col-md-6">
-                            <div class="info-label">Estimated Budget</div>
-                            <div class="info-value">₱{{ workflow.estimated_budget|floatformat:2|intcomma }}</div>
-                        </div>
-                        {% endif %}
-                        {% if workflow.ppa %}
-                        <div class="col-md-6">
-                            <div class="info-label">Linked PPA</div>
-                            <div class="info-value">
-                                <a href="{% url 'monitoring:ppa_detail' workflow.ppa.id %}">{{ workflow.ppa.title }}</a>
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    {% if workflow.blocker_description %}
-                    <div class="alert alert-danger mt-3 mb-0">
-                        <h6 class="alert-heading">
-                            <i class="fas fa-exclamation-triangle"></i> Blocker Identified
-                        </h6>
-                        <p class="mb-0">{{ workflow.blocker_description }}</p>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            Advance to Next Stage
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="alert alert-success mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Workflow complete! All stages finished.
                     </div>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Workflow Timeline -->
+            <!-- Project Details -->
             <div class="card mb-4">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-tasks"></i> Workflow Stages
+                        <i class="fas fa-info-circle"></i> Project Details
                     </h5>
                 </div>
                 <div class="card-body">
-                    {% with workflow.get_stage_progress as progress %}
-                    {% for stage_code, stage_label in workflow.WORKFLOW_STAGES %}
-                        {% with stage_status=progress|get_item:stage_code %}
-                        <div class="workflow-stage {{ stage_status }}">
-                            <div class="d-flex align-items-center">
-                                <div class="stage-icon {{ stage_status }}">
-                                    {% if stage_status == 'completed' %}
-                                        <i class="fas fa-check"></i>
-                                    {% elif stage_status == 'active' %}
-                                        <i class="fas fa-spinner fa-pulse"></i>
-                                    {% else %}
-                                        <i class="fas fa-circle"></i>
-                                    {% endif %}
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1">{{ stage_label }}</h6>
-                                    {% if stage_code == workflow.current_stage %}
-                                        <small class="text-muted">
-                                            In progress since {{ workflow.last_stage_change|date:"M d, Y" }}
-                                        </small>
-                                    {% endif %}
-                                </div>
-                            </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-medium text-muted">Need:</div>
+                        <div class="col-sm-8">
+                            <a href="{% url 'mana:need_detail' workflow.primary_need.id %}">
+                                {{ workflow.primary_need.title }}
+                            </a>
                         </div>
-
-                        {% if not forloop.last %}
-                        <div class="timeline-connector {% if stage_status == 'completed' %}completed{% endif %}"></div>
-                        {% endif %}
-                        {% endwith %}
-                    {% endfor %}
-                    {% endwith %}
+                    </div>
+                    {% if workflow.ppa %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-medium text-muted">PPA:</div>
+                        <div class="col-sm-8">
+                            <a href="{% url 'monitoring:ppa_detail' workflow.ppa.id %}">
+                                {{ workflow.ppa.title }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-medium text-muted">Budget:</div>
+                        <div class="col-sm-8">
+                            ₱{{ workflow.ppa.budget_allocation|floatformat:2|intcomma }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-medium text-muted">Project Lead:</div>
+                        <div class="col-sm-8">
+                            {% if workflow.project_lead %}
+                                {{ workflow.project_lead.get_full_name }}
+                            {% else %}
+                                <span class="text-muted">Not assigned</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-medium text-muted">Initiated:</div>
+                        <div class="col-sm-8">{{ workflow.initiated_date|date:"F d, Y" }}</div>
+                    </div>
+                    {% if workflow.target_completion_date %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-medium text-muted">Target Completion:</div>
+                        <div class="col-sm-8">
+                            {{ workflow.target_completion_date|date:"F d, Y" }}
+                            {% if workflow.is_overdue %}
+                            <span class="badge bg-danger ms-2">Overdue</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if workflow.notes %}
+                    <div class="row">
+                        <div class="col-sm-4 fw-medium text-muted">Notes:</div>
+                        <div class="col-sm-8">{{ workflow.notes }}</div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
+            <!-- Related Tasks -->
+            {% if tasks %}
+            <div class="card mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks"></i> Related Tasks
+                    </h5>
+                    <span class="badge bg-secondary">{{ tasks|length }}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for task in tasks|slice:":5" %}
+                        <a href="{% url 'staff:task_detail' task.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ task.title }}</h6>
+                                    <small class="text-muted">
+                                        Due: {{ task.due_date|date:"M d, Y" }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ task.get_status_display|lower }}">
+                                    {{ task.get_status_display }}
+                                </span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: History & Alerts -->
+        <div class="col-md-4">
             <!-- Stage History -->
-            {% if stage_history %}
             <div class="card mb-4">
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
@@ -236,126 +271,56 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="timeline">
-                        {% for entry in stage_history %}
-                        <div class="mb-3 pb-3 border-bottom">
-                            <div class="d-flex justify-content-between">
-                                <strong>{{ entry.stage_display }}</strong>
-                                <small class="text-muted">{{ entry.entered_at|date:"M d, Y g:i A" }}</small>
-                            </div>
+                    {% if history %}
+                    <div class="space-y-4">
+                        {% for entry in history %}
+                        <div class="history-item mb-4">
+                            <p class="fw-medium mb-1">{{ entry.stage|title|capfirst }}</p>
+                            <p class="small text-muted mb-1">
+                                Completed by: {{ entry.user }}
+                            </p>
+                            <p class="small text-muted mb-1">
+                                {{ entry.timestamp|date:"M d, Y g:i A" }}
+                            </p>
                             {% if entry.notes %}
-                            <p class="mb-0 mt-1 text-muted small">{{ entry.notes }}</p>
+                            <p class="small fst-italic mt-2 text-dark">
+                                "{{ entry.notes }}"
+                            </p>
                             {% endif %}
-                            <small class="text-muted">By {{ entry.changed_by }}</small>
                         </div>
                         {% endfor %}
                     </div>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Related Tasks -->
-            <div class="card mb-4">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-tasks"></i> Related Tasks
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    {% if tasks %}
-                        <div class="list-group list-group-flush">
-                            {% for task in tasks %}
-                            <div class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h6 class="mb-1">{{ task.title }}</h6>
-                                        <small class="text-muted">
-                                            {% if task.assigned_to %}
-                                                Assigned to {{ task.assigned_to.get_full_name }}
-                                            {% endif %}
-                                            • Due {{ task.due_date|date:"M d, Y" }}
-                                        </small>
-                                    </div>
-                                    <span class="badge bg-{{ task.status }}">{{ task.get_status_display }}</span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
                     {% else %}
-                        <p class="p-3 text-muted text-center mb-0">No tasks yet</p>
+                    <p class="text-muted mb-0">No stage transitions yet.</p>
                     {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Quick Actions -->
-            <div class="card mb-4">
-                <div class="card-header bg-white">
-                    <h6 class="mb-0">Quick Actions</h6>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'project_central:advance_project_stage' workflow.id %}" class="btn btn-emerald-600">
-                            <i class="fas fa-forward"></i> Advance Stage
-                        </a>
-                        <a href="{% url 'project_central:generate_workflow_tasks' workflow.id %}" class="btn btn-outline-emerald-600">
-                            <i class="fas fa-magic"></i> Generate Tasks
-                        </a>
-                    </div>
                 </div>
             </div>
 
             <!-- Active Alerts -->
             {% if alerts %}
-            <div class="card mb-4">
+            <div class="card">
                 <div class="card-header bg-white">
-                    <h6 class="mb-0">
+                    <h5 class="mb-0">
                         <i class="fas fa-exclamation-triangle text-warning"></i> Active Alerts
-                    </h6>
+                    </h5>
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
                         {% for alert in alerts %}
                         <a href="{% url 'project_central:alert_detail' alert.id %}" class="list-group-item list-group-item-action">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong class="d-block mb-1">{{ alert.title }}</strong>
-                                    <small class="text-muted">{{ alert.created_at|timesince }} ago</small>
-                                </div>
-                                <span class="badge bg-{{ alert.severity }}">{{ alert.get_severity_display }}</span>
-                            </div>
+                            <span class="badge bg-{{ alert.severity }} mb-2">
+                                {{ alert.get_severity_display|upper }}
+                            </span>
+                            <p class="mb-1 fw-medium">{{ alert.title }}</p>
+                            <p class="small text-muted mb-0">
+                                {{ alert.description|truncatewords:15 }}
+                            </p>
                         </a>
                         {% endfor %}
                     </div>
                 </div>
             </div>
             {% endif %}
-
-            <!-- Need Information -->
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-lightbulb"></i> Original Need
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <h6>{{ need.title }}</h6>
-                    <p class="text-muted small mb-2">{{ need.description|truncatewords:30 }}</p>
-                    <div class="mb-2">
-                        <small class="text-muted">Priority Score:</small>
-                        <strong class="text-emerald-600">{{ need.priority_score|floatformat:1 }}</strong>
-                    </div>
-                    <div class="mb-2">
-                        <small class="text-muted">Sector:</small>
-                        <strong>{{ need.get_sector_display }}</strong>
-                    </div>
-                    <a href="{% url 'mana:need_detail' need.id %}" class="btn btn-sm btn-outline-emerald-600 w-100 mt-2">
-                        View Full Need
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 </div>

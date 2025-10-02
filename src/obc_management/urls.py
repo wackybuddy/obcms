@@ -47,7 +47,11 @@ urlpatterns = [
     path('', include('common.urls')),
     path('communities/', include('communities.urls')),
     path('monitoring/', include('monitoring.urls')),
+
+    # Project Central (Integrated Project Management)
     path('project-central/', include('project_central.urls')),
+
+    # Documents and MANA
     path('documents/', include(('recommendations.documents.urls', 'documents'), namespace='documents')),
     path('mana/workshops/', include(('mana.urls', 'mana'), namespace='mana')),
     

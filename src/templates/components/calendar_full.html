@@ -1,0 +1,394 @@
+{#
+Enhanced FullCalendar Widget Component
+
+Expected context:
+- calendar_id: unique identifier for calendar div (string)
+- events_feed_url: URL endpoint that returns events JSON (string)
+- initial_view: 'dayGridMonth', 'timeGridWeek', 'timeGridDay', 'listWeek' (default: 'dayGridMonth')
+- editable: boolean, allow drag-to-reschedule (default: False)
+- selectable: boolean, allow date range selection (default: False)
+- height: 'auto', 'parent', or pixel value like '650px' (default: 'auto')
+- slot_min_time: earliest time slot (default: '06:00:00')
+- slot_max_time: latest time slot (default: '20:00:00')
+- timezone: timezone identifier (default: 'Asia/Manila')
+- header_toolbar: custom header toolbar config (optional)
+- event_click_handler: custom JS function name for event clicks (optional)
+- show_weekends: boolean (default: True)
+- wrapper_class: custom wrapper classes (optional)
+
+Usage:
+{% include "components/calendar_full.html" with
+    calendar_id="assessment-calendar"
+    events_feed_url="/api/tasks/calendar-feed/"
+    initial_view="dayGridMonth"
+    editable=True
+    height="700px"
+%}
+#}
+{% load static %}
+
+<div class="{{ wrapper_class|default:'bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden' }}">
+    {# Calendar Container #}
+    <div id="{{ calendar_id }}"
+         class="calendar-widget p-4"
+         data-events-url="{{ events_feed_url }}"
+         data-editable="{{ editable|default:False|yesno:'true,false' }}"
+         data-selectable="{{ selectable|default:False|yesno:'true,false' }}"
+         role="application"
+         aria-label="Calendar view">
+    </div>
+
+    {# Loading Indicator #}
+    <div id="{{ calendar_id }}-loading"
+         class="hidden absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+        <div class="flex flex-col items-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-emerald-500 mb-2"></i>
+            <p class="text-sm text-gray-600">Loading events...</p>
+        </div>
+    </div>
+</div>
+
+{# FullCalendar Initialization Script #}
+<script>
+(function() {
+    // Wait for FullCalendar to be loaded
+    function initializeCalendar() {
+        const calendarEl = document.getElementById('{{ calendar_id }}');
+        if (!calendarEl) {
+            console.error('Calendar element not found: {{ calendar_id }}');
+            return;
+        }
+
+        // Check if FullCalendar is loaded
+        if (typeof FullCalendar === 'undefined') {
+            console.error('FullCalendar library is not loaded. Include it in your template.');
+            calendarEl.innerHTML = '<p class="text-red-600 text-sm p-4">FullCalendar library not loaded.</p>';
+            return;
+        }
+
+        // Prevent duplicate initialization
+        if (calendarEl.dataset.initialized === 'true') {
+            console.log('Calendar already initialized: {{ calendar_id }}');
+            return;
+        }
+
+        const eventsUrl = calendarEl.dataset.eventsUrl;
+        const editable = calendarEl.dataset.editable === 'true';
+        const selectable = calendarEl.dataset.selectable === 'true';
+
+        // Calendar configuration
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: '{{ initial_view|default:"dayGridMonth" }}',
+            height: '{{ height|default:"auto" }}',
+            timeZone: '{{ timezone|default:"Asia/Manila" }}',
+            slotMinTime: '{{ slot_min_time|default:"06:00:00" }}',
+            slotMaxTime: '{{ slot_max_time|default:"20:00:00" }}',
+            weekends: {{ show_weekends|default:True|yesno:'true,false' }},
+
+            // Header toolbar
+            headerToolbar: {% if header_toolbar %}{{ header_toolbar|safe }}{% else %}{
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek'
+            }{% endif %},
+
+            // Button text
+            buttonText: {
+                today: 'Today',
+                month: 'Month',
+                week: 'Week',
+                day: 'Day',
+                list: 'List'
+            },
+
+            // Load events from feed URL
+            events: {
+                url: eventsUrl,
+                method: 'GET',
+                failure: function() {
+                    console.error('Failed to fetch calendar events from:', eventsUrl);
+                    if (window.showToast) {
+                        window.showToast('Failed to load calendar events', 'error');
+                    }
+                }
+            },
+
+            // Interaction settings
+            editable: editable,
+            selectable: selectable,
+            selectMirror: true,
+            dayMaxEvents: true, // Show "more" link when too many events
+
+            // Event click handler
+            eventClick: function(info) {
+                {% if event_click_handler %}
+                    // Use custom handler if provided
+                    if (typeof {{ event_click_handler }} === 'function') {
+                        {{ event_click_handler }}(info);
+                    }
+                {% else %}
+                    // Default handler: open modal based on event type
+                    const eventType = info.event.extendedProps.type || 'event';
+                    const eventId = info.event.id;
+
+                    let modalUrl;
+                    if (eventType === 'task') {
+                        modalUrl = `/oobc-management/staff/tasks/${eventId}/modal/`;
+                    } else if (eventType === 'event') {
+                        modalUrl = `/coordination/events/${eventId}/modal/`;
+                    } else if (eventType === 'milestone') {
+                        modalUrl = `/oobc-management/projects/${info.event.extendedProps.project_id}/milestones/${eventId}/modal/`;
+                    } else {
+                        // Generic detail view
+                        modalUrl = info.event.url;
+                    }
+
+                    if (modalUrl && typeof htmx !== 'undefined') {
+                        info.jsEvent.preventDefault(); // Prevent navigation
+                        htmx.ajax('GET', modalUrl, {
+                            target: '#modal-container',
+                            swap: 'innerHTML'
+                        });
+                    }
+                {% endif %}
+            },
+
+            // Date selection handler (for creating new events)
+            {% if selectable %}
+            select: function(info) {
+                // Trigger event creation modal with selected dates
+                const startDate = info.startStr;
+                const endDate = info.endStr;
+
+                if (typeof htmx !== 'undefined') {
+                    htmx.ajax('GET', '/oobc-management/staff/tasks/create/', {
+                        target: '#modal-container',
+                        swap: 'innerHTML',
+                        values: {
+                            start_date: startDate,
+                            due_date: endDate
+                        }
+                    });
+                }
+
+                calendar.unselect();
+            },
+            {% endif %}
+
+            // Drag and drop handler (for rescheduling)
+            {% if editable %}
+            eventDrop: function(info) {
+                const eventType = info.event.extendedProps.type || 'task';
+
+                // Only allow rescheduling for tasks
+                if (eventType !== 'task') {
+                    info.revert();
+                    if (window.showToast) {
+                        window.showToast('Only tasks can be rescheduled', 'warning');
+                    }
+                    return;
+                }
+
+                // Update task due date
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                  document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+                fetch(`/api/tasks/${info.event.id}/update/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        due_date: info.event.start.toISOString().split('T')[0]
+                    })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Server returned error');
+                    }
+                    if (window.showToast) {
+                        window.showToast('Task rescheduled successfully', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Failed to reschedule task:', error);
+                    info.revert();
+                    if (window.showToast) {
+                        window.showToast('Failed to reschedule task', 'error');
+                    }
+                });
+            },
+
+            eventResize: function(info) {
+                // Handle event duration changes
+                console.log('Event resized:', info.event.id);
+                // Implement update logic similar to eventDrop
+            },
+            {% endif %}
+
+            // Event rendering customization
+            eventDidMount: function(info) {
+                const type = info.event.extendedProps.type;
+
+                // Color-code by event type
+                if (type === 'milestone') {
+                    info.el.style.backgroundColor = '#3b82f6'; // blue
+                    info.el.style.borderColor = '#2563eb';
+                } else if (type === 'task') {
+                    info.el.style.backgroundColor = '#10b981'; // green
+                    info.el.style.borderColor = '#059669';
+                } else if (type === 'event') {
+                    info.el.style.backgroundColor = '#f97316'; // orange
+                    info.el.style.borderColor = '#ea580c';
+                }
+
+                // Add tooltip with more details
+                if (info.event.extendedProps.description) {
+                    info.el.setAttribute('title', info.event.extendedProps.description);
+                }
+
+                // Add priority indicator for tasks
+                if (type === 'task' && info.event.extendedProps.priority === 'high') {
+                    info.el.style.borderLeft = '4px solid #dc2626';
+                }
+            },
+
+            // Loading indicator
+            loading: function(isLoading) {
+                const loadingEl = document.getElementById('{{ calendar_id }}-loading');
+                if (loadingEl) {
+                    if (isLoading) {
+                        loadingEl.classList.remove('hidden');
+                        calendarEl.classList.add('opacity-50');
+                    } else {
+                        loadingEl.classList.add('hidden');
+                        calendarEl.classList.remove('opacity-50');
+                    }
+                }
+            },
+
+            // Event content customization
+            eventContent: function(arg) {
+                const event = arg.event;
+                const timeText = arg.timeText;
+                const title = event.title;
+
+                // Custom HTML for event display
+                let html = '<div class="fc-event-main-frame">';
+                if (timeText) {
+                    html += `<div class="fc-event-time">${timeText}</div>`;
+                }
+                html += `<div class="fc-event-title-container">`;
+                html += `<div class="fc-event-title">${title}</div>`;
+
+                // Add assignee info if available
+                if (event.extendedProps.assigned_to) {
+                    html += `<div class="text-xs opacity-75 mt-1"><i class="fas fa-user"></i> ${event.extendedProps.assigned_to}</div>`;
+                }
+
+                html += `</div></div>`;
+
+                return { html: html };
+            }
+        });
+
+        // Render the calendar
+        calendar.render();
+
+        // Mark as initialized
+        calendarEl.dataset.initialized = 'true';
+
+        // Store calendar instance for external access
+        window['calendar_' + '{{ calendar_id }}'] = calendar;
+
+        // Listen for HTMX events to refresh calendar
+        if (typeof htmx !== 'undefined') {
+            document.body.addEventListener('task-updated', function() {
+                calendar.refetchEvents();
+            });
+
+            document.body.addEventListener('kanban:itemMoved', function() {
+                calendar.refetchEvents();
+            });
+        }
+
+        console.log('Calendar initialized successfully:', '{{ calendar_id }}');
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeCalendar);
+    } else {
+        initializeCalendar();
+    }
+
+    // Re-initialize after HTMX swap
+    if (typeof htmx !== 'undefined') {
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.target.querySelector('#{{ calendar_id }}')) {
+                setTimeout(initializeCalendar, 100);
+            }
+        });
+    }
+})();
+</script>
+
+<style>
+/* FullCalendar custom styling */
+.fc {
+    font-family: inherit;
+}
+
+.fc-button {
+    background-color: #10b981 !important;
+    border-color: #10b981 !important;
+    text-transform: capitalize;
+}
+
+.fc-button:hover {
+    background-color: #059669 !important;
+    border-color: #059669 !important;
+}
+
+.fc-button-active {
+    background-color: #047857 !important;
+    border-color: #047857 !important;
+}
+
+.fc-today-button:disabled {
+    background-color: #6b7280 !important;
+    border-color: #6b7280 !important;
+    opacity: 0.5;
+}
+
+/* Event styling */
+.fc-event {
+    cursor: pointer;
+    transition: transform 150ms ease-in-out, box-shadow 150ms ease-in-out;
+}
+
+.fc-event:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .fc-header-toolbar {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .fc-button {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+</style>

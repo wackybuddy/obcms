@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import facilitator_views, participant_views
+from . import facilitator_views, participant_views, views
 
 app_name = "mana"
 
@@ -99,5 +99,41 @@ urlpatterns = [
         "assessments/<uuid:assessment_id>/facilitator/exports/<str:workshop_type>/<str:format_type>/",
         facilitator_views.export_workshop_responses,
         name="facilitator_export_workshop",
+    ),
+    # Phase 2: MANA Integration URLs
+    path(
+        "assessments/<uuid:assessment_id>/tasks/board/",
+        views.assessment_tasks_board,
+        name="mana_assessment_tasks_board",
+    ),
+    path(
+        "assessments/<uuid:assessment_id>/calendar/",
+        views.assessment_calendar,
+        name="mana_assessment_calendar",
+    ),
+    path(
+        "assessments/<uuid:assessment_id>/calendar/feed/",
+        views.assessment_calendar_feed,
+        name="mana_assessment_calendar_feed",
+    ),
+    path(
+        "needs/prioritize/",
+        views.needs_prioritization_board,
+        name="mana_needs_prioritize",
+    ),
+    path(
+        "needs/update-ranking/",
+        views.needs_update_ranking,
+        name="mana_needs_update_ranking",
+    ),
+    path(
+        "needs/<int:need_id>/vote/",
+        views.need_vote,
+        name="mana_need_vote",
+    ),
+    path(
+        "needs/export/",
+        views.needs_export,
+        name="mana_needs_export",
     ),
 ]

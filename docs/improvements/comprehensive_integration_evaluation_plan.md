@@ -8,7 +8,7 @@
 **Related Documents**:
 - [Integrated Calendar System Evaluation Plan](integrated_calendar_system_evaluation_plan.md) - 88 tasks
 - [Integrated Staff Task Management Evaluation Plan](integrated_staff_task_management_evaluation_plan.md) - 40 tasks
-- [Integrated Project Management System Evaluation Plan](integrated_project_management_system_evaluation_plan.md) - 8 phases
+- [Integrated Project Management System Evaluation Plan](integrated_project_management_system_evaluation_plan.md) - 8 phases; 63 Tasks
 
 ---
 
@@ -2146,7 +2146,7 @@ The three systems (Calendar, Task Management, Project Management) are **highly c
 **Task Management Tasks** (40 total from original plan):
 - See [integrated_staff_task_management_evaluation_plan.md](integrated_staff_task_management_evaluation_plan.md)
 
-**Project Management Tasks** (8 phases from original plan):
+**Project Management Tasks** (8 phases from original plan; 63 tasks total):
 - See [integrated_project_management_system_evaluation_plan.md](integrated_project_management_system_evaluation_plan.md)
 
 **Integration-Specific Tasks** (25 new tasks):
@@ -2265,30 +2265,6 @@ The three systems (Calendar, Task Management, Project Management) are **highly c
 - Consistent UI/UX patterns
 - Integrated analytics and reporting
 
-## Coding Agent Implementation Checklist
-
-### Priority A — Data Foundations & Migrations
-- [x] Add `milestone_dates` JSONField to `monitoring.MonitoringEntry` with admin/form exposure, default handling, and forward/backward-safe migration (update serializers, API schemas, and seed data)
-- [x] Author data migration to move `MonitoringEntryTaskAssignment` into `common.StaffTask`, including idempotent script, integrity assertions, and removal/deprecation of legacy model references in `monitoring/` views, admin, and templates
-- [x] Backfill existing `MonitoringEntry` records so milestone metadata populates the new field (pull from `next_milestone_date`, `target_end_date`, workflow stages)
-- [x] Introduce validation on `StaffTask` ensuring only one domain FK is set (model `clean()`, admin form guard) and extend tests for dual-FK errors
-
-### Priority B — Calendar & Task Experience
-- [x] Update `common.services.calendar.build_calendar_payload` to merge StaffTask items without duplicating linked `coordination.Event` records; add regression tests covering linked-event suppression
-- [x] Surface PPA milestones on the calendar using the new `milestone_dates`, including color coding, filters, and analytics counters
-- [x] Ensure task-generated resource bookings flow through `CalendarResourceBooking` (service function on task creation + validation + tests)
-- [x] Implement cache strategy for calendar payloads (context-level caching + signal-based invalidation) and measure before/after performance with pytest benchmarks
-
-### Priority C — Project Central & Automation
-- [x] Connect StaffTask completion to `MonitoringEntry.progress` updates with guarded signals and unit tests (avoid cascades, ensure atomicity)
-- [x] Expose StaffTask lists inside Project Central dashboards (`project_central` views/templates) with HTMX interactions and filters by workflow stage
-- [x] Add idempotent task-template instantiation service covering MANA, coordination, monitoring triggers; document service contract and add pytest coverage for duplicate suppression
-- [x] Batch calendar/task notifications in Celery (`send_calendar_notifications_batch`) with logging, retries, and unit tests for failure handling
-
-### Priority D — Quality Assurance & Operability
-- [x] Extend pytest suites for new migrations, calendar-task integration, signal wiring, and project dashboards (unit + integration + HTMX responses)
-- [x] Generate staging rehearsal checklist: run migrations on snapshot, execute smoke tests, verify notification queue, and capture performance baselines
-- [x] Refresh docs/user guides to reflect integrated workflows (calendar usage, task dashboard, project central) and link updates in `docs/README.md`
 
 ---
 

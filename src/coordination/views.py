@@ -808,3 +808,398 @@ def event_edit_instance(request, event_id):
         "submit_label": "Save Changes",
     }
     return render(request, "coordination/event_edit_instance.html", context)
+
+
+# ===================================
+# Phase 3: Enhanced Resource Booking
+# ===================================
+
+@login_required
+def resource_bookings_feed(request, resource_id):
+    """
+    Return resource bookings as JSON feed for FullCalendar.
+    Shows approved and pending bookings.
+    """
+    from common.models import CalendarResource, CalendarResourceBooking
+    from django.http import JsonResponse
+
+    resource = get_object_or_404(CalendarResource, id=resource_id)
+
+    # Get bookings for this resource
+    bookings = CalendarResourceBooking.objects.filter(
+        resource=resource,
+        status__in=['approved', 'pending']
+    ).select_related('booked_by')
+
+    events = []
+    for booking in bookings:
+        events.append({
+            'id': str(booking.id),
+            'title': f"{booking.booked_by.get_full_name()} - {booking.status}",
+            'start': booking.start_datetime.isoformat(),
+            'end': booking.end_datetime.isoformat(),
+            'backgroundColor': '#10b981' if booking.status == 'approved' else '#f59e0b',
+            'borderColor': '#059669' if booking.status == 'approved' else '#d97706',
+            'extendedProps': {
+                'status': booking.status,
+                'bookedBy': booking.booked_by.get_full_name(),
+                'notes': booking.notes,
+            }
+        })
+
+    return JsonResponse(events, safe=False)
+
+
+@login_required
+def calendar_check_conflicts(request):
+    """
+    Real-time conflict checking via HTMX.
+    Returns HTML fragment with warnings or success message.
+    """
+    from common.models import CalendarResource, CalendarResourceBooking
+    from django.http import HttpResponse
+    from datetime import datetime
+
+    resource_id = request.GET.get('resource_id')
+    start = request.GET.get('start_datetime')
+    end = request.GET.get('end_datetime')
+
+    if not (resource_id and start and end):
+        return HttpResponse('')
+
+    try:
+        resource = get_object_or_404(CalendarResource, id=resource_id)
+
+        # Parse datetime strings (ISO format from datetime-local input)
+        start_dt = timezone.make_aware(datetime.fromisoformat(start))
+        end_dt = timezone.make_aware(datetime.fromisoformat(end))
+
+        # Check for overlapping bookings
+        conflicts = CalendarResourceBooking.objects.filter(
+            resource=resource,
+            status__in=['approved', 'pending'],
+            start_datetime__lt=end_dt,
+            end_datetime__gt=start_dt
+        ).select_related('booked_by')
+
+        if conflicts.exists():
+            html = '<div class="border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded">'
+            html += '<div class="flex items-center mb-2">'
+            html += '<i class="fas fa-exclamation-triangle text-yellow-600 mr-2"></i>'
+            html += f'<span class="font-semibold text-yellow-800">{conflicts.count()} conflicting booking(s) found:</span>'
+            html += '</div>'
+            html += '<ul class="ml-6 list-disc space-y-1">'
+            for booking in conflicts:
+                status_class = 'bg-green-100 text-green-800' if booking.status == 'approved' else 'bg-yellow-100 text-yellow-800'
+                html += f'<li class="text-sm text-yellow-800">'
+                html += f'{booking.start_datetime.strftime("%b %d, %I:%M %p")} - '
+                html += f'{booking.end_datetime.strftime("%I:%M %p")} '
+                html += f'<span class="px-2 py-1 text-xs rounded {status_class}">'
+                html += f'{booking.get_status_display()}'
+                html += f'</span>'
+                html += f' by {booking.booked_by.get_full_name()}'
+                html += f'</li>'
+            html += '</ul>'
+            html += '</div>'
+            return HttpResponse(html)
+        else:
+            html = '<div class="border-l-4 border-green-500 bg-green-50 p-4 rounded">'
+            html += '<div class="flex items-center">'
+            html += '<i class="fas fa-check-circle text-green-600 mr-2"></i>'
+            html += '<span class="text-green-800 font-medium">Resource available for selected time</span>'
+            html += '</div>'
+            html += '</div>'
+            return HttpResponse(html)
+    except Exception as e:
+        logger.error(f"Error checking conflicts: {e}")
+        return HttpResponse(f'<div class="border-l-4 border-red-500 bg-red-50 p-4 rounded text-red-800">Error checking conflicts</div>')
+
+
+@login_required
+def resource_booking_form(request, resource_id):
+    """
+    Render and process resource booking form with availability calendar.
+    """
+    from common.models import CalendarResource, CalendarResourceBooking
+
+    resource = get_object_or_404(CalendarResource, id=resource_id)
+
+    if request.method == 'POST':
+        # Extract form data
+        start_datetime = request.POST.get('start_datetime')
+        end_datetime = request.POST.get('end_datetime')
+        purpose = request.POST.get('purpose')
+        is_recurring = request.POST.get('is_recurring') == 'on'
+
+        try:
+            # Parse datetimes
+            start_dt = timezone.make_aware(datetime.fromisoformat(start_datetime))
+            end_dt = timezone.make_aware(datetime.fromisoformat(end_datetime))
+
+            # Create booking
+            with transaction.atomic():
+                booking = CalendarResourceBooking.objects.create(
+                    resource=resource,
+                    booked_by=request.user,
+                    start_datetime=start_dt,
+                    end_datetime=end_dt,
+                    notes=purpose,
+                    status='pending' if resource.requires_approval else 'approved',
+                )
+
+                # Handle recurring bookings
+                if is_recurring:
+                    recurrence_pattern = request.POST.get('recurrence_pattern')
+                    recurrence_end = request.POST.get('recurrence_end_date')
+
+                    if recurrence_end:
+                        end_date = datetime.fromisoformat(recurrence_end).date()
+                        current_date = start_dt
+
+                        # Generate recurring instances (limit to 52 weeks)
+                        count = 0
+                        while current_date.date() < end_date and count < 52:
+                            if recurrence_pattern == 'daily':
+                                current_date += timedelta(days=1)
+                            elif recurrence_pattern == 'weekly':
+                                current_date += timedelta(weeks=1)
+                            elif recurrence_pattern == 'biweekly':
+                                current_date += timedelta(weeks=2)
+                            elif recurrence_pattern == 'monthly':
+                                # Add roughly 30 days
+                                current_date += timedelta(days=30)
+
+                            if current_date.date() <= end_date:
+                                new_end = current_date + (end_dt - start_dt)
+                                CalendarResourceBooking.objects.create(
+                                    resource=resource,
+                                    booked_by=request.user,
+                                    start_datetime=current_date,
+                                    end_datetime=new_end,
+                                    notes=f"{purpose} (Recurring)",
+                                    status='pending' if resource.requires_approval else 'approved',
+                                )
+                                count += 1
+
+            messages.success(
+                request,
+                f"Resource booking submitted successfully. Status: {'Pending Approval' if resource.requires_approval else 'Approved'}"
+            )
+            return redirect('common:coordination_home')
+
+        except Exception as e:
+            logger.error(f"Error creating booking: {e}")
+            messages.error(request, f"Error creating booking: {str(e)}")
+
+    context = {
+        'resource': resource,
+        'return_url': reverse('common:coordination_home'),
+        'page_title': f'Book {resource.name}',
+        'page_heading': f'Book {resource.name}',
+    }
+    return render(request, 'coordination/resource_booking_form.html', context)
+
+
+# ===================================
+# Phase 3: Event Attendance Tracking
+# ===================================
+
+@login_required
+def event_attendance_tracker(request, event_id):
+    """
+    Main attendance tracking interface with QR scanner and live updates.
+    """
+    from .models import EventAttendance, EventParticipant
+
+    event = get_object_or_404(Event, id=event_id)
+
+    context = {
+        'event': event,
+        'return_url': reverse('common:coordination_events'),
+        'page_title': f'Attendance - {event.title}',
+        'page_heading': f'Attendance Tracker: {event.title}',
+    }
+    return render(request, 'coordination/event_attendance_tracker.html', context)
+
+
+@login_required
+def event_attendance_count(request, event_id):
+    """
+    Return HTML fragment with live attendance counter.
+    Polled every 10 seconds by HTMX.
+    """
+    from .models import EventAttendance
+    from django.http import HttpResponse
+
+    event = get_object_or_404(Event, id=event_id)
+
+    # Count checked-in participants
+    checked_in = EventAttendance.objects.filter(
+        event=event,
+        checked_in_at__isnull=False
+    ).count()
+
+    # Count expected participants
+    expected = event.participants.count()
+    percentage = (checked_in / expected * 100) if expected > 0 else 0
+
+    # Calculate circumference for SVG circle
+    circumference = 2 * 3.14159 * 45  # radius = 45
+    offset = circumference - (percentage / 100 * circumference)
+
+    # Generate HTML
+    html = f'''
+    <div class="flex flex-col items-center">
+        <div class="relative w-48 h-48 mb-4">
+            <!-- SVG Circular Progress -->
+            <svg viewBox="0 0 100 100" class="transform -rotate-90 w-full h-full">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"/>
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="8"
+                        stroke-dasharray="{circumference}"
+                        stroke-dashoffset="{offset}"
+                        stroke-linecap="round"
+                        class="transition-all duration-500"/>
+            </svg>
+
+            <!-- Counter Text (centered) -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                <span class="text-5xl font-bold text-gray-900">{checked_in}</span>
+                <span class="text-xl text-gray-600">/ {expected}</span>
+            </div>
+        </div>
+
+        <p class="text-center text-lg">
+            <strong class="text-2xl text-emerald-600">{percentage:.0f}%</strong>
+            <span class="text-gray-600 ml-2">attendance</span>
+        </p>
+
+        <p class="text-sm text-gray-500 mt-2">
+            Last updated: {timezone.now().strftime("%I:%M:%S %p")}
+        </p>
+    </div>
+    '''
+
+    return HttpResponse(html)
+
+
+@login_required
+def event_participant_list(request, event_id):
+    """
+    Return HTML fragment with participant list.
+    Shows check-in status for each participant.
+    """
+    from .models import EventAttendance
+    from django.http import HttpResponse
+
+    event = get_object_or_404(Event, id=event_id)
+    participants = event.participants.all().select_related('user', 'contact')
+
+    html = '<div class="space-y-2">'
+
+    for participant in participants:
+        # Check if participant has checked in
+        attendance = EventAttendance.objects.filter(
+            event=event,
+            participant=participant
+        ).first()
+
+        checked_in = attendance and attendance.checked_in_at
+
+        html += f'''
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+             data-participant-id="{participant.id}">
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                    {f'<i class="fas fa-check-circle text-green-500 text-xl"></i>' if checked_in else '<i class="far fa-clock text-gray-400 text-xl"></i>'}
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">{participant.participant_name}</p>
+                    <p class="text-sm text-gray-600">{participant.participant_email or 'No email'}</p>
+                    {f'<p class="text-xs text-green-600 mt-1"><i class="fas fa-check mr-1"></i>Checked in at {attendance.checked_in_at.strftime("%I:%M %p")}</p>' if checked_in else ''}
+                </div>
+            </div>
+
+            {'' if checked_in else f'''
+            <button class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
+                    hx-post="{reverse('common:coordination_event_check_in', kwargs={'event_id': event.id})}"
+                    hx-vals='{{"participant_id": "{participant.id}", "method": "manual"}}'
+                    hx-target="[data-participant-id='{participant.id}']"
+                    hx-swap="outerHTML"
+                    hx-headers='{{"X-CSRFToken": "{request.META.get('CSRF_COOKIE', '')}"}}'>
+                <i class="fas fa-user-check mr-1"></i>Check In
+            </button>
+            '''}
+        </div>
+        '''
+
+    if not participants.exists():
+        html += '<p class="text-center text-gray-500 py-8">No participants registered yet.</p>'
+
+    html += '</div>'
+
+    return HttpResponse(html)
+
+
+@login_required
+@require_POST
+def event_check_in(request, event_id):
+    """
+    Handle participant check-in (manual or QR code).
+    Returns updated participant row HTML.
+    """
+    from .models import EventAttendance, EventParticipant
+    from django.http import HttpResponse
+
+    event = get_object_or_404(Event, id=event_id)
+    participant_id = request.POST.get('participant_id')
+    method = request.POST.get('method', 'manual')
+
+    try:
+        participant = get_object_or_404(EventParticipant, id=participant_id, event=event)
+
+        # Create or update attendance record
+        attendance, created = EventAttendance.objects.get_or_create(
+            event=event,
+            participant=participant,
+            defaults={
+                'checked_in_at': timezone.now(),
+                'check_in_method': method,
+            }
+        )
+
+        if not created and not attendance.checked_in_at:
+            attendance.checked_in_at = timezone.now()
+            attendance.check_in_method = method
+            attendance.save()
+
+        # Return updated participant row HTML
+        html = f'''
+        <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-500"
+             data-participant-id="{participant.id}">
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-900">{participant.participant_name}</p>
+                    <p class="text-sm text-gray-600">{participant.participant_email or 'No email'}</p>
+                    <p class="text-xs text-green-600 mt-1">
+                        <i class="fas fa-check mr-1"></i>Checked in at {attendance.checked_in_at.strftime("%I:%M %p")}
+                        via {method.replace('_', ' ').title()}
+                    </p>
+                </div>
+            </div>
+            <div class="text-green-600">
+                <i class="fas fa-check text-2xl"></i>
+            </div>
+        </div>
+        '''
+
+        return HttpResponse(html)
+
+    except Exception as e:
+        logger.error(f"Error checking in participant: {e}")
+        return HttpResponse(
+            f'<div class="p-4 bg-red-50 rounded-lg text-red-800">Error: {str(e)}</div>',
+            status=400
+        )

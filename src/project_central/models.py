@@ -323,6 +323,119 @@ class ProjectWorkflow(models.Model):
         return stage_weights.get(self.current_stage, 0)
 
 
+class BudgetApprovalStage(models.Model):
+    """
+    Tracks budget approval workflow for PPAs through multiple approval stages.
+
+    Each PPA must go through several approval stages before budget is enacted.
+    This model tracks the status of each stage and captures approval history.
+    """
+
+    STAGE_CHOICES = [
+        ('draft', 'Draft'),
+        ('technical_review', 'Technical Review'),
+        ('budget_review', 'Budget Review'),
+        ('executive_approval', 'Executive Approval'),
+        ('enacted', 'Enacted'),
+    ]
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('returned', 'Returned for Revision'),
+    ]
+
+    # Identifiers
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # Related PPA
+    ppa = models.ForeignKey(
+        'monitoring.MonitoringEntry',
+        on_delete=models.CASCADE,
+        related_name='approval_stages',
+        help_text="PPA being approved"
+    )
+
+    # Stage and Status
+    stage = models.CharField(
+        max_length=30,
+        choices=STAGE_CHOICES,
+        help_text="Approval stage"
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        help_text="Current status of this approval stage"
+    )
+
+    # Approval Details
+    approver = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='budget_approvals',
+        help_text="User who approved/rejected this stage"
+    )
+
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When this stage was approved/rejected"
+    )
+
+    comments = models.TextField(
+        blank=True,
+        help_text="Reviewer comments and feedback"
+    )
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Budget Approval Stage"
+        verbose_name_plural = "Budget Approval Stages"
+        ordering = ['created_at']
+        unique_together = [['ppa', 'stage']]
+        indexes = [
+            models.Index(fields=['ppa', 'stage']),
+            models.Index(fields=['status', 'stage']),
+            models.Index(fields=['approver', 'approved_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.ppa.title} - {self.get_stage_display()} ({self.get_status_display()})"
+
+    def approve(self, user, comments=''):
+        """Mark this stage as approved."""
+        self.status = 'approved'
+        self.approver = user
+        self.approved_at = timezone.now()
+        if comments:
+            self.comments = comments
+        self.save()
+
+    def reject(self, user, comments):
+        """Mark this stage as rejected."""
+        self.status = 'rejected'
+        self.approver = user
+        self.approved_at = timezone.now()
+        self.comments = comments
+        self.save()
+
+    def return_for_revision(self, user, comments):
+        """Return this stage for revision."""
+        self.status = 'returned'
+        self.approver = user
+        self.approved_at = timezone.now()
+        self.comments = comments
+        self.save()
+
+
 class BudgetCeiling(models.Model):
     """
     Tracks budget ceilings by sector, funding source, and fiscal year.
