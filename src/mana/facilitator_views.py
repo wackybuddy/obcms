@@ -17,6 +17,7 @@ from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.conf import settings
 from django.views.decorators.http import require_http_methods
 
@@ -266,7 +267,7 @@ def manage_participants(request, assessment_id):
                     with transaction.atomic():
                         temp_password = (
                             data.get("temp_password")
-                            or User.objects.make_random_password()
+                            or get_random_string(length=12)
                         )
                         user = User.objects.create_user(
                             username=email,
@@ -321,7 +322,7 @@ def manage_participants(request, assessment_id):
                             first_name=row.get("first_name", ""),
                             last_name=row.get("last_name", ""),
                             password=row.get(
-                                "password", User.objects.make_random_password()
+                                "password", get_random_string(length=12)
                             ),
                         )
                         _ensure_participant_permissions(user)

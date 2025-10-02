@@ -6,6 +6,7 @@ from pathlib import Path
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
+from django.utils.crypto import get_random_string
 
 from common.models import Province
 from mana.models import Assessment, WorkshopParticipantAccount
@@ -71,7 +72,7 @@ class Command(BaseCommand):
                 password = (
                     row.get("password")
                     or options.get("default_password")
-                    or User.objects.make_random_password()
+                    or get_random_string(length=12)
                 )
 
                 user = User.objects.create_user(

@@ -14,7 +14,11 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
 - [Installation Guide](admin-guide/installation.md)
 
 ### 🚀 Deployment & Infrastructure
+
+**⚠️ BEFORE DEPLOYING: Read [CLAUDE.md](../CLAUDE.md) Lines 362-683 - Complete Deployment Checklist**
+
 - **Production Deployment:**
+  - [Deployment Readiness Verification](deployment/DEPLOYMENT_READINESS_VERIFICATION.md) ⭐ **FINAL VERIFICATION - 100% Ready**
   - [Production Deployment Issues & Resolution](deployment/production-deployment-issues-resolution.md) ⭐ **Primary Reference**
   - [Deployment Implementation Status](deployment/DEPLOYMENT_IMPLEMENTATION_STATUS.md)
   - [Critical Blockers Fixed](deployment/CRITICAL_BLOCKERS_FIXED.md) ✅
@@ -26,8 +30,72 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Coolify Deployment Checklist](deployment/deployment-coolify.md)
   - [Docker Guide](deployment/docker-guide.md)
 
-- **Database Migration:**
-  - [PostgreSQL Migration Review](deployment/POSTGRESQL_MIGRATION_REVIEW.md) ✅ **NEW - Migration Ready**
+- **Django 5.2 LTS Upgrade:**
+
+  **⚠️ NEW: Django 5.2 LTS Migration Ready**
+
+  **Quick Start:**
+  - [Django 5.2 Quick Start Guide](deployment/DJANGO_5_2_QUICK_START.md) ⭐ **START HERE - Ready to Migrate**
+  - [Django 5.2 Migration Analysis](deployment/DJANGO_5_2_MIGRATION_ANALYSIS.md) ✅ **Complete Impact Assessment**
+
+  **Key Highlights:**
+  - ✅ **All Dependencies Compatible** - DRF 3.16, django-debug-toolbar 6.0, etc.
+  - ✅ **Audit Passed** - 0 critical issues, 3 minor deprecation warnings
+  - ✅ **Python 3.12 Fully Supported** - No upgrade needed
+  - ✅ **Extended Support** - Until April 2028 (+15 months vs Django 4.2)
+  - ✅ **Low Risk** - Minimal breaking changes, mostly configuration
+
+  **Migration Steps:**
+  ```bash
+  # 1. Run audit
+  ./scripts/audit_django_5_compatibility.sh
+
+  # 2. Update Django
+  # Edit requirements/base.txt: Django>=5.2.0,<5.3.0
+  pip install -r requirements/development.txt
+
+  # 3. Migrate
+  cd src && python manage.py migrate
+
+  # 4. Test
+  pytest -v
+  ```
+
+- **Database Migration to PostgreSQL:**
+
+  **⚠️ CRITICAL: Before Migration, Review ALL Documents Below**
+
+  **Quick Start Guide:**
+  ```bash
+  # 1. Create PostgreSQL database (NO PostGIS extension needed!)
+  CREATE DATABASE obcms_prod ENCODING 'UTF8';
+  CREATE USER obcms_user WITH PASSWORD 'secure-password';
+  GRANT ALL PRIVILEGES ON DATABASE obcms_prod TO obcms_user;
+
+  # 2. Update .env
+  DATABASE_URL=postgres://obcms_user:password@localhost:5432/obcms_prod
+
+  # 3. Run migrations (all 118 migrations are PostgreSQL-compatible)
+  cd src
+  python manage.py migrate
+  # Expected: All migrations complete in 2-5 minutes
+  ```
+
+  **Critical Decisions Made:**
+  - ✅ **Geographic Data: Use JSONField (NO PostGIS!)** - Production-ready, works with PostgreSQL native `jsonb`
+  - ✅ **Text Queries: 100% Compatible** - All queries already use case-insensitive lookups
+  - ✅ **No Code Changes Required** - System is fully PostgreSQL-compatible
+
+  **Essential Reading:**
+  - [PostgreSQL Migration Summary](deployment/POSTGRESQL_MIGRATION_SUMMARY.md) ⭐ **START HERE - Complete Overview**
+  - [PostgreSQL Migration Review](deployment/POSTGRESQL_MIGRATION_REVIEW.md) ✅ **Technical Analysis**
+  - [Case-Sensitive Query Audit](deployment/CASE_SENSITIVE_QUERY_AUDIT.md) ✅ **100% Compatible**
+
+  **Geographic Data (Critical):**
+  - [Geographic Data Implementation](improvements/geography/GEOGRAPHIC_DATA_IMPLEMENTATION.md) ✅ **NO PostGIS Needed**
+  - [PostGIS Migration Guide](improvements/geography/POSTGIS_MIGRATION_GUIDE.md) 📋 **Reference Only (NOT Recommended)**
+
+  **Other Guides:**
   - [PostgreSQL Migration Guide](deployment/postgres-migration-guide.md)
   - [Regional MANA Deployment Checklist](deployment/regional_mana_deployment_checklist.md)
 
@@ -93,6 +161,10 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [BARMM MOA Implementation Complete](improvements/BARMM_MOA_IMPLEMENTATION_COMPLETE.md)
   - [BARMM MOA Mandates Implementation](improvements/BARMM_MOA_MANDATES_IMPLEMENTATION.md)
 
+- **Geographic Data:**
+  - [Geographic Data Implementation Guide](improvements/geography/GEOGRAPHIC_DATA_IMPLEMENTATION.md) ⭐ **NEW - JSONField vs PostGIS**
+  - [PostGIS Migration Guide](improvements/geography/POSTGIS_MIGRATION_GUIDE.md) 📋 **Reference Only (Future)**
+
 - **Module-Specific:**
   - [Planning & Budgeting Implementation Evaluation](improvements/planning_budgeting_implementation_evaluation.md) ⭐ **NEW - Codebase Analysis**
   - [Planning & Budgeting Comprehensive Plan](improvements/planning_budgeting_comprehensive_plan.md) ⭐ **NEW - Research-based**
@@ -140,6 +212,13 @@ The Other Bangsamoro Communities (OBC) Management System is a comprehensive web-
   - [Dashboard Hero Implementation Summary](improvements/UI/DASHBOARD_HERO_IMPLEMENTATION_SUMMARY.md) - Phase 1 complete
   - [UI Refinements Complete](improvements/UI/UI_REFINEMENTS_COMPLETE.md) ✅ **NEW - Production Ready**
   - [OBCMS UI Structure Analysis](improvements/UI/OBCMS_UI_STRUCTURE_ANALYSIS.md) - Audit results
+  - [Quick Actions Template](improvements/ui/QUICK_ACTIONS_TEMPLATE.md) ⭐ **NEW - Flex-based Bottom Alignment**
+
+- **Stat Card Design System:** ⭐ **NEW - Official Standard**
+  - [Stat Card Template](improvements/ui/STATCARD_TEMPLATE.md) ⭐ **NEW - 3D Milk White Design (Official)**
+  - [Stat Card Auto-Refresh Guide](improvements/ui/STATCARD_AUTO_REFRESH_GUIDE.md) ⚡ **NEW - Live Updates with HTMX**
+  - [Stat Card Implementation Tracker](improvements/ui/STATCARD_IMPLEMENTATION_TRACKER.md) 🚧 **In Progress (3/15 Complete)**
+  - [Stat Card Implementation Progress](improvements/ui/STATCARD_IMPLEMENTATION_PROGRESS.md) 📊 **20% Complete**
 
 - **Admin Panel:**
   - [Admin Panel UI Evaluation](ui/admin_panel_ui_evaluation.md) ⭐ **NEW - Comprehensive Analysis**
