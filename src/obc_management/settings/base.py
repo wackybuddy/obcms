@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 import environ
 
+from obc_management.settings.bmms_config import BMMSMode
+
 # Initialize environment variables
 env = environ.Env(
     DEBUG=(bool, True),
@@ -80,6 +82,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "common",
+    "organizations",  # Phase 1: BMMS multi-tenant foundation (44 MOAs)
     "communities",
     "municipal_profiles",
     "monitoring",
@@ -96,6 +99,7 @@ LOCAL_APPS = [
     "planning",  # Phase 1: Strategic planning module (BMMS)
     "budget_preparation",  # Phase 2A: Budget Preparation (Parliament Bill No. 325)
     "budget_execution",  # Phase 2B: Budget Execution (Parliament Bill No. 325 Section 78)
+    "ocm",  # Phase 6: OCM aggregation layer
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -130,6 +134,7 @@ MIDDLEWARE = [
     "auditlog.middleware.AuditlogMiddleware",  # Audit logging (after AuthenticationMiddleware)
     "common.middleware.organization_context.OrganizationContextMiddleware",  # Phase 5: BMMS multi-tenant organization context (after AuthenticationMiddleware)
     "common.middleware.AuditMiddleware",  # Budget system audit logging (Parliament Bill No. 325 Section 78)
+    "ocm.middleware.OCMAccessMiddleware",  # Enforce OCM read-only access
     "common.middleware.APILoggingMiddleware",  # API request/response logging for security audit
     "common.middleware.DeprecationLoggingMiddleware",  # Track deprecated URL usage for migration planning
     "common.middleware.MANAAccessControlMiddleware",  # Restrict MANA user access to authorized pages only
@@ -626,23 +631,38 @@ WORKITEM_MIGRATION_STRICT_MODE = env.bool(
     "WORKITEM_MIGRATION_STRICT_MODE", default=False
 )
 
+# ========== BMMS MODE CONFIGURATION ==========
+# Operational mode: 'obcms' (single-tenant) or 'bmms' (multi-tenant)
+BMMS_MODE = env.str('BMMS_MODE', default=BMMSMode.OBCMS)
+
+# Default organization code for OBCMS mode
+DEFAULT_ORGANIZATION_CODE = env.str('DEFAULT_ORGANIZATION_CODE', default='OOBC')
+
 # ========== BMMS MULTI-TENANT RBAC CONFIGURATION ==========
 # Phase 5: Organization Context and Multi-Tenant Support
 # See: docs/plans/bmms/TRANSITION_PLAN.md
 
 RBAC_SETTINGS = {
     # Enable multi-tenant organization context
-    'ENABLE_MULTI_TENANT': env.bool('ENABLE_MULTI_TENANT', default=True),
+    # In OBCMS mode, this is automatically set to False
+    'ENABLE_MULTI_TENANT': env.bool(
+        'ENABLE_MULTI_TENANT',
+        default=(BMMS_MODE == BMMSMode.BMMS)
+    ),
 
     # Office of Chief Minister (OCM) organization code
     # OCM has special aggregation access (read-only across all MOAs)
-    'OCM_ORGANIZATION_CODE': 'ocm',
+    'OCM_ORGANIZATION_CODE': 'OCM',
 
     # Permission cache timeout (seconds)
     'CACHE_TIMEOUT': 300,  # 5 minutes
 
     # Organization switching
-    'ALLOW_ORGANIZATION_SWITCHING': True,  # OOBC staff and OCM can switch
+    # In OBCMS mode, this is automatically set to False
+    'ALLOW_ORGANIZATION_SWITCHING': env.bool(
+        'ALLOW_ORGANIZATION_SWITCHING',
+        default=(BMMS_MODE == BMMSMode.BMMS)
+    ),
 
     # Session key for current organization
     'SESSION_ORG_KEY': 'current_organization',
