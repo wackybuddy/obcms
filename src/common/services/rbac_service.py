@@ -428,7 +428,7 @@ class RBACService:
             # Filter by organization if provided
             if organization:
                 user_role_ids = user_role_ids.filter(
-                    models.Q(organization=organization) | models.Q(organization__isnull=True)
+                    models.Q(organization_id=organization.id) | models.Q(organization__isnull=True)
                 )
 
             # Filter out expired roles
@@ -458,7 +458,7 @@ class RBACService:
             # Filter by organization if provided
             if organization:
                 direct_grants = direct_grants.filter(
-                    models.Q(organization=organization) | models.Q(organization__isnull=True)
+                    models.Q(organization_id=organization.id) | models.Q(organization__isnull=True)
                 )
 
             # Filter expired
@@ -477,7 +477,7 @@ class RBACService:
 
             if organization:
                 direct_denials = direct_denials.filter(
-                    models.Q(organization=organization) | models.Q(organization__isnull=True)
+                    models.Q(organization_id=organization.id) | models.Q(organization__isnull=True)
                 )
 
             direct_denials = direct_denials.filter(
@@ -530,7 +530,7 @@ class RBACService:
             # Filter by organization if provided
             if organization:
                 features = features.filter(
-                    models.Q(organization=organization) | models.Q(organization__isnull=True)
+                    models.Q(organization_id=organization.id) | models.Q(organization__isnull=True)
                 )
 
             return list(features.order_by('module', 'sort_order', 'name'))

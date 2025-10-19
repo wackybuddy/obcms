@@ -1,0 +1,120 @@
+{# Modal Component Template - Bangsamoro Color Scheme #}
+{% now "U" as timestamp %}
+{% firstof modal_id|safe_id as use_modal_id %}
+
+<div id="{{ use_modal_id }}"
+     class="modal-backdrop fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 p-4"
+     data-modal-backdrop="true"
+     data-backdrop-dismiss="{% if backdrop_dismiss %}true{% else %}false{% endif %}"
+     x-data="{ show: true }"
+     x-show="show"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     {% if backdrop_dismiss %}@click.self="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"{% endif %}
+     @keydown.escape.window="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="{{ use_modal_id }}-title">
+
+    <div class="modal-content bg-white rounded-xl shadow-2xl
+                {% if size == 'sm' %}max-w-md
+                {% elif size == 'lg' %}max-w-4xl
+                {% elif size == 'xl' %}max-w-6xl
+                {% elif size == 'full' %}max-w-[95vw]
+                {% else %}max-w-2xl{% endif %}
+                w-full max-h-[90vh] flex flex-col"
+         x-show="show"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         @click.stop
+         x-trap.inert.noscroll="show">
+
+        {# Modal Header #}
+        <div class="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0">
+            <h2 id="{{ use_modal_id }}-title" class="text-xl font-semibold text-gray-900">
+                {{ title }}
+            </h2>
+            {% if closeable %}
+            <button type="button"
+                    data-modal-dismiss
+                    @click="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"
+                    class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-lg p-1"
+                    aria-label="Close modal">
+                <i class="fas fa-times text-xl" aria-hidden="true"></i>
+            </button>
+            {% endif %}
+        </div>
+
+        {# Modal Body #}
+        <div class="modal-body px-6 py-4 overflow-y-auto flex-1">
+            {% if content_template %}
+                {% include content_template %}
+            {% else %}
+                <p class="text-gray-500 text-sm">Modal content goes here.</p>
+            {% endif %}
+        </div>
+
+        {# Modal Footer #}
+        {% if show_footer %}
+        <div class="modal-footer px-6 py-4 border-t border-gray-200 flex items-center justify-end space-x-3 flex-shrink-0 bg-gray-50">
+            <button type="button"
+                    data-modal-dismiss
+                    @click="show = false; setTimeout(() => { const root = $el.closest('.modal-backdrop'); if (root) { root.remove(); } }, 200)"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                Close
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Modal behavior script #}
+<script>
+(function() {
+    const modalBackdrop = document.getElementById('{{ use_modal_id }}');
+    if (!modalBackdrop) return;
+
+    const shouldDismissOnBackdrop = modalBackdrop.dataset.backdropDismiss !== 'false';
+    const dismissButtons = Array.from(modalBackdrop.querySelectorAll('[data-modal-dismiss]'));
+    const CLOSE_DELAY = 200;
+
+    const closeModal = () => {
+        if (modalBackdrop.dataset.modalClosing === 'true') return;
+        modalBackdrop.dataset.modalClosing = 'true';
+        
+        setTimeout(() => {
+            if (modalBackdrop.parentNode) {
+                modalBackdrop.parentNode.removeChild(modalBackdrop);
+            }
+        }, CLOSE_DELAY);
+    };
+
+    dismissButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            closeModal();
+        });
+    });
+
+    if (shouldDismissOnBackdrop) {
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) closeModal();
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeModal();
+        }
+    });
+})();
+</script>

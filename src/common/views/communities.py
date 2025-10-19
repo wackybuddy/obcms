@@ -1141,20 +1141,7 @@ def communities_manage_municipal(request):
         "OBC Data - Municipal (Archived)" if show_archived else "OBC Data - Municipal"
     )
 
-    hero_actions = [
-        {
-            "href": (
-                reverse("communities:communities_manage_municipal")
-                if show_archived
-                else f"{reverse('communities:communities_manage_municipal')}?archived=1"
-            ),
-            "label": (
-                "Back to active records" if show_archived else "View archived records"
-            ),
-            "icon": "fas fa-list" if show_archived else "fas fa-archive",
-            "variant": "secondary",
-        }
-    ]
+    hero_actions = []
     if can_manage_communities:
         hero_actions.append(
             {

@@ -260,7 +260,7 @@ def dashboard(request):
         is_active=True
     ).exists()
 
-    if has_oobc_staff_role and not request.user.is_superuser:
+    if has_oobc_staff_role:
         return _render_staff_dashboard(request)
 
     if request.user.is_moa_staff:
