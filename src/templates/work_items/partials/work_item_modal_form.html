@@ -25,9 +25,7 @@
     {% endif %}
 
     <!-- Form Content -->
-    <form method="post"
-          action="{% url 'common:work_item_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
-          hx-post="{% url 'common:work_item_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
+    <form hx-post="{% url 'common:work_item_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
           hx-target="#workItemModal"
           hx-swap="innerHTML"
           class="p-6">
