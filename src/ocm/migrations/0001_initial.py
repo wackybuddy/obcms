@@ -90,23 +90,19 @@ class Migration(migrations.Migration):
             ],
             options={
                 "verbose_name": "OCM Access",
-                "verbose_name_plural": "OCM Access Records",
-                "db_table": "ocm_access",
+                "verbose_name_plural": "OCM Access",
                 "ordering": ["-granted_at"],
                 "permissions": [
-                    ("view_ocm_dashboard", "Can view OCM aggregated dashboard"),
+                    ("view_ocm_dashboard", "Can view OCM dashboard"),
                     (
                         "view_consolidated_budget",
-                        "Can view consolidated budget across MOAs",
-                    ),
+                        "Can view consolidated budget"),
                     (
                         "view_planning_overview",
-                        "Can view planning overview across MOAs",
-                    ),
+                        "Can view planning overview"),
                     (
                         "view_coordination_matrix",
-                        "Can view coordination matrix across MOAs",
-                    ),
+                        "Can view coordination matrix"),
                     ("generate_ocm_reports", "Can generate OCM reports"),
                     ("export_ocm_data", "Can export OCM data"),
                 ],

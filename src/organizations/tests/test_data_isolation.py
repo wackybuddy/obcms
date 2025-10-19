@@ -40,30 +40,39 @@ class TestDataIsolation:
 
     @pytest.fixture
     def org_oobc(self):
-        """Create OOBC organization."""
-        return Organization.objects.create(
+        """Get or create OOBC organization."""
+        org, _ = Organization.objects.get_or_create(
             code='OOBC',
-            name='Office for Other Bangsamoro Communities',
-            org_type='office',
+            defaults={
+                'name': 'Office for Other Bangsamoro Communities',
+                'org_type': 'office',
+            }
         )
+        return org
 
     @pytest.fixture
     def org_moh(self):
-        """Create MOH organization."""
-        return Organization.objects.create(
+        """Get or create MOH organization."""
+        org, _ = Organization.objects.get_or_create(
             code='MOH',
-            name='Ministry of Health',
-            org_type='ministry',
+            defaults={
+                'name': 'Ministry of Health',
+                'org_type': 'ministry',
+            }
         )
+        return org
 
     @pytest.fixture
     def org_mole(self):
-        """Create MOLE organization."""
-        return Organization.objects.create(
+        """Get or create MOLE organization."""
+        org, _ = Organization.objects.get_or_create(
             code='MOLE',
-            name='Ministry of Labor and Employment',
-            org_type='ministry',
+            defaults={
+                'name': 'Ministry of Labor and Employment',
+                'org_type': 'ministry',
+            }
         )
+        return org
 
     @pytest.fixture
     def oobc_user(self, org_oobc):

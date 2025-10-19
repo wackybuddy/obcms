@@ -265,11 +265,15 @@
         });
     }
 
-    document.body.addEventListener('workItemCreated', function(event) {
-        const workItemId = event.detail?.workItemId;
-        console.log('[Sidebar] Work item created', event.detail);
-        refreshWorkItemsTree({ focusId: workItemId });
-    });
+    // Prevent duplicate event listeners
+    if (!window.workItemCreatedListenerAttached) {
+        document.body.addEventListener('workItemCreated', function(event) {
+            const workItemId = event.detail?.workItemId;
+            console.log('[Sidebar] Work item created', event.detail);
+            refreshWorkItemsTree({ focusId: workItemId });
+        });
+        window.workItemCreatedListenerAttached = true;
+    }
 
     document.body.addEventListener('htmx:oobAfterSwap', function(event) {
         if (event.detail.target && event.detail.target.tagName === 'TR') {

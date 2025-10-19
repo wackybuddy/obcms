@@ -52,13 +52,17 @@
         }, 5000);
     }
 
-    document.body.addEventListener('showToast', function(event) {
-        const { message, level } = event.detail || {};
-        if (!message) {
-            return;
-        }
-        showToast(message, level);
-    });
+    // Prevent duplicate toast event listeners
+    if (!window.showToastListenerAttached) {
+        document.body.addEventListener('showToast', function(event) {
+            const { message, level } = event.detail || {};
+            if (!message) {
+                return;
+            }
+            showToast(message, level);
+        });
+        window.showToastListenerAttached = true;
+    }
 
     console.log('✅ Toast notification system initialized');
 

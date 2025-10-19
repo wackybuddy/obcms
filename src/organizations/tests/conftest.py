@@ -52,58 +52,70 @@ def test_client():
 @pytest.fixture
 def org_oobc(db):
     """
-    Create OOBC organization (ID=1 for backward compatibility).
+    Get or create OOBC organization (ID=1 for backward compatibility).
 
     OOBC is the primary organization for existing OBCMS data.
     """
-    return Organization.objects.create(
+    org, _ = Organization.objects.get_or_create(
         code='OOBC',
-        name='Office for Other Bangsamoro Communities',
-        org_type='office',
-        enable_mana=True,
-        enable_planning=True,
-        enable_budgeting=True,
-        enable_me=True,
-        enable_coordination=True,
-        enable_policies=True,
-        is_active=True,
+        defaults={
+            'name': 'Office for Other Bangsamoro Communities',
+            'org_type': 'office',
+            'enable_mana': True,
+            'enable_planning': True,
+            'enable_budgeting': True,
+            'enable_me': True,
+            'enable_coordination': True,
+            'enable_policies': True,
+            'is_active': True,
+        }
     )
+    return org
 
 
 @pytest.fixture
 def org_moh(db):
-    """Create Ministry of Health (pilot MOA)."""
-    return Organization.objects.create(
+    """Get or create Ministry of Health (pilot MOA)."""
+    org, _ = Organization.objects.get_or_create(
         code='MOH',
-        name='Ministry of Health',
-        org_type='ministry',
-        is_pilot=True,
-        is_active=True,
+        defaults={
+            'name': 'Ministry of Health',
+            'org_type': 'ministry',
+            'is_pilot': True,
+            'is_active': True,
+        }
     )
+    return org
 
 
 @pytest.fixture
 def org_mole(db):
-    """Create Ministry of Labor and Employment (pilot MOA)."""
-    return Organization.objects.create(
+    """Get or create Ministry of Labor and Employment (pilot MOA)."""
+    org, _ = Organization.objects.get_or_create(
         code='MOLE',
-        name='Ministry of Labor and Employment',
-        org_type='ministry',
-        is_pilot=True,
-        is_active=True,
+        defaults={
+            'name': 'Ministry of Labor and Employment',
+            'org_type': 'ministry',
+            'is_pilot': True,
+            'is_active': True,
+        }
     )
+    return org
 
 
 @pytest.fixture
 def org_mafar(db):
-    """Create Ministry of Agriculture (pilot MOA)."""
-    return Organization.objects.create(
+    """Get or create Ministry of Agriculture (pilot MOA)."""
+    org, _ = Organization.objects.get_or_create(
         code='MAFAR',
-        name='Ministry of Agriculture, Fisheries and Agrarian Reform',
-        org_type='ministry',
-        is_pilot=True,
-        is_active=True,
+        defaults={
+            'name': 'Ministry of Agriculture, Fisheries and Agrarian Reform',
+            'org_type': 'ministry',
+            'is_pilot': True,
+            'is_active': True,
+        }
     )
+    return org
 
 
 @pytest.fixture
@@ -115,102 +127,26 @@ def pilot_moas(db, org_moh, org_mole, org_mafar):
 @pytest.fixture
 def all_44_moas(db):
     """
-    Create all 44 BARMM MOAs (for comprehensive tests).
+    Get all 44 BARMM MOAs (for comprehensive tests).
 
-    Organizations are created in order:
+    Organizations are seeded by migration 0002_seed_barmm_organizations:
     - OOBC (ID=1)
     - 16 Ministries
     - 10 Offices
     - 8 Agencies
     - 7 Special Bodies
     - 3 Commissions
+
+    This fixture simply returns all seeded organizations.
     """
-    organizations = []
+    # Fetch all organizations (should be 45 including OOBC at ID=1)
+    organizations = list(Organization.objects.all().order_by('id'))
 
-    # OOBC (must be first)
-    organizations.append(Organization.objects.create(
-        code='OOBC',
-        name='Office for Other Bangsamoro Communities',
-        org_type='office',
-        is_active=True,
-    ))
-
-    # Ministries (16)
-    ministries = [
-        ('MAFAR', 'Ministry of Agriculture, Fisheries and Agrarian Reform', True),
-        ('MBHTE', 'Ministry of Basic, Higher and Technical Education', False),
-        ('MENRE', 'Ministry of Environment, Natural Resources and Energy', False),
-        ('MFBM', 'Ministry of Finance, Budget and Management', False),
-        ('MOH', 'Ministry of Health', True),
-        ('MHSD', 'Ministry of Human Settlements and Development', False),
-        ('MIPA', 'Ministry of Indigenous Peoples Affairs', False),
-        ('MILG', 'Ministry of Interior and Local Government', False),
-        ('MOLE', 'Ministry of Labor and Employment', True),
-        ('MPWH', 'Ministry of Public Works and Highways', False),
-        ('MSSD', 'Ministry of Social Services and Development', False),
-        ('MTI', 'Ministry of Trade, Investments and Tourism', False),
-        ('MTIT', 'Ministry of Transportation and Information Technology', False),
-        ('MWDWA', 'Ministry of Women, Development and Welfare Affairs', False),
-        ('MYNDA', 'Ministry of Youth and Nonprofit Development Affairs', False),
-    ]
-
-    for code, name, is_pilot in ministries:
-        organizations.append(Organization.objects.create(
-            code=code,
-            name=name,
-            org_type='ministry',
-            is_pilot=is_pilot,
-            is_active=True,
-        ))
-
-    # Offices (10)
-    offices = [
-        'OCM', 'OMP', 'OPARL', 'OPMDA', 'OSM',
-        'OTAF', 'OADP', 'OBCE', 'OCRE', 'OMLA',
-    ]
-    for code in offices:
-        organizations.append(Organization.objects.create(
-            code=code,
-            name=f'Office - {code}',
-            org_type='office',
-            is_active=True,
-        ))
-
-    # Agencies (8)
-    agencies = [
-        'BAI', 'BEDC', 'BTA', 'BSWM',
-        'CAB', 'CSC-BARMM', 'RLEA', 'TESDA-BARMM',
-    ]
-    for code in agencies:
-        organizations.append(Organization.objects.create(
-            code=code,
-            name=f'Agency - {code}',
-            org_type='agency',
-            is_active=True,
-        ))
-
-    # Special Bodies (7)
-    special = [
-        'BIDA', 'BIAF', 'BRTA', 'BSBC',
-        'BWPB', 'MUWASSCO', 'SPBI',
-    ]
-    for code in special:
-        organizations.append(Organization.objects.create(
-            code=code,
-            name=f'Special Body - {code}',
-            org_type='special',
-            is_active=True,
-        ))
-
-    # Commissions (3)
-    commissions = ['BCHRC', 'BWCRC', 'BYDC']
-    for code in commissions:
-        organizations.append(Organization.objects.create(
-            code=code,
-            name=f'Commission - {code}',
-            org_type='commission',
-            is_active=True,
-        ))
+    # Verify we have the expected organizations
+    assert len(organizations) >= 44, (
+        f"Expected at least 44 MOAs, found {len(organizations)}. "
+        "Run migrations to seed organizations."
+    )
 
     return organizations
 
