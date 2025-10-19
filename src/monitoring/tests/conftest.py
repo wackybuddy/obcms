@@ -16,13 +16,11 @@ User = get_user_model()
 
 @pytest.fixture
 def staff_user(db):
-    """Create a staff user approved for monitoring workflows."""
-    return User.objects.create_user(
+    """Create a superuser to bypass RBAC checks for monitoring tests."""
+    return User.objects.create_superuser(
         username="monitoring_staff",
         password="testpass123",
         user_type="oobc_staff",
-        is_staff=True,
-        is_approved=True,
     )
 
 

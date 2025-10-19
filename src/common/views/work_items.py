@@ -9,6 +9,8 @@ Implements:
 - HTMX integration for interactive tree
 """
 
+import uuid
+
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
@@ -108,6 +110,11 @@ def get_work_item_permissions(user, work_item):
         dict: {'can_edit': bool, 'can_delete': bool}
     """
     # Owner can always edit and delete
+    if work_item.created_by_id and work_item.created_by_id == user.id:
+        return {'can_edit': True, 'can_delete': True}
+
+    # Owner can always edit and delete
+    # (Retained for backward compatibility when created_by may not be persisted)
     if work_item.created_by == user:
         return {'can_edit': True, 'can_delete': True}
 
@@ -115,16 +122,29 @@ def get_work_item_permissions(user, work_item):
     if user.is_superuser:
         return {'can_edit': True, 'can_delete': True}
 
-    # Check Django permissions
+    # Baseline permission flags using Django auth system
     has_change_perm = user.has_perm('common.change_workitem')
     has_delete_perm = user.has_perm('common.delete_workitem')
 
-    # Staff with appropriate permissions
-    can_edit = user.is_staff and has_change_perm
-    can_delete = user.is_staff and has_delete_perm
+    # Start with model permissions (do not require is_staff so group perms work)
+    can_edit = bool(has_change_perm)
+    can_delete = bool(has_delete_perm)
 
-    # Assigned users can edit (but not delete unless they have permission)
-    if user in work_item.assignees.all():
+    # OOBC staff have organization-wide edit/delete access for work items
+    if getattr(user, 'is_oobc_staff', False):
+        can_edit = True
+        can_delete = True
+
+    # Delegate to user helper for additional org-based checks (MOA staff, etc.)
+    try:
+        if hasattr(user, 'can_edit_work_item') and user.can_edit_work_item(work_item):
+            can_edit = True
+    except Exception:
+        # Defensive: never break permissions if helper raises unexpectedly
+        pass
+
+    # Assigned users may edit (but still respect delete permissions)
+    if work_item.assignees.filter(pk=user.pk).exists():
         can_edit = True
 
     return {'can_edit': can_edit, 'can_delete': can_delete}
@@ -627,7 +647,10 @@ def work_item_delete(request, pk):
                 'message': f'{work_type_display} "{work_title}" deleted successfully',
                 'level': 'success'
             },
-            'refreshCalendar': True
+            'refreshCalendar': True,
+            'closeSidebar': True,
+            'closeDetailPanel': True,
+            'closePPASidebar': True,
         }
 
         if is_moa_page:
@@ -973,59 +996,28 @@ def work_item_sidebar_edit(request, pk):
             import json
 
             if should_update_oob_row:
-                # Return updated edit form for sidebar + updated tree row for instant update
+                # Return an out-of-band row update and close the sidebar
                 from django.template.loader import render_to_string
-                from common.forms.work_items import WorkItemQuickEditForm
 
-                # Re-render the edit form with updated data (keep sidebar open)
-                form = WorkItemQuickEditForm(instance=work_item, user=request.user)
-                context = {
-                    'form': form,
-                    'work_item': work_item,
-                    'sidebar_target_id': sidebar_target_id,
-                    'close_action': close_action,
-                }
-                edit_form_html = render_to_string('work_items/partials/sidebar_edit_form.html', context, request=request)
-
-                # Render the updated row for out-of-band swap
                 if is_tree_page:
                     row_template = 'work_items/_work_item_tree_row.html'
+                    row_id = f'work-item-row-{work_item.id}'
                 else:
                     row_template = 'monitoring/partials/_ppa_work_item_row.html'
+                    row_id = f'ppa-work-item-row-{work_item.id}'
 
                 row_html = render_to_string(row_template, {'work_item': work_item}, request=request)
 
-                # Extract ONLY the main <tr> (exclude placeholder and skeleton rows)
                 import re
-                # Match the main row: from opening <tr id="..."> to its closing </tr>
-                # Use non-greedy match to get just the first <tr>...</tr>
-                row_id = f'work-item-row-{work_item.id}' if is_tree_page else f'ppa-work-item-row-{work_item.id}'
                 pattern = rf'(<tr\s+id="{row_id}"[^>]*>.*?</tr>)'
                 match = re.search(pattern, row_html, re.DOTALL)
 
                 if match:
-                    # Successfully extracted just the main row
-                    main_row_only = match.group(1)
-                    # Add hx-swap-oob attribute right after the opening <tr tag
-                    row_html_with_oob = main_row_only.replace(
-                        '<tr ',
-                        '<tr hx-swap-oob="true" ',
-                        1
-                    )
+                    row_html_with_oob = match.group(1).replace('<tr ', '<tr hx-swap-oob="true" ', 1)
                 else:
-                    # Fallback: add hx-swap-oob to entire template output
-                    row_html_with_oob = row_html.replace(
-                        '<tr ',
-                        '<tr hx-swap-oob="true" ',
-                        1
-                    )
+                    row_html_with_oob = row_html.replace('<tr ', '<tr hx-swap-oob="true" ', 1)
 
-                # Wrap form in div container for proper HTML structure
-                # Wrap row in table structure to prevent browser from stripping it
-                # HTMX will process OOB swaps before the main innerHTML swap
-                from django.http import HttpResponse
-                combined_html = f'''
-                <div>{edit_form_html}</div>
+                response_body = f'''
                 <table style="display:none;">
                     <tbody>
                         {row_html_with_oob}
@@ -1033,13 +1025,26 @@ def work_item_sidebar_edit(request, pk):
                 </table>
                 '''
 
-                response = HttpResponse(combined_html)
-                response['HX-Trigger'] = json.dumps({
+                response = HttpResponse(response_body)
+                triggers = {
                     'showToast': {
                         'message': f'{work_item.get_work_type_display()} updated successfully',
                         'level': 'success'
+                    },
+                    'closeSidebar': True,
+                    'closeDetailPanel': True,
+                    'closePPASidebar': True,
+                }
+
+                if is_tree_page:
+                    triggers['workItemUpdated'] = {'workItemId': str(work_item.pk)}
+                if is_ppa_sidebar:
+                    triggers['refreshPPAWorkItems'] = {
+                        'reload': False,
+                        'workItemId': str(work_item.pk)
                     }
-                })
+
+                response['HX-Trigger'] = json.dumps(triggers)
                 return response
             else:
                 # Return updated detail view HTML (calendar, PPA sidebar, or staff sidebar)
@@ -1075,6 +1080,11 @@ def work_item_sidebar_edit(request, pk):
                         'workItemId': str(work_item.pk),
                     }
                     triggers['closeSidebar'] = True
+                else:
+                    # Default close actions for other sidebar contexts
+                    triggers.setdefault('closeSidebar', True)
+                    triggers.setdefault('closeDetailPanel', True)
+                    triggers.setdefault('closePPASidebar', True)
 
                 response['HX-Trigger'] = json.dumps(triggers)
                 return response
@@ -1345,6 +1355,112 @@ def work_item_sidebar_create(request):
         User = get_user_model()
 
         post_data = request.POST.copy()
+        submission_token = post_data.get('submission_token')
+        token_entries = request.session.get('work_item_sidebar_tokens', [])
+        existing_item = None
+        if submission_token:
+            for entry in list(token_entries):
+                if entry.get('token') == submission_token:
+                    existing_item = WorkItem.objects.filter(pk=entry.get('work_item_id')).first()
+                    if not existing_item:
+                        # Clean up stale token references
+                        token_entries = [e for e in token_entries if e.get('token') != submission_token]
+                    break
+
+        def build_success_response(work_item, *, duplicate=False):
+            import json
+
+            message = (
+                f'{work_item.get_work_type_display()} created successfully'
+                if not duplicate
+                else f'{work_item.get_work_type_display()} already processed. Using existing record.'
+            )
+            level = 'success' if not duplicate else 'info'
+
+            response = HttpResponse(status=204)
+
+            if is_ppa_page:
+                trigger_payload = {
+                    'workItemCreated': {'workItemId': str(work_item.pk), 'ppaId': ppa_id},
+                    'refreshPPAWorkItems': {
+                        'reload': False,
+                        'entryId': str(related_ppa.pk) if related_ppa else ppa_id,
+                        'workItemId': str(work_item.pk),
+                    },
+                    'showToast': {
+                        'message': message,
+                        'level': level
+                    },
+                    'closePPASidebar': True,
+                    'closeSidebar': True,
+                    'closeDetailPanel': True,
+                }
+                response['HX-Trigger'] = json.dumps(trigger_payload)
+                return response
+
+            if is_work_items_tree:
+                response['HX-Trigger'] = json.dumps({
+                    'workItemCreated': {'workItemId': str(work_item.pk)},
+                    'showToast': {
+                        'message': message,
+                        'level': level
+                    },
+                    'closeSidebar': True,
+                    'closeDetailPanel': True,
+                    'closePPASidebar': True,
+                })
+                return response
+
+            if is_moa_page:
+                org_id = (
+                    resolved_implementing_moa_id
+                    or (str(related_ppa.implementing_moa_id) if related_ppa and related_ppa.implementing_moa_id else None)
+                )
+                response['HX-Trigger'] = json.dumps({
+                    'workItemCreated': {
+                        'workItemId': str(work_item.pk),
+                        'context': 'moa',
+                        'organizationId': org_id,
+                    },
+                    'refreshMoaWorkItems': {
+                        'organizationId': org_id,
+                        'workItemId': str(work_item.pk),
+                        'reason': 'created',
+                    },
+                    'showToast': {
+                        'message': message,
+                        'level': level
+                    },
+                    'closeSidebar': True,
+                    'closeDetailPanel': True,
+                    'closePPASidebar': True,
+                })
+                return response
+
+            # Default calendar/sidebar behaviour
+            event_payload = serialize_work_item_for_calendar(work_item)
+            response['HX-Trigger'] = json.dumps({
+                'calendarRefresh': {
+                    'eventId': str(work_item.pk),
+                    'event': event_payload,
+                },
+                'showToast': {
+                    'message': message,
+                    'level': level
+                },
+                'closeDetailPanel': True,
+                'closeSidebar': True,
+                'closePPASidebar': True,
+            })
+            return response
+
+        if existing_item:
+            request.session['work_item_sidebar_tokens'] = token_entries
+            request.session.modified = True
+            return build_success_response(existing_item, duplicate=True)
+
+        current_token = submission_token or uuid.uuid4().hex
+
         if auto_assign_oobc and oobc_org and not post_data.get('implementing_moa'):
             post_data['implementing_moa'] = str(oobc_org.pk)
 
@@ -1388,6 +1504,7 @@ def work_item_sidebar_create(request):
                     'assignee_user': assignee_user,
                     'assignee_id': assignee_id,
                     'requires_related_ppa': requires_related_ppa_flag and not auto_assign_oobc,
+                    'submission_token': current_token,
                     'close_action': close_action,
                 }
                 return render(request, create_template, context)
@@ -1470,72 +1587,15 @@ def work_item_sidebar_create(request):
             invalidate_calendar_cache(request.user.id)
             invalidate_work_item_tree_cache(work_item)
 
-            # Return success response with appropriate triggers
-            import json
-            response = HttpResponse(status=204)  # No Content
+            if submission_token:
+                token_entries = [entry for entry in token_entries if entry.get('token') != submission_token]
+                token_entries.append({'token': submission_token, 'work_item_id': str(work_item.pk)})
+                if len(token_entries) > 20:
+                    token_entries = token_entries[-20:]
+                request.session['work_item_sidebar_tokens'] = token_entries
+                request.session.modified = True
 
-            if is_ppa_page:
-                # PPA page: refresh tab content via HTMX helpers (no full reload)
-                trigger_payload = {
-                    'reload': False,
-                    'entryId': str(related_ppa.pk) if related_ppa else ppa_id,
-                    'workItemId': str(work_item.pk),
-                }
-                response['HX-Trigger'] = json.dumps({
-                    'workItemCreated': {'workItemId': str(work_item.pk), 'ppaId': ppa_id},
-                    'refreshPPAWorkItems': trigger_payload,
-                    'showToast': {
-                        'message': f'{work_item.get_work_type_display()} created successfully',
-                        'level': 'success'
-                    },
-                    'closePPASidebar': True
-                })
-            elif is_work_items_tree:
-                # Work items tree: trigger reload and close sidebar
-                response['HX-Trigger'] = json.dumps({
-                    'workItemCreated': {'workItemId': str(work_item.pk)},
-                    'showToast': {
-                        'message': f'{work_item.get_work_type_display()} created successfully',
-                        'level': 'success'
-                    }
-                })
-            elif is_moa_page:
-                org_id = (
-                    resolved_implementing_moa_id
-                    or (str(related_ppa.implementing_moa_id) if related_ppa and related_ppa.implementing_moa_id else None)
-                )
-                response['HX-Trigger'] = json.dumps({
-                    'workItemCreated': {
-                        'workItemId': str(work_item.pk),
-                        'context': 'moa',
-                        'organizationId': org_id,
-                    },
-                    'refreshMoaWorkItems': {
-                        'organizationId': org_id,
-                        'workItemId': str(work_item.pk),
-                        'reason': 'created',
-                    },
-                    'showToast': {
-                        'message': f'{work_item.get_work_type_display()} created successfully',
-                        'level': 'success'
-                    },
-                    'closeSidebar': True,
-                })
-            else:
-                # Calendar: trigger calendar refresh and close panel
-                event_payload = serialize_work_item_for_calendar(work_item)
-                response['HX-Trigger'] = json.dumps({
-                    'calendarRefresh': {
-                        'eventId': str(work_item.pk),
-                        'event': event_payload,
-                    },
-                    'showToast': {
-                        'message': f'{work_item.get_work_type_display()} created successfully',
-                        'level': 'success'
-                    },
-                    'closeDetailPanel': True
-                })
-            return response
+            return build_success_response(work_item)
         else:
             # Log form errors for debugging
             import logging
@@ -1560,7 +1620,8 @@ def work_item_sidebar_create(request):
                 'lock_implementing_moa': lock_implementing_moa,
                 'implementing_moa_obj': implementing_moa_obj,
                 'auto_assign_oobc': auto_assign_oobc,
-                    'requires_related_ppa': requires_related_ppa_flag and not auto_assign_oobc,
+                'requires_related_ppa': requires_related_ppa_flag and not auto_assign_oobc,
+                'submission_token': current_token,
                 'close_action': close_action,
             }
             return render(request, create_template, context)
@@ -1628,6 +1689,7 @@ def work_item_sidebar_create(request):
         else:
             initial['activity_category'] = None
 
+        submission_token = uuid.uuid4().hex
         form = WorkItemQuickEditForm(initial=initial, user=request.user)
         if auto_assign_oobc:
             form.fields['related_ppa'].queryset = oobc_ppa_queryset
@@ -1651,6 +1713,7 @@ def work_item_sidebar_create(request):
             'auto_assign_oobc': auto_assign_oobc,
             'requires_related_ppa': requires_related_ppa_flag and not auto_assign_oobc,
             'close_action': close_action,
+            'submission_token': submission_token,
         }
         return render(request, create_template, context)
 

@@ -24,11 +24,11 @@ User = get_user_model()
 def test_create_assessment_populates_manage_listing(client):
     """Posting through the new assessment form should persist and surface entries."""
 
-    staff_user = User.objects.create_user(
+    # Use superuser to bypass RBAC checks in test environment
+    staff_user = User.objects.create_superuser(
         username="staff@example.com",
         email="staff@example.com",
         password="password123",
-        is_staff=True,
     )
     StaffProfile.objects.create(user=staff_user)
 

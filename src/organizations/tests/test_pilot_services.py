@@ -56,18 +56,18 @@ class TestPilotRoleService:
             "viewer",
         }
         actual_roles = {role.name for role in self.service.DEFAULT_ROLES}
-        self.assertEqual(expected_roles, actual_roles)
-        self.assertEqual(len(self.service.DEFAULT_ROLES), 5)
+        assert expected_roles == actual_roles
+        assert len(self.service.DEFAULT_ROLES) == 5
 
     def test_role_definitions_structure(self):
         """Test that each role definition has proper structure."""
         for role_def in self.service.DEFAULT_ROLES:
-            self.assertIsInstance(role_def, RoleDefinition)
-            self.assertIsInstance(role_def.name, str)
-            self.assertIsInstance(role_def.description, str)
-            self.assertIsNotNone(role_def.permissions)
-            self.assertTrue(len(role_def.name) > 0)
-            self.assertTrue(len(role_def.description) > 0)
+            assert isinstance(role_def, RoleDefinition)
+            assert isinstance(role_def.name, str)
+            assert isinstance(role_def.description, str)
+            assert role_def.permissions is not None
+            assert len(role_def.name) > 0
+            assert len(role_def.description) > 0
 
     def test_ensure_roles_exist_creates_all_roles(self):
         """Test ensure_roles_exist() creates all 5 role groups."""
@@ -82,12 +82,12 @@ class TestPilotRoleService:
                 "viewer",
             ]
         )
-        self.assertEqual(created_groups.count(), 5)
+        assert created_groups.count() == 5
 
         # Verify each role was created
         for role_def in self.service.DEFAULT_ROLES:
             group = Group.objects.get(name=role_def.name)
-            self.assertIsNotNone(group)
+            assert group is not None
 
     def test_ensure_roles_exist_is_idempotent(self):
         """Test that calling ensure_roles_exist() multiple times is safe."""
@@ -103,9 +103,9 @@ class TestPilotRoleService:
         self.service.ensure_roles_exist()
         third_count = Group.objects.count()
 
-        self.assertEqual(first_count, second_count)
-        self.assertEqual(second_count, third_count)
-        self.assertEqual(first_count, 5)
+        assert first_count == second_count
+        assert second_count == third_count
+        assert first_count == 5
 
     def test_permission_synchronization_with_valid_permissions(self):
         """Test that permissions are properly synchronized when they exist."""
@@ -128,7 +128,7 @@ class TestPilotRoleService:
 
         # Check that pilot_admin has the expected permissions
         pilot_admin = Group.objects.get(name="pilot_admin")
-        self.assertTrue(pilot_admin.permissions.exists())
+        assert pilot_admin.permissions.exists()
 
     def test_permission_synchronization_with_missing_permissions(self):
         """Test that missing permissions are logged but don't break creation."""
@@ -136,7 +136,7 @@ class TestPilotRoleService:
         self.service.ensure_roles_exist()
 
         # All groups should still be created
-        self.assertEqual(Group.objects.count(), 5)
+        assert Group.objects.count() == 5
 
     def test_assign_role_with_valid_role(self):
         """Test assign_role() successfully assigns a role to a user."""
@@ -146,9 +146,9 @@ class TestPilotRoleService:
 
         group = self.service.assign_role(user, "pilot_admin")
 
-        self.assertIsNotNone(group)
-        self.assertEqual(group.name, "pilot_admin")
-        self.assertTrue(user.groups.filter(name="pilot_admin").exists())
+        assert group is not None
+        assert group.name == "pilot_admin"
+        assert user.groups.filter(name="pilot_admin").exists()
 
     def test_assign_role_with_invalid_role(self):
         """Test assign_role() raises ValueError for unknown roles."""
@@ -156,11 +156,11 @@ class TestPilotRoleService:
             username="testuser", email="test@example.com", password="testpass123"
         )
 
-        with self.assertRaises(ValueError) as context:
+        with pytest.raises(ValueError) as context:
             self.service.assign_role(user, "invalid_role")
 
-        self.assertIn("Unknown pilot role", str(context.exception))
-        self.assertIn("invalid_role", str(context.exception))
+        assert "Unknown pilot role" in str(context.exception)
+        assert "invalid_role" in str(context.exception)
 
     def test_assign_role_ensures_role_exists(self):
         """Test assign_role() creates role if it doesn't exist."""
@@ -174,8 +174,8 @@ class TestPilotRoleService:
         # This should create the role before assigning
         group = self.service.assign_role(user, "planner")
 
-        self.assertIsNotNone(group)
-        self.assertTrue(Group.objects.filter(name="planner").exists())
+        assert group is not None
+        assert Group.objects.filter(name="planner").exists()
 
     def test_assign_role_multiple_times_is_idempotent(self):
         """Test assigning the same role multiple times doesn't create duplicates."""
@@ -189,7 +189,7 @@ class TestPilotRoleService:
         self.service.assign_role(user, "planner")
 
         # User should still have exactly one "planner" group
-        self.assertEqual(user.groups.filter(name="planner").count(), 1)
+        assert user.groups.filter(name="planner").count() == 1
 
     def test_assign_multiple_roles_to_user(self):
         """Test that a user can have multiple pilot roles."""
@@ -200,28 +200,28 @@ class TestPilotRoleService:
         self.service.assign_role(user, "planner")
         self.service.assign_role(user, "viewer")
 
-        self.assertEqual(user.groups.count(), 2)
-        self.assertTrue(user.groups.filter(name="planner").exists())
-        self.assertTrue(user.groups.filter(name="viewer").exists())
+        assert user.groups.count() == 2
+        assert user.groups.filter(name="planner").exists()
+        assert user.groups.filter(name="viewer").exists()
 
     def test_available_roles_returns_sorted_list(self):
         """Test available_roles() returns all role names sorted."""
         roles = self.service.available_roles()
 
-        self.assertEqual(len(roles), 5)
-        self.assertIsInstance(roles, list)
+        assert len(roles) == 5
+        assert isinstance(roles, list)
         # Check if sorted
-        self.assertEqual(roles, sorted(roles))
+        assert roles == sorted(roles)
         # Check expected roles
-        self.assertIn("pilot_admin", roles)
-        self.assertIn("planner", roles)
-        self.assertIn("budget_officer", roles)
-        self.assertIn("me_officer", roles)
-        self.assertIn("viewer", roles)
+        assert "pilot_admin" in roles
+        assert "planner" in roles
+        assert "budget_officer" in roles
+        assert "me_officer" in roles
+        assert "viewer" in roles
 
     def test_role_map_initialization(self):
         """Test that _role_map is properly initialized."""
-        self.assertEqual(len(self.service._role_map), 5)
+        assert len(self.service._role_map) == 5
 
         for role_name in [
             "pilot_admin",
@@ -230,14 +230,14 @@ class TestPilotRoleService:
             "me_officer",
             "viewer",
         ]:
-            self.assertIn(role_name, self.service._role_map)
-            self.assertIsInstance(self.service._role_map[role_name], RoleDefinition)
+            assert role_name in self.service._role_map
+            assert isinstance(self.service._role_map[role_name], RoleDefinition)
 
     def test_role_definitions_are_frozen(self):
         """Test that RoleDefinition dataclass is frozen (immutable)."""
         role_def = self.service.DEFAULT_ROLES[0]
 
-        with self.assertRaises(Exception):
+        with pytest.raises(Exception):
             # Should not be able to modify frozen dataclass
             role_def.name = "new_name"
 
@@ -245,7 +245,7 @@ class TestPilotRoleService:
         """Test that new permissions are added to existing groups."""
         # Create a group with no permissions
         group = Group.objects.create(name="pilot_admin")
-        self.assertEqual(group.permissions.count(), 0)
+        assert group.permissions.count() == 0
 
         # Create some permissions
         org_ct = ContentType.objects.get_or_create(
@@ -262,7 +262,7 @@ class TestPilotRoleService:
         group.refresh_from_db()
 
         # Group should now have permissions
-        self.assertTrue(group.permissions.exists())
+        assert group.permissions.exists()
 
     def test_permission_sync_removes_old_permissions(self):
         """Test that removed permissions are cleaned up."""
@@ -286,7 +286,7 @@ class TestPilotRoleService:
         group.permissions.add(perm1, extra_perm)
 
         initial_count = group.permissions.count()
-        self.assertGreater(initial_count, 0)
+        assert initial_count > 0
 
         # Sync should remove extra permission
         self.service.ensure_roles_exist()
@@ -294,7 +294,7 @@ class TestPilotRoleService:
 
         # Extra permission should be removed if not in role definition
         # (depends on actual role definition)
-        self.assertTrue(group.permissions.filter(pk=perm1.pk).exists())
+        assert group.permissions.filter(pk=perm1.pk).exists()
 
     def test_transaction_rollback_on_error(self):
         """Test that role creation is rolled back on error."""
@@ -304,13 +304,13 @@ class TestPilotRoleService:
         with patch.object(
             self.service, "_synchronize_group_permissions", side_effect=Exception("Test error")
         ):
-            with self.assertRaises(Exception):
+            with pytest.raises(Exception):
                 self.service.ensure_roles_exist()
 
         # Groups should not be partially created due to transaction
         # Note: each role has its own transaction, so some may be created
         # This tests that individual role creation is atomic
-        self.assertTrue(Group.objects.count() >= initial_count)
+        assert Group.objects.count() >= initial_count
 
 
 # ============================================================================

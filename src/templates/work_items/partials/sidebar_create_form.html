@@ -18,9 +18,10 @@
           }
       "
       class="space-y-5">
-    {% csrf_token %}
+{% csrf_token %}
 {% if ppa_id %}<input type="hidden" name="ppa_id" value="{{ ppa_id }}">{% endif %}
 {% if assignee_id %}<input type="hidden" name="assignee_id" value="{{ assignee_id }}">{% endif %}
+<input type="hidden" name="submission_token" value="{{ submission_token }}">
 
     <div class="flex items-center justify-between pb-3 border-b border-gray-200">
         <div class="flex items-start gap-3">
