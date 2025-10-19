@@ -8,10 +8,9 @@ import pytest
 import sys
 from pathlib import Path
 
-# Import all fixtures from fixtures module
-pytest_plugins = [
-    'budget_preparation.tests.fixtures.budget_data',
-]
+# Import fixtures directly instead of using pytest_plugins
+# (pytest_plugins only allowed in root conftest.py)
+from budget_preparation.tests.fixtures.budget_data import *  # noqa: F401, F403
 
 # Configure Django for tests
 import django

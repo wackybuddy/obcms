@@ -6,11 +6,10 @@ Imports all fixtures and configures test environment.
 
 import pytest
 
-# Import fixtures from both budget_preparation and budget_execution
-pytest_plugins = [
-    'budget_preparation.tests.fixtures.budget_data',
-    'budget_execution.tests.fixtures.execution_data',
-]
+# Import fixtures directly instead of using pytest_plugins
+# (pytest_plugins only allowed in root conftest.py)
+from budget_preparation.tests.fixtures.budget_data import *  # noqa: F401, F403
+from budget_execution.tests.fixtures.execution_data import *  # noqa: F401, F403
 
 
 @pytest.fixture(autouse=True)

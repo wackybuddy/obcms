@@ -8,7 +8,8 @@ import pytest
 from decimal import Decimal
 from datetime import date, timedelta
 from django.contrib.auth import get_user_model
-from budget_execution.models import Allotment, Obligation, Disbursement, WorkItem
+from budget_execution.models import Allotment, Obligation, Disbursement
+from common.work_item_model import WorkItem
 from budget_preparation.models import ProgramBudget
 
 User = get_user_model()
