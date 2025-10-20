@@ -350,11 +350,19 @@ class TestEndToEndSecurity(TestCase):
         # Should succeed without executing malicious SQL
         self.assertTrue(result['success'])
 
-        # Verify workshops table still exists
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_name LIKE '%workshop%'")
-            count = cursor.fetchone()[0]
-            self.assertGreater(count, 0, "Workshops table should still exist")
+        # Verify workshops table still exists (using ORM, SQLite-compatible)
+        try:
+            from mana.models import Workshop
+            # Try to count workshops - if table doesn't exist, this will raise an error
+            count = Workshop.objects.count()
+            # If we get here, table exists
+            self.assertGreaterEqual(count, 0, "Workshops table should still exist")
+        except Exception as e:
+            if 'no such table' in str(e).lower() or 'does not exist' in str(e).lower():
+                self.fail(f"Workshops table was dropped by SQL injection: {e}")
+            else:
+                # Some other error, re-raise
+                raise
 
     def test_e2e_multiple_injection_vectors(self):
         """Test multiple injection vectors in sequence."""
