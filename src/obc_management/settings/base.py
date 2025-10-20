@@ -68,6 +68,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    "django_prometheus",  # Must be first for metrics collection
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",  # JWT token blacklisting
@@ -122,6 +123,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # ============================================================================
 
 MIDDLEWARE = [
+    "django_prometheus.middleware.PrometheusBeforeMiddleware",  # Must be first for metrics
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files in production
     "common.middleware.DeprecatedURLRedirectMiddleware",  # Phase 0: URL refactoring backward compatibility (TEMPORARY - remove after 30 days)
@@ -142,6 +144,7 @@ MIDDLEWARE = [
     "mana.middleware.ManaParticipantAccessMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_prometheus.middleware.PrometheusAfterMiddleware",  # Must be last for metrics
 ]
 
 # Add debug toolbar for development
@@ -180,6 +183,30 @@ WSGI_APPLICATION = "obc_management.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {"default": env.db(default="sqlite:///" + str(BASE_DIR / "db.sqlite3"))}
+
+# ============================================================================
+# CACHE CONFIGURATION (Redis)
+# ============================================================================
+# Redis cache backend for session storage and application caching
+# Uses Django 4.0+ built-in Redis cache backend (no django-redis package needed)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
+        "KEY_PREFIX": "obcms",
+        "TIMEOUT": 300,  # 5 minutes default timeout
+    }
+}
+
+# Session backend (uses Redis cache for better performance)
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+# Session security settings
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookie
+SESSION_COOKIE_SAMESITE = "Lax"  # CSRF protection (allow top-level navigation)
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_SAVE_EVERY_REQUEST = False  # Only save if session modified
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -242,6 +269,10 @@ WHITENOISE_MANIFEST_STRICT = False  # Graceful degradation if hashed file missin
 # Media files
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# File upload size limits
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB for POST data
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB for file uploads
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -310,10 +341,15 @@ SITE_DESCRIPTION = env(
 
 # Django Admin "View site" link
 SITE_ID = 1
-SITE_URL = "/auth/dashboard/"
 
 # Canonical base URL for email templates and absolute links
 BASE_URL = env("BASE_URL", default="http://localhost:8000")
+
+# Site URL for absolute links in emails and API responses
+SITE_URL = env("SITE_URL", default="http://localhost:8000")
+
+# Application version (used by health checks and deployment tracking)
+VERSION = env("APP_VERSION", default="1.0.0")
 
 # Crispy Forms
 CRISPY_TEMPLATE_PACK = "bootstrap4"
@@ -549,6 +585,9 @@ AUDITLOG_INCLUDE_TRACKING_MODELS = (
     "project_central.Workflow",
 )
 
+# Enable two-step migration for auditlog (handles JSONField migration in PostgreSQL)
+AUDITLOG_TWO_STEP_MIGRATION = True
+
 # Security Event Logging
 LOGGING["loggers"]["axes"] = {
     "handlers": ["console", "file"],
@@ -668,3 +707,9 @@ RBAC_SETTINGS = {
     # Session key for current organization
     'SESSION_ORG_KEY': 'current_organization',
 }
+
+# ============================================================================
+# PROMETHEUS METRICS CONFIGURATION
+# ============================================================================
+# Export migration metrics to Prometheus
+PROMETHEUS_EXPORT_MIGRATIONS = True

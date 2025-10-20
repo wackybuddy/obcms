@@ -25,11 +25,6 @@ class BudgetProposalForm(forms.ModelForm):
         fields = ['fiscal_year', 'title', 'description']
 
         widgets = {
-            'fiscal_year': forms.NumberInput(attrs={
-                'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
-                'placeholder': 'e.g., 2025',
-                'min': timezone.now().year,
-            }),
             'title': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
                 'placeholder': 'Enter budget proposal title',
@@ -60,6 +55,16 @@ class BudgetProposalForm(forms.ModelForm):
         # Mark required fields
         for field_name in ['fiscal_year', 'title']:
             self.fields[field_name].required = True
+
+        # Configure fiscal year choices (current year + next 5 years)
+        current_year = timezone.now().year
+        fiscal_year_field = self.fields['fiscal_year']
+        fiscal_year_field.widget = forms.Select(attrs={
+            'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
+        })
+        fiscal_year_field.choices = [
+            (year, year) for year in range(current_year, current_year + 6)
+        ]
 
     def clean_fiscal_year(self):
         """Validate fiscal year is current or future."""

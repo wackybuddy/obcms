@@ -146,10 +146,11 @@ def budget_proposal(db, test_organization, test_user):
 @pytest.fixture
 def approved_budget_proposal(db, test_organization, test_user, test_admin_user):
     """Create approved budget proposal for execution testing."""
+    # Use fiscal_year 2024 to avoid conflicts with other fixtures using 2025
     proposal = BudgetProposal.objects.create(
         organization=test_organization,
-        fiscal_year=2025,
-        title="OOBC FY 2025 Budget (Approved)",
+        fiscal_year=2024,
+        title="OOBC FY 2024 Budget (Approved)",
         description="Approved budget for execution",
         total_requested_budget=Decimal('100000000.00'),
         total_approved_budget=Decimal('95000000.00'),  # 95M approved
@@ -275,9 +276,37 @@ def complete_budget_structure(db, test_organization, test_user, monitoring_entry
 
     program_budgets = []
     for i in range(1, 4):
+        # Create unique monitoring entry for each program budget
+        # (ProgramBudget has unique_together constraint on budget_proposal + monitoring_entry)
+        if i == 1:
+            # Use the provided monitoring_entry for the first program
+            program_monitoring_entry = monitoring_entry
+        else:
+            # Create new monitoring entries for programs 2-3
+            coordination_org, _ = CoordinationOrganization.objects.get_or_create(
+                name=f"{test_organization.name} Complete Budget Program {i}",
+                defaults={
+                    "acronym": f"{test_organization.acronym or test_organization.code}_CBP{i}",
+                    "organization_type": "bmoa",
+                    "description": f"Test coordination record for complete budget program {i}",
+                    "partnership_status": "active",
+                    "is_active": True,
+                },
+            )
+            program_monitoring_entry = MonitoringEntry.objects.create(
+                title=f"Complete Budget Program {i}",
+                category="moa_ppa",
+                summary=f"Complete budget structure program {i}",
+                status="planning",
+                priority="high",
+                lead_organization=coordination_org,
+                implementing_moa=coordination_org,
+                fiscal_year=2025
+            )
+
         pb = ProgramBudget.objects.create(
             budget_proposal=proposal,
-            monitoring_entry=monitoring_entry,
+            monitoring_entry=program_monitoring_entry,
             requested_amount=Decimal(f'{50000000 * i}.00'),
             priority_rank=i
         )

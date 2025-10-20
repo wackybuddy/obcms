@@ -1,0 +1,361 @@
+groups:
+  - name: obcms_application_alerts
+    interval: 30s
+    rules:
+      # High Error Rate Alert
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(django_http_responses_total_by_status_total{job="obcms",status=~"5.."}[5m]))
+            /
+            sum(rate(django_http_responses_total_by_status_total{job="obcms"}[5m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: application
+        annotations:
+          summary: "High 5xx error rate detected"
+          description: "OBCMS application is experiencing {{ $value | humanizePercentage }} error rate (threshold: 1%)"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+      # Slow Response Time Alert
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(django_http_requests_latency_seconds_by_view_method_bucket{job="obcms"}[5m])) by (le)
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "Slow response times detected"
+          description: "95th percentile response time is {{ $value | humanizeDuration }} (threshold: 1s)"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+      # Cache Failure Alert
+      - alert: CacheFailure
+        expr: |
+          (
+            sum(rate(django_cache_get_hits_total{job="obcms"}[5m]))
+            /
+            (sum(rate(django_cache_get_hits_total{job="obcms"}[5m])) + sum(rate(django_cache_get_misses_total{job="obcms"}[5m])))
+          ) < 0.5
+        for: 15m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Cache hit rate below threshold"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (threshold: 50%)"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+      # High Request Rate
+      - alert: HighRequestRate
+        expr: |
+          sum(rate(django_http_requests_total_by_view_transport_method_total{job="obcms"}[5m])) > 1000
+        for: 5m
+        labels:
+          severity: info
+          component: application
+        annotations:
+          summary: "High request rate detected"
+          description: "Request rate is {{ $value }} req/s (threshold: 1000 req/s)"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+  - name: obcms_database_alerts
+    interval: 30s
+    rules:
+      # Database Connection Pool Exhausted
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (django_db_connections_active{job="obcms"} / django_db_connections_total{job="obcms"}) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "Connection pool utilization is {{ $value | humanizePercentage }} (threshold: 90%)"
+          dashboard: "http://grafana:3000/d/obcms-database"
+
+      # High Database Connection Count
+      - alert: HighDatabaseConnections
+        expr: |
+          pg_stat_database_numbackends{datname="obcms"} > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High number of database connections"
+          description: "Database has {{ $value }} active connections (threshold: 80)"
+          dashboard: "http://grafana:3000/d/obcms-database"
+
+      # Database Replication Lag
+      - alert: DatabaseReplicationLag
+        expr: |
+          pg_replication_lag_seconds > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database replication lag detected"
+          description: "Replication lag is {{ $value | humanizeDuration }} (threshold: 30s)"
+          dashboard: "http://grafana:3000/d/obcms-database"
+
+      # Slow Database Queries
+      - alert: SlowDatabaseQueries
+        expr: |
+          rate(pg_stat_statements_mean_exec_time_ms{datname="obcms"}[5m]) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Mean query execution time is {{ $value }}ms (threshold: 1000ms)"
+          dashboard: "http://grafana:3000/d/obcms-database"
+
+      # Database Deadlocks
+      - alert: DatabaseDeadlocks
+        expr: |
+          increase(pg_stat_database_deadlocks{datname="obcms"}[10m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database deadlocks detected"
+          description: "{{ $value }} deadlocks detected in the last 10 minutes"
+          dashboard: "http://grafana:3000/d/obcms-database"
+
+      # Low Buffer Cache Hit Ratio
+      - alert: LowBufferCacheHitRatio
+        expr: |
+          (
+            rate(pg_stat_database_blks_hit{datname="obcms"}[5m])
+            /
+            (rate(pg_stat_database_blks_hit{datname="obcms"}[5m]) + rate(pg_stat_database_blks_read{datname="obcms"}[5m]))
+          ) < 0.90
+        for: 15m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Low PostgreSQL buffer cache hit ratio"
+          description: "Buffer cache hit ratio is {{ $value | humanizePercentage }} (threshold: 90%)"
+          dashboard: "http://grafana:3000/d/obcms-database"
+
+  - name: obcms_celery_alerts
+    interval: 30s
+    rules:
+      # High Celery Queue Depth
+      - alert: HighCeleryQueueDepth
+        expr: |
+          sum(celery_task_queue_depth{job="celery"}) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: celery
+        annotations:
+          summary: "High Celery task queue depth"
+          description: "Celery queue has {{ $value }} pending tasks (threshold: 1000)"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+      # No Active Celery Workers
+      - alert: NoActiveCeleryWorkers
+        expr: |
+          celery_workers_active{job="celery"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: celery
+        annotations:
+          summary: "No active Celery workers available"
+          description: "All Celery workers are down or unavailable"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+      # High Celery Task Failure Rate
+      - alert: HighCeleryTaskFailureRate
+        expr: |
+          (
+            sum(rate(celery_tasks_total{job="celery",state="failure"}[5m]))
+            /
+            sum(rate(celery_tasks_total{job="celery"}[5m]))
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          component: celery
+        annotations:
+          summary: "High Celery task failure rate"
+          description: "Celery task failure rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+  - name: obcms_redis_alerts
+    interval: 30s
+    rules:
+      # High Redis Memory Usage
+      - alert: HighRedisMemoryUsage
+        expr: |
+          (redis_memory_used_bytes{job="redis"} / redis_memory_max_bytes{job="redis"}) > 0.80
+        for: 10m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is {{ $value | humanizePercentage }} (threshold: 80%)"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+      # Redis Down
+      - alert: RedisDown
+        expr: |
+          up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: redis
+        annotations:
+          summary: "Redis service is down"
+          description: "Redis is not responding to health checks"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+      # High Redis Eviction Rate
+      - alert: HighRedisEvictionRate
+        expr: |
+          rate(redis_evicted_keys_total{job="redis"}[5m]) > 100
+        for: 10m
+        labels:
+          severity: warning
+          component: redis
+        annotations:
+          summary: "High Redis key eviction rate"
+          description: "Redis is evicting {{ $value }} keys/s (threshold: 100/s)"
+          dashboard: "http://grafana:3000/d/obcms-main"
+
+  - name: obcms_infrastructure_alerts
+    interval: 30s
+    rules:
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: |
+          100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 80%)"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          100 * (1 - ((node_memory_MemAvailable_bytes) / (node_memory_MemTotal_bytes))) > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 85%)"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"
+
+      # Low Disk Space
+      - alert: LowDiskSpace
+        expr: |
+          100 - ((node_filesystem_avail_bytes{mountpoint="/",fstype!="rootfs"} * 100) / node_filesystem_size_bytes{mountpoint="/",fstype!="rootfs"}) > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 80%)"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"
+
+      # Critical Disk Space
+      - alert: CriticalDiskSpace
+        expr: |
+          100 - ((node_filesystem_avail_bytes{mountpoint="/",fstype!="rootfs"} * 100) / node_filesystem_size_bytes{mountpoint="/",fstype!="rootfs"}) > 90
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Critical disk space - immediate action required"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 90%)"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"
+
+      # High Disk I/O
+      - alert: HighDiskIO
+        expr: |
+          rate(node_disk_io_time_seconds_total[5m]) > 0.8
+        for: 15m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High disk I/O detected"
+          description: "Disk I/O time is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 80%)"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"
+
+      # Node Down
+      - alert: NodeDown
+        expr: |
+          up{job="node"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Node is down"
+          description: "Node {{ $labels.instance }} is not responding"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"
+
+  - name: obcms_container_alerts
+    interval: 30s
+    rules:
+      # High Container CPU Usage
+      - alert: HighContainerCPUUsage
+        expr: |
+          sum(rate(container_cpu_usage_seconds_total{name=~"obcms.*"}[5m])) by (name) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: docker
+        annotations:
+          summary: "High CPU usage in container"
+          description: "Container {{ $labels.name }} is using {{ $value }}% CPU (threshold: 80%)"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"
+
+      # High Container Memory Usage
+      - alert: HighContainerMemoryUsage
+        expr: |
+          (container_memory_usage_bytes{name=~"obcms.*"} / container_spec_memory_limit_bytes{name=~"obcms.*"}) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+          component: docker
+        annotations:
+          summary: "High memory usage in container"
+          description: "Container {{ $labels.name }} is using {{ $value | humanizePercentage }} memory (threshold: 85%)"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"
+
+      # Container Restart Loop
+      - alert: ContainerRestartLoop
+        expr: |
+          rate(container_last_seen{name=~"obcms.*"}[15m]) > 0
+        for: 10m
+        labels:
+          severity: warning
+          component: docker
+        annotations:
+          summary: "Container is restarting frequently"
+          description: "Container {{ $labels.name }} has restarted multiple times in the last 15 minutes"
+          dashboard: "http://grafana:3000/d/obcms-infrastructure"

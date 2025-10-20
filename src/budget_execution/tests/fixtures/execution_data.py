@@ -205,8 +205,9 @@ def complete_execution_cycle(db, approved_program_budget, monitoring_entry, exec
     obligations = []
     disbursements = []
 
-    # Create 3 work items with obligations and disbursements
-    for i in range(1, 4):
+    # Create 2 work items with obligations and disbursements
+    # Allotment is 20M, so we can fit: 5M + 10M = 15M (within limit)
+    for i in range(1, 3):
         work_item = WorkItem.objects.create(
             monitoring_entry=monitoring_entry,
             title=f"Work Item {i}",
@@ -242,8 +243,8 @@ def complete_execution_cycle(db, approved_program_budget, monitoring_entry, exec
         'obligations': obligations,
         'disbursements': disbursements,
         'total_allotted': Decimal('20000000.00'),
-        'total_obligated': Decimal('30000000.00'),  # Sum of obligations
-        'total_disbursed': Decimal('15000000.00')   # Sum of disbursements
+        'total_obligated': Decimal('15000000.00'),  # Sum of 2 obligations: 5M + 10M
+        'total_disbursed': Decimal('7500000.00')    # Sum of 2 disbursements: 2.5M + 5M
     }
 
 

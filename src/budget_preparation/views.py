@@ -19,6 +19,7 @@ from .services.budget_builder import BudgetBuilderService
 from .forms import (
     BudgetProposalForm,
     ProgramBudgetForm,
+    BudgetLineItemForm,
     BudgetLineItemFormSet,
     BudgetJustificationForm
 )
@@ -611,6 +612,55 @@ def program_delete(request, pk):
     }
 
     return render(request, 'budget_preparation/program_confirm_delete.html', context)
+
+
+@login_required
+def line_item_create(request, program_pk):
+    """
+    Add a budget line item to a program budget.
+    """
+    organization = Organization.objects.filter(name__icontains='OOBC').first()
+
+    program_budget = get_object_or_404(
+        ProgramBudget.objects.select_related('budget_proposal'),
+        pk=program_pk,
+        budget_proposal__organization=organization,
+    )
+
+    proposal = program_budget.budget_proposal
+
+    if not proposal.is_editable:
+        messages.error(request, "Cannot modify line items for non-editable proposals.")
+        return redirect('budget_preparation:proposal_detail', pk=proposal.pk)
+
+    if request.method == 'POST':
+        form = BudgetLineItemForm(request.POST)
+        if form.is_valid():
+            service = BudgetBuilderService()
+            try:
+                service.add_line_item(
+                    program_budget=program_budget,
+                    category=form.cleaned_data['category'],
+                    description=form.cleaned_data['description'],
+                    unit_cost=form.cleaned_data['unit_cost'],
+                    quantity=form.cleaned_data['quantity'],
+                    sub_category=form.cleaned_data.get('sub_category', ''),
+                    justification=form.cleaned_data.get('justification', ''),
+                    notes=form.cleaned_data.get('notes', ''),
+                )
+                messages.success(request, "Line item added successfully!")
+                return redirect('budget_preparation:proposal_detail', pk=proposal.pk)
+            except Exception as exc:
+                messages.error(request, f"Error adding line item: {exc}")
+    else:
+        form = BudgetLineItemForm()
+
+    context = {
+        'form': form,
+        'program_budget': program_budget,
+        'proposal': proposal,
+    }
+    return render(request, 'budget_preparation/line_item_form.html', context)
 
 
 # ==================== HTMX API Endpoints ====================

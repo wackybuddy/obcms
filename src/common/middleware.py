@@ -391,3 +391,80 @@ class DeprecationLoggingMiddleware(MiddlewareMixin):
 
         # Fall back to REMOTE_ADDR
         return request.META.get('REMOTE_ADDR', 'Unknown')
+
+
+class AdminIPWhitelistMiddleware:
+    """
+    Middleware to restrict admin panel access to whitelisted IP addresses.
+    Only active in production when ADMIN_IP_WHITELIST is configured.
+
+    Configuration:
+        ADMIN_IP_WHITELIST = ['192.168.1.100', '10.0.0.0/8', '172.16.0.0/12']
+
+    Supports both individual IPs and CIDR notation.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.whitelist = getattr(settings, 'ADMIN_IP_WHITELIST', [])
+        self.enabled = bool(self.whitelist)
+
+    def __call__(self, request):
+        # Only check admin URLs if whitelist is configured
+        if self.enabled and request.path.startswith('/admin/'):
+            client_ip = self._get_client_ip(request)
+
+            if not self._is_ip_allowed(client_ip):
+                security_logger.warning(
+                    f"Admin access denied from unauthorized IP | "
+                    f"IP: {client_ip} | "
+                    f"Path: {request.path} | "
+                    f"User: {request.user.username if request.user.is_authenticated else 'Anonymous'}"
+                )
+                raise PermissionDenied("Access to admin panel is restricted to authorized IP addresses.")
+
+        return self.get_response(request)
+
+    def _get_client_ip(self, request):
+        """Get client IP address (proxy-aware)."""
+        # Check for Cloudflare real IP
+        cf_connecting_ip = request.META.get('HTTP_CF_CONNECTING_IP')
+        if cf_connecting_ip:
+            return cf_connecting_ip
+
+        # Check for X-Forwarded-For
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            # Take the first IP (client IP)
+            ip = x_forwarded_for.split(',')[0].strip()
+            return ip
+
+        # Fall back to REMOTE_ADDR
+        return request.META.get('REMOTE_ADDR', '0.0.0.0')
+
+    def _is_ip_allowed(self, client_ip):
+        """Check if client IP is in whitelist (supports CIDR notation)."""
+        from ipaddress import ip_address, ip_network
+
+        try:
+            client_ip_obj = ip_address(client_ip)
+        except ValueError:
+            # Invalid IP format
+            return False
+
+        for allowed in self.whitelist:
+            try:
+                # Check if it's a network (CIDR notation)
+                if '/' in allowed:
+                    network = ip_network(allowed, strict=False)
+                    if client_ip_obj in network:
+                        return True
+                else:
+                    # Individual IP address
+                    if client_ip_obj == ip_address(allowed):
+                        return True
+            except ValueError:
+                # Invalid whitelist entry, skip
+                continue
+
+        return False

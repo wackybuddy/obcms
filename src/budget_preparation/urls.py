@@ -27,6 +27,7 @@ urlpatterns = [
     path('proposals/<int:proposal_pk>/programs/create/', views.program_create, name='program_create'),
     path('programs/<int:pk>/edit/', views.program_edit, name='program_edit'),
     path('programs/<int:pk>/delete/', views.program_delete, name='program_delete'),
+    path('programs/<int:program_pk>/line-items/create/', views.line_item_create, name='line_item_create'),
 
     # HTMX API Endpoints
     path('api/stats/', views.proposal_stats, name='proposal_stats'),

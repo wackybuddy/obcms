@@ -41,6 +41,8 @@ urlpatterns = [
     # Health check endpoints (no authentication required)
     path("health/", health_check, name="health"),
     path("ready/", readiness_check, name="readiness"),
+    # Prometheus metrics endpoint (for monitoring infrastructure)
+    path("metrics/", include("django_prometheus.urls")),
     # Custom admin views (must come before admin.site.urls)
     path("admin/auth/group/", group_changelist_view, name="custom_group_changelist"),
     path("admin/", admin.site.urls),

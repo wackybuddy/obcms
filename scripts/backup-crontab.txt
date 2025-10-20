@@ -1,0 +1,98 @@
+##############################################################################
+# OBCMS Backup Crontab Configuration
+#
+# Installation:
+#   1. Edit this file with your actual paths
+#   2. Install: crontab -e
+#   3. Paste the lines below
+#
+# Testing:
+#   - View current crontab: crontab -l
+#   - Check logs: tail -f /path/to/obcms/logs/backup-*.log
+#
+# IMPORTANT: Replace /path/to/obcms with actual project path!
+##############################################################################
+
+# Set shell and path
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+PROJECT_ROOT=/path/to/obcms
+
+# Email notifications (optional - uncomment and set your email)
+# MAILTO=admin@example.com
+
+##############################################################################
+# Daily Backups (2:00 AM)
+##############################################################################
+
+# Daily full backup (database + media)
+0 2 * * * cd $PROJECT_ROOT && ./scripts/backup-all.sh daily >> /tmp/backup-cron.log 2>&1
+
+# Alternative: Separate database and media backups
+# 0 2 * * * cd $PROJECT_ROOT && ./scripts/backup-database.sh daily >> /tmp/backup-cron.log 2>&1
+# 15 2 * * * cd $PROJECT_ROOT && ./scripts/backup-media.sh daily >> /tmp/backup-cron.log 2>&1
+
+##############################################################################
+# Weekly Backups (Sunday 3:00 AM)
+##############################################################################
+
+0 3 * * 0 cd $PROJECT_ROOT && ./scripts/backup-all.sh weekly >> /tmp/backup-cron.log 2>&1
+
+##############################################################################
+# Monthly Backups (1st of month at 4:00 AM)
+##############################################################################
+
+0 4 1 * * cd $PROJECT_ROOT && ./scripts/backup-all.sh monthly >> /tmp/backup-cron.log 2>&1
+
+##############################################################################
+# Backup Cleanup (Daily at 5:00 AM)
+##############################################################################
+
+0 5 * * * cd $PROJECT_ROOT && ./scripts/cleanup-old-backups.sh >> /tmp/backup-cron.log 2>&1
+
+##############################################################################
+# Backup Monitoring (Every 6 hours)
+##############################################################################
+
+0 */6 * * * cd $PROJECT_ROOT && ./scripts/backup-monitor.sh --alert >> /tmp/backup-cron.log 2>&1
+
+##############################################################################
+# Weekly Backup Health Report (Monday 9:00 AM)
+##############################################################################
+
+0 9 * * 1 cd $PROJECT_ROOT && ./scripts/backup-monitor.sh --report >> /tmp/backup-cron.log 2>&1
+
+##############################################################################
+# Backup Verification (Daily at 6:00 AM - latest backup only)
+##############################################################################
+
+# 0 6 * * * cd $PROJECT_ROOT && LATEST_BACKUP=$(find $PROJECT_ROOT/backups/daily -name "*.sql.gz" -type f | tail -n 1) && [ -n "$LATEST_BACKUP" ] && ./scripts/verify-backup.sh "$LATEST_BACKUP" >> /tmp/backup-cron.log 2>&1
+
+##############################################################################
+# Notes:
+#
+# 1. Schedule Overview:
+#    - 2:00 AM - Daily full backup (database + media)
+#    - 3:00 AM - Weekly backup (Sundays)
+#    - 4:00 AM - Monthly backup (1st of month)
+#    - 5:00 AM - Cleanup old backups (retention policy)
+#    - Every 6 hours - Check for alerts
+#    - 9:00 AM Mondays - Weekly health report
+#
+# 2. Disk Space:
+#    - Monitor disk space regularly
+#    - Adjust retention policy if needed
+#    - Consider offsite backup for monthly backups
+#
+# 3. Testing:
+#    - Test backups manually before deploying to production
+#    - Verify restore procedures work correctly
+#    - Check logs after first automated run
+#
+# 4. Customization:
+#    - Adjust times based on your traffic patterns
+#    - Add email notifications for critical alerts
+#    - Implement offsite backup to S3/cloud storage
+#
+##############################################################################
+

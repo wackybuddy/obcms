@@ -42,13 +42,12 @@ SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# SECURITY: Secure cookies
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = True
+# SECURITY: Secure cookies (production-only overrides)
+SESSION_COOKIE_SECURE = True  # HTTPS-only session cookies
+CSRF_COOKIE_SECURE = True  # HTTPS-only CSRF cookies
 CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Strict"  # CSRF protection via SameSite
-CSRF_COOKIE_SAMESITE = "Strict"
+SESSION_COOKIE_SAMESITE = "Lax"  # Inherited from base.py, allows top-level navigation
+CSRF_COOKIE_SAMESITE = "Strict"  # Strict for CSRF (prevent cross-site form submission)
 
 # SECURITY: Additional headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -56,12 +55,15 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_BROWSER_XSS_FILTER = True
 
 # SECURITY: Content Security Policy (CSP)
-# Restricts resource loading to prevent XSS and data injection attacks
-# Customizable via environment variable for flexibility
+# Strict CSP without 'unsafe-inline' - use nonce or hash-based approach
+# For Bootstrap/Tailwind inline styles, consider:
+# 1. Using nonce-based CSP (django-csp package)
+# 2. Extracting inline styles to external files
+# 3. Using hash-based CSP for specific inline blocks
 CSP_DEFAULT = (
     "default-src 'self'; "
-    "script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; "
-    "style-src 'self' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com 'unsafe-inline'; "
+    "script-src 'self' https://cdn.tailwindcss.com https://unpkg.com; "
+    "style-src 'self' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com https://unpkg.com; "
     "font-src 'self' https://cdnjs.cloudflare.com data:; "
     "img-src 'self' data: https:; "
     "connect-src 'self'; "
@@ -71,11 +73,16 @@ CSP_DEFAULT = (
 )
 CONTENT_SECURITY_POLICY = env.str("CONTENT_SECURITY_POLICY", default=CSP_DEFAULT)
 
-# Add CSP middleware to inject headers
+# Admin IP whitelist (restrict /admin/ access to specific IPs)
+ADMIN_IP_WHITELIST = env.list("ADMIN_IP_WHITELIST", default=[])
+# Example: ADMIN_IP_WHITELIST=192.168.1.100,10.0.0.0/8,172.16.0.0/12
+
+# Add CSP and admin IP restriction middleware
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "common.middleware.ContentSecurityPolicyMiddleware",  # CSP headers (production)
+    "common.middleware.AdminIPWhitelistMiddleware",  # Admin IP restriction (production)
 ] + [
     m
     for m in MIDDLEWARE

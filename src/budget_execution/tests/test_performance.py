@@ -53,6 +53,9 @@ class TestBudgetPerformance:
 
     def test_complex_query_performance(self, test_organization, test_user, monitoring_entry):
         """Test dashboard query with 50 programs - Target: < 1 second."""
+        from monitoring.models import MonitoringEntry
+        from coordination.models import Organization as CoordinationOrganization
+
         scenario = PERFORMANCE_TEST_SCENARIOS['complex_query']
 
         # Create proposal with 50 programs
@@ -65,10 +68,38 @@ class TestBudgetPerformance:
         )
 
         # Create 50 program budgets with line items
+        # Each needs a unique monitoring entry (ProgramBudget unique constraint)
         for i in range(50):
+            # Create or get unique monitoring entry for each program
+            if i == 0:
+                # Use provided monitoring_entry for first program
+                program_monitoring_entry = monitoring_entry
+            else:
+                # Create unique monitoring entries for programs 2-50
+                coordination_org, _ = CoordinationOrganization.objects.get_or_create(
+                    name=f"Performance Test Program {i}",
+                    defaults={
+                        "acronym": f"PERF_P{i}",
+                        "organization_type": "bmoa",
+                        "description": f"Performance test program {i}",
+                        "partnership_status": "active",
+                        "is_active": True,
+                    },
+                )
+                program_monitoring_entry = MonitoringEntry.objects.create(
+                    title=f"Performance Program {i}",
+                    category="moa_ppa",
+                    summary=f"Performance test program {i}",
+                    status="planning",
+                    priority="high",
+                    lead_organization=coordination_org,
+                    implementing_moa=coordination_org,
+                    fiscal_year=2025
+                )
+
             pb = ProgramBudget.objects.create(
                 budget_proposal=proposal,
-                monitoring_entry=monitoring_entry,
+                monitoring_entry=program_monitoring_entry,
                 requested_amount=Decimal('10000000.00'),
                 priority_rank=i + 1
             )
@@ -113,16 +144,67 @@ class TestBudgetPerformance:
         assert elapsed_time < scenario['target_time_seconds'], \
             f"Complex query took {elapsed_time:.2f}s, target was {scenario['target_time_seconds']}s"
 
-    def test_financial_validation_performance(self, approved_program_budget, execution_user, monitoring_entry):
+    def test_financial_validation_performance(self, test_organization, test_user, test_admin_user, execution_user, monitoring_entry):
         """Test constraint validation on 1000 obligations - Target: < 5 seconds."""
+        from budget_preparation.models import BudgetProposal, ProgramBudget
+
         scenario = PERFORMANCE_TEST_SCENARIOS['financial_validation']
 
-        # Create 10 allotments
+        # Create a new approved budget proposal to get multiple unique program budgets
+        # (Allotment has unique constraint on program_budget + quarter)
+        proposal = BudgetProposal.objects.create(
+            organization=test_organization,
+            fiscal_year=2026,  # Different year
+            title="Performance Test Budget FY2026",
+            total_approved_budget=Decimal('100000000.00'),
+            status='approved',
+            submitted_by=test_user,
+            approved_by=test_admin_user
+        )
+
+        # Create 10 program budgets with 1 allotment each
         allotments = []
         for i in range(10):
+            # Get or create unique monitoring entry for each program budget
+            if i == 0:
+                program_monitoring_entry = monitoring_entry
+            else:
+                from monitoring.models import MonitoringEntry
+                from coordination.models import Organization as CoordinationOrganization
+
+                coordination_org, _ = CoordinationOrganization.objects.get_or_create(
+                    name=f"Performance Validation Program {i}",
+                    defaults={
+                        "acronym": f"PERF_VAL_{i}",
+                        "organization_type": "bmoa",
+                        "description": f"Performance validation program {i}",
+                        "partnership_status": "active",
+                        "is_active": True,
+                    },
+                )
+                program_monitoring_entry = MonitoringEntry.objects.create(
+                    title=f"Performance Validation Program {i}",
+                    category="moa_ppa",
+                    summary=f"Performance validation program {i}",
+                    status="planning",
+                    priority="high",
+                    lead_organization=coordination_org,
+                    implementing_moa=coordination_org,
+                    fiscal_year=2026
+                )
+
+            program_budget = ProgramBudget.objects.create(
+                budget_proposal=proposal,
+                monitoring_entry=program_monitoring_entry,
+                requested_amount=Decimal('10000000.00'),
+                approved_amount=Decimal('10000000.00'),
+                priority_rank=i + 1
+            )
+
+            # Create one Q1 allotment per program budget
             allotment = Allotment.objects.create(
-                program_budget=approved_program_budget,
-                quarter=['Q1', 'Q2', 'Q3', 'Q4'][i % 4],
+                program_budget=program_budget,
+                quarter='Q1',
                 amount=Decimal('4000000.00'),
                 released_by=execution_user,
                 status='released'

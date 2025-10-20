@@ -118,7 +118,17 @@ class BudgetBuilderService:
         return program_budget
 
     @transaction.atomic
-    def add_line_item(self, program_budget, category, description, unit_cost, quantity, notes=''):
+    def add_line_item(
+        self,
+        program_budget,
+        category,
+        description,
+        unit_cost,
+        quantity,
+        sub_category='',
+        justification='',
+        notes='',
+    ):
         """
         Add a line item to a program budget.
 
@@ -142,6 +152,8 @@ class BudgetBuilderService:
             description=description,
             unit_cost=Decimal(str(unit_cost)),
             quantity=quantity,
+            sub_category=sub_category,
+            justification=justification,
             notes=notes
         )
         # total_cost is auto-calculated in save() method
