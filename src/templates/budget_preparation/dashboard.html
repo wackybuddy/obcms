@@ -20,13 +20,82 @@
                     Manage budget proposals for FY {{ current_year }}
                 </p>
             </div>
-            <a href="{% url 'budget_preparation:proposal_create' %}"
-               role="button"
-               class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <button type="button"
+                    onclick="toggleNewProposalForm()"
+                    class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <i class="fas fa-plus mr-2"></i>
                 New Proposal
-            </a>
+            </button>
         </div>
+    </div>
+
+    <!-- Inline New Proposal Form -->
+    <div id="newProposalContainer" class="hidden bg-white rounded-xl border border-gray-200 shadow-sm mb-8">
+        <form method="post" action="{% url 'budget_preparation:proposal_create' %}" id="budget-proposal-form" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            <h2 class="text-2xl font-bold text-gray-900">Create Budget Proposal</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-1">
+                    <label for="{{ create_form.fiscal_year.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Fiscal Year<span class="text-red-500">*</span>
+                    </label>
+                    {{ create_form.fiscal_year }}
+                    {% if create_form.fiscal_year.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ create_form.fiscal_year.errors.0 }}</p>
+                    {% else %}
+                    <p class="mt-1 text-sm text-gray-500">Budget year (current year or future)</p>
+                    {% endif %}
+                </div>
+                <div class="space-y-1">
+                    <label for="{{ create_form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Proposal Title<span class="text-red-500">*</span>
+                    </label>
+                    {{ create_form.title }}
+                    {% if create_form.title.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ create_form.title.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label for="{{ create_form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                </label>
+                {{ create_form.description }}
+                {% if create_form.description.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ create_form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="space-y-1">
+                <label for="{{ create_form.total_requested_budget.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Total Requested Budget<span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₱</span>
+                    {{ create_form.total_requested_budget }}
+                </div>
+                {% if create_form.total_requested_budget.errors %}
+                <p class="mt-2 text-sm text-red-600">{{ create_form.total_requested_budget.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button type="submit"
+                        class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <i class="fas fa-save mr-2"></i>
+                    Submit Proposal
+                </button>
+                <button type="button"
+                        onclick="toggleNewProposalForm()"
+                        class="border-2 border-gray-300 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancel
+                </button>
+            </div>
+        </form>
     </div>
 
     <!-- Statistics Cards -->
@@ -162,12 +231,12 @@
                     <i class="fas fa-inbox text-6xl mb-4 text-gray-300"></i>
                     <p class="text-lg font-medium mb-2">No proposals yet</p>
                     <p class="text-sm mb-4">Get started by creating your first budget proposal</p>
-                    <a href="{% url 'budget_preparation:proposal_create' %}"
-                       role="button"
-                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200">
+                    <button type="button"
+                            onclick="window.location.href='{% url 'budget_preparation:proposal_create' %}'"
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors duration-200">
                         <i class="fas fa-plus mr-2"></i>
                         Create Proposal
-                    </a>
+                    </button>
                 </div>
                 {% endif %}
             </div>
@@ -211,13 +280,14 @@
                         </div>
                         <span class="text-sm font-medium text-gray-700">View All Proposals</span>
                     </a>
-                    <a href="{% url 'budget_preparation:proposal_create' %}"
-                       class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    <button type="button"
+                            onclick="toggleNewProposalForm()"
+                            class="flex w-full items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-left">
                         <div class="bg-emerald-100 p-2 rounded-lg mr-3">
                             <i class="fas fa-plus text-emerald-600"></i>
                         </div>
-                        <span class="text-sm font-medium text-gray-700">New Proposal</span>
-                    </a>
+                        <span class="text-sm font-medium text-gray-700">Quick Create</span>
+                    </button>
                     <a href="{% url 'planning:dashboard' %}"
                        class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
                         <div class="bg-purple-100 p-2 rounded-lg mr-3">
@@ -228,7 +298,23 @@
                 </div>
             </div>
         </div>
-    </div>
+</div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    function toggleNewProposalForm() {
+        var container = document.getElementById('newProposalContainer');
+        if (!container) {
+            return;
+        }
+        container.classList.toggle('hidden');
+        if (!container.classList.contains('hidden')) {
+            container.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+    }
+</script>
 {% endblock %}

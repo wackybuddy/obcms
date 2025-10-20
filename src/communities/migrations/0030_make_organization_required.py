@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('organizations', '0001_initial'),
-        ('communities', '0029_add_organization_field'),
+        ('communities', '0029a_populate_organization_field'),
     ]
 
     operations = [

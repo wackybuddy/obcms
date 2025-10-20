@@ -2,22 +2,15 @@
 {% with target_id=sidebar_target_id|default:'sidebar-content' %}
 {% with default_close=use_ppa_sidebar|yesno:"closePPASidebar,closeSidebar" %}
 {% with close_fn=close_action|default:default_close %}
-<form hx-post="{% url 'common:work_item_sidebar_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
+<form action="javascript:void(0);"
+      hx-post="{% url 'common:work_item_sidebar_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
       hx-target="#{{ target_id }}"
       hx-swap="innerHTML"
       hx-indicator="#formSubmitIndicator"
-      hx-trigger="submit"
+      hx-sync="this:drop"
       hx-disabled-elt="#{{ target_id }} button[type='submit']"
       data-close-action="{{ close_fn }}"
-      hx-on::after-request="
-          if(!event.detail.successful) {
-              console.error('[Sidebar] Create failed');
-              document.body.dispatchEvent(new CustomEvent('showToast', {
-                  detail: { message: 'Failed to create. Please check the form for errors.', level: 'error' }
-              }));
-          }
-      "
-      class="space-y-5">
+      class="space-y-5 workitem-create-form">
 {% csrf_token %}
 {% if ppa_id %}<input type="hidden" name="ppa_id" value="{{ ppa_id }}">{% endif %}
 {% if assignee_id %}<input type="hidden" name="assignee_id" value="{{ assignee_id }}">{% endif %}

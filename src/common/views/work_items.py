@@ -330,6 +330,7 @@ def work_item_create(request):
     - Dynamic form fields based on type
     - Validation rules (enforce hierarchy constraints)
     - Success redirect to detail view
+    - Idempotency token-based duplicate prevention (prevents double-submit)
     """
     # Get parent_id from query params (for "Add Child" quick action)
     parent_id = request.GET.get('parent')
@@ -353,6 +354,33 @@ def work_item_create(request):
     valid_work_types = {code for code, _ in WorkItem.WORK_TYPE_CHOICES}
 
     if request.method == 'POST':
+        # DUPLICATE PREVENTION: Check submission token for idempotency
+        post_data = request.POST.copy()
+        submission_token = post_data.get('submission_token')
+        token_entries = request.session.get('work_item_create_tokens', [])
+        existing_item = None
+
+        if submission_token:
+            for entry in list(token_entries):
+                if entry.get('token') == submission_token:
+                    existing_item = WorkItem.objects.filter(pk=entry.get('work_item_id')).first()
+                    if not existing_item:
+                        # Clean up stale token references
+                        token_entries = [e for e in token_entries if e.get('token') != submission_token]
+                    break
+
+        if existing_item:
+            # DUPLICATE DETECTED: Return existing item instead of creating duplicate
+            request.session['work_item_create_tokens'] = token_entries
+            request.session.modified = True
+
+            messages.info(
+                request,
+                f'{existing_item.get_work_type_display()} "{existing_item.title}" '
+                f'(already processed - using existing record)'
+            )
+            return redirect('common:work_item_detail', pk=existing_item.pk)
+
         form = WorkItemForm(request.POST)
         form.user = request.user  # For created_by field
 
@@ -373,6 +401,15 @@ def work_item_create(request):
             # Invalidate caches
             invalidate_calendar_cache(request.user.id)
             invalidate_work_item_tree_cache(work_item)  # Invalidate tree cache
+
+            # DUPLICATE PREVENTION: Record this submission token
+            if submission_token:
+                token_entries = [entry for entry in token_entries if entry.get('token') != submission_token]
+                token_entries.append({'token': submission_token, 'work_item_id': str(work_item.pk)})
+                if len(token_entries) > 20:
+                    token_entries = token_entries[-20:]
+                request.session['work_item_create_tokens'] = token_entries
+                request.session.modified = True
 
             messages.success(
                 request,
@@ -407,6 +444,9 @@ def work_item_create(request):
     if parent:
         breadcrumb = list(parent.get_ancestors(include_self=True))
 
+    # Generate submission token for duplicate prevention
+    submission_token = uuid.uuid4().hex
+
     context = {
         'form': form,
         'action': 'Create',
@@ -416,6 +456,7 @@ def work_item_create(request):
         'ppa': related_ppa,  # Pass PPA context to template
         'ppa_info': related_ppa,  # Alias for template clarity
         'ppa_id': ppa_id,  # Pass ppa_id for form submission
+        'submission_token': submission_token,  # DUPLICATE PREVENTION: Pass token to template
     }
 
     # If HTMX request, return modal partial

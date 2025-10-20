@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('organizations', '0001_initial'),
-        ('mana', '0022_add_organization_field_nullable'),
+        ('mana', '0022a_populate_organization_field'),
     ]
 
     operations = [

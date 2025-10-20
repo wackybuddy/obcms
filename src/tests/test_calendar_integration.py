@@ -82,6 +82,7 @@ class CalendarIntegrationTests(TestCase):
             address="123 Integration Way",
             target_participants=30,
             actual_participants=0,
+            created_by=self.user,
         )
 
     def test_work_item_in_calendar_payload(self):

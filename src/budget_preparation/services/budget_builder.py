@@ -15,7 +15,15 @@ class BudgetBuilderService:
     """Service for building and validating budget proposals."""
 
     @transaction.atomic
-    def create_proposal(self, organization, fiscal_year, title, description, user):
+    def create_proposal(
+        self,
+        organization,
+        fiscal_year,
+        title,
+        description,
+        user,
+        total_requested_budget=None,
+    ):
         """
         Create a new budget proposal.
 
@@ -49,7 +57,7 @@ class BudgetBuilderService:
             title=title,
             description=description,
             submitted_by=user,
-            total_requested_budget=Decimal('0.00')
+            total_requested_budget=Decimal(str(total_requested_budget)) if total_requested_budget is not None else Decimal('0.00')
         )
 
         return proposal

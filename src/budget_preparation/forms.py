@@ -22,7 +22,7 @@ class BudgetProposalForm(forms.ModelForm):
 
     class Meta:
         model = BudgetProposal
-        fields = ['fiscal_year', 'title', 'description']
+        fields = ['fiscal_year', 'title', 'description', 'total_requested_budget']
 
         widgets = {
             'title': forms.TextInput(attrs={
@@ -34,18 +34,26 @@ class BudgetProposalForm(forms.ModelForm):
                 'rows': 4,
                 'placeholder': 'Provide an overview of this budget proposal',
             }),
+            'total_requested_budget': forms.NumberInput(attrs={
+                'class': 'w-full pl-8 pr-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
+                'placeholder': '0.00',
+                'step': '0.01',
+                'min': '0',
+            }),
         }
 
         labels = {
             'fiscal_year': 'Fiscal Year',
             'title': 'Proposal Title',
             'description': 'Description',
+            'total_requested_budget': 'Total Requested Budget (₱)',
         }
 
         help_texts = {
             'fiscal_year': 'Budget year (current year or future)',
             'title': 'Brief title describing this budget proposal',
             'description': 'Overview of objectives and scope',
+            'total_requested_budget': 'Initial requested budget amount for this proposal',
         }
 
     def __init__(self, *args, **kwargs):
@@ -53,7 +61,7 @@ class BudgetProposalForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Mark required fields
-        for field_name in ['fiscal_year', 'title']:
+        for field_name in ['fiscal_year', 'title', 'total_requested_budget']:
             self.fields[field_name].required = True
 
         # Configure fiscal year choices (current year + next 5 years)
@@ -93,6 +101,12 @@ class BudgetProposalForm(forms.ModelForm):
                 )
 
         return fiscal_year
+
+    def clean_total_requested_budget(self):
+        amount = self.cleaned_data.get('total_requested_budget')
+        if amount is None or amount < 0:
+            raise ValidationError('Total requested budget must be zero or greater.')
+        return amount
 
 
 class ProgramBudgetForm(forms.ModelForm):

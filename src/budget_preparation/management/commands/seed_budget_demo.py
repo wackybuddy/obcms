@@ -36,7 +36,7 @@ class Command(BaseCommand):
                 "title": "Demo Budget Proposal",
                 "description": "Automatically generated for end-to-end testing workflows.",
                 "submitted_by": user,
-                "total_requested_budget": Decimal("0.00"),
+                "total_requested_budget": Decimal("150000000"),
             },
         )
 

@@ -33,7 +33,15 @@ def budget_dashboard(request):
     Budget preparation dashboard with overview statistics and recent proposals.
     """
     # Get user's organization (OOBC for now, will be user.organization in BMMS)
-    organization = getattr(request.user, "organization", None)
+    organization = getattr(request.user, "moa_organization", None)
+
+    if organization is None:
+        user_org_identifier = getattr(request.user, "organization", "") or None
+        if user_org_identifier:
+            organization = Organization.objects.filter(
+                Q(code__iexact=user_org_identifier) | Q(name__iexact=user_org_identifier)
+            ).first()
+
     if organization is None:
         organization = Organization.objects.filter(name__icontains='OOBC').first()
 
@@ -66,6 +74,7 @@ def budget_dashboard(request):
         'current_year': current_year,
         'recent_proposals': recent_proposals,
         'budget_by_year': budget_by_year,
+        'create_form': BudgetProposalForm(organization=organization),
     }
 
     return render(request, 'budget_preparation/dashboard.html', context)
@@ -194,7 +203,8 @@ def proposal_create(request):
                     fiscal_year=form.cleaned_data['fiscal_year'],
                     title=form.cleaned_data['title'],
                     description=form.cleaned_data['description'],
-                    user=request.user
+                    user=request.user,
+                    total_requested_budget=form.cleaned_data['total_requested_budget'],
                 )
 
                 messages.success(

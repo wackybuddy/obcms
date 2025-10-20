@@ -38,6 +38,9 @@
           class="grid grid-cols-1 lg:grid-cols-2 gap-6"
           {% if work_item %}data-autosave="true"{% endif %}>
         {% csrf_token %}
+        {% if submission_token %}
+        <input type="hidden" name="submission_token" value="{{ submission_token }}">
+        {% endif %}
 
         {% if form.non_field_errors %}
             <div class="lg:col-span-2 bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4">

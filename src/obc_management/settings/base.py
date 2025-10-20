@@ -198,19 +198,39 @@ DATABASES = {"default": env.db(default="sqlite:///" + str(BASE_DIR / "db.sqlite3
 # ============================================================================
 # CACHE CONFIGURATION (Redis)
 # ============================================================================
-# Redis cache backend for session storage and application caching
-# Uses Django 4.0+ built-in Redis cache backend (no django-redis package needed)
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
-        "KEY_PREFIX": "obcms",
-        "TIMEOUT": 300,  # 5 minutes default timeout
-    }
-}
+USE_REDIS_CACHE = env.bool("USE_REDIS_CACHE", default=False)
 
-# Session backend (uses Redis cache for better performance)
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+if USE_REDIS_CACHE:
+    # Redis cache backend for session storage and application caching
+    # Uses Django 4.0+ built-in Redis cache backend (no django-redis package needed)
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/1"),
+            "KEY_PREFIX": "obcms",
+            "TIMEOUT": 300,  # 5 minutes default timeout
+        }
+    }
+else:
+    # Fallback to local memory cache for development and testing environments.
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "obcms-cache",
+        }
+    }
+
+# Session backend configuration
+# Development: Use database sessions (reliable, no Redis needed)
+# Production: Use cache sessions with Redis (fast, scalable)
+SESSION_ENGINE = env.str(
+    "SESSION_ENGINE",
+    default=(
+        "django.contrib.sessions.backends.db"  # Database backend for development
+        if not USE_REDIS_CACHE
+        else "django.contrib.sessions.backends.cache"  # Cache backend with Redis
+    )
+)
 SESSION_CACHE_ALIAS = "default"
 
 # Session security settings

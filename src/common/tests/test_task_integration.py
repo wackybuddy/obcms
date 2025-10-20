@@ -584,8 +584,15 @@ class TestTaskHierarchyIntegration:
             created_by=user,
         )
 
-        # Verify hierarchy
-        assert project.get_descendants().count() == 6  # 2 activities + 2 tasks + 2 subtasks
+        # Verify hierarchy - refresh objects to ensure tree is updated
+        project.refresh_from_db()
+        planning.refresh_from_db()
+        development.refresh_from_db()
+        task2.refresh_from_db()
+
+        # Count all descendants and verify structure
+        descendants = list(project.get_descendants())
+        assert len(descendants) == 6  # 2 activities + 2 tasks + 2 subtasks
         assert planning.get_children().count() == 1  # 1 task
         assert development.get_children().count() == 1  # 1 task
         assert task2.get_children().count() == 2  # 2 subtasks

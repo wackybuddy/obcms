@@ -25,11 +25,16 @@
     {% endif %}
 
     <!-- Form Content -->
-    <form hx-post="{% url 'common:work_item_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
+    <form action="javascript:void(0);"
+          hx-post="{% url 'common:work_item_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
           hx-target="#workItemModal"
           hx-swap="innerHTML"
-          class="p-6">
+          hx-sync="this:drop"
+          class="p-6 workitem-create-form">
         {% csrf_token %}
+        {% if submission_token %}
+        <input type="hidden" name="submission_token" value="{{ submission_token }}">
+        {% endif %}
 
         {% if form.non_field_errors %}
         <div class="mb-6 bg-red-50 border-l-4 border-red-500 rounded-r-lg p-4">

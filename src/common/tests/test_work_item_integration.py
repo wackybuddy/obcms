@@ -39,7 +39,7 @@ class TestEndToEndProjectWorkflow:
             first_name="Project",
             last_name="Manager",
         )
-        client.login(username="pm_user", password="testpass")
+        client.force_login(user)
 
         # Step 2: Create Project using WorkItem
         project = WorkItem.objects.create(
