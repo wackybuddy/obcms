@@ -1,6 +1,7 @@
 """Signal handlers linking barangay communities and municipality coverage."""
 
-from django.db.models.signals import post_delete, post_save
+from django.apps import apps
+from django.db.models.signals import post_delete, post_save, pre_delete
 from django.dispatch import receiver
 
 from .models import MunicipalityCoverage, OBCCommunity, ProvinceCoverage
@@ -14,6 +15,17 @@ def sync_municipality_coverage_on_save(sender, instance, **kwargs):
     MunicipalityCoverage.sync_for_municipality(municipality)
     if municipality and municipality.province:
         ProvinceCoverage.sync_for_province(municipality.province)
+
+
+@receiver(pre_delete, sender=OBCCommunity)
+def delete_community_history_on_delete(sender, instance, **kwargs):
+    """Delete all history entries for a community before the community is deleted."""
+    try:
+        OBCCommunityHistory = apps.get_model("municipal_profiles", "OBCCommunityHistory")
+        OBCCommunityHistory.objects.filter(community=instance).delete()
+    except (LookupError, Exception):
+        # If municipal_profiles app isn't loaded yet or OBCCommunityHistory doesn't exist, skip
+        pass
 
 
 @receiver(post_delete, sender=OBCCommunity)
