@@ -82,7 +82,7 @@ def proposal_list(request):
     # Base queryset
     proposals = BudgetProposal.objects.filter(
         organization=organization
-    ).select_related('submitted_by', 'reviewed_by').prefetch_related('program_budgets')
+    ).select_related('submitted_by', 'approved_by').prefetch_related('program_budgets')
 
     # Filters
     status_filter = request.GET.get('status', '')
@@ -134,7 +134,7 @@ def proposal_detail(request, pk):
     organization = Organization.objects.filter(name__icontains='OOBC').first()
 
     proposal = get_object_or_404(
-        BudgetProposal.objects.select_related('submitted_by', 'reviewed_by'),
+        BudgetProposal.objects.select_related('submitted_by', 'approved_by'),
         pk=pk,
         organization=organization
     )

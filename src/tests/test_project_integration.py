@@ -78,6 +78,7 @@ class ProjectActivityIntegrationTest(TestCase):
             evidence_sources="Community consultation",
             impact_severity=4,
             feasibility="high",
+            identified_by=self.user,
         )
 
         # Create project workflow
@@ -334,6 +335,7 @@ class ProjectWorkflowPropertyTest(TestCase):
             evidence_sources="Community assessment",
             impact_severity=3,
             feasibility="medium",
+            identified_by=self.user,
         )
 
         self.workflow = ProjectWorkflow.objects.create(
@@ -410,6 +412,7 @@ class EnhancedTaskGenerationTest(TestCase):
             evidence_sources="Community consultation",
             impact_severity=4,
             feasibility="high",
+            identified_by=self.user,
         )
 
         self.workflow = ProjectWorkflow.objects.create(
@@ -769,6 +772,7 @@ class WorkflowSignalTest(TestCase):
             evidence_sources="Community consultation",
             impact_severity=4,
             feasibility="high",
+            identified_by=self.user,
         )
 
         self.workflow = ProjectWorkflow.objects.create(

@@ -259,8 +259,15 @@ def multi_quarter_execution(db, approved_program_budget, monitoring_entry, execu
     quarters_data = {}
 
     for quarter_num, quarter_name in enumerate(['Q1', 'Q2', 'Q3', 'Q4'], 1):
-        # Create allotment for quarter - ensure allotment >= obligation amount
-        allotment_amount = Decimal(f'{15000000 + quarter_num * 1000000}.00')
+        # Create allotment for quarter
+        # Total approved budget is 45M, so divide into quarters: Q1=10M, Q2=12M, Q3=13M, Q4=10M = 45M total
+        allotment_amounts = [
+            Decimal('10000000.00'),  # Q1
+            Decimal('12000000.00'),  # Q2
+            Decimal('13000000.00'),  # Q3
+            Decimal('10000000.00'),  # Q4
+        ]
+        allotment_amount = allotment_amounts[quarter_num - 1]
         allotment = Allotment.objects.create(
             program_budget=approved_program_budget,
             quarter=quarter_name,
@@ -271,7 +278,14 @@ def multi_quarter_execution(db, approved_program_budget, monitoring_entry, execu
         )
 
         # Create work item and obligation - obligation amount must be <= allotment
-        obligation_amount = Decimal(f'{5000000 * quarter_num}.00')
+        # Q1=4M, Q2=5M, Q3=6M, Q4=5M = 20M total obligations
+        obligation_amounts = [
+            Decimal('4000000.00'),   # Q1
+            Decimal('5000000.00'),   # Q2
+            Decimal('6000000.00'),   # Q3
+            Decimal('5000000.00'),   # Q4
+        ]
+        obligation_amount = obligation_amounts[quarter_num - 1]
         work_item = WorkItem.objects.create(
             monitoring_entry=monitoring_entry,
             title=f"{quarter_name} Work Package",

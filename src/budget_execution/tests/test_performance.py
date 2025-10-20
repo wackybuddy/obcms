@@ -270,11 +270,10 @@ class TestBudgetPerformance:
             for j in range(20):
                 # Create unique monitoring entry for each program (required by unique constraint)
                 me = MonitoringEntry.objects.create(
-                    organization=test_organization,
+                    lead_organization=test_organization,
                     title=f"Proposal {i} Program {j}",
-                    description=f"Monitoring entry for aggregation test",
-                    community_name="Test Community",
-                    status='active'
+                    category='oobc_ppa',
+                    status='planning'
                 )
 
                 pb = ProgramBudget.objects.create(
