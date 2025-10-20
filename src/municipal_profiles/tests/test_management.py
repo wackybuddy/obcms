@@ -11,6 +11,8 @@ except ImportError:  # pragma: no cover - handled via skip
         allow_module_level=True,
     )
 
+pytestmark = pytest.mark.component
+
 
 @pytest.mark.django_db
 def test_seed_dummy_obc_data_command_populates_demo_records():

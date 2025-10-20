@@ -246,6 +246,8 @@ class TestLazyTemplateLoader:
 # =============================================================================
 
 
+@pytest.mark.component
+@pytest.mark.cache
 class TestAdvancedTemplateRegistry:
     """Test suite for AdvancedTemplateRegistry class."""
 

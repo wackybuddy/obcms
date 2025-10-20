@@ -119,7 +119,7 @@ class DisbursementLineItem(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(amount__gte=Decimal("0.01")),
+                condition=models.Q(amount__gte=Decimal("0.01")),
                 name="disbursement_line_item_positive_amount",
             ),
         ]

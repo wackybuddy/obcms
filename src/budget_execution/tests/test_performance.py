@@ -252,7 +252,14 @@ class TestBudgetPerformance:
     def test_aggregation_heavy_query(self, test_organization, test_user, monitoring_entry):
         """Test multi-level aggregation across 10,000 line items - Target: < 3 seconds."""
         from monitoring.models import MonitoringEntry
+        from coordination.models import Organization as CoordinationOrganization
         scenario = PERFORMANCE_TEST_SCENARIOS['aggregation_heavy']
+
+        # Create coordination organization for monitoring entries
+        coord_org = CoordinationOrganization.objects.create(
+            name='Test Coordination Organization',
+            organization_type='ngo'
+        )
 
         # Create 10 proposals
         proposals = []
@@ -270,7 +277,7 @@ class TestBudgetPerformance:
             for j in range(20):
                 # Create unique monitoring entry for each program (required by unique constraint)
                 me = MonitoringEntry.objects.create(
-                    lead_organization=test_organization,
+                    lead_organization=coord_org,
                     title=f"Proposal {i} Program {j}",
                     category='oobc_ppa',
                     status='planning'

@@ -26,6 +26,8 @@ from common.ai_services.chat.entity_extractor import EntityExtractor
 from common.ai_services.chat.template_matcher import TemplateMatcher
 
 
+@pytest.mark.component
+@pytest.mark.cache
 class TemplateLoadingPerformanceTests(TestCase):
     """Test template loading and initialization performance."""
 

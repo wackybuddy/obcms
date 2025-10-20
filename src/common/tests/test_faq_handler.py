@@ -20,6 +20,8 @@ from django.utils import timezone
 from common.ai_services.chat.faq_handler import FAQHandler
 
 
+@pytest.mark.component
+@pytest.mark.cache
 @pytest.mark.django_db
 class TestFAQHandler:
     """Test suite for FAQ Handler."""

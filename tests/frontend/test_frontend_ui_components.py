@@ -10,7 +10,7 @@ TEMPLATE_CASES = [
         "communities",
         "src/templates/communities/provincial_manage.html",
         [
-            '''hx-get="{% url 'common:communities_manage_provincial' %}"''',
+            '''hx-get="{% url 'communities:communities_manage_provincial' %}"''',
             '''hx-target="#provincial-results-container"''',
             '''hx-trigger="change from:select, submit"''',
         ],
@@ -26,7 +26,7 @@ TEMPLATE_CASES = [
         "coordination",
         "src/templates/coordination/resource_booking_form.html",
         [
-            '''hx-get="{% url 'common:coordination_check_conflicts' %}"''',
+            '''hx-get="{% url 'coordination:check_conflicts' %}"''',
             '''hx-target="#conflict-warnings"''',
             '''hx-trigger="change delay:500ms"''',
         ],
@@ -36,7 +36,7 @@ TEMPLATE_CASES = [
         "coordination",
         "src/templates/coordination/event_attendance_tracker.html",
         [
-            '''hx-get="{% url 'common:coordination_event_attendance_count' event_id=event.id %}"''',
+            '''hx-get="{% url 'coordination:event_attendance_count' event_id=event.id %}"''',
             '''hx-trigger="load, every 10s"''',
             '''class="min-h-[300px] flex items-center justify-center"''',
         ],
@@ -74,7 +74,7 @@ TEMPLATE_CASES = [
         "recommendations",
         "src/templates/recommendations/recommendations_home.html",
         [
-            '''hx-get="{% url 'common:recommendations_stats_cards' %}"''',
+            '''hx-get="{% url 'policies:stats_cards' %}"''',
             '''hx-trigger="load, every 60s"''',
             '''hx-swap="innerHTML swap:300ms"''',
         ],

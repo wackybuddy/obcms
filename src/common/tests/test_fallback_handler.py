@@ -85,6 +85,8 @@ def fallback_handler():
 
 # ==================== SimilarityCalculator Tests ====================
 
+@pytest.mark.component
+@pytest.mark.cache
 class TestSimilarityCalculator:
     """Test similarity calculation algorithms."""
 

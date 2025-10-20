@@ -14,7 +14,7 @@ except ImportError:  # pragma: no cover - handled via skip
 
 from recommendations.policy_tracking.models import PolicyRecommendation
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.component
 
 
 class LoadPolicyRecommendationsCommandTests(TestCase):

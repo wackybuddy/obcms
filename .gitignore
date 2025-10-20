@@ -67,6 +67,7 @@ logs/
 
 # Claude Code & AI Tools
 .claude/
+.claudedocs/
 .gemini-clipboard/
 .cursor/
 .roo/

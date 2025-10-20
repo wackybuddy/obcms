@@ -15,6 +15,8 @@ except ImportError:  # pragma: no cover - handled via skip
 from mana.models import WorkshopQuestionDefinition
 from mana.schema import get_questions_for_workshop
 
+pytestmark = pytest.mark.component
+
 
 @pytest.mark.django_db
 def test_sync_mana_question_schema(tmp_path, settings):

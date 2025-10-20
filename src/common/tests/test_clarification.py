@@ -163,6 +163,8 @@ class TestClarificationDialogGeneration:
         assert dialog1["clarification_id"] != dialog2["clarification_id"]
 
 
+@pytest.mark.component
+@pytest.mark.cache
 class TestContextStorage:
     """Test clarification context storage and retrieval."""
 

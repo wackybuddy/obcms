@@ -16,6 +16,8 @@ except ImportError:  # pragma: no cover - handled via skip
 
 from common.models import Barangay, Municipality, Province, Region
 
+pytestmark = pytest.mark.component
+
 
 class PopulationImportCommandTest(TestCase):
     """Verify that the import command builds and updates the location hierarchy."""
