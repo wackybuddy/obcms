@@ -43,7 +43,10 @@ def budget_dashboard(request):
             ).first()
 
     if organization is None:
-        organization = Organization.objects.filter(name__icontains='OOBC').first()
+        organization = Organization.objects.filter(code__iexact='OOBC').first()
+
+    if organization is None:
+        organization = Organization.objects.order_by('name').first()
 
     proposal_qs = BudgetProposal.objects.filter(organization=organization) if organization else BudgetProposal.objects.none()
 

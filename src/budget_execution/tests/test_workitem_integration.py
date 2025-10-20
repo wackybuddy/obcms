@@ -738,12 +738,12 @@ def monitoring_entry_2(db):
 @pytest.fixture
 def test_organization_2(db):
     """Create second test organization for multi-tenant testing."""
-    from organizations.models import Organization
+    from coordination.models import Organization
     organization, _ = Organization.objects.get_or_create(
-        code="ORG002",
+        name="Second Organization",
         defaults={
-            "name": "Second Organization",
-            "org_type": "office",
+            "acronym": "ORG2",
+            "organization_type": "bmoa",
             "is_active": True
         }
     )

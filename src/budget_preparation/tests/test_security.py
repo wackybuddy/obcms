@@ -103,14 +103,23 @@ class TestSQLInjection:
         # Should return validation error, not execute SQL
         assert response.status_code in [400, 422]
 
-        # Verify table still exists
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT COUNT(*) FROM information_schema.tables "
-                "WHERE table_name = 'budget_proposal'"
-            )
-            count = cursor.fetchone()[0]
-            assert count > 0, "Table was dropped by SQL injection!"
+        # Verify table still exists by counting proposals
+        # This confirms the table was not dropped by SQL injection
+        from django.db import connection as db_connection
+        db_engine = db_connection.vendor  # 'sqlite', 'postgresql', 'mysql', etc.
+
+        try:
+            # Verify table still exists by attempting a query
+            from budget_preparation.models import BudgetProposal
+            count = BudgetProposal.objects.count()
+            # If we get here, table exists
+            assert True, "Table was not dropped - SQL injection was prevented"
+        except Exception as e:
+            if 'no such table' in str(e).lower() or 'does not exist' in str(e).lower():
+                raise AssertionError(f"Table was dropped by SQL injection: {e}")
+            else:
+                # Some other error, re-raise
+                raise
 
 
 @pytest.mark.django_db

@@ -49,7 +49,7 @@ class OBCHierarchyDataFlowTests(TestCase):
         )
         self.barangay = Barangay.objects.create(
             municipality=self.municipality,
-            code="BRGY-001",
+            code="BRGY-SETUP-001",
             name="Central"
         )
 
@@ -137,7 +137,7 @@ class OBCHierarchyDataFlowTests(TestCase):
 
         barangay2 = Barangay.objects.create(
             municipality=self.municipality,
-            code="BRGY-002",
+            code="BRGY-TEST03-002",
             name="East"
         )
         obc2 = OBCCommunity.objects.create(
@@ -172,9 +172,9 @@ class OBCHierarchyDataFlowTests(TestCase):
 
         # Create 3 barangays with OBCs
         data = [
-            ("BRGY-001", "Central", 100, 200),
-            ("BRGY-002", "East", 150, 300),
-            ("BRGY-003", "West", 80, 160),
+            ("BRGY-TEST04-001", "Central", 100, 200),
+            ("BRGY-TEST04-002", "East", 150, 300),
+            ("BRGY-TEST04-003", "West", 80, 160),
         ]
 
         for code, name, households, women in data:
@@ -217,7 +217,7 @@ class OBCHierarchyDataFlowTests(TestCase):
         # Create OBCs in both municipalities
         brgy1 = Barangay.objects.create(
             municipality=self.municipality,
-            code="BRGY-001",
+            code="BRGY-TEST05-001",
             name="Central"
         )
         OBCCommunity.objects.create(
@@ -230,7 +230,7 @@ class OBCHierarchyDataFlowTests(TestCase):
 
         brgy2 = Barangay.objects.create(
             municipality=municipality2,
-            code="BRGY-002",
+            code="BRGY-TEST05-002",
             name="Dakudao"
         )
         OBCCommunity.objects.create(

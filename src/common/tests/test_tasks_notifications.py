@@ -132,7 +132,7 @@ class CalendarNotificationTaskTests(TestCase):
             notification_type=CalendarNotification.NOTIFICATION_REMINDER
         )
         notif2 = self.create_notification(
-            notification_type=CalendarNotification.NOTIFICATION_ALERT,
+            notification_type=CalendarNotification.NOTIFICATION_UPDATE,
             scheduled_for=timezone.now() - timedelta(minutes=2),
         )
 

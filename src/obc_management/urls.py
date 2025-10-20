@@ -119,6 +119,16 @@ urlpatterns = [
     path("api/coordination/", include("coordination.api_urls")),
     path("api/policies/", include("recommendations.policies.api_urls")),
     path("api/policy-tracking/", include("recommendations.policy_tracking.api_urls")),
+    # Budget Preparation API (with nested namespaces: api:budget)
+    path(
+        "api/",
+        include((
+            [
+                path("budget/", include(("budget_preparation.api_urls", "budget"), namespace="budget")),
+            ],
+            "api"
+        ), namespace="api"),
+    ),
     # Browsable API authentication
     path("api-auth/", include("rest_framework.urls")),
     path(

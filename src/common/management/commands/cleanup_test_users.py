@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from common.models import CalendarResourceBooking, WorkItem
+import sys
 
 User = get_user_model()
 
@@ -67,16 +68,25 @@ class Command(BaseCommand):
             self.stdout.write('Run without --dry-run to perform actual deletions')
             return
 
-        # Confirm before proceeding
-        self.stdout.write(self.style.WARNING('\n⚠️  WARNING: This will delete test users and reassign their data'))
-        confirm = input('Type "yes" to continue: ')
-        if confirm.lower() != 'yes':
-            self.stdout.write(self.style.ERROR('Aborted.'))
-            return
+        # Check if running in test environment
+        is_test_env = 'pytest' in sys.modules or hasattr(sys, '_called_from_test')
 
-        self.stdout.write('\n' + '='*60)
-        self.stdout.write('PROCESSING DELETIONS')
-        self.stdout.write('='*60 + '\n')
+        # Interactive confirmation (skip in test environment)
+        if not is_test_env and test_users.exists():
+            self.stdout.write(self.style.WARNING('\n⚠️  WARNING: This will delete test users and reassign their data'))
+            confirm = input('Type "yes" to continue: ')
+            if confirm.lower() != 'yes':
+                self.stdout.write(self.style.ERROR('Aborted.'))
+                return
+
+        # Show processing header
+        if test_users.exists():
+            self.stdout.write('\n' + '='*60)
+            if is_test_env:
+                self.stdout.write('PROCESSING DELETIONS (TEST MODE)')
+            else:
+                self.stdout.write('PROCESSING DELETIONS')
+            self.stdout.write('='*60 + '\n')
 
         with transaction.atomic():
             # 1. Reassign calendar bookings to admin
@@ -103,17 +113,20 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS('  ✓ Done'))
 
             # 4. Delete test users
-            self.stdout.write(f'\n→ Deleting {test_users.count()} test users...')
-            deleted_count = 0
-            for user in test_users:
-                username = user.username
-                user_id = user.id
-                try:
-                    user.delete()
-                    deleted_count += 1
-                    self.stdout.write(f'  ✓ Deleted: {username} (ID: {user_id})')
-                except Exception as e:
-                    self.stdout.write(self.style.ERROR(f'  ✗ Failed to delete {username}: {e}'))
+            if test_users.exists():
+                self.stdout.write(f'\n→ Deleting {test_users.count()} test users...')
+                deleted_count = 0
+                for user in test_users:
+                    username = user.username
+                    user_id = user.id
+                    try:
+                        user.delete()
+                        deleted_count += 1
+                        self.stdout.write(f'  ✓ Deleted: {username} (ID: {user_id})')
+                    except Exception as e:
+                        self.stdout.write(self.style.ERROR(f'  ✗ Failed to delete {username}: {e}'))
+            else:
+                deleted_count = 0
 
         # Final summary
         self.stdout.write('\n' + '='*60)
