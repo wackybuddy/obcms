@@ -2,7 +2,14 @@ from django.db import connection, migrations, models
 
 
 def ensure_population_fields(apps, schema_editor):
-    """Add population_total columns when they are missing due to legacy databases."""
+    """
+    Add population_total columns when they are missing due to legacy databases.
+
+    Security:
+    - Uses connection.ops.quote_name() for SQL identifier quoting
+    - Uses parameterized queries for values
+    - Prevents SQL injection via proper escaping
+    """
 
     cursor = connection.cursor()
     introspection = connection.introspection
@@ -24,7 +31,13 @@ def ensure_population_fields(apps, schema_editor):
         schema_editor.add_field(model, field)
 
         # Ensure nulls are backfilled to zero for compatibility
-        cursor.execute(f"UPDATE {table_name} SET {field_name} = 0 WHERE {field_name} IS NULL")
+        # SECURITY FIX: Use quote_name() for identifiers and parameterized query for values
+        sql = "UPDATE {} SET {} = %s WHERE {} IS NULL".format(
+            connection.ops.quote_name(table_name),
+            connection.ops.quote_name(field_name),
+            connection.ops.quote_name(field_name)
+        )
+        cursor.execute(sql, [0])
 
     add_column_if_missing("Barangay", "common_barangay", "population_total")
     add_column_if_missing("Municipality", "common_municipality", "population_total")

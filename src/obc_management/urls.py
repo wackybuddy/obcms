@@ -26,6 +26,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+import environ
 
 # Import admin customizations
 from . import admin as admin_customizations
@@ -37,6 +38,16 @@ from common.views.health import health_check, readiness_check
 # Main API router
 api_router = DefaultRouter()
 
+# Initialize environment for admin URL configuration
+env = environ.Env()
+
+# Admin URL (configurable for security)
+admin_url = env.str("ADMIN_URL", default="admin/")
+
+# Ensure admin_url ends with /
+if not admin_url.endswith('/'):
+    admin_url += '/'
+
 urlpatterns = [
     # Health check endpoints (no authentication required)
     path("health/", health_check, name="health"),
@@ -44,8 +55,8 @@ urlpatterns = [
     # Prometheus metrics endpoint (for monitoring infrastructure)
     path("metrics/", include("django_prometheus.urls")),
     # Custom admin views (must come before admin.site.urls)
-    path("admin/auth/group/", group_changelist_view, name="custom_group_changelist"),
-    path("admin/", admin.site.urls),
+    path(f"{admin_url}auth/group/", group_changelist_view, name="custom_group_changelist"),
+    path(admin_url, admin.site.urls, name="admin"),
     # Main application URLs
     path("", include("common.urls")),
     path("communities/", include("communities.urls")),

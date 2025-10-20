@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from communities.models import OBCCommunity
 from mana.models import Assessment, Need
+from common.validators import validate_document_file
 
 User = get_user_model()
 
@@ -672,7 +673,8 @@ class PolicyEvidence(models.Model):
         upload_to="policy_evidence/%Y/%m/",
         null=True,
         blank=True,
-        help_text="Supporting document file",
+        validators=[validate_document_file],
+        help_text="Supporting document file (PDF, DOC, DOCX, XLS, XLSX - max 10MB)",
     )
 
     url = models.URLField(blank=True, help_text="URL to online source")
@@ -951,7 +953,9 @@ class PolicyDocument(models.Model):
     )
 
     file = models.FileField(
-        upload_to="policy_documents/%Y/%m/", help_text="Document file"
+        upload_to="policy_documents/%Y/%m/",
+        validators=[validate_document_file],
+        help_text="Document file (PDF, DOC, DOCX, XLS, XLSX - max 10MB)"
     )
 
     file_size = models.PositiveIntegerField(

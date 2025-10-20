@@ -46,13 +46,49 @@ SECURE_HSTS_PRELOAD = True
 SESSION_COOKIE_SECURE = True  # HTTPS-only session cookies
 CSRF_COOKIE_SECURE = True  # HTTPS-only CSRF cookies
 CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Lax"  # Inherited from base.py, allows top-level navigation
 CSRF_COOKIE_SAMESITE = "Strict"  # Strict for CSRF (prevent cross-site form submission)
+
+# Session Security (Production Override)
+SESSION_COOKIE_AGE = 28800  # 8 hours (was 2 weeks in base.py)
+SESSION_COOKIE_SAMESITE = "Strict"  # Stricter than base.py's "Lax"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_SAVE_EVERY_REQUEST = True  # Extend session on activity
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep 8-hour timeout
+
+# Session cookie name (security through obscurity)
+SESSION_COOKIE_NAME = env.str("SESSION_COOKIE_NAME", default="obcms_sessionid")
+
+# SECURITY: Strict SECRET_KEY validation for production
+if DEBUG:
+    raise ValueError("DEBUG must be False in production")
+
+if not SECRET_KEY or len(SECRET_KEY) < 50:
+    raise ValueError("Production requires a strong SECRET_KEY (50+ characters)")
+
+if SECRET_KEY.startswith('django-insecure'):
+    raise ValueError(
+        "Production cannot use django-insecure SECRET_KEY. "
+        "Generate a cryptographically secure key and set SECRET_KEY in environment."
+    )
 
 # SECURITY: Additional headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-SECURE_BROWSER_XSS_FILTER = True
+
+# REMOVED: SECURE_BROWSER_XSS_FILTER (deprecated in modern browsers)
+
+# NEW: Referrer Policy
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# NEW: Permissions Policy (restrict browser features)
+PERMISSIONS_POLICY = {
+    "accelerometer": [],
+    "camera": [],
+    "geolocation": [],
+    "microphone": [],
+    "payment": [],
+    "usb": [],
+}
 
 # SECURITY: Content Security Policy (CSP)
 # Strict CSP without 'unsafe-inline' - use nonce or hash-based approach
@@ -77,20 +113,31 @@ CONTENT_SECURITY_POLICY = env.str("CONTENT_SECURITY_POLICY", default=CSP_DEFAULT
 ADMIN_IP_WHITELIST = env.list("ADMIN_IP_WHITELIST", default=[])
 # Example: ADMIN_IP_WHITELIST=192.168.1.100,10.0.0.0/8,172.16.0.0/12
 
+# Metrics Authentication (Prometheus endpoint protection)
+METRICS_TOKEN = env.str("METRICS_TOKEN", default="")
+# Generate with: openssl rand -hex 32
+# Example: METRICS_TOKEN=a1b2c3d4e5f6...
+
 # Add CSP and admin IP restriction middleware
-MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    "common.middleware.ContentSecurityPolicyMiddleware",  # CSP headers (production)
-    "common.middleware.AdminIPWhitelistMiddleware",  # Admin IP restriction (production)
-] + [
+_base_middleware = [
     m
     for m in MIDDLEWARE
     if m
     not in [
         "django.middleware.security.SecurityMiddleware",
         "whitenoise.middleware.WhiteNoiseMiddleware",
+        "django_prometheus.middleware.PrometheusAfterMiddleware",  # Will be re-added at the end
     ]
+]
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "common.middleware.ContentSecurityPolicyMiddleware",  # CSP headers (production)
+    "common.middleware.AdminIPWhitelistMiddleware",  # Admin IP restriction (production)
+] + _base_middleware + [
+    "common.middleware.MetricsAuthenticationMiddleware",  # Protect metrics endpoint
+    "django_prometheus.middleware.PrometheusAfterMiddleware",  # Must be last for metrics
 ]
 
 # SECURITY: Proxy SSL header (for Coolify/Traefik/Nginx)
@@ -158,6 +205,30 @@ DATABASES["default"]["CONN_HEALTH_CHECKS"] = True  # Django 4.1+
 
 # If using PgBouncer transaction pooling, uncomment:
 # DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
+
+# ============================================================================
+# DATABASE SSL/TLS CONFIGURATION
+# ============================================================================
+# PostgreSQL SSL/TLS encryption for production security
+if 'postgres' in DATABASES['default']['ENGINE']:
+    # SSL mode: require, verify-ca, or verify-full
+    db_sslmode = env.str('DB_SSLMODE', default='require')
+
+    # Only configure SSL options if not using verify-none/disable
+    if db_sslmode not in ['disable', 'allow', 'prefer']:
+        DATABASES['default']['OPTIONS'] = DATABASES['default'].get('OPTIONS', {})
+        DATABASES['default']['OPTIONS'].update({
+            'sslmode': db_sslmode,
+        })
+
+        # Add SSL certificate if using verify-ca or verify-full
+        if db_sslmode in ['verify-ca', 'verify-full']:
+            db_ssl_cert = env.str('DB_SSL_CERT', default='')
+            if db_ssl_cert:
+                DATABASES['default']['OPTIONS']['sslrootcert'] = db_ssl_cert
+            else:
+                # Use system CA certificates
+                DATABASES['default']['OPTIONS']['sslrootcert'] = '/etc/ssl/certs/ca-certificates.crt'
 
 # EMAIL: Ensure production email backend is configured
 if EMAIL_BACKEND == "django.core.mail.backends.console.EmailBackend":

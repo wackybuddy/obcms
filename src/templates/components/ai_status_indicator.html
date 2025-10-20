@@ -306,13 +306,28 @@ function addActivityLog(operationId, message, timestamp) {
     if (logEl) {
         const entry = document.createElement('div');
         entry.className = 'text-xs text-gray-600 flex items-start space-x-2';
-        entry.innerHTML = `
-            <i class="fas fa-circle text-blue-500 text-xs mt-1"></i>
-            <div>
-                <span class="font-medium">${message}</span>
-                <span class="text-gray-500">• ${timestamp}</span>
-            </div>
-        `;
+
+        // Create icon securely
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-circle text-blue-500 text-xs mt-1';
+        entry.appendChild(icon);
+
+        // Create container div
+        const contentDiv = document.createElement('div');
+
+        // Create message span
+        const messageSpan = document.createElement('span');
+        messageSpan.className = 'font-medium';
+        messageSpan.textContent = message;  // Safe - auto-escapes
+        contentDiv.appendChild(messageSpan);
+
+        // Create timestamp span
+        const timestampSpan = document.createElement('span');
+        timestampSpan.className = 'text-gray-500';
+        timestampSpan.textContent = `• ${timestamp}`;  // Safe - auto-escapes
+        contentDiv.appendChild(timestampSpan);
+
+        entry.appendChild(contentDiv);
         logEl.insertBefore(entry, logEl.firstChild);
     }
 }

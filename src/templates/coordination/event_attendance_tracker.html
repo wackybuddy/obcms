@@ -150,7 +150,14 @@ function startScanner() {
 
     Html5Qrcode.getCameras().then(cameras => {
         if (cameras && cameras.length > 0) {
-            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Starting camera...';
+            // Set button text securely
+            startBtn.innerHTML = '';
+            const spinner = document.createElement('i');
+            spinner.className = 'fas fa-spinner fa-spin mr-2';
+            const spinnerText = document.createElement('span');
+            spinnerText.textContent = 'Starting camera...';
+            startBtn.appendChild(spinner);
+            startBtn.appendChild(spinnerText);
             startBtn.disabled = true;
 
             html5QrCode.start(
@@ -216,22 +223,67 @@ function startScanner() {
                 }
             ).then(() => {
                 scannerStarted = true;
-                startBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>Stop Scanner';
+                // Set button text securely
+                startBtn.innerHTML = '';
+                const stopIcon = document.createElement('i');
+                stopIcon.className = 'fas fa-stop mr-2';
+                const stopText = document.createElement('span');
+                stopText.textContent = 'Stop Scanner';
+                startBtn.appendChild(stopIcon);
+                startBtn.appendChild(stopText);
                 startBtn.disabled = false;
                 startBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
                 startBtn.classList.add('bg-red-600', 'hover:bg-red-700');
             }).catch(err => {
                 console.error('Unable to start QR scanner:', err);
-                statusDiv.innerHTML = '<div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm"><i class="fas fa-exclamation-triangle mr-2"></i>Unable to access camera. Please check permissions or use manual check-in.</div>';
-                startBtn.innerHTML = '<i class="fas fa-camera mr-2"></i>Start Scanner';
+                // Show error securely
+                statusDiv.innerHTML = '';
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm';
+                const errorIcon = document.createElement('i');
+                errorIcon.className = 'fas fa-exclamation-triangle mr-2';
+                const errorText = document.createElement('span');
+                errorText.textContent = 'Unable to access camera. Please check permissions or use manual check-in.';
+                errorDiv.appendChild(errorIcon);
+                errorDiv.appendChild(errorText);
+                statusDiv.appendChild(errorDiv);
+
+                // Reset button
+                startBtn.innerHTML = '';
+                const cameraIcon = document.createElement('i');
+                cameraIcon.className = 'fas fa-camera mr-2';
+                const cameraText = document.createElement('span');
+                cameraText.textContent = 'Start Scanner';
+                startBtn.appendChild(cameraIcon);
+                startBtn.appendChild(cameraText);
                 startBtn.disabled = false;
             });
         } else {
-            statusDiv.innerHTML = '<div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm"><i class="fas fa-exclamation-triangle mr-2"></i>No cameras found. Please use manual check-in.</div>';
+            // No cameras found
+            statusDiv.innerHTML = '';
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm';
+            const warningIcon = document.createElement('i');
+            warningIcon.className = 'fas fa-exclamation-triangle mr-2';
+            const warningText = document.createElement('span');
+            warningText.textContent = 'No cameras found. Please use manual check-in.';
+            warningDiv.appendChild(warningIcon);
+            warningDiv.appendChild(warningText);
+            statusDiv.appendChild(warningDiv);
         }
     }).catch(err => {
         console.error('Error getting cameras:', err);
-        statusDiv.innerHTML = '<div class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm"><i class="fas fa-times-circle mr-2"></i>Camera access denied. Please enable camera permissions.</div>';
+        // Camera access denied
+        statusDiv.innerHTML = '';
+        const deniedDiv = document.createElement('div');
+        deniedDiv.className = 'p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm';
+        const deniedIcon = document.createElement('i');
+        deniedIcon.className = 'fas fa-times-circle mr-2';
+        const deniedText = document.createElement('span');
+        deniedText.textContent = 'Camera access denied. Please enable camera permissions.';
+        deniedDiv.appendChild(deniedIcon);
+        deniedDiv.appendChild(deniedText);
+        statusDiv.appendChild(deniedDiv);
     });
 }
 
@@ -240,7 +292,14 @@ function stopScanner() {
         html5QrCode.stop().then(() => {
             scannerStarted = false;
             const startBtn = document.getElementById('start-scanner-btn');
-            startBtn.innerHTML = '<i class="fas fa-camera mr-2"></i>Start Scanner';
+            // Set button text securely
+            startBtn.innerHTML = '';
+            const cameraIcon = document.createElement('i');
+            cameraIcon.className = 'fas fa-camera mr-2';
+            const cameraText = document.createElement('span');
+            cameraText.textContent = 'Start Scanner';
+            startBtn.appendChild(cameraIcon);
+            startBtn.appendChild(cameraText);
             startBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
             startBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
         }).catch(err => {
@@ -257,10 +316,16 @@ function showToast(message, type) {
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
 
     toast.className = `toast px-6 py-4 rounded-lg shadow-lg ${bgColor} text-white flex items-center space-x-3`;
-    toast.innerHTML = `
-        <i class="fas ${icon} text-xl"></i>
-        <span class="font-medium">${message}</span>
-    `;
+
+    // Build toast content securely
+    const iconEl = document.createElement('i');
+    iconEl.className = `fas ${icon} text-xl`;
+    toast.appendChild(iconEl);
+
+    const messageEl = document.createElement('span');
+    messageEl.className = 'font-medium';
+    messageEl.textContent = message;  // Safe - auto-escapes
+    toast.appendChild(messageEl);
 
     container.appendChild(toast);
 

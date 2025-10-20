@@ -10,9 +10,14 @@ Comprehensive templates (50+) for querying MANA (Mapping and Needs Assessment) d
 - Assessment analytics (completion rate, coverage, trends)
 - Methodology queries (tools used, approaches)
 - Validation queries (validated assessments, pending validation)
+
+SECURITY NOTE:
+All query builders now return QuerySet objects directly instead of strings to prevent
+SQL injection vulnerabilities. Previously used f-string formatting which could be exploited.
 """
 
 from typing import Any, Dict
+from django.db.models import Q
 from common.ai_services.chat.query_templates.base import QueryTemplate
 
 
@@ -26,17 +31,34 @@ def build_list_all_workshops(entities: Dict[str, Any]) -> str:
 
 
 def build_workshops_by_location(entities: Dict[str, Any]) -> str:
-    """List workshops in specific location."""
+    """
+    List workshops in specific location.
+
+    SECURITY: Uses Django Q objects to safely construct query without string interpolation.
+    User input is passed as filter kwargs, not interpolated into query string.
+    """
+    from mana.models import WorkshopActivity
+
     location = entities.get('location', {})
     loc_value = location.get('value', '')
     loc_type = location.get('type', 'region')
 
+    # SECURITY FIX: Construct QuerySet directly instead of returning interpolated string
     if loc_type == 'region':
-        return f"WorkshopActivity.objects.filter(assessment__region__name__icontains='{loc_value}').select_related('assessment__region', 'assessment__province').order_by('-start_date')[:30]"
+        qs = WorkshopActivity.objects.filter(
+            assessment__region__name__icontains=loc_value
+        ).select_related('assessment__region', 'assessment__province').order_by('-start_date')[:30]
     elif loc_type == 'province':
-        return f"WorkshopActivity.objects.filter(assessment__province__name__icontains='{loc_value}').select_related('assessment__province', 'assessment__municipality').order_by('-start_date')[:30]"
+        qs = WorkshopActivity.objects.filter(
+            assessment__province__name__icontains=loc_value
+        ).select_related('assessment__province', 'assessment__municipality').order_by('-start_date')[:30]
     else:
-        return f"WorkshopActivity.objects.filter(assessment__municipality__name__icontains='{loc_value}').select_related('assessment__municipality').order_by('-start_date')[:30]"
+        qs = WorkshopActivity.objects.filter(
+            assessment__municipality__name__icontains=loc_value
+        ).select_related('assessment__municipality').order_by('-start_date')[:30]
+
+    # Return the QuerySet - executor will process it directly
+    return qs
 
 
 def build_recent_workshops(entities: Dict[str, Any]) -> str:

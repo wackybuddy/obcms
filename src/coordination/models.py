@@ -11,6 +11,7 @@ from django.utils import timezone
 from communities.models import OBCCommunity
 from mana.models import Assessment
 from common.models import Region, Province, Municipality, Barangay
+from common.validators import validate_document_file
 
 
 def _invalidate_calendar_cache() -> None:
@@ -2414,7 +2415,11 @@ class PartnershipDocument(models.Model):
         max_length=10, default="1.0", help_text="Document version"
     )
 
-    file = models.FileField(upload_to="partnerships/%Y/%m/", help_text="Document file")
+    file = models.FileField(
+        upload_to="partnerships/%Y/%m/",
+        validators=[validate_document_file],
+        help_text="Document file (PDF, DOC, DOCX, XLS, XLSX - max 10MB)"
+    )
 
     file_size = models.PositiveIntegerField(
         null=True, blank=True, help_text="File size in bytes"

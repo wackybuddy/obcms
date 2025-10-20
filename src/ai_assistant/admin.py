@@ -2,7 +2,7 @@ import json
 
 from django.contrib import admin
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, escape
 from django.utils.safestring import mark_safe
 
 from .models import (
@@ -81,10 +81,17 @@ class AIConversationAdmin(admin.ModelAdmin):
                     else msg.get("content", "")
                 )
                 timestamp = msg.get("timestamp", "No timestamp")
+                # Escape user content before inserting into HTML
                 formatted_messages.append(
-                    f"<strong>{role.title()}:</strong> {content}<br><small>{timestamp}</small>"
+                    format_html(
+                        "<strong>{}:</strong> {}<br><small>{}</small>",
+                        role.title(),
+                        escape(content),  # Escape user content
+                        escape(timestamp)  # Escape timestamp for safety
+                    )
                 )
-            return mark_safe("<br><br>".join(formatted_messages))
+            # Use mark_safe() only for the safe structure (format_html already escapes content)
+            return mark_safe("<br><br>".join(str(msg) for msg in formatted_messages))
         return "No messages"
 
     messages_display.short_description = "Recent Messages"

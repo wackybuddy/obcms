@@ -237,14 +237,242 @@ class QueryExecutor:
         }
 
     def _execute_safe(self, query_string: str) -> Any:
-        """Execute query in restricted context."""
-        # Use eval with restricted builtins and safe context
-        result = eval(
-            query_string,
-            {"__builtins__": {}},  # No built-in functions
-            self._context,  # Only our safe context
-        )
+        """
+        Execute query without eval() - secure programmatic QuerySet construction.
+
+        Security:
+        - NO eval(), exec(), or compile() usage
+        - Parses query string into components (model, methods, arguments)
+        - Builds QuerySets programmatically using getattr() and method chaining
+        - Validates all methods against allowlist before execution
+        - Prevents code injection via Python sandbox bypass
+
+        Example query_string:
+            "OBCCommunity.objects.filter(barangay__municipality__name='Cotabato').count()"
+        """
+        try:
+            # Parse query string into executable components
+            parsed = self._parse_query_string(query_string)
+
+            # Get model class from context
+            model_name = parsed['model']
+            if model_name not in self._context:
+                raise ValueError(f"Model {model_name} not in allowed context")
+
+            model_class = self._context[model_name]
+
+            # Start with base queryset
+            queryset = model_class.objects.all()
+
+            # Chain methods programmatically
+            for method_call in parsed['operations']:
+                method_name = method_call['method']
+                args = method_call.get('args', [])
+                kwargs = method_call.get('kwargs', {})
+
+                # Security: Validate method is allowed
+                if method_name not in self.ALLOWED_METHODS and method_name not in self.ALLOWED_AGGREGATES:
+                    raise SecurityError(f"Method {method_name} not allowed")
+
+                # Get method and execute
+                if hasattr(queryset, method_name):
+                    method = getattr(queryset, method_name)
+                    queryset = method(*args, **kwargs)
+                else:
+                    raise ValueError(f"Method {method_name} not available on QuerySet")
+
+            return queryset
+
+        except Exception as e:
+            logger.error(f"Safe execution failed: {query_string} - {str(e)}")
+            raise
+
+    def _parse_query_string(self, query_string: str) -> Dict[str, Any]:
+        """
+        Parse query string into structured components for safe execution.
+
+        Args:
+            query_string: Django ORM query like "Model.objects.filter(field='value').count()"
+
+        Returns:
+            Dictionary with:
+                - model: Model class name
+                - operations: List of method calls with args/kwargs
+
+        Security:
+        - Uses AST parsing to extract method calls safely
+        - Validates all components before returning
+        - No direct string execution
+        """
+        try:
+            # Parse the query string as an AST expression
+            tree = ast.parse(query_string, mode='eval')
+
+            # Extract model name and operations
+            result = {
+                'model': None,
+                'operations': []
+            }
+
+            # Walk the AST to extract components
+            result = self._extract_from_ast(tree.body)
+
+            if not result['model']:
+                raise ValueError("Could not extract model name from query")
+
+            return result
+
+        except SyntaxError as e:
+            raise ValueError(f"Invalid query syntax: {str(e)}")
+
+    def _extract_from_ast(self, node: ast.AST) -> Dict[str, Any]:
+        """
+        Recursively extract model and operations from AST node.
+
+        Security:
+        - Only extracts safe attribute access and method calls
+        - Validates all extracted components
+        """
+        result = {
+            'model': None,
+            'operations': []
+        }
+
+        if isinstance(node, ast.Call):
+            # Method call - extract method name and arguments
+            method_info = self._extract_method_call(node)
+
+            # Recursively process the function/attribute
+            if isinstance(node.func, ast.Attribute):
+                parent_result = self._extract_from_ast(node.func.value)
+                result['model'] = parent_result['model']
+                result['operations'] = parent_result['operations'] + [method_info]
+
+        elif isinstance(node, ast.Attribute):
+            # Attribute access like Model.objects
+            parent_result = self._extract_from_ast(node.value)
+            result['model'] = parent_result['model']
+            result['operations'] = parent_result['operations']
+
+            # Special handling for .objects
+            if node.attr != 'objects':
+                result['operations'].append({
+                    'method': node.attr,
+                    'args': [],
+                    'kwargs': {}
+                })
+
+        elif isinstance(node, ast.Name):
+            # Model name (e.g., "OBCCommunity")
+            result['model'] = node.id
+
         return result
+
+    def _extract_method_call(self, node: ast.Call) -> Dict[str, Any]:
+        """
+        Extract method name and arguments from AST Call node.
+
+        Returns:
+            Dictionary with method, args, kwargs
+
+        Security:
+        - Only extracts literal values (strings, numbers, booleans)
+        - Blocks complex expressions that could be malicious
+        """
+        method_name = None
+
+        if isinstance(node.func, ast.Attribute):
+            method_name = node.func.attr
+        elif isinstance(node.func, ast.Name):
+            method_name = node.func.id
+
+        # Extract positional arguments
+        args = []
+        for arg in node.args:
+            arg_value = self._extract_literal_value(arg)
+            if arg_value is not None:
+                args.append(arg_value)
+
+        # Extract keyword arguments
+        kwargs = {}
+        for keyword in node.keywords:
+            key = keyword.arg
+            value = self._extract_literal_value(keyword.value)
+            if value is not None:
+                kwargs[key] = value
+
+        return {
+            'method': method_name,
+            'args': args,
+            'kwargs': kwargs
+        }
+
+    def _extract_literal_value(self, node: ast.AST) -> Any:
+        """
+        Safely extract literal values from AST nodes.
+
+        Security:
+        - Only returns primitive types (str, int, float, bool, None)
+        - Returns None for complex expressions to prevent injection
+        """
+        if isinstance(node, ast.Constant):
+            # Python 3.8+ - all literals are ast.Constant
+            value = node.value
+            if isinstance(value, (str, int, float, bool, type(None))):
+                return value
+
+        elif isinstance(node, ast.Str):
+            # Python 3.7 compatibility
+            return node.s
+
+        elif isinstance(node, ast.Num):
+            # Python 3.7 compatibility
+            return node.n
+
+        elif isinstance(node, ast.NameConstant):
+            # Python 3.7 compatibility - True, False, None
+            return node.value
+
+        elif isinstance(node, ast.List):
+            # List literal
+            return [self._extract_literal_value(item) for item in node.elts]
+
+        elif isinstance(node, ast.Dict):
+            # Dict literal
+            result = {}
+            for key_node, value_node in zip(node.keys, node.values):
+                key = self._extract_literal_value(key_node)
+                value = self._extract_literal_value(value_node)
+                if key is not None:
+                    result[key] = value
+            return result
+
+        elif isinstance(node, ast.Call):
+            # Handle special cases like Q() objects
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+                if func_name == 'Q' and 'Q' in self._context:
+                    # Reconstruct Q object
+                    kwargs = {}
+                    for keyword in node.keywords:
+                        key = keyword.arg
+                        value = self._extract_literal_value(keyword.value)
+                        if value is not None:
+                            kwargs[key] = value
+                    return Q(**kwargs)
+
+                # Handle aggregation functions
+                if func_name in self.ALLOWED_AGGREGATES and func_name in self._context:
+                    agg_class = self._context[func_name]
+                    args = [self._extract_literal_value(arg) for arg in node.args]
+                    kwargs = {
+                        kw.arg: self._extract_literal_value(kw.value)
+                        for kw in node.keywords
+                    }
+                    return agg_class(*args, **kwargs)
+
+        # Unknown node type - return None for safety
+        return None
 
     def _process_result(self, result: Any) -> Any:
         """
@@ -352,6 +580,11 @@ class QueryExecutor:
                 logger.warning(f"Could not get info for {model_name}: {e}")
 
         return available
+
+
+class SecurityError(Exception):
+    """Raised when a security violation is detected in query execution."""
+    pass
 
 
 # Singleton instance

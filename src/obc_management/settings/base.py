@@ -36,10 +36,21 @@ environ.Env.read_env(os.path.join(BASE_DIR.parent, ".env"))
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env(
-    "SECRET_KEY",
-    default="django-insecure-!yaxjq5)03f=tclan4d=b+^bh%(gl9@lgze9*)+fu79)-y!)k5",
-)
+# SECURITY: Require SECRET_KEY to be set explicitly (no insecure default)
+SECRET_KEY = env("SECRET_KEY")  # Will raise error if not set
+
+# Validate SECRET_KEY strength
+if len(SECRET_KEY) < 50:
+    raise ValueError(
+        "SECRET_KEY must be at least 50 characters long. "
+        "Generate a strong key with: python -c \"from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())\""
+    )
+
+if SECRET_KEY.startswith('django-insecure'):
+    raise ValueError(
+        "SECRET_KEY must not use the default insecure key. "
+        "Generate a new key and set it in your .env file."
+    )
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DEBUG")
@@ -369,12 +380,17 @@ if EMAIL_BACKEND != "django.core.mail.backends.console.EmailBackend":
     EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 
 # Celery Configuration (for background tasks)
-CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = env("REDIS_URL", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=env("REDIS_URL", default="redis://localhost:6379/0"))
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default=env("REDIS_URL", default="redis://localhost:6379/1"))
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+
+# SECURITY: Ensure Redis connection uses password from URL
+# Redis URLs with auth format: redis://:password@host:port/db
+CELERY_BROKER_USE_SSL = CELERY_BROKER_URL.startswith('rediss://')
+CELERY_REDIS_BACKEND_USE_SSL = CELERY_RESULT_BACKEND.startswith('rediss://')
 
 # Celery Beat Schedule (automated task scheduling)
 from celery.schedules import crontab

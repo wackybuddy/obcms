@@ -840,12 +840,22 @@ DEPENDENCIES:
         const workItemId = event.id.replace('work-item-', '');
         const editUrl = `/oobc-management/work-items/${workItemId}/sidebar/edit/`;
 
-        detailPanelBody.innerHTML = `
-            <div class="text-center py-8">
-                <i class="fas fa-spinner fa-spin text-blue-500 text-2xl mb-3"></i>
-                <p class="text-sm text-gray-600">Loading...</p>
-            </div>
-        `;
+        // Clear detail panel and add loading spinner securely
+        detailPanelBody.innerHTML = '';
+
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'text-center py-8';
+
+        const spinner = document.createElement('i');
+        spinner.className = 'fas fa-spinner fa-spin text-blue-500 text-2xl mb-3 block';
+
+        const loadingText = document.createElement('p');
+        loadingText.className = 'text-sm text-gray-600';
+        loadingText.textContent = 'Loading...';
+
+        loadingDiv.appendChild(spinner);
+        loadingDiv.appendChild(loadingText);
+        detailPanelBody.appendChild(loadingDiv);
 
         if (typeof htmx !== 'undefined') {
             htmx.ajax('GET', editUrl, {
@@ -865,12 +875,22 @@ DEPENDENCIES:
     function handleDateDoubleClick(info) {
         const createUrl = `/oobc-management/work-items/sidebar/create/?start_date=${info.dateStr}&due_date=${info.dateStr}`;
 
-        detailPanelBody.innerHTML = `
-            <div class="text-center py-8">
-                <i class="fas fa-spinner fa-spin text-emerald-500 text-2xl mb-3"></i>
-                <p class="text-sm text-gray-600">Loading create form...</p>
-            </div>
-        `;
+        // Clear detail panel and add loading spinner securely
+        detailPanelBody.innerHTML = '';
+
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'text-center py-8';
+
+        const spinner = document.createElement('i');
+        spinner.className = 'fas fa-spinner fa-spin text-emerald-500 text-2xl mb-3 block';
+
+        const loadingText = document.createElement('p');
+        loadingText.className = 'text-sm text-gray-600';
+        loadingText.textContent = 'Loading create form...';
+
+        loadingDiv.appendChild(spinner);
+        loadingDiv.appendChild(loadingText);
+        detailPanelBody.appendChild(loadingDiv);
 
         if (typeof htmx !== 'undefined') {
             htmx.ajax('GET', createUrl, {
@@ -1136,13 +1156,27 @@ DEPENDENCIES:
             info: 'fa-info-circle text-blue-600'
         }[level] || 'fa-info-circle text-blue-600';
 
-        toast.innerHTML = `
-            <i class="fas ${icon} mt-0.5"></i>
-            <p class="flex-1 text-sm font-medium text-gray-800">${message}</p>
-            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
+        // Build toast content securely without innerHTML
+        toast.innerHTML = '';
+
+        const iconEl = document.createElement('i');
+        iconEl.className = `fas ${icon} mt-0.5`;
+        toast.appendChild(iconEl);
+
+        const messageEl = document.createElement('p');
+        messageEl.className = 'flex-1 text-sm font-medium text-gray-800';
+        messageEl.textContent = message;  // Safe - auto-escapes
+        toast.appendChild(messageEl);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'text-gray-400 hover:text-gray-600';
+        closeBtn.addEventListener('click', function() {
+            this.parentElement.remove();
+        });
+        const closeIcon = document.createElement('i');
+        closeIcon.className = 'fas fa-times';
+        closeBtn.appendChild(closeIcon);
+        toast.appendChild(closeBtn);
 
         toastContainer.appendChild(toast);
 

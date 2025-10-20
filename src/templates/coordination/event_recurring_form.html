@@ -229,13 +229,26 @@ document.addEventListener('DOMContentLoaded', function() {
             const recurrenceType = recurrenceTypeField.value;
             const interval = document.querySelector('[name="interval"]').value || 1;
 
+            // Clear preview section
+            previewSection.innerHTML = '';
+
             if (!startDate || !recurrenceType) {
-                previewSection.innerHTML = '<p class="italic text-red-600">Please select a start date and recurrence type first.</p>';
+                const errorP = document.createElement('p');
+                errorP.className = 'italic text-red-600';
+                errorP.textContent = 'Please select a start date and recurrence type first.';
+                previewSection.appendChild(errorP);
                 return;
             }
 
-            // Simple client-side preview (real preview would need server-side calculation)
-            let previewText = `<p class="font-semibold text-gray-900 mb-2">First 5 occurrences:</p><ol class="list-decimal list-inside space-y-1 text-gray-700">`;
+            // Create title
+            const titleP = document.createElement('p');
+            titleP.className = 'font-semibold text-gray-900 mb-2';
+            titleP.textContent = 'First 5 occurrences:';
+            previewSection.appendChild(titleP);
+
+            // Create list
+            const ol = document.createElement('ol');
+            ol.className = 'list-decimal list-inside space-y-1 text-gray-700';
 
             const start = new Date(startDate);
             for (let i = 0; i < 5; i++) {
@@ -251,11 +264,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     occurrence.setFullYear(start.getFullYear() + (i * interval));
                 }
 
-                previewText += `<li>${occurrence.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</li>`;
+                const li = document.createElement('li');
+                li.textContent = occurrence.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                ol.appendChild(li);
             }
 
-            previewText += '</ol><p class="text-sm text-gray-500 mt-3 italic">Note: This is a simplified preview. Actual occurrences may vary based on weekday/monthday rules.</p>';
-            previewSection.innerHTML = previewText;
+            previewSection.appendChild(ol);
+
+            // Add note
+            const noteP = document.createElement('p');
+            noteP.className = 'text-sm text-gray-500 mt-3 italic';
+            noteP.textContent = 'Note: This is a simplified preview. Actual occurrences may vary based on weekday/monthday rules.';
+            previewSection.appendChild(noteP);
         });
     }
 });

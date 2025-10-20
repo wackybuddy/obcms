@@ -5,6 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <!-- Content Security Policy (production only) -->
+    {% if not debug %}
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://cdn.tailwindcss.com https://unpkg.com https://cdnjs.cloudflare.com;
+        style-src 'self' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com;
+        img-src 'self' data: https:;
+        font-src 'self' data: https://cdnjs.cloudflare.com;
+        connect-src 'self';
+        frame-ancestors 'none';
+    ">
+    {% endif %}
+
     <title>{% block title %}OBC Management System{% endblock %}</title>
 
     <!-- Favicon -->
@@ -851,6 +865,67 @@
 
         // Expose showToast globally for use in other scripts
         window.showToast = showToast;
+    })();
+    </script>
+
+    <!-- XSS Prevention Utilities -->
+    <script>
+    (function() {
+        // Global namespace for safe DOM operations
+        window.SafeDOM = window.SafeDOM || {};
+
+        /**
+         * Safely set text content without HTML injection risk
+         * @param {Element} element - Target element
+         * @param {string} text - Text content to set
+         */
+        window.SafeDOM.setText = function(element, text) {
+            if (!element) return;
+            element.textContent = text;  // Auto-escapes HTML
+        };
+
+        /**
+         * Create a safe element with text content
+         * @param {string} tagName - HTML tag name
+         * @param {string} className - CSS class name
+         * @param {string} text - Text content
+         * @returns {Element} Created element
+         */
+        window.SafeDOM.createElement = function(tagName, className, text) {
+            const element = document.createElement(tagName);
+            if (className) element.className = className;
+            if (text) element.textContent = text;  // Auto-escapes
+            return element;
+        };
+
+        /**
+         * Clear and repopulate element safely
+         * @param {Element} container - Container element
+         * @param {Element[]} children - Child elements to append
+         */
+        window.SafeDOM.clearAndAppend = function(container, children) {
+            if (!container) return;
+            container.innerHTML = '';
+            if (Array.isArray(children)) {
+                children.forEach(child => container.appendChild(child));
+            } else if (children) {
+                container.appendChild(children);
+            }
+        };
+
+        /**
+         * Sanitize user input for safe display
+         * @param {string} text - Text to sanitize
+         * @returns {string} Sanitized text
+         */
+        window.SafeDOM.escape = function(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+
+        console.log('XSS Prevention utilities loaded: SafeDOM');
     })();
     </script>
 

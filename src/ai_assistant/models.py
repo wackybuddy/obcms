@@ -9,6 +9,7 @@ from django.db import models
 from django.utils import timezone
 
 from recommendations.policy_tracking.models import PolicyRecommendation
+from common.validators import validate_document_file
 
 User = get_user_model()
 
@@ -352,14 +353,16 @@ class AIGeneratedDocument(models.Model):
         upload_to="ai_documents/pdf/%Y/%m/",
         null=True,
         blank=True,
-        help_text="Generated PDF version",
+        validators=[validate_document_file],
+        help_text="Generated PDF version (max 10MB)",
     )
 
     word_file = models.FileField(
         upload_to="ai_documents/word/%Y/%m/",
         null=True,
         blank=True,
-        help_text="Generated Word document version",
+        validators=[validate_document_file],
+        help_text="Generated Word document version (max 10MB)",
     )
 
     # Metadata

@@ -4,6 +4,8 @@ from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
+from common.validators import validate_document_file
+
 
 class DataImport(models.Model):
     """
@@ -48,8 +50,11 @@ class DataImport(models.Model):
     # File Information
     file = models.FileField(
         upload_to="imports/%Y/%m/",
-        validators=[FileExtensionValidator(allowed_extensions=["csv", "xlsx", "xls"])],
-        help_text="CSV or Excel file to import",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["csv", "xlsx", "xls"]),
+            validate_document_file,
+        ],
+        help_text="CSV or Excel file to import (max 10MB)",
     )
 
     file_size = models.PositiveIntegerField(
@@ -281,8 +286,11 @@ class ImportTemplate(models.Model):
 
     template_file = models.FileField(
         upload_to="templates/",
-        validators=[FileExtensionValidator(allowed_extensions=["csv", "xlsx"])],
-        help_text="Template file with sample data and headers",
+        validators=[
+            FileExtensionValidator(allowed_extensions=["csv", "xlsx"]),
+            validate_document_file,
+        ],
+        help_text="Template file with sample data and headers (max 10MB)",
     )
 
     required_fields = models.JSONField(

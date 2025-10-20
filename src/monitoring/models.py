@@ -9,6 +9,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Q, Sum
 
+from common.validators import validate_document_file
+
 ZERO_DECIMAL = Decimal("0.00")
 
 
@@ -1767,7 +1769,8 @@ class MonitoringRequestAttachment(models.Model):
     )
     file = models.FileField(
         upload_to="monitoring/request_documents/%Y/%m/",
-        help_text="Upload supporting document file",
+        validators=[validate_document_file],
+        help_text="Upload supporting document file (PDF, DOC, DOCX, XLS, XLSX - max 10MB)",
     )
     description = models.CharField(
         max_length=255,
@@ -1973,7 +1976,8 @@ class MonitoringEntryWorkflowDocument(models.Model):
     )
     file = models.FileField(
         upload_to="monitoring/workflow_documents/%Y/%m/",
-        help_text="Upload document file (PDF, Word, Excel, etc.)",
+        validators=[validate_document_file],
+        help_text="Upload document file (PDF, DOC, DOCX, XLS, XLSX - max 10MB)",
     )
     file_size = models.PositiveIntegerField(
         null=True,
