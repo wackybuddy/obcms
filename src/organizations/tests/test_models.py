@@ -178,14 +178,17 @@ class TestOrganizationMembershipModel:
 
     def test_user_org_unique_constraint(self, user, organization):
         """Test that user-organization combination must be unique."""
+        from django.core.exceptions import ValidationError
+
         OrganizationMembership.objects.create(
             user=user,
             organization=organization,
             role='staff',
         )
 
-        # Attempting to create duplicate membership should fail
-        with pytest.raises(IntegrityError):
+        # Attempting to create duplicate membership should fail with ValidationError
+        # (raised by full_clean() in save() method)
+        with pytest.raises(ValidationError):
             OrganizationMembership.objects.create(
                 user=user,
                 organization=organization,
@@ -251,7 +254,8 @@ class TestOrganizationMembershipModel:
             role='admin',
         )
 
-        expected_str = f'{user.username} @ {organization.code} (admin)'
+        # __str__ returns: "{username} @ {org_code} - {role_display}"
+        expected_str = f'{user.username} @ {organization.code} - Administrator'
         assert str(membership) == expected_str
 
     def test_membership_role_choices(self, user, organization):

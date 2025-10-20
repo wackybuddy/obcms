@@ -742,6 +742,6 @@ def test_organization_2(db):
     return Organization.objects.create(
         name="Second Organization",
         code="ORG002",
-        organization_type="other_bangsamoro_community",
-        status="active"
+        org_type="office",
+        is_active=True
     )

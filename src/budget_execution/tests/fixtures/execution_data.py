@@ -272,7 +272,7 @@ def multi_quarter_execution(db, approved_program_budget, monitoring_entry, execu
             program_budget=approved_program_budget,
             quarter=quarter_name,
             amount=allotment_amount,
-            release_date=date(2025, quarter_num * 3 - 2, 15),
+            released_at=date(2025, quarter_num * 3 - 2, 15),
             released_by=execution_user,
             status='released'
         )
@@ -317,7 +317,7 @@ def create_allotment(**kwargs):
     defaults = {
         'quarter': 'Q1',
         'amount': Decimal('1000000.00'),
-        'release_date': date.today(),
+        'released_at': date.today(),
         'status': 'released'
     }
     defaults.update(kwargs)
@@ -329,8 +329,8 @@ def create_obligation(**kwargs):
     defaults = {
         'amount': Decimal('500000.00'),
         'payee': 'Test Contractor',
-        'purpose': 'Test purpose',
-        'obligation_date': date.today(),
+        'notes': 'Test notes',
+        'obligated_at': date.today(),
         'status': 'obligated'
     }
     defaults.update(kwargs)
@@ -353,7 +353,7 @@ def create_work_item(**kwargs):
     defaults = {
         'title': 'Test Work Item',
         'estimated_cost': Decimal('1000000.00'),
-        'status': 'not_started'
+        'status': 'planned'
     }
     defaults.update(kwargs)
     return WorkItem.objects.create(**defaults)

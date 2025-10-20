@@ -95,10 +95,14 @@ def require_permission(permission_code, organization_param=None):
             from common.services.rbac_service import RBACService
 
             if not request.user or not request.user.is_authenticated:
-                messages.error(
-                    request,
-                    "You must be logged in to access this resource."
-                )
+                try:
+                    messages.error(
+                        request,
+                        "You must be logged in to access this resource."
+                    )
+                except Exception:
+                    # Messages middleware not available (e.g., in tests without middleware)
+                    pass
                 raise PermissionDenied("Authentication required")
 
             # Extract organization context
@@ -138,10 +142,14 @@ def require_permission(permission_code, organization_param=None):
                     }
                 )
 
-                messages.error(
-                    request,
-                    f"You do not have permission to access this resource."
-                )
+                try:
+                    messages.error(
+                        request,
+                        f"You do not have permission to access this resource."
+                    )
+                except Exception:
+                    # Messages middleware not available (e.g., in tests without middleware)
+                    pass
                 raise PermissionDenied(
                     f"User lacks required permission: {permission_code}"
                 )
@@ -179,10 +187,14 @@ def require_feature_access(feature_code, organization_param=None):
             from common.services.rbac_service import RBACService
 
             if not request.user or not request.user.is_authenticated:
-                messages.error(
-                    request,
-                    "You must be logged in to access this feature."
-                )
+                try:
+                    messages.error(
+                        request,
+                        "You must be logged in to access this feature."
+                    )
+                except Exception:
+                    # Messages middleware not available (e.g., in tests without middleware)
+                    pass
                 raise PermissionDenied("Authentication required")
 
             # Extract organization context
@@ -223,10 +235,14 @@ def require_feature_access(feature_code, organization_param=None):
                 )
 
                 feature_name = feature_code.split('.')[-1].replace('_', ' ').title()
-                messages.error(
-                    request,
-                    f"You do not have access to the {feature_name} module."
-                )
+                try:
+                    messages.error(
+                        request,
+                        f"You do not have access to the {feature_name} module."
+                    )
+                except Exception:
+                    # Messages middleware not available (e.g., in tests without middleware)
+                    pass
                 raise PermissionDenied(
                     f"User lacks access to feature: {feature_code}"
                 )

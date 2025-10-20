@@ -61,13 +61,13 @@ class CalendarIntegrationTests(TestCase):
 
         # Create WorkItem with work_type='activity' (replaces old Event model)
         self.work_item = WorkItem.objects.create(
-            work_type='activity',
+            work_type=WorkItem.WORK_TYPE_ACTIVITY,
             title="Coordination Planning Session",
             description="Integration test work item",
             start_date=start_date,
             start_time=timezone.now().time().replace(microsecond=0),
             due_date=start_date,
-            status='not_started',
+            status=WorkItem.STATUS_NOT_STARTED,
             created_by=self.user,
         )
 
