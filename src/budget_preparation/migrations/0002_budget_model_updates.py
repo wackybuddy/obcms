@@ -3,6 +3,38 @@ import django.core.validators
 import django.db.models.deletion
 
 
+def column_exists(schema_editor, table_name, column_name):
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        return any(row[1] == column_name for row in cursor.fetchall())
+
+
+def add_column_if_missing(schema_editor, table_name, column_name, column_sql):
+    if column_exists(schema_editor, table_name, column_name):
+        return
+    schema_editor.execute(
+        f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_sql}"
+    )
+
+
+def add_strategic_goal_column(apps, schema_editor):
+    add_column_if_missing(
+        schema_editor,
+        'budget_preparation_programbudget',
+        'strategic_goal_id',
+        'INTEGER REFERENCES planning_strategicgoal(id) DEFERRABLE INITIALLY DEFERRED'
+    )
+
+
+def add_annual_work_plan_column(apps, schema_editor):
+    add_column_if_missing(
+        schema_editor,
+        'budget_preparation_programbudget',
+        'annual_work_plan_id',
+        'INTEGER REFERENCES planning_annualworkplan(id) DEFERRABLE INITIALLY DEFERRED'
+    )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -66,14 +98,7 @@ class Migration(migrations.Migration):
         ),
         migrations.SeparateDatabaseAndState(
             database_operations=[
-                migrations.RunSQL(
-                    sql=(
-                        'ALTER TABLE budget_preparation_programbudget '
-                        'ADD COLUMN IF NOT EXISTS strategic_goal_id INTEGER '
-                        'REFERENCES planning_strategicgoal(id) DEFERRABLE INITIALLY DEFERRED'
-                    ),
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
+                migrations.RunPython(add_strategic_goal_column, migrations.RunPython.noop),
             ],
             state_operations=[
                 migrations.AddField(
@@ -92,14 +117,7 @@ class Migration(migrations.Migration):
         ),
         migrations.SeparateDatabaseAndState(
             database_operations=[
-                migrations.RunSQL(
-                    sql=(
-                        'ALTER TABLE budget_preparation_programbudget '
-                        'ADD COLUMN IF NOT EXISTS annual_work_plan_id INTEGER '
-                        'REFERENCES planning_annualworkplan(id) DEFERRABLE INITIALLY DEFERRED'
-                    ),
-                    reverse_sql=migrations.RunSQL.noop,
-                ),
+                migrations.RunPython(add_annual_work_plan_column, migrations.RunPython.noop),
             ],
             state_operations=[
                 migrations.AddField(

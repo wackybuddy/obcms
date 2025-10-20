@@ -171,7 +171,7 @@ def program_budget(db, budget_proposal, monitoring_entry, strategic_goal, annual
         strategic_goal=strategic_goal,
         annual_work_plan=annual_work_plan,
         justification="Critical education infrastructure needs",
-        expected_outcomes="50 schools built, 10,000 students served",
+        expected_outputs="50 schools built, 10,000 students served",
         priority_rank=1
     )
 

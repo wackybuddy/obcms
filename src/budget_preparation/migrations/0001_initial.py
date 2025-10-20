@@ -168,9 +168,11 @@ class Migration(migrations.Migration):
                             ("medium", "Medium"),
                             ("low", "Low"),
                         ],
-                        default="medium",
-                        help_text="Priority level for this program budget",
+                        blank=True,
+                        null=True,
+                        help_text="Legacy priority field retained for compatibility",
                         max_length=20,
+                        editable=False,
                     ),
                 ),
                 (
@@ -182,7 +184,10 @@ class Migration(migrations.Migration):
                 (
                     "expected_outputs",
                     models.TextField(
-                        help_text="Expected deliverables and outputs from this program"
+                        blank=True,
+                        null=True,
+                        help_text="Legacy expected outputs field",
+                        editable=False,
                     ),
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -199,9 +204,12 @@ class Migration(migrations.Migration):
                 (
                     "program",
                     models.ForeignKey(
-                        help_text="Work plan objective this budget supports",
-                        on_delete=django.db.models.deletion.PROTECT,
-                        related_name="budget_allocations",
+                        blank=True,
+                        editable=False,
+                        help_text="Legacy field retained for compatibility",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="legacy_budget_allocations",
                         to="planning.workplanobjective",
                     ),
                 ),

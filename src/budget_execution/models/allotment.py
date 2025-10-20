@@ -62,6 +62,11 @@ class Allotment(models.Model):
         default=timezone.now,
         help_text="Date the allotment was released",
     )
+    reference_number = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Optional release reference or document number",
+    )
     notes = models.TextField(
         blank=True,
         help_text="Optional release notes",
@@ -116,3 +121,14 @@ class Allotment(models.Model):
     def get_remaining_balance(self) -> Decimal:
         """Return remaining balance after obligations."""
         return self.amount - self.get_obligated_amount()
+
+    # ------------------------------------------------------------------
+    # Legacy aliases for compatibility with integration fixtures
+    # ------------------------------------------------------------------
+    @property
+    def release_date(self):
+        return self.released_at
+
+    @release_date.setter
+    def release_date(self, value):
+        self.released_at = value

@@ -82,6 +82,30 @@ class ProgramBudget(models.Model):
         help_text="Priority ranking within the proposal (1 = highest)",
     )
 
+    # Legacy fields retained for compatibility with older modules/migrations.
+    program = models.ForeignKey(
+        "planning.WorkPlanObjective",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="legacy_budget_allocations",
+        help_text="Legacy field retained for compatibility",
+        editable=False,
+    )
+    priority_level = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text="Legacy priority field retained for compatibility",
+        editable=False,
+    )
+    expected_outputs = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Legacy expected outputs field",
+        editable=False,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
