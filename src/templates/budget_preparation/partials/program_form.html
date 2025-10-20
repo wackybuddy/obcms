@@ -19,18 +19,40 @@
         </div>
         {% endif %}
 
-        <!-- Work Plan Objective -->
+        <!-- Monitoring Entry -->
         <div>
-            <label for="{{ form.program.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                {{ form.program.label }} <span class="text-red-600">*</span>
+            <label for="{{ form.monitoring_entry.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                {{ form.monitoring_entry.label }} <span class="text-red-600">*</span>
             </label>
-            {{ form.program }}
-            {% if form.program.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.program.errors.0 }}</p>
+            {{ form.monitoring_entry }}
+            {% if form.monitoring_entry.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.monitoring_entry.errors.0 }}</p>
             {% endif %}
         </div>
 
-        <!-- Allocated Amount -->
+        <!-- Strategic Goal -->
+        <div>
+            <label for="{{ form.strategic_goal.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                {{ form.strategic_goal.label }}
+            </label>
+            {{ form.strategic_goal }}
+            {% if form.strategic_goal.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.strategic_goal.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Annual Work Plan -->
+        <div>
+            <label for="{{ form.annual_work_plan.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                {{ form.annual_work_plan.label }}
+            </label>
+            {{ form.annual_work_plan }}
+            {% if form.annual_work_plan.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.annual_work_plan.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Requested Amount -->
         <div>
             <label for="{{ form.requested_amount.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
                 {{ form.requested_amount.label }} <span class="text-red-600">*</span>
@@ -41,7 +63,18 @@
             {% endif %}
         </div>
 
-        <!-- Priority Level -->
+        <!-- Approved Amount -->
+        <div>
+            <label for="{{ form.approved_amount.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                {{ form.approved_amount.label }}
+            </label>
+            {{ form.approved_amount }}
+            {% if form.approved_amount.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.approved_amount.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Priority Rank -->
         <div>
             <label for="{{ form.priority_rank.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
                 {{ form.priority_rank.label }} <span class="text-red-600">*</span>
@@ -49,17 +82,6 @@
             {{ form.priority_rank }}
             {% if form.priority_rank.errors %}
             <p class="mt-1 text-sm text-red-600">{{ form.priority_rank.errors.0 }}</p>
-            {% endif %}
-        </div>
-
-        <!-- Priority Level -->
-        <div>
-            <label for="{{ form.priority_level.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                {{ form.priority_level.label }} <span class="text-red-600">*</span>
-            </label>
-            {{ form.priority_level }}
-            {% if form.priority_level.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.priority_level.errors.0 }}</p>
             {% endif %}
         </div>
 
@@ -74,14 +96,14 @@
             {% endif %}
         </div>
 
-        <!-- Expected Outputs -->
+        <!-- Expected Outcomes -->
         <div>
-            <label for="{{ form.expected_outputs.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                {{ form.expected_outputs.label }} <span class="text-red-600">*</span>
+            <label for="{{ form.expected_outcomes.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                {{ form.expected_outcomes.label }}
             </label>
-            {{ form.expected_outputs }}
-            {% if form.expected_outputs.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.expected_outputs.errors.0 }}</p>
+            {{ form.expected_outcomes }}
+            {% if form.expected_outcomes.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.expected_outcomes.errors.0 }}</p>
             {% endif %}
         </div>
 

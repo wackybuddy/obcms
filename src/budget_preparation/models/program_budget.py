@@ -36,6 +36,8 @@ class ProgramBudget(models.Model):
         on_delete=models.PROTECT,
         related_name="program_budgets",
         help_text="Linked monitoring entry (PPA)",
+        null=True,
+        blank=True,
     )
     strategic_goal = models.ForeignKey(
         "planning.StrategicGoal",

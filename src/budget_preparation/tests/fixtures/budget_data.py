@@ -205,13 +205,13 @@ def budget_line_item(db, program_budget):
 
 
 @pytest.fixture
-def budget_justification(db, budget_proposal):
+def budget_justification(db, program_budget):
     """Create test budget justification."""
     return BudgetJustification.objects.create(
-        budget_proposal=budget_proposal,
-        section='executive_summary',
-        content="This budget supports strategic goal achievement...",
-        order=1
+        program_budget=program_budget,
+        rationale="This budget supports strategic goal achievement...",
+        alignment_with_priorities="Aligns with BMMS priorities",
+        expected_impact="Improved access to education for OBC communities",
     )
 
 

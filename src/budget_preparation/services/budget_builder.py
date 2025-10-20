@@ -55,17 +55,31 @@ class BudgetBuilderService:
         return proposal
 
     @transaction.atomic
-    def add_program_budget(self, proposal, program, requested_amount, priority, justification, expected_outputs=''):
+    def add_program_budget(
+        self,
+        proposal,
+        monitoring_entry,
+        requested_amount,
+        priority_rank,
+        justification,
+        expected_outcomes='',
+        strategic_goal=None,
+        annual_work_plan=None,
+        approved_amount=None,
+    ):
         """
         Add a program budget to a proposal.
 
         Args:
             proposal: BudgetProposal instance
-            program: WorkPlanObjective instance
+            monitoring_entry: MonitoringEntry instance (linked PPA)
             requested_amount: Budget amount (Decimal or float)
-            priority: Priority level ('high', 'medium', 'low')
+            priority_rank: Integer priority order (1 = highest)
             justification: Justification text
-            expected_outputs: Expected outputs text (optional)
+            expected_outcomes: Expected outcomes text (optional)
+            strategic_goal: Optional StrategicGoal instance
+            annual_work_plan: Optional AnnualWorkPlan instance
+            approved_amount: Optional approved budget amount
 
         Returns:
             ProgramBudget: Created program budget instance
@@ -77,16 +91,25 @@ class BudgetBuilderService:
             raise ValidationError("Cannot modify submitted/approved proposals")
 
         # Check for duplicate program
-        if ProgramBudget.objects.filter(budget_proposal=proposal, program=program).exists():
-            raise ValidationError(f"Program {program} already exists in this proposal")
+        if ProgramBudget.objects.filter(
+            budget_proposal=proposal,
+            monitoring_entry=monitoring_entry,
+        ).exists():
+            raise ValidationError(
+                f"Monitoring entry {monitoring_entry} already exists in this proposal"
+            )
 
         program_budget = ProgramBudget.objects.create(
             budget_proposal=proposal,
-            program=program,
+            monitoring_entry=monitoring_entry,
             requested_amount=Decimal(str(requested_amount)),
-            priority_level=priority,
+            approved_amount=Decimal(str(approved_amount)) if approved_amount else None,
+            strategic_goal=strategic_goal,
+            annual_work_plan=annual_work_plan,
+            priority_rank=priority_rank,
             justification=justification,
-            expected_outputs=expected_outputs or f"Expected outputs for {program.title}"
+            expected_outcomes=expected_outcomes
+            or f"Expected outcomes for {monitoring_entry.title}"
         )
 
         # Update proposal total
@@ -143,7 +166,7 @@ class BudgetBuilderService:
             raise ValidationError(validation_errors)
 
         # Submit
-        proposal.submit(user)
+        proposal.mark_submitted(user)
 
         return proposal
 
@@ -167,22 +190,24 @@ class BudgetBuilderService:
         # Check each program budget has line items
         for pb in program_budgets:
             if not pb.line_items.exists():
-                errors[f'program_{pb.id}'] = f"Program '{pb.program.title}' must have budget line items"
+                errors[f'program_{pb.id}'] = (
+                    f"Program '{pb.monitoring_entry.title}' must have budget line items"
+                )
 
-            # Check line items total matches allocated amount
-            line_items_total = pb.line_items_total
-            allocated = pb.allocated_amount
-            variance = abs(line_items_total - allocated)
+            # Check line items total matches requested amount
+            line_items_total = pb.line_items_total()
+            requested = pb.requested_amount
+            variance = abs(line_items_total - requested)
 
             if variance > Decimal('0.01'):  # Allow 1 cent tolerance
                 errors[f'program_{pb.id}_variance'] = (
-                    f"Program '{pb.program.title}': Line items total (₱{line_items_total:,.2f}) "
-                    f"does not match allocated amount (₱{allocated:,.2f})"
+                    f"Program '{pb.monitoring_entry.title}': Line items total (₱{line_items_total:,.2f}) "
+                    f"does not match requested amount (₱{requested:,.2f})"
                 )
 
         # Check proposal total matches sum of program budgets
-        program_total = proposal.allocated_total
-        proposal_total = proposal.total_proposed_budget
+        program_total = proposal.total_program_requested
+        proposal_total = proposal.total_requested_budget
         variance = abs(program_total - proposal_total)
 
         if variance > Decimal('0.01'):
@@ -195,9 +220,13 @@ class BudgetBuilderService:
 
     def _update_proposal_total(self, proposal):
         """Update proposal total from program budgets."""
-        total = proposal.allocated_total
-        proposal.total_proposed_budget = total
-        proposal.save(update_fields=['total_requested_budget', 'updated_at'])
+        requested_total = proposal.total_program_requested
+        approved_total = proposal.total_program_approved
+        proposal.total_proposed_budget = requested_total
+        proposal.total_approved_budget = approved_total or proposal.total_approved_budget
+        proposal.save(
+            update_fields=['total_requested_budget', 'total_approved_budget', 'updated_at']
+        )
 
     @transaction.atomic
     def add_justification(self, program_budget, rationale, alignment, expected_impact,

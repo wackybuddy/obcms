@@ -204,44 +204,38 @@ class TestBudgetLineItem:
 class TestBudgetJustification:
     """Test BudgetJustification model."""
 
-    def test_create_justification(self, budget_proposal):
+    def test_create_justification(self, program_budget):
         """Test creating budget justification."""
         justification = BudgetJustification.objects.create(
-            budget_proposal=budget_proposal,
-            section='executive_summary',
-            content="Test justification content",
-            order=1
+            program_budget=program_budget,
+            rationale="Test justification content",
+            alignment_with_priorities="Alignment",
+            expected_impact="Expected impact",
         )
 
         assert justification.id is not None
-        assert justification.section == 'executive_summary'
-        assert justification.order == 1
+        assert justification.program_budget == program_budget
+        assert justification.has_evidence is False
 
-    def test_ordering(self, budget_proposal):
+    def test_ordering(self, program_budget):
         """Test justifications are ordered correctly."""
         j1 = BudgetJustification.objects.create(
-            budget_proposal=budget_proposal,
-            section='section_1',
-            content="First",
-            order=3
+            program_budget=program_budget,
+            rationale="First",
         )
         j2 = BudgetJustification.objects.create(
-            budget_proposal=budget_proposal,
-            section='section_2',
-            content="Second",
-            order=1
+            program_budget=program_budget,
+            rationale="Second",
         )
         j3 = BudgetJustification.objects.create(
-            budget_proposal=budget_proposal,
-            section='section_3',
-            content="Third",
-            order=2
+            program_budget=program_budget,
+            rationale="Third",
         )
 
-        justifications = list(budget_proposal.justifications.all())
-        assert justifications[0] == j2  # order=1
-        assert justifications[1] == j3  # order=2
-        assert justifications[2] == j1  # order=3
+        justifications = list(program_budget.justifications.all())
+        assert justifications[0] == j3  # Most recent first (ordering by -created_at)
+        assert justifications[1] == j2
+        assert justifications[2] == j1
 
 
 @pytest.mark.django_db

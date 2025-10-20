@@ -473,11 +473,14 @@ def program_create(request, proposal_pk):
                 service = BudgetBuilderService()
                 program_budget = service.add_program_budget(
                     proposal=proposal,
-                    program=form.cleaned_data['program'],
+                    monitoring_entry=form.cleaned_data['monitoring_entry'],
                     requested_amount=form.cleaned_data['requested_amount'],
-                    priority=form.cleaned_data['priority_level'],
+                    priority_rank=form.cleaned_data['priority_rank'],
                     justification=form.cleaned_data['justification'],
-                    expected_outputs=form.cleaned_data['expected_outputs']
+                    expected_outcomes=form.cleaned_data['expected_outcomes'],
+                    strategic_goal=form.cleaned_data.get('strategic_goal'),
+                    annual_work_plan=form.cleaned_data.get('annual_work_plan'),
+                    approved_amount=form.cleaned_data.get('approved_amount'),
                 )
 
                 if request.headers.get('HX-Request'):

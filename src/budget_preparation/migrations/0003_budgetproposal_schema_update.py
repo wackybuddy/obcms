@@ -10,14 +10,21 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('budget_preparation', '0002_use_new_organization_model'),
+        ('budget_preparation', '0002_budget_model_updates'),
+        ('organizations', '0002_seed_barmm_organizations'),
+        ('planning', '0001_initial'),
     ]
 
     operations = [
-        migrations.RenameField(
+        migrations.AlterField(
             model_name='budgetproposal',
-            old_name='total_proposed_budget',
-            new_name='total_requested_budget',
+            name='organization',
+            field=models.ForeignKey(
+                help_text='MOA submitting this budget proposal (BMMS multi-tenant organization)',
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name='budget_proposals',
+                to='organizations.organization',
+            ),
         ),
         migrations.RenameField(
             model_name='budgetproposal',
@@ -35,18 +42,6 @@ class Migration(migrations.Migration):
             field=models.PositiveIntegerField(
                 help_text='Fiscal year this budget proposal covers',
                 validators=[django.core.validators.MinValueValidator(2024)],
-            ),
-        ),
-        migrations.AddField(
-            model_name='budgetproposal',
-            name='total_approved_budget',
-            field=models.DecimalField(
-                blank=True,
-                decimal_places=2,
-                max_digits=15,
-                null=True,
-                validators=[django.core.validators.MinValueValidator(Decimal('0.00'))],
-                help_text='Total budget amount approved (₱)',
             ),
         ),
         migrations.AlterField(
@@ -89,6 +84,18 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name='budgetproposal',
+            name='total_approved_budget',
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                max_digits=15,
+                null=True,
+                help_text='Total budget amount approved (₱)',
+                validators=[django.core.validators.MinValueValidator(Decimal('0.00'))],
+            ),
+        ),
+        migrations.AlterField(
+            model_name='budgetproposal',
             name='approved_by',
             field=models.ForeignKey(
                 blank=True,
@@ -98,5 +105,19 @@ class Migration(migrations.Migration):
                 related_name='approved_budget_proposals',
                 to=settings.AUTH_USER_MODEL,
             ),
+        ),
+        migrations.AlterField(
+            model_name='programbudget',
+            name='monitoring_entry',
+            field=models.ForeignKey(
+                help_text='Linked monitoring entry (PPA)',
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name='program_budgets',
+                to='monitoring.monitoringentry',
+            ),
+        ),
+        migrations.AlterUniqueTogether(
+            name='programbudget',
+            unique_together={('budget_proposal', 'monitoring_entry')},
         ),
     ]

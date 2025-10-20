@@ -11,7 +11,8 @@ from django.utils import timezone
 from decimal import Decimal
 
 from .models import BudgetProposal, ProgramBudget, BudgetLineItem, BudgetJustification
-from planning.models import WorkPlanObjective
+from monitoring.models import MonitoringEntry
+from planning.models import StrategicGoal, AnnualWorkPlan
 
 
 class BudgetProposalForm(forms.ModelForm):
@@ -97,19 +98,27 @@ class ProgramBudgetForm(forms.ModelForm):
     class Meta:
         model = ProgramBudget
         fields = [
-            'program',
+            'monitoring_entry',
             'requested_amount',
+            'approved_amount',
             'priority_rank',
-            'priority_level',
+            'strategic_goal',
+            'annual_work_plan',
             'justification',
-            'expected_outputs'
+            'expected_outcomes'
         ]
 
         widgets = {
-            'program': forms.Select(attrs={
+            'monitoring_entry': forms.Select(attrs={
                 'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
             }),
             'requested_amount': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
+                'placeholder': '0.00',
+                'step': '0.01',
+                'min': '0',
+            }),
+            'approved_amount': forms.NumberInput(attrs={
                 'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
                 'placeholder': '0.00',
                 'step': '0.01',
@@ -119,7 +128,10 @@ class ProgramBudgetForm(forms.ModelForm):
                 'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
                 'min': '1',
             }),
-            'priority_level': forms.Select(attrs={
+            'strategic_goal': forms.Select(attrs={
+                'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
+            }),
+            'annual_work_plan': forms.Select(attrs={
                 'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
             }),
             'justification': forms.Textarea(attrs={
@@ -127,7 +139,7 @@ class ProgramBudgetForm(forms.ModelForm):
                 'rows': 3,
                 'placeholder': 'Explain why this budget allocation is necessary',
             }),
-            'expected_outputs': forms.Textarea(attrs={
+            'expected_outcomes': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200',
                 'rows': 3,
                 'placeholder': 'Describe expected deliverables and outcomes',
@@ -135,26 +147,37 @@ class ProgramBudgetForm(forms.ModelForm):
         }
 
         labels = {
-            'program': 'Work Plan Objective',
+            'monitoring_entry': 'Monitoring Entry (PPA)',
             'requested_amount': 'Requested Amount (₱)',
+            'approved_amount': 'Approved Amount (₱)',
             'priority_rank': 'Priority Rank',
-            'priority_level': 'Priority Level',
+            'strategic_goal': 'Strategic Goal',
+            'annual_work_plan': 'Annual Work Plan',
             'justification': 'Justification',
-            'expected_outputs': 'Expected Outputs',
+            'expected_outcomes': 'Expected Outcomes',
         }
 
     def __init__(self, *args, **kwargs):
         self.proposal = kwargs.pop('proposal', None)
         super().__init__(*args, **kwargs)
 
-        # Filter program choices based on proposal's fiscal year
+        # Limit selectable records for contextual relevance
         if self.proposal:
-            self.fields['program'].queryset = WorkPlanObjective.objects.filter(
-                annual_work_plan__year=self.proposal.fiscal_year,
-                status__in=['not_started', 'in_progress']
-            ).select_related('annual_work_plan', 'strategic_goal')
+            fiscal_year = self.proposal.fiscal_year
+            self.fields['monitoring_entry'].queryset = MonitoringEntry.objects.filter(
+                fiscal_year=fiscal_year
+            ).order_by("title")
+            self.fields['strategic_goal'].queryset = StrategicGoal.objects.filter(
+                strategic_plan__start_year__lte=fiscal_year,
+                strategic_plan__end_year__gte=fiscal_year,
+            )
+            self.fields['annual_work_plan'].queryset = AnnualWorkPlan.objects.filter(
+                year=fiscal_year
+            )
         else:
-            self.fields['program'].queryset = WorkPlanObjective.objects.none()
+            self.fields['monitoring_entry'].queryset = MonitoringEntry.objects.none()
+            self.fields['strategic_goal'].queryset = StrategicGoal.objects.none()
+            self.fields['annual_work_plan'].queryset = AnnualWorkPlan.objects.none()
 
         # Mark required fields
         for field_name in self.fields:
@@ -163,7 +186,7 @@ class ProgramBudgetForm(forms.ModelForm):
     def clean(self):
         """Validate program budget."""
         cleaned_data = super().clean()
-        program = cleaned_data.get('program')
+        monitoring_entry = cleaned_data.get('monitoring_entry')
         requested_amount = cleaned_data.get('requested_amount')
 
         if requested_amount and requested_amount <= 0:
@@ -172,10 +195,10 @@ class ProgramBudgetForm(forms.ModelForm):
             })
 
         # Check for duplicate program in proposal
-        if self.proposal and program:
+        if self.proposal and monitoring_entry:
             existing = ProgramBudget.objects.filter(
                 budget_proposal=self.proposal,
-                program=program
+                monitoring_entry=monitoring_entry
             )
 
             # Exclude current instance if editing
@@ -184,7 +207,7 @@ class ProgramBudgetForm(forms.ModelForm):
 
             if existing.exists():
                 raise ValidationError({
-                    'program': 'This program is already included in the proposal.'
+                    'monitoring_entry': 'This monitoring entry is already included in the proposal.'
                 })
 
         return cleaned_data
@@ -197,7 +220,7 @@ class BudgetLineItemForm(forms.ModelForm):
 
     class Meta:
         model = BudgetLineItem
-        fields = ['category', 'sub_category', 'description', 'unit_cost', 'quantity', 'notes']
+        fields = ['category', 'sub_category', 'description', 'unit_cost', 'quantity', 'justification', 'notes']
 
         widgets = {
             'category': forms.Select(attrs={
@@ -222,6 +245,11 @@ class BudgetLineItemForm(forms.ModelForm):
                 'placeholder': '1',
                 'min': '1',
             }),
+            'justification': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200',
+                'rows': 2,
+                'placeholder': 'Explain why this line item is needed (optional)',
+            }),
             'notes': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200',
                 'rows': 2,
@@ -234,6 +262,7 @@ class BudgetLineItemForm(forms.ModelForm):
             'description': 'Description',
             'unit_cost': 'Unit Cost (₱)',
             'quantity': 'Quantity',
+            'justification': 'Justification',
             'notes': 'Notes',
         }
 

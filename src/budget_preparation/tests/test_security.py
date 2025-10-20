@@ -25,7 +25,7 @@ from django.db import connection
 from django.test.utils import override_settings
 
 from budget_preparation.models import BudgetProposal, ProgramBudget, BudgetLineItem
-from coordination.models import Organization
+from organizations.models import Organization
 
 User = get_user_model()
 
@@ -249,17 +249,15 @@ class TestAuthorization:
         """Test that users cannot access other organization's budgets."""
         # Create two organizations
         org1 = Organization.objects.create(
+            code="SEC-ORG1",
             name="Org 1",
-            acronym="ORG1",
-            organization_type="bmoa",
-            partnership_status="active",
+            org_type="agency",
             is_active=True,
         )
         org2 = Organization.objects.create(
+            code="SEC-ORG2",
             name="Org 2",
-            acronym="ORG2",
-            organization_type="bmoa",
-            partnership_status="active",
+            org_type="agency",
             is_active=True,
         )
 
@@ -300,17 +298,15 @@ class TestAuthorization:
     def test_cannot_modify_other_organization_budget(self, client):
         """Test that users cannot modify other organization's budgets."""
         org1 = Organization.objects.create(
+            code="SEC-ORG3",
             name="Org 1",
-            acronym="ORG3",
-            organization_type="bmoa",
-            partnership_status="active",
+            org_type="agency",
             is_active=True,
         )
         org2 = Organization.objects.create(
+            code="SEC-ORG4",
             name="Org 2",
-            acronym="ORG4",
-            organization_type="bmoa",
-            partnership_status="active",
+            org_type="agency",
             is_active=True,
         )
 

@@ -154,32 +154,30 @@ def multiple_disbursements(db, obligation, execution_user):
     disbursements.append(Disbursement.objects.create(
         obligation=obligation,
         amount=Decimal('1500000.00'),
-        payment_date=date(2025, 2, 15),
         payment_method='check',
-        check_number='CHK-2025-100',
         disbursed_by=execution_user,
-        status='paid'
+        status='paid',
+        reference_number='DIS-2025-101'
     ))
 
     # Second payment - 30%
     disbursements.append(Disbursement.objects.create(
         obligation=obligation,
         amount=Decimal('1500000.00'),
-        payment_date=date(2025, 3, 15),
         payment_method='check',
-        check_number='CHK-2025-101',
         disbursed_by=execution_user,
-        status='paid'
+        status='paid',
+        reference_number='DIS-2025-102'
     ))
 
     # Final payment - 40%
     disbursements.append(Disbursement.objects.create(
         obligation=obligation,
         amount=Decimal('2000000.00'),
-        payment_date=date(2025, 4, 15),
         payment_method='bank_transfer',
         disbursed_by=execution_user,
-        status='paid'
+        status='paid',
+        reference_number='DIS-2025-103'
     ))
 
     return disbursements
@@ -232,10 +230,10 @@ def complete_execution_cycle(db, approved_program_budget, monitoring_entry, exec
         disbursement = Disbursement.objects.create(
             obligation=obligation,
             amount=Decimal(f'{2500000 * i}.00'),
-            payment_date=date(2025, 2, i),
             payment_method='check',
             disbursed_by=execution_user,
-            status='paid'
+            status='paid',
+            reference_number=f'DIS-LOOP-{i}'
         )
         disbursements.append(disbursement)
 
@@ -326,7 +324,6 @@ def create_disbursement(**kwargs):
     """Helper to create disbursements with defaults."""
     defaults = {
         'amount': Decimal('250000.00'),
-        'payment_date': date.today(),
         'payment_method': 'check',
         'status': 'paid'
     }
