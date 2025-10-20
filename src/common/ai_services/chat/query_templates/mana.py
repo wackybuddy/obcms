@@ -72,17 +72,31 @@ def build_upcoming_workshops(entities: Dict[str, Any]) -> str:
 
 
 def build_workshops_by_date_range(entities: Dict[str, Any]) -> str:
-    """List workshops in date range."""
+    """
+    List workshops in date range.
+
+    SECURITY: Constructs QuerySet directly using filter kwargs (no string interpolation).
+    """
+    from mana.models import WorkshopActivity
+
     date_range = entities.get('date_range', {})
     start_date = date_range.get('start')
     end_date = date_range.get('end')
 
+    # SECURITY FIX: Build QuerySet with kwargs instead of f-strings
     if start_date and end_date:
-        return f"WorkshopActivity.objects.filter(start_date__gte='{start_date}', start_date__lte='{end_date}').select_related('assessment__province').order_by('-start_date')[:30]"
+        qs = WorkshopActivity.objects.filter(
+            start_date__gte=start_date,
+            start_date__lte=end_date
+        ).select_related('assessment__province').order_by('-start_date')[:30]
     elif start_date:
-        return f"WorkshopActivity.objects.filter(start_date__gte='{start_date}').select_related('assessment__province').order_by('-start_date')[:30]"
+        qs = WorkshopActivity.objects.filter(
+            start_date__gte=start_date
+        ).select_related('assessment__province').order_by('-start_date')[:30]
     else:
-        return "WorkshopActivity.objects.all().order_by('-start_date')[:20]"
+        qs = WorkshopActivity.objects.all().order_by('-start_date')[:20]
+
+    return qs
 
 
 def build_workshop_count_total(entities: Dict[str, Any]) -> str:
@@ -91,10 +105,24 @@ def build_workshop_count_total(entities: Dict[str, Any]) -> str:
 
 
 def build_workshop_count_by_location(entities: Dict[str, Any]) -> str:
-    """Count workshops in location."""
+    """
+    Count workshops in location.
+
+    SECURITY: Uses Django Q objects - no string interpolation of user input.
+    """
+    from mana.models import WorkshopActivity
+
     location = entities.get('location', {})
     loc_value = location.get('value', '')
-    return f"WorkshopActivity.objects.filter(Q(assessment__region__name__icontains='{loc_value}') | Q(assessment__province__name__icontains='{loc_value}') | Q(assessment__municipality__name__icontains='{loc_value}')).count()"
+
+    # SECURITY FIX: Use Q objects with kwargs instead of f-string interpolation
+    qs = WorkshopActivity.objects.filter(
+        Q(assessment__region__name__icontains=loc_value) |
+        Q(assessment__province__name__icontains=loc_value) |
+        Q(assessment__municipality__name__icontains=loc_value)
+    ).count()
+
+    return qs
 
 
 MANA_WORKSHOP_TEMPLATES = [
@@ -222,16 +250,42 @@ def build_list_all_assessments(entities: Dict[str, Any]) -> str:
 
 
 def build_assessments_by_location(entities: Dict[str, Any]) -> str:
-    """List assessments in location."""
+    """
+    List assessments in location.
+
+    SECURITY: Uses Django Q objects - no string interpolation of user input.
+    """
+    from mana.models import Assessment
+
     location = entities.get('location', {})
     loc_value = location.get('value', '')
-    return f"Assessment.objects.filter(Q(region__name__icontains='{loc_value}') | Q(province__name__icontains='{loc_value}') | Q(municipality__name__icontains='{loc_value}')).select_related('province', 'municipality').order_by('-created_at')[:30]"
+
+    # SECURITY FIX: Use Q objects with kwargs instead of f-string interpolation
+    qs = Assessment.objects.filter(
+        Q(region__name__icontains=loc_value) |
+        Q(province__name__icontains=loc_value) |
+        Q(municipality__name__icontains=loc_value)
+    ).select_related('province', 'municipality').order_by('-created_at')[:30]
+
+    return qs
 
 
 def build_assessments_by_status(entities: Dict[str, Any]) -> str:
-    """List assessments by status."""
+    """
+    List assessments by status.
+
+    SECURITY: Uses filter kwargs - no string interpolation of user input.
+    """
+    from mana.models import Assessment
+
     status = entities.get('status', {}).get('value', 'completed')
-    return f"Assessment.objects.filter(status__icontains='{status}').select_related('province', 'municipality', 'category').order_by('-created_at')[:30]"
+
+    # SECURITY FIX: Use filter kwargs instead of f-string interpolation
+    qs = Assessment.objects.filter(
+        status__icontains=status
+    ).select_related('province', 'municipality', 'category').order_by('-created_at')[:30]
+
+    return qs
 
 
 def build_completed_assessments(entities: Dict[str, Any]) -> str:
@@ -518,10 +572,23 @@ def build_needs_by_category(entities: Dict[str, Any]) -> str:
 
 
 def build_needs_by_location(entities: Dict[str, Any]) -> str:
-    """List needs in specific location."""
+    """
+    List needs in specific location.
+
+    SECURITY: Uses Django Q objects - no string interpolation of user input.
+    """
+    from mana.models import IdentifiedNeed
+
     location = entities.get('location', {})
     loc_value = location.get('value', '')
-    return f"IdentifiedNeed.objects.filter(Q(assessment__region__name__icontains='{loc_value}') | Q(assessment__province__name__icontains='{loc_value}')).select_related('assessment__province', 'category').order_by('-priority')[:30]"
+
+    # SECURITY FIX: Use Q objects with kwargs instead of f-string interpolation
+    qs = IdentifiedNeed.objects.filter(
+        Q(assessment__region__name__icontains=loc_value) |
+        Q(assessment__province__name__icontains=loc_value)
+    ).select_related('assessment__province', 'category').order_by('-priority')[:30]
+
+    return qs
 
 
 def build_critical_needs(entities: Dict[str, Any]) -> str:
@@ -629,10 +696,23 @@ def build_participants_by_workshop(entities: Dict[str, Any]) -> str:
 
 
 def build_participants_by_location(entities: Dict[str, Any]) -> str:
-    """Count participants from location."""
+    """
+    Count participants from location.
+
+    SECURITY: Uses Django Q objects - no string interpolation of user input.
+    """
+    from mana.models import WorkshopParticipant
+
     location = entities.get('location', {})
     loc_value = location.get('value', '')
-    return f"WorkshopParticipant.objects.filter(Q(workshop_session__workshop_activity__assessment__region__name__icontains='{loc_value}') | Q(workshop_session__workshop_activity__assessment__province__name__icontains='{loc_value}')).count()"
+
+    # SECURITY FIX: Use Q objects with kwargs instead of f-string interpolation
+    count = WorkshopParticipant.objects.filter(
+        Q(workshop_session__workshop_activity__assessment__region__name__icontains=loc_value) |
+        Q(workshop_session__workshop_activity__assessment__province__name__icontains=loc_value)
+    ).count()
+
+    return count
 
 
 def build_participant_demographics(entities: Dict[str, Any]) -> str:

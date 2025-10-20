@@ -94,12 +94,12 @@ class QueryExecutor:
         """Initialize query executor with safety context."""
         self._context = self._build_safe_context()
 
-    def execute(self, query_string: str) -> Dict[str, Any]:
+    def execute(self, query_input: Any) -> Dict[str, Any]:
         """
         Execute a query with comprehensive safety checks.
 
         Args:
-            query_string: Django ORM query as string
+            query_input: Either a Django ORM query string OR a QuerySet object
 
         Returns:
             Dictionary with:
@@ -108,6 +108,10 @@ class QueryExecutor:
                 - error: Error message if failed
                 - query_info: Metadata about the query
 
+        Security:
+            - If QuerySet is provided directly, no eval() or parsing is needed (most secure)
+            - If string is provided, uses safe AST parsing without eval()
+
         Example:
             >>> executor = QueryExecutor()
             >>> result = executor.execute(
@@ -115,20 +119,33 @@ class QueryExecutor:
             ... )
             >>> print(result['result'])
             42
-        """
-        try:
-            # Step 1: Parse and validate query
-            validation = self._validate_query(query_string)
-            if not validation["is_safe"]:
-                return {
-                    "success": False,
-                    "result": None,
-                    "error": f"Unsafe query: {validation['reason']}",
-                    "query_info": validation,
-                }
 
-            # Step 2: Execute query in restricted context
-            result = self._execute_safe(query_string)
+            Or with QuerySet directly (PREFERRED):
+            >>> result = executor.execute(OBCCommunity.objects.all())
+        """
+        from django.db.models import QuerySet
+
+        try:
+            # SECURITY: If query_input is already a QuerySet, use it directly (most secure)
+            if isinstance(query_input, QuerySet):
+                result = query_input
+                query_string = str(query_input.query)
+            else:
+                # String query - parse and validate
+                query_string = str(query_input)
+
+                # Step 1: Parse and validate query
+                validation = self._validate_query(query_string)
+                if not validation["is_safe"]:
+                    return {
+                        "success": False,
+                        "result": None,
+                        "error": f"Unsafe query: {validation['reason']}",
+                        "query_info": validation,
+                    }
+
+                # Step 2: Execute query in restricted context
+                result = self._execute_safe(query_string)
 
             # Step 3: Process and limit results
             processed_result = self._process_result(result)
@@ -138,19 +155,20 @@ class QueryExecutor:
                 "result": processed_result,
                 "error": None,
                 "query_info": {
-                    "query": query_string,
+                    "query": query_string if isinstance(query_input, str) else "QuerySet object",
                     "result_type": type(result).__name__,
                     "result_count": self._get_result_count(processed_result),
                 },
             }
 
         except Exception as e:
-            logger.error(f"Query execution failed: {query_string} - {str(e)}")
+            query_repr = str(query_input)[:200] if query_input else "None"
+            logger.error(f"Query execution failed: {query_repr} - {str(e)}")
             return {
                 "success": False,
                 "result": None,
                 "error": f"Execution error: {str(e)}",
-                "query_info": {"query": query_string},
+                "query_info": {"query": query_repr},
             }
 
     def _validate_query(self, query_string: str) -> Dict[str, Any]:

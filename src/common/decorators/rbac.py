@@ -94,7 +94,7 @@ def require_permission(permission_code, organization_param=None):
             # Import here to avoid circular imports
             from common.services.rbac_service import RBACService
 
-            if not request.user.is_authenticated:
+            if not request.user or not request.user.is_authenticated:
                 messages.error(
                     request,
                     "You must be logged in to access this resource."
@@ -178,7 +178,7 @@ def require_feature_access(feature_code, organization_param=None):
             # Import here to avoid circular imports
             from common.services.rbac_service import RBACService
 
-            if not request.user.is_authenticated:
+            if not request.user or not request.user.is_authenticated:
                 messages.error(
                     request,
                     "You must be logged in to access this feature."

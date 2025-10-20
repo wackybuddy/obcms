@@ -11,7 +11,15 @@ echo ""
 
 # Generate SECRET_KEY
 echo "SECRET_KEY (Django):"
-python3 -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+# Try to use project's virtual environment if available
+if [ -f "../venv/bin/python" ]; then
+    ../venv/bin/python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+elif [ -f "../../venv/bin/python" ]; then
+    ../../venv/bin/python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+else
+    # Fallback: Generate using openssl (same randomness as Django)
+    openssl rand -base64 50 | tr -d '\n' && echo
+fi
 echo ""
 
 # Generate Redis password
