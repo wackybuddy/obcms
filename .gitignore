@@ -36,14 +36,20 @@ db_backup_*.sqlite3
 current_db_backup.db
 
 # Environment variables
-.env*
+.env
+.env.*
 !.env.example
+!.env.staging.example
+!.env.production.template
 .venv
-env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Environment variants and backups
+env/variants/
+backups/env/
 
 # Media files (user uploads)
 /src/media/
