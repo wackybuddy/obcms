@@ -32,7 +32,8 @@ backups/sqlite/db.sqlite3.pre_migration
 *.backup
 
 # Environment variables
-.env
+.env*
+!.env.example
 .venv
 env/
 venv/

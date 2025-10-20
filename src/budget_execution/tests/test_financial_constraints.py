@@ -283,7 +283,7 @@ class TestTransactionRollback:
                     payee="Test",
                     obligated_by=execution_user
                 )
-        except IntegrityError:
+        except (IntegrityError, ValidationError):
             pass
 
         # Verify no record was created
@@ -302,7 +302,7 @@ class TestTransactionRollback:
                     payment_method='check',
                     disbursed_by=execution_user
                 )
-        except IntegrityError:
+        except (IntegrityError, ValidationError):
             pass
 
         # Verify no record was created
