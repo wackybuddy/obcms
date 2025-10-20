@@ -114,8 +114,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Documentation & Tasks
-# NOTE: Only AI assistant guidance files are ignored, NOT the docs/ directory itself
-# docs/ contains essential project documentation that MUST be in git
+# All documentation is gitignored - managed externally (Notion, wiki, etc.)
+docs/
 tasks/
 *.README.md
 
