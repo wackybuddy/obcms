@@ -23,7 +23,7 @@ from .forms import (
     BudgetJustificationForm
 )
 from planning.models import WorkPlanObjective, AnnualWorkPlan
-from coordination.models import Organization
+from organizations.models import Organization
 
 
 @login_required

@@ -145,6 +145,9 @@ class TestBudgetFullCycle:
 
     def test_multi_program_budget(self, test_organization, test_user, monitoring_entry):
         """Test budget with multiple programs."""
+        from monitoring.models import MonitoringEntry
+        from coordination.models import Organization as CoordinationOrganization
+
         proposal = BudgetProposal.objects.create(
             organization=test_organization,
             fiscal_year=2025,
@@ -154,11 +157,39 @@ class TestBudgetFullCycle:
             submitted_by=test_user
         )
 
-        # Create 5 program budgets
+        # Create 5 program budgets with unique monitoring entries
+        # (ProgramBudget has unique_together constraint on budget_proposal + monitoring_entry)
         for i in range(1, 6):
+            # Create a unique monitoring entry for each program
+            if i == 1:
+                # Use the provided monitoring_entry for the first program
+                program_monitoring_entry = monitoring_entry
+            else:
+                # Create new monitoring entries for programs 2-5
+                coordination_org, _ = CoordinationOrganization.objects.get_or_create(
+                    name=f"{test_organization.name} Program {i}",
+                    defaults={
+                        "acronym": f"{test_organization.acronym or test_organization.code}_P{i}",
+                        "organization_type": "bmoa",
+                        "description": f"Test coordination record for program {i}",
+                        "partnership_status": "active",
+                        "is_active": True,
+                    },
+                )
+                program_monitoring_entry = MonitoringEntry.objects.create(
+                    title=f"Program {i}: Multi-sector Initiative",
+                    category="moa_ppa",
+                    summary=f"Program {i} implementation and monitoring",
+                    status="planning",
+                    priority="high",
+                    lead_organization=coordination_org,
+                    implementing_moa=coordination_org,
+                    fiscal_year=2025
+                )
+
             program_budget = ProgramBudget.objects.create(
                 budget_proposal=proposal,
-                monitoring_entry=monitoring_entry,
+                monitoring_entry=program_monitoring_entry,
                 requested_amount=Decimal(f'{40000000 * i}.00'),
                 priority_rank=i
             )
@@ -230,7 +261,7 @@ class TestBudgetExecutionFlows:
         Disbursement.objects.create(
             obligation=obligation,
             amount=Decimal('3000000.00'),
-            payment_date=date(2025, 2, 15),
+            disbursed_at=date(2025, 2, 15),
             payment_method='check',
             disbursed_by=execution_user,
             status='paid'
@@ -240,7 +271,7 @@ class TestBudgetExecutionFlows:
         Disbursement.objects.create(
             obligation=obligation,
             amount=Decimal('3000000.00'),
-            payment_date=date(2025, 3, 15),
+            disbursed_at=date(2025, 3, 15),
             payment_method='check',
             disbursed_by=execution_user,
             status='paid'
@@ -250,7 +281,7 @@ class TestBudgetExecutionFlows:
         Disbursement.objects.create(
             obligation=obligation,
             amount=Decimal('4000000.00'),
-            payment_date=date(2025, 4, 15),
+            disbursed_at=date(2025, 4, 15),
             payment_method='bank_transfer',
             disbursed_by=execution_user,
             status='paid'
@@ -265,11 +296,13 @@ class TestBudgetExecutionFlows:
     def test_multiple_work_items_single_allotment(self, allotment_q1, monitoring_entry, execution_user):
         """Test executing multiple work items under one allotment."""
         from budget_execution.models import WorkItem
+        from django.core.exceptions import ValidationError
 
         work_items = []
         obligations = []
 
-        # Create 3 work items
+        # Create 3 work items, but only 2 should succeed
+        # (allotment_q1 = 10M, so 2M + 4M = 6M OK, but 6M would make 12M total and exceed)
         for i in range(1, 4):
             work_item = WorkItem.objects.create(
                 monitoring_entry=monitoring_entry,
@@ -279,24 +312,31 @@ class TestBudgetExecutionFlows:
             )
             work_items.append(work_item)
 
-            obligation = Obligation.objects.create(
-                allotment=allotment_q1,
-                work_item=work_item,
-                amount=Decimal(f'{2000000 * i}.00'),
-                payee=f"Contractor {i}",
-                obligated_by=execution_user,
-                status='obligated'
-            )
-            obligations.append(obligation)
+            try:
+                obligation = Obligation.objects.create(
+                    allotment=allotment_q1,
+                    work_item=work_item,
+                    amount=Decimal(f'{2000000 * i}.00'),
+                    payee=f"Contractor {i}",
+                    obligated_by=execution_user,
+                    status='obligated'
+                )
+                obligations.append(obligation)
+            except ValidationError as e:
+                # Third obligation (6M) should fail: 2M + 4M + 6M = 12M > 10M allotment
+                if i == 3:
+                    assert 'exceed allotment' in str(e)
+                else:
+                    raise
 
-        # Verify total obligations within allotment
+        # Verify total obligations: only first 2 created (2M + 4M = 6M)
         total_obligated = Obligation.objects.filter(
             allotment=allotment_q1
         ).aggregate(total=Sum('amount'))['total']
 
-        # Total: 2M + 4M + 6M = 12M (but allotment is 10M)
-        # This should be caught by constraint (TODO: uncomment when constraint exists)
-        # assert total_obligated <= allotment_q1.amount
+        assert len(obligations) == 2
+        assert total_obligated == Decimal('6000000.00')
+        assert total_obligated <= allotment_q1.amount
 
 
 @pytest.mark.integration
