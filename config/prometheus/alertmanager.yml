@@ -1,0 +1,216 @@
+global:
+  # Global configuration
+  resolve_timeout: 5m
+  # SMTP configuration for email alerts
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@example.com'
+  smtp_auth_username: 'alerts@example.com'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+# Templates for alert formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alerts
+route:
+  # Default receiver for all alerts
+  receiver: 'default'
+
+  # Group alerts by these labels
+  group_by: ['alertname', 'component', 'severity']
+
+  # Wait before sending first notification
+  group_wait: 30s
+
+  # Wait before sending notification about new alerts in group
+  group_interval: 5m
+
+  # How often to re-send notifications
+  repeat_interval: 4h
+
+  # Child routes for specific alert routing
+  routes:
+    # Critical alerts go to PagerDuty and Slack immediately
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      continue: true  # Also process by other routes
+
+    # Database alerts to database team
+    - match:
+        component: database
+      receiver: 'database-team'
+      group_by: ['alertname']
+      repeat_interval: 12h
+
+    # Infrastructure alerts to ops team
+    - match:
+        component: infrastructure
+      receiver: 'ops-team'
+      group_by: ['alertname', 'instance']
+      repeat_interval: 6h
+
+    # Application alerts to dev team
+    - match:
+        component: application
+      receiver: 'dev-team'
+      group_by: ['alertname']
+      repeat_interval: 8h
+
+    # Info level alerts (low priority)
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      group_wait: 5m
+      group_interval: 30m
+      repeat_interval: 24h
+
+# Inhibition rules - suppress certain alerts when others fire
+inhibit_rules:
+  # Suppress warning alerts when critical alerts are firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'component']
+
+  # Suppress high CPU alert when node is down
+  - source_match:
+      alertname: 'NodeDown'
+    target_match:
+      alertname: 'HighCPUUsage'
+    equal: ['instance']
+
+  # Suppress container alerts when node is down
+  - source_match:
+      alertname: 'NodeDown'
+    target_match:
+      component: 'docker'
+    equal: ['instance']
+
+# Receiver definitions
+receivers:
+  # Default receiver - email to ops
+  - name: 'default'
+    email_configs:
+      - to: 'ops@example.com'
+        headers:
+          Subject: '[OBCMS] Alert: {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>OBCMS Alert Notification</h2>
+          <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+          <p><strong>Severity:</strong> {{ .GroupLabels.severity }}</p>
+          <p><strong>Component:</strong> {{ .GroupLabels.component }}</p>
+          {{ range .Alerts }}
+          <hr>
+          <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+          <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+          <p><strong>Dashboard:</strong> <a href="{{ .Annotations.dashboard }}">View Dashboard</a></p>
+          {{ end }}
+
+  # Critical alerts - multiple channels
+  - name: 'critical-alerts'
+    # PagerDuty for on-call engineer
+    pagerduty_configs:
+      - service_key: '${PAGERDUTY_SERVICE_KEY}'
+        description: '{{ .CommonAnnotations.summary }}'
+        details:
+          severity: '{{ .GroupLabels.severity }}'
+          component: '{{ .GroupLabels.component }}'
+          firing: '{{ .Alerts.Firing | len }}'
+
+    # Slack for immediate visibility
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL_CRITICAL}'
+        channel: '#alerts-critical'
+        color: 'danger'
+        title: ':rotating_light: CRITICAL: {{ .GroupLabels.alertname }}'
+        text: |
+          *Severity:* {{ .GroupLabels.severity }}
+          *Component:* {{ .GroupLabels.component }}
+          {{ range .Alerts }}
+          *Summary:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          <{{ .Annotations.dashboard }}|View Dashboard>
+          {{ end }}
+        send_resolved: true
+
+    # Email
+    email_configs:
+      - to: 'oncall@example.com'
+        headers:
+          Subject: ':rotating_light: CRITICAL OBCMS Alert: {{ .GroupLabels.alertname }}'
+
+  # Database team alerts
+  - name: 'database-team'
+    email_configs:
+      - to: 'database-team@example.com'
+        headers:
+          Subject: '[OBCMS Database] {{ .GroupLabels.alertname }}'
+
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#database-alerts'
+        color: '{{ if eq .GroupLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
+        title: 'Database Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+          <{{ .Annotations.dashboard }}|View Dashboard>
+          {{ end }}
+        send_resolved: true
+
+  # Ops team alerts
+  - name: 'ops-team'
+    email_configs:
+      - to: 'ops-team@example.com'
+        headers:
+          Subject: '[OBCMS Infrastructure] {{ .GroupLabels.alertname }}'
+
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#ops-alerts'
+        color: '{{ if eq .GroupLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
+        title: 'Infrastructure Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+          <{{ .Annotations.dashboard }}|View Dashboard>
+          {{ end }}
+        send_resolved: true
+
+  # Dev team alerts
+  - name: 'dev-team'
+    email_configs:
+      - to: 'dev-team@example.com'
+        headers:
+          Subject: '[OBCMS Application] {{ .GroupLabels.alertname }}'
+
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#dev-alerts'
+        color: '{{ if eq .GroupLabels.severity "critical" }}danger{{ else }}warning{{ end }}'
+        title: 'Application Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+          <{{ .Annotations.dashboard }}|View Dashboard>
+          {{ end }}
+        send_resolved: true
+
+  # Info alerts - low priority, Slack only
+  - name: 'info-alerts'
+    slack_configs:
+      - api_url: '${SLACK_WEBHOOK_URL}'
+        channel: '#monitoring-info'
+        color: 'good'
+        title: 'Info: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+          {{ end }}
+        send_resolved: false
