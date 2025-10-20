@@ -186,6 +186,16 @@ class BudgetProposal(models.Model):
     # Backwards compatibility aliases
     # ------------------------------------------------------------------
     @property
+    def is_editable(self) -> bool:
+        """
+        Determine if the proposal can be modified.
+
+        Draft and rejected proposals remain editable; submitted/approved
+        proposals are locked for audit integrity.
+        """
+        return self.status in {"draft", "rejected"}
+
+    @property
     def total_proposed_budget(self) -> Decimal:
         """Legacy alias for total_requested_budget (pre-BMMS naming)."""
         return self.total_requested_budget

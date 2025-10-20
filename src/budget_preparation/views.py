@@ -212,6 +212,7 @@ def proposal_create(request):
 
     context = {
         'form': form,
+        'proposal': None,
         'current_year': timezone.now().year,
     }
 

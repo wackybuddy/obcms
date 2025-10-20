@@ -156,6 +156,7 @@ class TestBudgetPerformance:
             organization=test_organization,
             fiscal_year=2026,  # Different year
             title="Performance Test Budget FY2026",
+            total_requested_budget=Decimal('100000000.00'),  # Added missing field
             total_approved_budget=Decimal('100000000.00'),
             status='approved',
             submitted_by=test_user,

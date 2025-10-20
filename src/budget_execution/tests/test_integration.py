@@ -350,8 +350,8 @@ class TestBudgetReporting:
 
         # Verify aggregations
         assert data['total_allotted'] == Decimal('20000000.00')
-        assert len(data['obligations']) == 3
-        assert len(data['disbursements']) == 3
+        assert len(data['obligations']) == 2  # 2 obligations (5M + 10M = 15M, within 20M allotment)
+        assert len(data['disbursements']) == 2  # 2 disbursements corresponding to 2 obligations
 
     def test_variance_analysis(self, approved_budget_proposal):
         """Test variance analysis across proposal."""
