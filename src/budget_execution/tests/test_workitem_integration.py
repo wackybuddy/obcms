@@ -739,9 +739,12 @@ def monitoring_entry_2(db):
 def test_organization_2(db):
     """Create second test organization for multi-tenant testing."""
     from organizations.models import Organization
-    return Organization.objects.create(
-        name="Second Organization",
+    organization, _ = Organization.objects.get_or_create(
         code="ORG002",
-        org_type="office",
-        is_active=True
+        defaults={
+            "name": "Second Organization",
+            "org_type": "office",
+            "is_active": True
+        }
     )
+    return organization

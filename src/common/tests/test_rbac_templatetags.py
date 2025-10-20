@@ -31,9 +31,9 @@ class TestRBACTemplateTags:
         user = User.objects.create_user(
             username='oobc_staff',
             email='staff@oobc.gov.ph',
-            password='testpass123'
+            password='testpass123',
+            user_type='oobc_staff'
         )
-        user.is_oobc_staff = True
         user.is_approved = True
         user.save()
         return user
@@ -44,9 +44,9 @@ class TestRBACTemplateTags:
         user = User.objects.create_user(
             username='moa_staff',
             email='staff@moa.gov.ph',
-            password='testpass123'
+            password='testpass123',
+            user_type='bmoa'
         )
-        user.is_moa_staff = True
         user.is_approved = True
         user.save()
         return user

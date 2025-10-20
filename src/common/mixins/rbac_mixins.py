@@ -5,7 +5,7 @@ Provides permission and feature access control for Django's generic class-based 
 """
 
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ImproperlyConfigured
 from django.shortcuts import redirect
 
 
@@ -36,8 +36,12 @@ class PermissionRequiredMixin:
         # Import here to avoid circular imports
         from common.services.rbac_service import RBACService
 
-        if not request.user.is_authenticated:
-            messages.error(request, "You must be logged in to access this resource.")
+        if not request.user or not request.user.is_authenticated:
+            try:
+                messages.error(request, "You must be logged in to access this resource.")
+            except Exception:
+                # Messages middleware not available (e.g., in tests without middleware)
+                pass
             raise PermissionDenied("Authentication required")
 
         # Get organization context
@@ -45,10 +49,14 @@ class PermissionRequiredMixin:
 
         # Check permission
         if not RBACService.has_permission(request, self.permission_required, organization):
-            messages.error(
-                request,
-                f"You do not have permission to access this resource."
-            )
+            try:
+                messages.error(
+                    request,
+                    f"You do not have permission to access this resource."
+                )
+            except Exception:
+                # Messages middleware not available (e.g., in tests without middleware)
+                pass
             raise PermissionDenied(
                 f"User lacks required permission: {self.permission_required}"
             )
@@ -57,6 +65,9 @@ class PermissionRequiredMixin:
 
     def _get_organization_context(self, request, *args, **kwargs):
         """Extract organization from URL parameters or request."""
+        # Import here to avoid circular imports
+        from common.services.rbac_service import RBACService
+
         if not self.organization_param:
             return RBACService.get_user_organization_context(request)
 
@@ -97,8 +108,12 @@ class FeatureAccessMixin:
         # Import here to avoid circular imports
         from common.services.rbac_service import RBACService
 
-        if not request.user.is_authenticated:
-            messages.error(request, "You must be logged in to access this feature.")
+        if not request.user or not request.user.is_authenticated:
+            try:
+                messages.error(request, "You must be logged in to access this feature.")
+            except Exception:
+                # Messages middleware not available (e.g., in tests without middleware)
+                pass
             raise PermissionDenied("Authentication required")
 
         # Get organization context
@@ -107,10 +122,14 @@ class FeatureAccessMixin:
         # Check feature access
         if not RBACService.has_feature_access(request.user, self.feature_required, organization):
             feature_name = self.feature_required.split('.')[-1].replace('_', ' ').title()
-            messages.error(
-                request,
-                f"You do not have access to the {feature_name} module."
-            )
+            try:
+                messages.error(
+                    request,
+                    f"You do not have access to the {feature_name} module."
+                )
+            except Exception:
+                # Messages middleware not available (e.g., in tests without middleware)
+                pass
             raise PermissionDenied(
                 f"User lacks access to feature: {self.feature_required}"
             )

@@ -33,7 +33,7 @@ class WorkItem(models.Model):
     estimated_cost = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        validators=[MinValueValidator(Decimal("0.00"))],
+        validators=[MinValueValidator(Decimal("0.01"))],
     )
     status = models.CharField(
         max_length=20,
@@ -57,6 +57,11 @@ class WorkItem(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    def save(self, *args, **kwargs) -> None:
+        """Enforce validation before saving."""
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     # ------------------------------------------------------------------
     # Aggregations

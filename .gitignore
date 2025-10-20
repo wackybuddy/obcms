@@ -30,6 +30,10 @@ db.sqlite3
 db.sqlite3-journal
 backups/sqlite/db.sqlite3.pre_migration
 *.backup
+db.sqlite3.backup.*
+db_backup_*.sqlite3
+*_backup.db
+current_db_backup.db
 
 # Environment variables
 .env*
@@ -86,8 +90,12 @@ Thumbs.db
 
 # Testing
 .coverage
+coverage.xml
+coverage.json
 .pytest_cache/
 htmlcov/
+*_test_results*.json
+test_results.log
 
 # Celery
 celerybeat-schedule
@@ -100,8 +108,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # Documentation & Tasks
-docs/
+# NOTE: Only AI assistant guidance files are ignored, NOT the docs/ directory itself
+# docs/ contains essential project documentation that MUST be in git
 tasks/
+*.README.md
 
 # Backups & Data Files
 backups/
