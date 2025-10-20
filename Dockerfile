@@ -68,6 +68,11 @@ COPY --chown=app:app . /app/
 # Copy compiled CSS from node-builder stage
 COPY --from=node-builder --chown=app:app /app/src/static/css/output.css /app/src/static/css/output.css
 
+# Health check for container orchestration (Kubernetes, Docker Swarm, etc.)
+# Waits 40 seconds for app startup, checks every 30 seconds, allows 3 failures before marking unhealthy
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
+    CMD curl -f http://localhost:8000/health/ || exit 1
+
 USER app
 
 # Use gunicorn with production configuration file

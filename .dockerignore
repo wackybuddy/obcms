@@ -63,14 +63,8 @@ src/staticfiles/
 .env.local
 .env.*.local
 
-# Docker
-Dockerfile
-docker-compose*.yml
-.dockerignore
-
-# Documentation
+# Documentation (keep in image for reference)
 docs/
-*.md
 
 # Testing
 .coverage
