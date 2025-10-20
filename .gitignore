@@ -102,5 +102,13 @@ yarn-error.log*
 docs/
 tasks/
 
-# Backups
+# Backups & Data Files
 backups/
+backup_before_legacy_cleanup_*.json
+*_migration_data.json
+*_clean_backup.json
+*_data_backup*.json
+*_data_clean.json
+*_data_fixed.json
+*_backup.json
+users_*.json

@@ -32,34 +32,29 @@ def budget_dashboard(request):
     Budget preparation dashboard with overview statistics and recent proposals.
     """
     # Get user's organization (OOBC for now, will be user.organization in BMMS)
-    organization = Organization.objects.filter(name__icontains='OOBC').first()
+    organization = getattr(request.user, "organization", None)
+    if organization is None:
+        organization = Organization.objects.filter(name__icontains='OOBC').first()
+
+    proposal_qs = BudgetProposal.objects.filter(organization=organization) if organization else BudgetProposal.objects.none()
 
     # Statistics
-    total_proposals = BudgetProposal.objects.filter(organization=organization).count()
-    draft_proposals = BudgetProposal.objects.filter(
-        organization=organization, status='draft'
-    ).count()
-    submitted_proposals = BudgetProposal.objects.filter(
-        organization=organization, status='submitted'
-    ).count()
-    approved_proposals = BudgetProposal.objects.filter(
-        organization=organization, status='approved'
-    ).count()
+    total_proposals = proposal_qs.count()
+    draft_proposals = proposal_qs.filter(status='draft').count()
+    submitted_proposals = proposal_qs.filter(status='submitted').count()
+    approved_proposals = proposal_qs.filter(status='approved').count()
 
     # Current fiscal year
     current_year = timezone.now().year
 
     # Recent proposals
-    recent_proposals = BudgetProposal.objects.filter(
-        organization=organization
-    ).select_related('submitted_by', 'reviewed_by').order_by('-updated_at')[:5]
+    recent_proposals = proposal_qs.select_related('submitted_by', 'approved_by').order_by('-updated_at')[:5]
 
     # Total budget by fiscal year
-    budget_by_year = BudgetProposal.objects.filter(
-        organization=organization,
+    budget_by_year = proposal_qs.filter(
         status='approved'
     ).values('fiscal_year').annotate(
-        total=Sum('total_proposed_budget')
+        total=Sum('total_requested_budget')
     ).order_by('-fiscal_year')[:5]
 
     context = {
