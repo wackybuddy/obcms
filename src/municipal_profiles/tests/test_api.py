@@ -18,6 +18,9 @@ except ImportError:  # pragma: no cover - handled via skip
 User = get_user_model()
 
 
+@pytest.mark.django_db
+@pytest.mark.integration
+@pytest.mark.component
 class MunicipalOBCProfileAPITest(APITestCase):
     """Integration tests for municipal level OBC profile APIs."""
 

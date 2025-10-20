@@ -1,12 +1,5 @@
 """Integration tests for the shared calendar payload."""
 
-import pytest
-
-pytest.skip(
-    "Legacy calendar integration tests require deprecated EventParticipant models.",
-    allow_module_level=True,
-)
-
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -54,8 +47,8 @@ class CalendarIntegrationTests(TestCase):
         )
 
         self.community = OBCCommunity.objects.create(
-            name="Calendar Community",
             barangay=barangay,
+            community_names="Calendar Community",
         )
 
         self.engagement_type = StakeholderEngagementType.objects.create(
@@ -66,14 +59,15 @@ class CalendarIntegrationTests(TestCase):
 
         start_date = timezone.now().date() + timedelta(days=1)
 
+        # Create WorkItem with work_type='activity' (replaces old Event model)
         self.work_item = WorkItem.objects.create(
-            work_type=WorkItem.WORK_TYPE_ACTIVITY,
+            work_type='activity',
             title="Coordination Planning Session",
             description="Integration test work item",
             start_date=start_date,
             start_time=timezone.now().time().replace(microsecond=0),
             due_date=start_date,
-            status=WorkItem.STATUS_NOT_STARTED,
+            status='not_started',
             created_by=self.user,
         )
 

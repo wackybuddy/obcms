@@ -12,13 +12,6 @@ Test Categories:
 - F. Geographic Hierarchy Validation (4 tests)
 """
 
-import pytest
-
-pytest.skip(
-    "Legacy community integration tests require updated hierarchy fixtures after refactor.",
-    allow_module_level=True,
-)
-
 import time
 from decimal import Decimal
 from django.contrib.auth import get_user_model

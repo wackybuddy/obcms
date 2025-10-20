@@ -13,26 +13,29 @@ import pytest
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from faker import Faker
 
 from organizations.models import Organization, OrganizationMembership
 
 User = get_user_model()
+fake = Faker()
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 class TestOrganizationModel:
     """Test Organization model."""
 
     def test_create_organization_success(self):
         """Test successful organization creation with all required fields."""
+        unique_code = f'TEST{fake.numerify("####")}'
         org = Organization.objects.create(
-            code='OOBC',
+            code=unique_code,
             name='Office for Other Bangsamoro Communities',
             org_type='office',
             is_active=True,
         )
 
-        assert org.code == 'OOBC'
+        assert org.code == unique_code
         assert org.name == 'Office for Other Bangsamoro Communities'
         assert org.org_type == 'office'
         assert org.is_active is True
@@ -42,8 +45,9 @@ class TestOrganizationModel:
 
     def test_organization_code_unique(self):
         """Test that organization code must be unique."""
+        unique_code = f'UNIQ{fake.numerify("####")}'
         Organization.objects.create(
-            code='OOBC',
+            code=unique_code,
             name='Office for Other Bangsamoro Communities',
             org_type='office',
         )
@@ -51,26 +55,28 @@ class TestOrganizationModel:
         # Attempting to create duplicate code should fail
         with pytest.raises(IntegrityError):
             Organization.objects.create(
-                code='OOBC',
+                code=unique_code,
                 name='Duplicate Organization',
                 org_type='office',
             )
 
     def test_organization_str_method(self):
         """Test Organization __str__ method."""
+        unique_code = f'STR{fake.numerify("####")}'
         org = Organization.objects.create(
-            code='MOH',
+            code=unique_code,
             name='Ministry of Health',
             org_type='ministry',
         )
 
-        expected_str = 'MOH - Ministry of Health'
+        expected_str = f'{unique_code} - Ministry of Health'
         assert str(org) == expected_str
 
     def test_module_flags_defaults(self):
         """Test that module activation flags default to True."""
+        unique_code = f'MOD{fake.numerify("####")}'
         org = Organization.objects.create(
-            code='MAFAR',
+            code=unique_code,
             name='Ministry of Agriculture, Fisheries and Agrarian Reform',
             org_type='ministry',
         )
@@ -85,8 +91,9 @@ class TestOrganizationModel:
 
     def test_organization_optional_fields(self):
         """Test organization with optional fields populated."""
+        unique_code = f'OPT{fake.numerify("####")}'
         org = Organization.objects.create(
-            code='MOLE',
+            code=unique_code,
             name='Ministry of Labor and Employment',
             acronym='MOLE',
             org_type='ministry',
@@ -121,23 +128,25 @@ class TestOrganizationModel:
         ]
 
         for code_suffix, (org_type, org_name) in enumerate(org_types, start=1):
+            unique_code = f'TYP{fake.numerify("####")}'
             org = Organization.objects.create(
-                code=f'TEST{code_suffix}',
+                code=unique_code,
                 name=f'Test {org_name}',
                 org_type=org_type,
             )
             assert org.org_type == org_type
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 class TestOrganizationMembershipModel:
     """Test OrganizationMembership model."""
 
     @pytest.fixture
     def organization(self):
         """Create test organization."""
+        unique_code = f'MEM{fake.numerify("####")}'
         return Organization.objects.create(
-            code='OOBC',
+            code=unique_code,
             name='Office for Other Bangsamoro Communities',
             org_type='office',
         )
@@ -206,12 +215,12 @@ class TestOrganizationMembershipModel:
     def test_multiple_memberships_per_user(self, user):
         """Test that a user can belong to multiple organizations."""
         org1 = Organization.objects.create(
-            code='MOH',
+            code=f'MUL{fake.numerify("####")}',
             name='Ministry of Health',
             org_type='ministry',
         )
         org2 = Organization.objects.create(
-            code='MOLE',
+            code=f'MUL{fake.numerify("####")}',
             name='Ministry of Labor and Employment',
             org_type='ministry',
         )
@@ -251,8 +260,9 @@ class TestOrganizationMembershipModel:
 
         for role in roles:
             # Create new org for each membership to avoid unique constraint
+            unique_code = f'ROL{fake.numerify("####")}'
             org = Organization.objects.create(
-                code=f'TEST_{role.upper()}',
+                code=unique_code,
                 name=f'Test Organization for {role}',
                 org_type='office',
             )

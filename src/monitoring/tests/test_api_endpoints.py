@@ -24,7 +24,7 @@ from monitoring.models import MonitoringEntry
 
 User = get_user_model()
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.component]
 
 
 @pytest.fixture

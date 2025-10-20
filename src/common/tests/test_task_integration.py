@@ -1,606 +1,597 @@
-"""Integration tests for end-to-end task management workflows."""
+"""
+Task Integration Tests for WorkItem
+
+Integration tests for task management workflows using the unified WorkItem model.
+
+Test Coverage:
+- Task creation and management workflows
+- Task assignment and team collaboration
+- Task status transitions
+- Task querying and filtering
+- Task analytics and reporting
+"""
 
 import pytest
-
-pytest.skip(
-    "Legacy task integration tests require StaffTask/TaskTemplate models removed in WorkItem refactor.",
-    allow_module_level=True,
-)
-
-import json
 from datetime import date, timedelta
-from decimal import Decimal
-
-from django.test import TestCase
-from django.urls import reverse
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from common.models import StaffTask, StaffTeam, TaskTemplate, TaskTemplateItem, User
-from common.tests.factories import (
-    create_assessment,
-    create_event,
-    create_policy_recommendation,
-)
+from common.work_item_model import WorkItem
+from common.models import StaffTeam
+
+User = get_user_model()
 
 
-class AssessmentTaskWorkflowIntegrationTests(TestCase):
-    """Test complete workflow from assessment creation to task completion."""
+@pytest.mark.django_db
+class TestTaskCreationWorkflow:
+    """Test task creation workflows."""
 
-    def setUp(self):
-        """Set up test data."""
-        self.admin = User.objects.create_user(
-            username="admin",
+    def test_create_standalone_task(self):
+        """Test creating a standalone task."""
+        user = User.objects.create_user(
+            username="task_creator",
             password="pass1234",
-            user_type="admin",
-            is_staff=True,
-            is_superuser=True,
-            is_approved=True,
-        )
-        self.facilitator = User.objects.create_user(
-            username="facilitator",
-            password="pass1234",
-            user_type="oobc_staff",
-            is_approved=True,
-        )
-        self.client.force_login(self.admin)
-
-        # Create assessment template
-        self.template = TaskTemplate.objects.create(
-            name="mana_assessment_basic",
-            domain=StaffTask.DOMAIN_MANA,
-            description="Basic assessment workflow",
-            is_active=True,
         )
 
-        TaskTemplateItem.objects.create(
-            template=self.template,
-            title="Plan assessment: {assessment_name}",
-            description="Complete assessment planning for {assessment_name}",
-            sequence=1,
-            days_from_start=0,
-            priority=StaffTask.PRIORITY_HIGH,
-            assessment_phase=StaffTask.ASSESSMENT_PHASE_PLANNING,
-            estimated_hours=4,
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Review documentation",
+            description="Review and update project documentation",
+            status=WorkItem.STATUS_NOT_STARTED,
+            priority=WorkItem.PRIORITY_HIGH,
+            start_date=date.today(),
+            due_date=date.today() + timedelta(days=7),
+            created_by=user,
         )
 
-        TaskTemplateItem.objects.create(
-            template=self.template,
-            title="Collect data",
-            description="Data collection phase",
-            sequence=2,
-            days_from_start=7,
-            priority=StaffTask.PRIORITY_HIGH,
-            assessment_phase=StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION,
-            estimated_hours=8,
+        assert task.work_type == WorkItem.WORK_TYPE_TASK
+        assert task.status == WorkItem.STATUS_NOT_STARTED
+        assert task.priority == WorkItem.PRIORITY_HIGH
+        assert task.created_by == user
+
+    def test_create_task_under_project(self):
+        """Test creating a task under a project."""
+        user = User.objects.create_user(username="pm", password="pass")
+
+        project = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_PROJECT,
+            title="Software Development Project",
+            created_by=user,
         )
 
-        TaskTemplateItem.objects.create(
-            template=self.template,
-            title="Analyze results",
-            description="Analysis phase",
-            sequence=3,
-            days_from_start=14,
-            priority=StaffTask.PRIORITY_MEDIUM,
-            assessment_phase=StaffTask.ASSESSMENT_PHASE_ANALYSIS,
-            estimated_hours=6,
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Setup development environment",
+            parent=project,
+            priority=WorkItem.PRIORITY_HIGH,
+            created_by=user,
         )
 
-        self.team = StaffTeam.objects.create(name="MANA Team", is_active=True)
+        assert task.parent == project
+        assert task.get_ancestors().first() == project
+        assert project.get_children().filter(id=task.id).exists()
 
-    def test_complete_assessment_workflow(self):
-        """Test complete workflow from assessment creation to task completion."""
-        # Step 1: Create an assessment
-        assessment = create_assessment(
-            created_by=self.admin,
-            title="Region IX Education Assessment",
-            primary_methodology="survey",
-            planned_start=date(2025, 11, 1),
-            planned_end=date(2025, 11, 30),
+    def test_create_task_under_activity(self):
+        """Test creating a task under an activity."""
+        user = User.objects.create_user(username="facilitator", password="pass")
+
+        activity = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_ACTIVITY,
+            title="Workshop Preparation",
+            created_by=user,
         )
 
-        # Step 2: Verify tasks were auto-created
-        tasks = StaffTask.objects.filter(related_assessment=assessment).order_by(
-            "due_date"
-        )
-        self.assertEqual(tasks.count(), 3)
-
-        # Verify task details
-        planning_task = tasks[0]
-        self.assertIn("Region IX Education Assessment", planning_task.title)
-        self.assertEqual(
-            planning_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_PLANNING
-        )
-        self.assertEqual(planning_task.due_date, date(2025, 11, 1))
-
-        data_task = tasks[1]
-        self.assertEqual(
-            data_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_DATA_COLLECTION
-        )
-        self.assertEqual(data_task.due_date, date(2025, 11, 8))
-
-        analysis_task = tasks[2]
-        self.assertEqual(
-            analysis_task.assessment_phase, StaffTask.ASSESSMENT_PHASE_ANALYSIS
-        )
-        self.assertEqual(analysis_task.due_date, date(2025, 11, 15))
-
-        # Step 3: Assign tasks to team and staff
-        for task in tasks:
-            task.teams.add(self.team)
-            task.assignees.set([self.facilitator])
-
-        # Step 4: View tasks in domain view
-        url = reverse("common:tasks_by_domain", kwargs={"domain": "mana"})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Region IX Education Assessment")
-
-        # Step 5: View tasks in assessment-specific view
-        assessment_url = reverse(
-            "common:assessment_tasks",
-            kwargs={"assessment_id": assessment.id},
-        )
-        response = self.client.get(assessment_url)
-        self.assertEqual(response.status_code, 200)
-
-        # Verify phase grouping
-        tasks_by_phase = response.context["tasks_by_phase"]
-        self.assertIn("planning", tasks_by_phase)
-        self.assertIn("data_collection", tasks_by_phase)
-        self.assertIn("analysis", tasks_by_phase)
-
-        # Step 6: Complete first task
-        planning_task.status = StaffTask.STATUS_COMPLETED
-        planning_task.progress = 100
-        planning_task.completed_at = timezone.now()
-        planning_task.save()
-
-        # Step 7: Move second task to in_progress
-        data_task.status = StaffTask.STATUS_IN_PROGRESS
-        data_task.progress = 50
-        data_task.save()
-
-        # Step 8: Verify analytics
-        analytics_url = reverse("common:task_analytics")
-        response = self.client.get(analytics_url)
-        self.assertEqual(response.status_code, 200)
-
-        stats = response.context["stats"]
-        self.assertGreater(stats["total_tasks"], 0)
-        self.assertGreater(stats["completed_tasks"], 0)
-
-        # Step 9: Complete remaining tasks
-        data_task.status = StaffTask.STATUS_COMPLETED
-        data_task.progress = 100
-        data_task.completed_at = timezone.now()
-        data_task.save()
-
-        analysis_task.status = StaffTask.STATUS_COMPLETED
-        analysis_task.progress = 100
-        analysis_task.completed_at = timezone.now()
-        analysis_task.save()
-
-        # Step 10: Verify all tasks completed
-        completed_count = StaffTask.objects.filter(
-            related_assessment=assessment, status=StaffTask.STATUS_COMPLETED
-        ).count()
-        self.assertEqual(completed_count, 3)
-
-
-class EventTaskWorkflowIntegrationTests(TestCase):
-    """Test complete workflow for event-related tasks."""
-
-    def setUp(self):
-        """Set up test data."""
-        self.admin = User.objects.create_user(
-            username="admin",
-            password="pass1234",
-            user_type="admin",
-            is_staff=True,
-            is_approved=True,
-        )
-        self.client.force_login(self.admin)
-
-        # Create event template
-        self.template = TaskTemplate.objects.create(
-            name="event_meeting_standard",
-            domain=StaffTask.DOMAIN_COORDINATION,
-            description="Standard meeting preparation",
-            is_active=True,
+        task1 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Prepare materials",
+            parent=activity,
+            created_by=user,
         )
 
-        TaskTemplateItem.objects.create(
-            template=self.template,
-            title="Prepare agenda: {event_name}",
-            description="Draft and circulate meeting agenda",
-            sequence=1,
-            days_from_start=0,
-            priority=StaffTask.PRIORITY_HIGH,
-            estimated_hours=2,
+        task2 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Send invitations",
+            parent=activity,
+            created_by=user,
         )
 
-        TaskTemplateItem.objects.create(
-            template=self.template,
-            title="Send invitations: {event_name}",
-            description="Send meeting invitations to participants",
-            sequence=2,
-            days_from_start=7,
-            priority=StaffTask.PRIORITY_HIGH,
-            estimated_hours=1,
+        assert activity.get_children().count() == 2
+        assert task1 in activity.get_children()
+        assert task2 in activity.get_children()
+
+    def test_create_subtask(self):
+        """Test creating a subtask under a task."""
+        user = User.objects.create_user(username="user", password="pass")
+
+        parent_task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Implement feature X",
+            created_by=user,
         )
 
-        self.team = StaffTeam.objects.create(name="Coordination Team")
-
-    def test_event_task_workflow(self):
-        """Test creating event and managing its tasks."""
-        # Step 1: Create event
-        event = create_event(
-            created_by=self.admin,
-            title="Provincial Coordination Meeting",
-            event_type="meeting",
-            start_date=date(2025, 12, 15),
+        subtask1 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_SUBTASK,
+            title="Write unit tests",
+            parent=parent_task,
+            created_by=user,
         )
 
-        # Step 2: Verify tasks created
-        tasks = StaffTask.objects.filter(linked_event=event)
-        self.assertEqual(tasks.count(), 2)
-
-        # Step 3: View tasks in event view
-        url = reverse("common:event_tasks", kwargs={"event_id": event.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-        # Step 4: Complete tasks
-        for task in tasks:
-            task.teams.add(self.team)
-            task.status = StaffTask.STATUS_COMPLETED
-            task.progress = 100
-            task.save()
-
-        # Verify all completed
-        completed = StaffTask.objects.filter(
-            linked_event=event, status=StaffTask.STATUS_COMPLETED
-        ).count()
-        self.assertEqual(completed, 2)
-
-
-class PolicyTaskWorkflowIntegrationTests(TestCase):
-    """Test complete workflow for policy development tasks."""
-
-    def setUp(self):
-        """Set up test data."""
-        self.admin = User.objects.create_user(
-            username="admin",
-            password="pass1234",
-            user_type="admin",
-            is_staff=True,
-            is_approved=True,
-        )
-        self.client.force_login(self.admin)
-
-        # Create policy template
-        self.template = TaskTemplate.objects.create(
-            name="policy_development_full_cycle",
-            domain=StaffTask.DOMAIN_POLICY,
-            description="Full policy development cycle",
-            is_active=True,
+        subtask2 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_SUBTASK,
+            title="Update documentation",
+            parent=parent_task,
+            created_by=user,
         )
 
-        TaskTemplateItem.objects.create(
-            template=self.template,
-            title="Research: {policy_title}",
-            description="Conduct background research",
-            sequence=1,
-            days_from_start=0,
-            priority=StaffTask.PRIORITY_HIGH,
-            policy_phase=StaffTask.POLICY_PHASE_EVIDENCE,
-            estimated_hours=8,
+        assert parent_task.get_children().count() == 2
+        assert subtask1.work_type == WorkItem.WORK_TYPE_SUBTASK
+        assert subtask2.work_type == WorkItem.WORK_TYPE_SUBTASK
+
+
+@pytest.mark.django_db
+class TestTaskAssignment:
+    """Test task assignment workflows."""
+
+    def test_assign_task_to_user(self):
+        """Test assigning a task to a user."""
+        creator = User.objects.create_user(username="creator", password="pass")
+        assignee = User.objects.create_user(
+            username="assignee",
+            first_name="John",
+            last_name="Doe",
         )
 
-        TaskTemplateItem.objects.create(
-            template=self.template,
-            title="Draft: {policy_title}",
-            description="Draft policy document",
-            sequence=2,
-            days_from_start=14,
-            priority=StaffTask.PRIORITY_HIGH,
-            policy_phase=StaffTask.POLICY_PHASE_DRAFTING,
-            estimated_hours=12,
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Conduct user research",
+            created_by=creator,
         )
 
-        TaskTemplateItem.objects.create(
-            template=self.template,
-            title="Consultation: {policy_title}",
-            description="Stakeholder consultation",
-            sequence=3,
-            days_from_start=28,
-            priority=StaffTask.PRIORITY_MEDIUM,
-            policy_phase=StaffTask.POLICY_PHASE_CONSULTATION,
-            estimated_hours=6,
+        task.assignees.add(assignee)
+
+        assert assignee in task.assignees.all()
+        assert task in assignee.assigned_work_items.all()
+
+    def test_assign_task_to_team(self):
+        """Test assigning a task to a team."""
+        user = User.objects.create_user(username="user", password="pass")
+        team = StaffTeam.objects.create(name="Development Team", is_active=True)
+
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Code review",
+            created_by=user,
         )
 
-        self.team = StaffTeam.objects.create(name="Policy Team")
+        task.teams.add(team)
 
-    def test_policy_development_workflow(self):
-        """Test complete policy development workflow."""
-        # Step 1: Create policy
-        policy = create_policy_recommendation(
-            proposed_by=self.admin,
-            title="Education Subsidy Policy",
-            status="draft",
+        assert team in task.teams.all()
+        assert task in team.work_items.all()
+
+    def test_assign_task_to_multiple_users(self):
+        """Test assigning a task to multiple users."""
+        creator = User.objects.create_user(username="creator", password="pass")
+        user1 = User.objects.create_user(username="user1", password="pass")
+        user2 = User.objects.create_user(username="user2", password="pass")
+        user3 = User.objects.create_user(username="user3", password="pass")
+
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Collaborative task",
+            created_by=creator,
         )
 
-        # Step 2: Verify tasks created in phases
-        tasks = StaffTask.objects.filter(related_policy=policy).order_by("due_date")
-        self.assertEqual(tasks.count(), 3)
+        task.assignees.add(user1, user2, user3)
 
-        # Step 3: View in policy-specific view
-        url = reverse("common:policy_tasks", kwargs={"policy_id": policy.id})
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-        # Verify phase grouping
-        tasks_by_phase = response.context["tasks_by_phase"]
-        self.assertIn("evidence_collection", tasks_by_phase)
-        self.assertIn("drafting", tasks_by_phase)
-        self.assertIn("consultation", tasks_by_phase)
-
-        # Step 4: Progress through phases
-        research_task = tasks[0]
-        research_task.teams.add(self.team)
-        research_task.status = StaffTask.STATUS_COMPLETED
-        research_task.progress = 100
-        research_task.save()
-
-        # Update policy status
-        policy.status = "drafting"
-        policy.save()
-
-        drafting_task = tasks[1]
-        drafting_task.status = StaffTask.STATUS_IN_PROGRESS
-        drafting_task.progress = 60
-        drafting_task.save()
-
-        # Step 5: Verify progress in analytics
-        analytics_url = reverse("common:task_analytics")
-        response = self.client.get(analytics_url, {"domain": "policy"})
-        self.assertEqual(response.status_code, 200)
+        assert task.assignees.count() == 3
+        assert user1 in task.assignees.all()
+        assert user2 in task.assignees.all()
+        assert user3 in task.assignees.all()
 
 
-class TemplateInstantiationWorkflowTests(TestCase):
-    """Test template instantiation workflow."""
+@pytest.mark.django_db
+class TestTaskStatusTransitions:
+    """Test task status transition workflows."""
 
-    def setUp(self):
-        """Set up test data."""
-        self.admin = User.objects.create_user(
-            username="admin",
-            password="pass1234",
-            user_type="admin",
-            is_staff=True,
-            is_approved=True,
-        )
-        self.client.force_login(self.admin)
+    def test_task_status_transitions(self):
+        """Test transitioning task through different statuses."""
+        user = User.objects.create_user(username="user", password="pass")
 
-        # Create template
-        self.template = TaskTemplate.objects.create(
-            name="quick_project",
-            domain=StaffTask.DOMAIN_GENERAL,
-            description="Quick project setup",
-            is_active=True,
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Status transition test",
+            status=WorkItem.STATUS_NOT_STARTED,
+            created_by=user,
         )
 
+        # Not started -> In progress
+        task.status = WorkItem.STATUS_IN_PROGRESS
+        task.progress = 30
+        task.save()
+        task.refresh_from_db()
+        assert task.status == WorkItem.STATUS_IN_PROGRESS
+        assert task.progress == 30
+
+        # In progress -> At risk
+        task.status = WorkItem.STATUS_AT_RISK
+        task.progress = 45
+        task.save()
+        task.refresh_from_db()
+        assert task.status == WorkItem.STATUS_AT_RISK
+
+        # At risk -> Completed
+        task.status = WorkItem.STATUS_COMPLETED
+        task.progress = 100
+        task.completed_at = timezone.now()
+        task.save()
+        task.refresh_from_db()
+        assert task.status == WorkItem.STATUS_COMPLETED
+        assert task.progress == 100
+        assert task.completed_at is not None
+
+    def test_task_can_be_blocked(self):
+        """Test marking a task as blocked."""
+        user = User.objects.create_user(username="user", password="pass")
+
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Blocked task test",
+            status=WorkItem.STATUS_IN_PROGRESS,
+            created_by=user,
+        )
+
+        task.status = WorkItem.STATUS_BLOCKED
+        task.save()
+        task.refresh_from_db()
+        assert task.status == WorkItem.STATUS_BLOCKED
+
+    def test_task_can_be_cancelled(self):
+        """Test cancelling a task."""
+        user = User.objects.create_user(username="user", password="pass")
+
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Cancelled task test",
+            status=WorkItem.STATUS_IN_PROGRESS,
+            created_by=user,
+        )
+
+        task.status = WorkItem.STATUS_CANCELLED
+        task.save()
+        task.refresh_from_db()
+        assert task.status == WorkItem.STATUS_CANCELLED
+
+
+@pytest.mark.django_db
+class TestTaskQuerying:
+    """Test querying and filtering tasks."""
+
+    def test_query_tasks_by_status(self):
+        """Test querying tasks by status."""
+        user = User.objects.create_user(username="user", password="pass")
+
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Not started task",
+            status=WorkItem.STATUS_NOT_STARTED,
+            created_by=user,
+        )
+
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="In progress task",
+            status=WorkItem.STATUS_IN_PROGRESS,
+            created_by=user,
+        )
+
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Completed task",
+            status=WorkItem.STATUS_COMPLETED,
+            created_by=user,
+        )
+
+        not_started = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            status=WorkItem.STATUS_NOT_STARTED,
+        )
+        in_progress = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            status=WorkItem.STATUS_IN_PROGRESS,
+        )
+        completed = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            status=WorkItem.STATUS_COMPLETED,
+        )
+
+        assert not_started.count() == 1
+        assert in_progress.count() == 1
+        assert completed.count() == 1
+
+    def test_query_tasks_by_priority(self):
+        """Test querying tasks by priority."""
+        user = User.objects.create_user(username="user", password="pass")
+
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Low priority",
+            priority=WorkItem.PRIORITY_LOW,
+            created_by=user,
+        )
+
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="High priority",
+            priority=WorkItem.PRIORITY_HIGH,
+            created_by=user,
+        )
+
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Critical priority",
+            priority=WorkItem.PRIORITY_CRITICAL,
+            created_by=user,
+        )
+
+        high_priority_tasks = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            priority__in=[WorkItem.PRIORITY_HIGH, WorkItem.PRIORITY_URGENT, WorkItem.PRIORITY_CRITICAL],
+        )
+
+        assert high_priority_tasks.count() == 2
+
+    def test_query_tasks_by_assignee(self):
+        """Test querying tasks by assignee."""
+        creator = User.objects.create_user(username="creator", password="pass")
+        user1 = User.objects.create_user(username="user1", password="pass")
+        user2 = User.objects.create_user(username="user2", password="pass")
+
+        task1 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Task for user1",
+            created_by=creator,
+        )
+        task1.assignees.add(user1)
+
+        task2 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Task for user2",
+            created_by=creator,
+        )
+        task2.assignees.add(user2)
+
+        task3 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Task for both",
+            created_by=creator,
+        )
+        task3.assignees.add(user1, user2)
+
+        user1_tasks = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            assignees=user1,
+        )
+        user2_tasks = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            assignees=user2,
+        )
+
+        assert user1_tasks.count() == 2  # task1 and task3
+        assert user2_tasks.count() == 2  # task2 and task3
+
+    def test_query_overdue_tasks(self):
+        """Test querying overdue tasks."""
+        user = User.objects.create_user(username="user", password="pass")
+
+        # Overdue task
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Overdue task",
+            due_date=date.today() - timedelta(days=5),
+            status=WorkItem.STATUS_IN_PROGRESS,
+            created_by=user,
+        )
+
+        # Not overdue task
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Future task",
+            due_date=date.today() + timedelta(days=5),
+            status=WorkItem.STATUS_IN_PROGRESS,
+            created_by=user,
+        )
+
+        # Completed task (not overdue)
+        WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Completed late",
+            due_date=date.today() - timedelta(days=3),
+            status=WorkItem.STATUS_COMPLETED,
+            created_by=user,
+        )
+
+        overdue_tasks = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            due_date__lt=date.today(),
+            status__in=[
+                WorkItem.STATUS_NOT_STARTED,
+                WorkItem.STATUS_IN_PROGRESS,
+                WorkItem.STATUS_AT_RISK,
+                WorkItem.STATUS_BLOCKED,
+            ],
+        )
+
+        assert overdue_tasks.count() == 1
+
+
+@pytest.mark.django_db
+class TestTaskAnalytics:
+    """Test task analytics and reporting."""
+
+    def test_task_completion_statistics(self):
+        """Test calculating task completion statistics."""
+        user = User.objects.create_user(username="user", password="pass")
+        team = StaffTeam.objects.create(name="Analytics Team")
+
+        # Create tasks with different statuses
         for i in range(5):
-            TaskTemplateItem.objects.create(
-                template=self.template,
-                title=f"Project Task {i+1}",
-                description=f"Complete task {i+1}",
-                sequence=i + 1,
-                days_from_start=i * 3,
-                priority=StaffTask.PRIORITY_MEDIUM,
-                estimated_hours=4,
+            task = WorkItem.objects.create(
+                work_type=WorkItem.WORK_TYPE_TASK,
+                title=f"Task {i}",
+                status=WorkItem.STATUS_COMPLETED,
+                created_by=user,
             )
+            task.teams.add(team)
 
-        self.team = StaffTeam.objects.create(name="Project Team")
+        for i in range(3):
+            task = WorkItem.objects.create(
+                work_type=WorkItem.WORK_TYPE_TASK,
+                title=f"Task in progress {i}",
+                status=WorkItem.STATUS_IN_PROGRESS,
+                created_by=user,
+            )
+            task.teams.add(team)
 
-    def test_template_browse_and_instantiate_workflow(self):
-        """Test browsing templates and instantiating them."""
-        # Step 1: Browse template list
-        list_url = reverse("common:task_template_list")
-        response = self.client.get(list_url)
-        self.assertEqual(response.status_code, 200)
+        for i in range(2):
+            task = WorkItem.objects.create(
+                work_type=WorkItem.WORK_TYPE_TASK,
+                title=f"Task not started {i}",
+                status=WorkItem.STATUS_NOT_STARTED,
+                created_by=user,
+            )
+            task.teams.add(team)
 
-        templates = list(response.context["templates"])
-        self.assertIn(self.template, templates)
-
-        # Step 2: View template details
-        detail_url = reverse(
-            "common:task_template_detail", kwargs={"template_id": self.template.pk}
+        # Calculate statistics
+        team_tasks = WorkItem.objects.filter(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            teams=team,
         )
-        response = self.client.get(detail_url)
-        self.assertEqual(response.status_code, 200)
+        total_tasks = team_tasks.count()
+        completed_tasks = team_tasks.filter(status=WorkItem.STATUS_COMPLETED).count()
+        in_progress_tasks = team_tasks.filter(status=WorkItem.STATUS_IN_PROGRESS).count()
+        not_started_tasks = team_tasks.filter(status=WorkItem.STATUS_NOT_STARTED).count()
 
-        items = list(response.context["items"])
-        self.assertEqual(len(items), 5)
+        assert total_tasks == 10
+        assert completed_tasks == 5
+        assert in_progress_tasks == 3
+        assert not_started_tasks == 2
 
-        # Step 3: Instantiate template
-        initial_count = StaffTask.objects.count()
+        completion_rate = (completed_tasks / total_tasks) * 100
+        assert completion_rate == 50.0
 
-        instantiate_url = reverse(
-            "common:instantiate_template",
-            kwargs={"template_id": self.template.id},
-        )
-        response = self.client.post(
-            instantiate_url,
-            {
-                "context": json.dumps({"start_date": date.today().isoformat()}),
+
+@pytest.mark.django_db
+class TestTaskDataFields:
+    """Test task-specific JSON data fields."""
+
+    def test_task_with_domain_data(self):
+        """Test storing domain-specific data in task_data."""
+        user = User.objects.create_user(username="user", password="pass")
+
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="MANA assessment task",
+            created_by=user,
+            task_data={
+                "domain": "mana",
+                "assessment_phase": "data_collection",
+                "deliverable_type": "survey_data",
+                "estimated_hours": 8,
             },
         )
 
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertTrue(data["success"])
+        assert task.task_data["domain"] == "mana"
+        assert task.task_data["assessment_phase"] == "data_collection"
+        assert task.task_data["estimated_hours"] == 8
 
-        # Step 4: Verify tasks created
-        self.assertEqual(StaffTask.objects.count(), initial_count + 5)
+    def test_task_with_custom_fields(self):
+        """Test storing custom fields in task_data."""
+        user = User.objects.create_user(username="user", password="pass")
 
-        created_tasks = StaffTask.objects.filter(
-            created_from_template=self.template
-        ).order_by("due_date")
-
-        # Step 5: Verify due dates calculated correctly
-        start = date.today()
-        for i, task in enumerate(created_tasks):
-            expected_due = start + timedelta(days=i * 3)
-            self.assertEqual(task.due_date, expected_due)
-
-        # Step 6: Assign and complete tasks
-        for task in created_tasks:
-            task.teams.add(self.team)
-            task.status = StaffTask.STATUS_COMPLETED
-            task.progress = 100
-            task.save()
-
-        # Step 7: Verify all completed
-        completed_count = StaffTask.objects.filter(
-            created_from_template=self.template, status=StaffTask.STATUS_COMPLETED
-        ).count()
-        self.assertEqual(completed_count, 5)
-
-
-class TaskBoardKanbanWorkflowTests(TestCase):
-    """Test kanban board drag-and-drop workflow."""
-
-    def setUp(self):
-        """Set up test data."""
-        self.admin = User.objects.create_user(
-            username="admin",
-            password="pass1234",
-            user_type="admin",
-            is_staff=True,
-            is_approved=True,
-        )
-        self.client.force_login(self.admin)
-
-        self.team = StaffTeam.objects.create(name="Kanban Team")
-
-        # Create tasks in different statuses
-        self.task1 = StaffTask.objects.create(
-            title="Task 1",
-            status=StaffTask.STATUS_NOT_STARTED,
-            created_by=self.admin,
-        )
-        self.task1.teams.add(self.team)
-
-        self.task2 = StaffTask.objects.create(
-            title="Task 2",
-            status=StaffTask.STATUS_NOT_STARTED,
-            created_by=self.admin,
-        )
-        self.task2.teams.add(self.team)
-
-    def test_kanban_drag_and_drop_workflow(self):
-        """Test moving tasks between kanban columns."""
-        board_url = reverse("common:staff_task_board")
-
-        # Step 1: View board
-        response = self.client.get(board_url)
-        self.assertEqual(response.status_code, 200)
-
-        # Step 2: Move task from not_started to in_progress
-        update_url = reverse("common:staff_task_update")
-        response = self.client.post(
-            update_url,
-            data='{"task_id": %d, "group": "status", "value": "%s", "order": [%d]}'
-            % (self.task1.id, StaffTask.STATUS_IN_PROGRESS, self.task1.id),
-            content_type="application/json",
-            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        task = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Custom task",
+            created_by=user,
+            task_data={
+                "custom_field_1": "value1",
+                "custom_field_2": 123,
+                "custom_field_3": ["item1", "item2", "item3"],
+            },
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.task1.refresh_from_db()
-        self.assertEqual(self.task1.status, StaffTask.STATUS_IN_PROGRESS)
+        assert task.task_data["custom_field_1"] == "value1"
+        assert task.task_data["custom_field_2"] == 123
+        assert len(task.task_data["custom_field_3"]) == 3
 
-        # Step 3: Move task to completed
-        response = self.client.post(
-            update_url,
-            data='{"task_id": %d, "group": "status", "value": "%s", "order": [%d]}'
-            % (self.task1.id, StaffTask.STATUS_COMPLETED, self.task1.id),
-            content_type="application/json",
-            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+
+@pytest.mark.django_db
+class TestTaskHierarchyIntegration:
+    """Test task hierarchy integration with projects and activities."""
+
+    def test_complete_task_hierarchy(self):
+        """Test creating complete task hierarchy."""
+        user = User.objects.create_user(username="pm", password="pass")
+
+        # Project
+        project = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_PROJECT,
+            title="Software Release",
+            created_by=user,
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.task1.refresh_from_db()
-        self.assertEqual(self.task1.status, StaffTask.STATUS_COMPLETED)
-        self.assertEqual(self.task1.progress, 100)
-        self.assertIsNotNone(self.task1.completed_at)
-
-
-class MultiDomainAnalyticsWorkflowTests(TestCase):
-    """Test analytics across multiple domains."""
-
-    def setUp(self):
-        """Set up test data."""
-        self.admin = User.objects.create_user(
-            username="admin",
-            password="pass1234",
-            user_type="admin",
-            is_staff=True,
-            is_approved=True,
+        # Activities under project
+        planning = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_ACTIVITY,
+            title="Release Planning",
+            parent=project,
+            created_by=user,
         )
-        self.client.force_login(self.admin)
 
-        self.team = StaffTeam.objects.create(name="Analytics Team")
+        development = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_ACTIVITY,
+            title="Development Phase",
+            parent=project,
+            created_by=user,
+        )
 
-        # Create tasks across all domains
-        domains = [
-            StaffTask.DOMAIN_MANA,
-            StaffTask.DOMAIN_COORDINATION,
-            StaffTask.DOMAIN_POLICY,
-            StaffTask.DOMAIN_MONITORING,
-            StaffTask.DOMAIN_SERVICES,
-        ]
+        # Tasks under activities
+        task1 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Define release scope",
+            parent=planning,
+            created_by=user,
+        )
 
-        for i, domain in enumerate(domains):
-            for j in range(3):
-                status = [
-                    StaffTask.STATUS_COMPLETED,
-                    StaffTask.STATUS_IN_PROGRESS,
-                    StaffTask.STATUS_NOT_STARTED,
-                ][j]
+        task2 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_TASK,
+            title="Implement feature A",
+            parent=development,
+            created_by=user,
+        )
 
-                task = StaffTask.objects.create(
-                    title=f"{domain} task {j}",
-                    domain=domain,
-                    status=status,
-                    priority=(
-                        StaffTask.PRIORITY_HIGH if j == 0 else StaffTask.PRIORITY_MEDIUM
-                    ),
-                    estimated_hours=4,
-                    created_by=self.admin,
-                )
-                task.teams.add(self.team)
+        # Subtasks under tasks
+        subtask1 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_SUBTASK,
+            title="Write unit tests",
+            parent=task2,
+            created_by=user,
+        )
 
-    def test_comprehensive_analytics_workflow(self):
-        """Test comprehensive analytics across all domains."""
-        url = reverse("common:task_analytics")
-        response = self.client.get(url)
+        subtask2 = WorkItem.objects.create(
+            work_type=WorkItem.WORK_TYPE_SUBTASK,
+            title="Code review",
+            parent=task2,
+            created_by=user,
+        )
 
-        self.assertEqual(response.status_code, 200)
+        # Verify hierarchy
+        assert project.get_descendants().count() == 6  # 2 activities + 2 tasks + 2 subtasks
+        assert planning.get_children().count() == 1  # 1 task
+        assert development.get_children().count() == 1  # 1 task
+        assert task2.get_children().count() == 2  # 2 subtasks
 
-        # Verify domain breakdown
-        domain_data = response.context["domain_data"]
-        self.assertEqual(len(domain_data), 5)
-
-        # Each domain should have 3 tasks
-        for domain_info in domain_data:
-            self.assertEqual(domain_info["count"], 3)
-
-        # Verify overall stats
-        stats = response.context["stats"]
-        self.assertEqual(stats["total_tasks"], 15)
-        self.assertEqual(stats["completed_tasks"], 5)
-
-        # Verify priority distribution
-        priority_data = response.context["priority_data"]
-        self.assertGreater(len(priority_data), 0)
+        # Verify all descendants of project
+        all_tasks = project.get_descendants().filter(
+            work_type__in=[WorkItem.WORK_TYPE_TASK, WorkItem.WORK_TYPE_SUBTASK]
+        )
+        assert all_tasks.count() == 4  # 2 tasks + 2 subtasks
