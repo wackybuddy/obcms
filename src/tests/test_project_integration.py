@@ -56,9 +56,7 @@ class ProjectActivityIntegrationTest(TestCase):
         self.community = OBCCommunity.objects.create(
             name="Test Community",
             barangay=self.barangay,
-            community_type="indigenous",
-            population_total=500,
-            created_by=self.user,
+            population=500,
         )
 
         # Create need
@@ -306,9 +304,7 @@ class ProjectWorkflowPropertyTest(TestCase):
         community = OBCCommunity.objects.create(
             name="Test Community 2",
             barangay=barangay,
-            community_type="settler",
-            population_total=300,
-            created_by=self.user,
+            population=300,
         )
 
         need = Need.objects.create(
@@ -375,9 +371,7 @@ class EnhancedTaskGenerationTest(TestCase):
         community = OBCCommunity.objects.create(
             name="Test Community",
             barangay=barangay,
-            community_type="indigenous",
-            population_total=500,
-            created_by=self.user,
+            population=500,
         )
 
         need = Need.objects.create(
@@ -727,9 +721,7 @@ class WorkflowSignalTest(TestCase):
         community = OBCCommunity.objects.create(
             name="Test Community",
             barangay=barangay,
-            community_type="indigenous",
-            population_total=500,
-            created_by=self.user,
+            population=500,
         )
 
         need = Need.objects.create(

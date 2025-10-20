@@ -205,6 +205,15 @@ class BudgetProposal(models.Model):
         self.total_requested_budget = value
 
     @property
+    def proposed_amount(self) -> Decimal:
+        """Alias used by legacy templates for requested amount."""
+        return self.total_requested_budget
+
+    @proposed_amount.setter
+    def proposed_amount(self, value: Decimal) -> None:
+        self.total_requested_budget = value
+
+    @property
     def reviewed_by(self):
         """Legacy alias mapping to approved_by."""
         return self.approved_by

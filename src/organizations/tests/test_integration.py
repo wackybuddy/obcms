@@ -30,12 +30,15 @@ class TestFullRequestResponseCycle:
 
     @pytest.fixture
     def org_oobc(self):
-        """Create OOBC organization."""
-        return Organization.objects.create(
+        """Get or create OOBC organization."""
+        org, created = Organization.objects.get_or_create(
             code='OOBC',
-            name='Office for Other Bangsamoro Communities',
-            org_type='office',
+            defaults={
+                'name': 'Office for Other Bangsamoro Communities',
+                'org_type': 'office',
+            }
         )
+        return org
 
     @pytest.fixture
     def user(self, org_oobc):
@@ -102,16 +105,20 @@ class TestOrganizationSwitcherWorkflow:
 
     @pytest.fixture
     def organizations(self):
-        """Create multiple organizations."""
-        oobc = Organization.objects.create(
+        """Get or create multiple organizations."""
+        oobc, _ = Organization.objects.get_or_create(
             code='OOBC',
-            name='Office for Other Bangsamoro Communities',
-            org_type='office',
+            defaults={
+                'name': 'Office for Other Bangsamoro Communities',
+                'org_type': 'office',
+            }
         )
-        moh = Organization.objects.create(
+        moh, _ = Organization.objects.get_or_create(
             code='MOH',
-            name='Ministry of Health',
-            org_type='ministry',
+            defaults={
+                'name': 'Ministry of Health',
+                'org_type': 'ministry',
+            }
         )
         return oobc, moh
 
@@ -180,12 +187,15 @@ class TestUserMembershipManagement:
 
     @pytest.fixture
     def organization(self):
-        """Create test organization."""
-        return Organization.objects.create(
+        """Get or create test organization."""
+        org, _ = Organization.objects.get_or_create(
             code='OOBC',
-            name='Office for Other Bangsamoro Communities',
-            org_type='office',
+            defaults={
+                'name': 'Office for Other Bangsamoro Communities',
+                'org_type': 'office',
+            }
         )
+        return org
 
     def test_create_user_membership(self, admin_user, organization):
         """Test creating a new membership for a user."""
@@ -279,24 +289,30 @@ class TestPilotMOAFeatures:
 
     @pytest.fixture
     def pilot_moas(self):
-        """Create the 3 pilot MOAs."""
-        moh = Organization.objects.create(
+        """Get or create the 3 pilot MOAs."""
+        moh, _ = Organization.objects.get_or_create(
             code='MOH',
-            name='Ministry of Health',
-            org_type='ministry',
-            is_pilot=True,
+            defaults={
+                'name': 'Ministry of Health',
+                'org_type': 'ministry',
+                'is_pilot': True,
+            }
         )
-        mole = Organization.objects.create(
+        mole, _ = Organization.objects.get_or_create(
             code='MOLE',
-            name='Ministry of Labor and Employment',
-            org_type='ministry',
-            is_pilot=True,
+            defaults={
+                'name': 'Ministry of Labor and Employment',
+                'org_type': 'ministry',
+                'is_pilot': True,
+            }
         )
-        mafar = Organization.objects.create(
+        mafar, _ = Organization.objects.get_or_create(
             code='MAFAR',
-            name='Ministry of Agriculture, Fisheries and Agrarian Reform',
-            org_type='ministry',
-            is_pilot=True,
+            defaults={
+                'name': 'Ministry of Agriculture, Fisheries and Agrarian Reform',
+                'org_type': 'ministry',
+                'is_pilot': True,
+            }
         )
         return moh, mole, mafar
 
@@ -339,22 +355,28 @@ class TestMultiOrganizationUserWorkflows:
 
     @pytest.fixture
     def organizations(self):
-        """Create multiple organizations."""
+        """Get or create multiple organizations."""
         orgs = {}
-        orgs['oobc'] = Organization.objects.create(
+        orgs['oobc'], _ = Organization.objects.get_or_create(
             code='OOBC',
-            name='Office for Other Bangsamoro Communities',
-            org_type='office',
+            defaults={
+                'name': 'Office for Other Bangsamoro Communities',
+                'org_type': 'office',
+            }
         )
-        orgs['moh'] = Organization.objects.create(
+        orgs['moh'], _ = Organization.objects.get_or_create(
             code='MOH',
-            name='Ministry of Health',
-            org_type='ministry',
+            defaults={
+                'name': 'Ministry of Health',
+                'org_type': 'ministry',
+            }
         )
-        orgs['mole'] = Organization.objects.create(
+        orgs['mole'], _ = Organization.objects.get_or_create(
             code='MOLE',
-            name='Ministry of Labor and Employment',
-            org_type='ministry',
+            defaults={
+                'name': 'Ministry of Labor and Employment',
+                'org_type': 'ministry',
+            }
         )
         return orgs
 

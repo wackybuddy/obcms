@@ -8,7 +8,7 @@ import pytest
 from decimal import Decimal
 from datetime import date
 from budget_preparation.models import BudgetProposal, ProgramBudget, BudgetLineItem
-from budget_execution.models import Allotment, Obligation, Disbursement
+from budget_execution.models import Allotment, Obligation, Disbursement, WorkItem
 from django.db.models import Sum
 
 
@@ -348,10 +348,16 @@ class TestBudgetReporting:
         """Test aggregating execution summary data."""
         data = complete_execution_cycle
 
-        # Verify aggregations
+        # Verify aggregations using database queries for accuracy
+        allotment = data['allotment']
+
+        # Query actual obligations and disbursements from the database
+        actual_obligations = Obligation.objects.filter(allotment=allotment)
+        actual_disbursements = Disbursement.objects.filter(obligation__allotment=allotment)
+
         assert data['total_allotted'] == Decimal('20000000.00')
-        assert len(data['obligations']) == 2  # 2 obligations (5M + 10M = 15M, within 20M allotment)
-        assert len(data['disbursements']) == 2  # 2 disbursements corresponding to 2 obligations
+        assert len(actual_obligations) == 2  # 2 obligations (5M + 10M = 15M, within 20M allotment)
+        assert len(actual_disbursements) == 2  # 2 disbursements corresponding to 2 obligations
 
     def test_variance_analysis(self, approved_budget_proposal):
         """Test variance analysis across proposal."""
@@ -373,12 +379,41 @@ class TestBudgetReporting:
 class TestDataIntegrity:
     """Test data integrity across budget lifecycle."""
 
-    def test_cascade_delete_maintains_integrity(self, budget_proposal, program_budget, allotment_q1, obligation):
+    def test_cascade_delete_maintains_integrity(self, budget_proposal, program_budget, execution_user, monitoring_entry):
         """Test that cascade deletes maintain data integrity."""
+        # Create allotment tied to the program_budget being tested
+        allotment = Allotment.objects.create(
+            program_budget=program_budget,
+            quarter='Q1',
+            amount=Decimal('10000000.00'),
+            released_at=date(2025, 1, 15),
+            released_by=execution_user,
+            status='released'
+        )
+
+        # Create work item for obligation
+        work_item = WorkItem.objects.create(
+            monitoring_entry=monitoring_entry,
+            title="Test Work Item",
+            estimated_cost=Decimal('5000000.00'),
+            status='in_progress'
+        )
+
+        # Create obligation tied to the allotment
+        obligation = Obligation.objects.create(
+            allotment=allotment,
+            work_item=work_item,
+            amount=Decimal('5000000.00'),
+            payee="Test Contractor",
+            obligated_at=date(2025, 1, 20),
+            obligated_by=execution_user,
+            status='obligated'
+        )
+
         # Store IDs for verification
         proposal_id = budget_proposal.id
         program_id = program_budget.id
-        allotment_id = allotment_q1.id
+        allotment_id = allotment.id
         obligation_id = obligation.id
 
         # Delete proposal should cascade to all related objects

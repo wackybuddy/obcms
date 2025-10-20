@@ -146,11 +146,11 @@ def budget_proposal(db, test_organization, test_user):
 @pytest.fixture
 def approved_budget_proposal(db, test_organization, test_user, test_admin_user):
     """Create approved budget proposal for execution testing."""
-    # Use fiscal_year 2024 to avoid conflicts with other fixtures using 2025
+    # Use fiscal_year 2023 to avoid conflicts with budget_proposal (2025) and other fixtures
     proposal = BudgetProposal.objects.create(
         organization=test_organization,
-        fiscal_year=2024,
-        title="OOBC FY 2024 Budget (Approved)",
+        fiscal_year=2023,
+        title="OOBC FY 2023 Budget (Approved)",
         description="Approved budget for execution",
         total_requested_budget=Decimal('100000000.00'),
         total_approved_budget=Decimal('95000000.00'),  # 95M approved
