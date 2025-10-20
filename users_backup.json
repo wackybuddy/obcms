@@ -1,5 +1,0 @@
-INFO Loading faiss.
-INFO Successfully loaded faiss.
-CommandError: Unable to serialize database: 'NoneType' object has no attribute '_meta'
-✅ Auditlog registered for all security-sensitive models
-[
