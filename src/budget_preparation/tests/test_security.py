@@ -51,7 +51,7 @@ class TestSQLInjection:
 
         for payload in sql_payloads:
             response = client.get(
-                reverse('budget:proposal_list'),
+                reverse('budget_preparation:proposal_list'),
                 {'search': payload}
             )
 
@@ -72,7 +72,7 @@ class TestSQLInjection:
 
         # Attempt SQL injection via fiscal_year filter
         response = client.get(
-            reverse('budget:proposal_list'),
+            reverse('budget_preparation:proposal_list'),
             {'fiscal_year': "2025' OR '1'='1"}
         )
 
@@ -80,7 +80,7 @@ class TestSQLInjection:
 
         # Attempt SQL injection via status filter
         response = client.get(
-            reverse('budget:proposal_list'),
+            reverse('budget_preparation:proposal_list'),
             {'status': "draft' OR '1'='1--"}
         )
 
@@ -140,7 +140,7 @@ class TestXSS:
 
             # Get detail page
             response = client.get(
-                reverse('budget:proposal_detail', args=[proposal.id])
+                reverse('budget_preparation:proposal_detail', args=[proposal.id])
             )
 
             assert response.status_code == 200
@@ -175,7 +175,7 @@ class TestXSS:
         )
 
         response = client.get(
-            reverse('budget:proposal_detail', args=[proposal.id])
+            reverse('budget_preparation:proposal_detail', args=[proposal.id])
         )
 
         content = response.content.decode()
@@ -188,7 +188,7 @@ class TestXSS:
         xss_query = '<script>alert("XSS")</script>'
 
         response = client.get(
-            reverse('budget:proposal_list'),
+            reverse('budget_preparation:proposal_list'),
             {'search': xss_query}
         )
 
@@ -289,7 +289,7 @@ class TestAuthorization:
         # User2 tries to access org1's budget
         client.force_login(user2)
         response = client.get(
-            reverse('budget:proposal_detail', args=[proposal.id])
+            reverse('budget_preparation:proposal_detail', args=[proposal.id])
         )
 
         # Should be denied (403 or 404)
@@ -470,7 +470,7 @@ class TestSessionSecurity:
         client.force_login(test_user)
 
         # Verify logged in
-        response = client.get(reverse('budget:proposal_list'))
+        response = client.get(reverse('budget_preparation:proposal_list'))
         assert response.status_code == 200
 
         # In production, session should expire after inactivity

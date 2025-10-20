@@ -13,7 +13,7 @@ from project_central.models import ProjectWorkflow
 from coordination.models import Event
 from common.models import StaffTask, Region, Province, Municipality, Barangay
 from communities.models import OBCCommunity
-from mana.models import Need
+from mana.models import Need, NeedsCategory
 
 User = get_user_model()
 
@@ -59,15 +59,25 @@ class ProjectActivityIntegrationTest(TestCase):
             population=500,
         )
 
+        # Create needs category
+        self.category = NeedsCategory.objects.create(
+            name="Education Infrastructure",
+            sector="education",
+            description="Education infrastructure needs",
+        )
+
         # Create need
         self.need = Need.objects.create(
             title="Education Infrastructure Need",
             description="Need for school building",
-            assessment_area="education",
-            priority_level="high",
-            is_validated=True,
+            category=self.category,
+            urgency_level="immediate",
             community=self.community,
-            created_by=self.user,
+            affected_population=500,
+            geographic_scope="Barangay Central",
+            evidence_sources="Community consultation",
+            impact_severity=4,
+            feasibility="high",
         )
 
         # Create project workflow
@@ -307,14 +317,23 @@ class ProjectWorkflowPropertyTest(TestCase):
             population=300,
         )
 
+        category = NeedsCategory.objects.create(
+            name="Health Infrastructure",
+            sector="health",
+            description="Health infrastructure needs",
+        )
+
         need = Need.objects.create(
             title="Health Infrastructure",
             description="Need for clinic",
-            assessment_area="health",
-            priority_level="medium",
-            is_validated=True,
+            category=category,
+            urgency_level="medium_term",
             community=community,
-            created_by=self.user,
+            affected_population=300,
+            geographic_scope="Barangay Poblacion",
+            evidence_sources="Community assessment",
+            impact_severity=3,
+            feasibility="medium",
         )
 
         self.workflow = ProjectWorkflow.objects.create(
@@ -374,14 +393,23 @@ class EnhancedTaskGenerationTest(TestCase):
             population=500,
         )
 
+        category = NeedsCategory.objects.create(
+            name="Education Infrastructure",
+            sector="education",
+            description="Education infrastructure needs",
+        )
+
         need = Need.objects.create(
             title="Education Infrastructure Need",
             description="Need for school building",
-            assessment_area="education",
-            priority_level="high",
-            is_validated=True,
+            category=category,
+            urgency_level="immediate",
             community=community,
-            created_by=self.user,
+            affected_population=500,
+            geographic_scope="Barangay Central",
+            evidence_sources="Community consultation",
+            impact_severity=4,
+            feasibility="high",
         )
 
         self.workflow = ProjectWorkflow.objects.create(
@@ -724,14 +752,23 @@ class WorkflowSignalTest(TestCase):
             population=500,
         )
 
+        category = NeedsCategory.objects.create(
+            name="Education Infrastructure",
+            sector="education",
+            description="Education infrastructure needs",
+        )
+
         need = Need.objects.create(
             title="Education Infrastructure Need",
             description="Need for school building",
-            assessment_area="education",
-            priority_level="high",
-            is_validated=True,
+            category=category,
+            urgency_level="immediate",
             community=community,
-            created_by=self.user,
+            affected_population=500,
+            geographic_scope="Barangay Central",
+            evidence_sources="Community consultation",
+            impact_severity=4,
+            feasibility="high",
         )
 
         self.workflow = ProjectWorkflow.objects.create(

@@ -259,27 +259,29 @@ def multi_quarter_execution(db, approved_program_budget, monitoring_entry, execu
     quarters_data = {}
 
     for quarter_num, quarter_name in enumerate(['Q1', 'Q2', 'Q3', 'Q4'], 1):
-        # Create allotment for quarter
+        # Create allotment for quarter - ensure allotment >= obligation amount
+        allotment_amount = Decimal(f'{15000000 + quarter_num * 1000000}.00')
         allotment = Allotment.objects.create(
             program_budget=approved_program_budget,
             quarter=quarter_name,
-            amount=Decimal(f'{10000000 + quarter_num * 1000000}.00'),
+            amount=allotment_amount,
             release_date=date(2025, quarter_num * 3 - 2, 15),
             released_by=execution_user,
             status='released'
         )
 
-        # Create work item and obligation
+        # Create work item and obligation - obligation amount must be <= allotment
+        obligation_amount = Decimal(f'{5000000 * quarter_num}.00')
         work_item = WorkItem.objects.create(
             monitoring_entry=monitoring_entry,
             title=f"{quarter_name} Work Package",
-            estimated_cost=Decimal(f'{5000000 * quarter_num}.00')
+            estimated_cost=obligation_amount
         )
 
         obligation = Obligation.objects.create(
             allotment=allotment,
             work_item=work_item,
-            amount=Decimal(f'{5000000 * quarter_num}.00'),
+            amount=obligation_amount,
             payee=f"{quarter_name} Contractor",
             obligated_by=execution_user,
             status='obligated'
