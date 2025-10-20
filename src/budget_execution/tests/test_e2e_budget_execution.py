@@ -54,7 +54,7 @@ def authenticated_page(page: Page):
     yield page
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def base_url():
     """Fixture for base URL."""
     return os.environ.get("PLAYWRIGHT_BASE_URL", "http://localhost:8000")
