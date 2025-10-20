@@ -57,6 +57,8 @@ class Allotment(models.Model):
         on_delete=models.PROTECT,
         related_name="allotments_released",
         help_text="Budget execution user who released the allotment",
+        null=True,
+        blank=True,
     )
     released_at = models.DateField(
         default=timezone.now,

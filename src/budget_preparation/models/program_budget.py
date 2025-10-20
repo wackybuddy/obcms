@@ -33,7 +33,7 @@ class ProgramBudget(models.Model):
     )
     monitoring_entry = models.ForeignKey(
         "monitoring.MonitoringEntry",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="program_budgets",
         help_text="Linked monitoring entry (PPA)",
         null=True,
@@ -114,13 +114,10 @@ class ProgramBudget(models.Model):
         verbose_name = "Program Budget"
         verbose_name_plural = "Program Budgets"
         unique_together = [["budget_proposal", "monitoring_entry"]]
-        indexes = [
-            models.Index(fields=["budget_proposal", "priority_rank"]),
-            models.Index(fields=["monitoring_entry"]),
-        ]
 
     def __str__(self) -> str:
-        return f"{self.monitoring_entry.title} ({self.budget_proposal.fiscal_year})"
+        entry_title = getattr(self.monitoring_entry, "title", "Unassigned")
+        return f"{entry_title} ({self.budget_proposal.fiscal_year})"
 
     # ------------------------------------------------------------------
     # Financial helpers

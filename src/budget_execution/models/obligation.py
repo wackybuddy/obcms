@@ -33,6 +33,8 @@ class Obligation(models.Model):
         on_delete=models.PROTECT,
         related_name="obligations",
         help_text="Execution work item covered by this obligation",
+        null=True,
+        blank=True,
     )
     amount = models.DecimalField(
         max_digits=15,
@@ -43,6 +45,8 @@ class Obligation(models.Model):
     payee = models.CharField(
         max_length=255,
         help_text="Payee or supplier name",
+        blank=True,
+        default="",
     )
     status = models.CharField(
         max_length=25,
@@ -55,6 +59,8 @@ class Obligation(models.Model):
         on_delete=models.PROTECT,
         related_name="obligations_recorded",
         help_text="User who recorded the obligation",
+        null=True,
+        blank=True,
     )
     obligated_at = models.DateField(
         default=timezone.now,

@@ -9,30 +9,21 @@ def column_exists(schema_editor, table_name, column_name):
         return any(row[1] == column_name for row in cursor.fetchall())
 
 
-def add_column_if_missing(schema_editor, table_name, column_name, column_sql):
-    if column_exists(schema_editor, table_name, column_name):
-        return
-    schema_editor.execute(
-        f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_sql}"
-    )
+class AddFieldIfMissing(migrations.AddField):
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        model = from_state.apps.get_model(app_label, self.model_name)
+        table_name = model._meta.db_table
+        if column_exists(schema_editor, table_name, self.name):
+            return
+        super().database_forwards(app_label, schema_editor, from_state, to_state)
 
-
-def add_strategic_goal_column(apps, schema_editor):
-    add_column_if_missing(
-        schema_editor,
-        'budget_preparation_programbudget',
-        'strategic_goal_id',
-        'INTEGER REFERENCES planning_strategicgoal(id) DEFERRABLE INITIALLY DEFERRED'
-    )
-
-
-def add_annual_work_plan_column(apps, schema_editor):
-    add_column_if_missing(
-        schema_editor,
-        'budget_preparation_programbudget',
-        'annual_work_plan_id',
-        'INTEGER REFERENCES planning_annualworkplan(id) DEFERRABLE INITIALLY DEFERRED'
-    )
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        # Only attempt to remove the column if it exists.
+        model = from_state.apps.get_model(app_label, self.model_name)
+        table_name = model._meta.db_table
+        if not column_exists(schema_editor, table_name, self.name):
+            return
+        super().database_backwards(app_label, schema_editor, from_state, to_state)
 
 
 class Migration(migrations.Migration):
@@ -84,7 +75,7 @@ class Migration(migrations.Migration):
                 help_text='Rank order for prioritization (1 = highest priority)',
             ),
         ),
-        migrations.AddField(
+        AddFieldIfMissing(
             model_name='programbudget',
             name='monitoring_entry',
             field=models.ForeignKey(
@@ -96,43 +87,37 @@ class Migration(migrations.Migration):
                 to='monitoring.monitoringentry',
             ),
         ),
-        migrations.SeparateDatabaseAndState(
-            database_operations=[
-                migrations.RunPython(add_strategic_goal_column, migrations.RunPython.noop),
-            ],
-            state_operations=[
-                migrations.AddField(
-                    model_name='programbudget',
-                    name='strategic_goal',
-                    field=models.ForeignKey(
-                        blank=True,
-                        help_text='Strategic goal supported by this budget',
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name='program_budgets',
-                        to='planning.strategicgoal',
-                    ),
-                ),
-            ],
+        AddFieldIfMissing(
+            model_name='programbudget',
+            name='strategic_goal',
+            field=models.ForeignKey(
+                blank=True,
+                help_text='Strategic goal supported by this budget',
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='program_budgets',
+                to='planning.strategicgoal',
+            ),
         ),
-        migrations.SeparateDatabaseAndState(
-            database_operations=[
-                migrations.RunPython(add_annual_work_plan_column, migrations.RunPython.noop),
-            ],
-            state_operations=[
-                migrations.AddField(
-                    model_name='programbudget',
-                    name='annual_work_plan',
-                    field=models.ForeignKey(
-                        blank=True,
-                        help_text='Annual work plan reference for this program',
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name='program_budgets',
-                        to='planning.annualworkplan',
-                    ),
-                ),
-            ],
+        AddFieldIfMissing(
+            model_name='programbudget',
+            name='annual_work_plan',
+            field=models.ForeignKey(
+                blank=True,
+                help_text='Annual work plan reference for this program',
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name='program_budgets',
+                to='planning.annualworkplan',
+            ),
+        ),
+        AddFieldIfMissing(
+            model_name='programbudget',
+            name='expected_outcomes',
+            field=models.TextField(
+                blank=True,
+                help_text='Expected outcomes and beneficiaries',
+            ),
         ),
         migrations.AddField(
             model_name='budgetlineitem',

@@ -2,6 +2,9 @@
 
 import logging
 import time
+from pathlib import Path
+
+from django.conf import settings
 from django.utils.deprecation import MiddlewareMixin
 
 # Loggers
@@ -193,7 +196,11 @@ class DeprecationLoggingMiddleware(MiddlewareMixin):
 
         # Ensure handler exists (create if not configured)
         if not self.logger.handlers:
-            handler = logging.FileHandler('logs/deprecation.log')
+            log_path = Path(settings.BASE_DIR) / 'logs' / 'deprecation.log'
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            log_path.touch(exist_ok=True)
+
+            handler = logging.FileHandler(log_path, encoding='utf-8')
             handler.setFormatter(logging.Formatter(
                 '%(asctime)s | %(levelname)s | %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S'

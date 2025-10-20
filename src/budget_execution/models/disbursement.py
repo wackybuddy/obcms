@@ -54,6 +54,8 @@ class Disbursement(models.Model):
         on_delete=models.PROTECT,
         related_name="disbursements_processed",
         help_text="User who processed the disbursement",
+        null=True,
+        blank=True,
     )
     disbursed_at = models.DateField(
         default=timezone.now,
