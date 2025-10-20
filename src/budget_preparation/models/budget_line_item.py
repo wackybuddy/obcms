@@ -39,6 +39,17 @@ class BudgetLineItem(models.Model):
         default='operating',  # MOOE is the most common category
         help_text="Appropriation category (PS/MOOE/CO)"
     )
+    sub_category = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Optional sub-category (e.g., salaries, supplies)"
+    )
+
+    sub_category = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Optional sub-category (e.g., salaries, training, equipment)",
+    )
 
     description = models.CharField(
         max_length=255,
@@ -62,6 +73,11 @@ class BudgetLineItem(models.Model):
         decimal_places=2,
         default=0,
         help_text="Total cost (auto-calculated: unit_cost × quantity)"
+    )
+
+    justification = models.TextField(
+        blank=True,
+        help_text="Why this line item is required",
     )
 
     notes = models.TextField(

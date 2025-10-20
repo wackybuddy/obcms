@@ -19,7 +19,14 @@ Usage:
 
 import os
 import pytest
-from axe_playwright_python.sync_playwright import Axe
+
+try:
+    from axe_playwright_python.sync_playwright import Axe
+except ImportError:  # pragma: no cover - soft dependency for optional tests
+    pytest.skip(
+        "axe-playwright is required for accessibility tests",
+        allow_module_level=True,
+    )
 
 try:
     from playwright.sync_api import Page, expect

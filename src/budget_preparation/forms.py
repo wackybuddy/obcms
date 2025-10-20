@@ -98,7 +98,8 @@ class ProgramBudgetForm(forms.ModelForm):
         model = ProgramBudget
         fields = [
             'program',
-            'allocated_amount',
+            'requested_amount',
+            'priority_rank',
             'priority_level',
             'justification',
             'expected_outputs'
@@ -108,11 +109,15 @@ class ProgramBudgetForm(forms.ModelForm):
             'program': forms.Select(attrs={
                 'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
             }),
-            'allocated_amount': forms.NumberInput(attrs={
+            'requested_amount': forms.NumberInput(attrs={
                 'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
                 'placeholder': '0.00',
                 'step': '0.01',
                 'min': '0',
+            }),
+            'priority_rank': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
+                'min': '1',
             }),
             'priority_level': forms.Select(attrs={
                 'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
@@ -131,7 +136,8 @@ class ProgramBudgetForm(forms.ModelForm):
 
         labels = {
             'program': 'Work Plan Objective',
-            'allocated_amount': 'Budget Amount (₱)',
+            'requested_amount': 'Requested Amount (₱)',
+            'priority_rank': 'Priority Rank',
             'priority_level': 'Priority Level',
             'justification': 'Justification',
             'expected_outputs': 'Expected Outputs',
@@ -158,11 +164,11 @@ class ProgramBudgetForm(forms.ModelForm):
         """Validate program budget."""
         cleaned_data = super().clean()
         program = cleaned_data.get('program')
-        allocated_amount = cleaned_data.get('allocated_amount')
+        requested_amount = cleaned_data.get('requested_amount')
 
-        if allocated_amount and allocated_amount <= 0:
+        if requested_amount and requested_amount <= 0:
             raise ValidationError({
-                'allocated_amount': 'Budget amount must be greater than zero.'
+                'requested_amount': 'Budget amount must be greater than zero.'
             })
 
         # Check for duplicate program in proposal
@@ -191,11 +197,15 @@ class BudgetLineItemForm(forms.ModelForm):
 
     class Meta:
         model = BudgetLineItem
-        fields = ['category', 'description', 'unit_cost', 'quantity', 'notes']
+        fields = ['category', 'sub_category', 'description', 'unit_cost', 'quantity', 'notes']
 
         widgets = {
             'category': forms.Select(attrs={
                 'class': 'block w-full py-3 px-4 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] appearance-none pr-12 bg-white transition-all duration-200',
+            }),
+            'sub_category': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',
+                'placeholder': 'e.g., Salaries, Supplies (optional)',
             }),
             'description': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-3 text-base rounded-xl border border-gray-200 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 min-h-[48px] transition-all duration-200',

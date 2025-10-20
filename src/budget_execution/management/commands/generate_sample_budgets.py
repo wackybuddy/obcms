@@ -58,25 +58,13 @@ class Command(BaseCommand):
         if not objectives:
             raise CommandError("No work plan objectives available to budget against")
 
-        # Align with coordination.Organization model for BudgetProposal
-        from coordination.models import Organization as CoordinationOrganization
-
-        coord_org, _ = CoordinationOrganization.objects.get_or_create(
-            acronym=organization.code,
-            defaults={
-                "name": organization.name,
-                "organization_type": "bmoa",
-                "description": f"Auto-generated pilot record for {organization.name}",
-            },
-        )
-
         proposal, _ = BudgetProposal.objects.get_or_create(
-            organization=coord_org,
+            organization=organization,
             fiscal_year=options["year"],
             defaults={
                 "title": f"{organization.name} Budget Proposal {options['year']}",
                 "description": "Auto-generated pilot budget proposal",
-                "total_proposed_budget": Decimal("0.00"),
+                "total_requested_budget": Decimal("0.00"),
                 "status": "submitted",
                 "submitted_by": created_by,
             },
@@ -89,7 +77,9 @@ class Command(BaseCommand):
                 budget_proposal=proposal,
                 program=objective,
                 defaults={
-                    "allocated_amount": allocated_amount,
+                    "requested_amount": allocated_amount,
+                    "approved_amount": allocated_amount,
+                    "priority_rank": index,
                     "priority_level": "high" if index == 1 else "medium",
                     "justification": f"Fund initiative {objective.title}",
                     "expected_outputs": "Service delivery milestones",
@@ -101,9 +91,13 @@ class Command(BaseCommand):
                         f"Created program budget for {objective.title} (₱{allocated_amount:,.2f})"
                     )
                 )
-            total_allocated += program_budget.allocated_amount
+            if created:
+                program_budget.approved_amount = allocated_amount
+                program_budget.save(update_fields=["approved_amount", "updated_at"])
 
-            quarterly_amount = program_budget.allocated_amount / Decimal("4")
+            total_allocated += program_budget.requested_amount
+
+            quarterly_amount = (program_budget.approved_amount or program_budget.requested_amount) / Decimal("4")
             for quarter in range(1, 5):
                 allotment, _ = Allotment.objects.get_or_create(
                     program_budget=program_budget,
@@ -140,7 +134,8 @@ class Command(BaseCommand):
                 )
 
         proposal.total_proposed_budget = total_allocated
-        proposal.save(update_fields=["total_proposed_budget", "updated_at"])
+        proposal.total_approved_budget = total_allocated
+        proposal.save(update_fields=["total_requested_budget", "total_approved_budget", "updated_at"])
 
         self.stdout.write(
             self.style.SUCCESS(

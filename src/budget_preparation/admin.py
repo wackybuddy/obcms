@@ -14,7 +14,7 @@ class BudgetLineItemInline(admin.TabularInline):
     """Inline editing for budget line items"""
     model = BudgetLineItem
     extra = 1
-    fields = ['category', 'description', 'unit_cost', 'quantity', 'total_cost', 'notes']
+    fields = ['category', 'sub_category', 'description', 'unit_cost', 'quantity', 'total_cost', 'notes']
     readonly_fields = ['total_cost']
 
 
@@ -36,8 +36,15 @@ class ProgramBudgetInline(admin.TabularInline):
     """Inline editing for program budgets"""
     model = ProgramBudget
     extra = 1
-    fields = ['program', 'allocated_amount', 'priority_level', 'justification']
-    raw_id_fields = ['program']
+    fields = [
+        'program',
+        'requested_amount',
+        'approved_amount',
+        'priority_rank',
+        'priority_level',
+        'justification'
+    ]
+    raw_id_fields = ['program', 'monitoring_entry']
 
 
 @admin.register(BudgetProposal)
@@ -68,6 +75,7 @@ class BudgetProposalAdmin(admin.ModelAdmin):
 
     readonly_fields = [
         'total_proposed_budget',
+        'total_approved_budget',
         'submitted_at',
         'reviewed_at',
         'created_at',
@@ -86,6 +94,7 @@ class BudgetProposalAdmin(admin.ModelAdmin):
         ('Budget Summary', {
             'fields': (
                 'total_proposed_budget',
+                'total_approved_budget',
                 'status',
             )
         }),
@@ -161,7 +170,7 @@ class ProgramBudgetAdmin(admin.ModelAdmin):
         'justification',
     ]
 
-    raw_id_fields = ['budget_proposal', 'program']
+    raw_id_fields = ['budget_proposal', 'program', 'monitoring_entry']
 
     readonly_fields = ['created_at', 'updated_at']
 
@@ -174,10 +183,13 @@ class ProgramBudgetAdmin(admin.ModelAdmin):
         }),
         ('Budget Details', {
             'fields': (
-                'allocated_amount',
+                'requested_amount',
+                'approved_amount',
+                'priority_rank',
                 'priority_level',
                 'justification',
                 'expected_outputs',
+                'monitoring_entry',
             )
         }),
         ('Audit Information', {

@@ -165,7 +165,7 @@ def proposal_detail(request, pk):
     # Priority breakdown
     priority_breakdown = program_budgets.values('priority_level').annotate(
         count=Count('id'),
-        total=Sum('allocated_amount')
+        total=Sum('requested_amount')
     ).order_by('priority_level')
 
     context = {
@@ -474,7 +474,7 @@ def program_create(request, proposal_pk):
                 program_budget = service.add_program_budget(
                     proposal=proposal,
                     program=form.cleaned_data['program'],
-                    allocated_amount=form.cleaned_data['allocated_amount'],
+                    requested_amount=form.cleaned_data['requested_amount'],
                     priority=form.cleaned_data['priority_level'],
                     justification=form.cleaned_data['justification'],
                     expected_outputs=form.cleaned_data['expected_outputs']

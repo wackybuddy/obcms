@@ -25,7 +25,7 @@ from django.db import connection
 from django.test.utils import override_settings
 
 from budget_preparation.models import BudgetProposal, ProgramBudget, BudgetLineItem
-from common.models import Organization
+from coordination.models import Organization
 
 User = get_user_model()
 
@@ -248,19 +248,35 @@ class TestAuthorization:
     def test_cannot_access_other_organization_budget(self, client):
         """Test that users cannot access other organization's budgets."""
         # Create two organizations
-        org1 = Organization.objects.create(name="Org 1")
-        org2 = Organization.objects.create(name="Org 2")
+        org1 = Organization.objects.create(
+            name="Org 1",
+            acronym="ORG1",
+            organization_type="bmoa",
+            partnership_status="active",
+            is_active=True,
+        )
+        org2 = Organization.objects.create(
+            name="Org 2",
+            acronym="ORG2",
+            organization_type="bmoa",
+            partnership_status="active",
+            is_active=True,
+        )
 
         # Create users for each org
         user1 = User.objects.create_user(
             username='user1',
             password='pass',
-            organization=org1
+            user_type='bmoa',
+            organization=org1.name,
+            moa_organization=org1,
         )
         user2 = User.objects.create_user(
             username='user2',
             password='pass',
-            organization=org2
+            user_type='bmoa',
+            organization=org2.name,
+            moa_organization=org2,
         )
 
         # Create budget for org1
@@ -283,18 +299,34 @@ class TestAuthorization:
 
     def test_cannot_modify_other_organization_budget(self, client):
         """Test that users cannot modify other organization's budgets."""
-        org1 = Organization.objects.create(name="Org 1")
-        org2 = Organization.objects.create(name="Org 2")
+        org1 = Organization.objects.create(
+            name="Org 1",
+            acronym="ORG3",
+            organization_type="bmoa",
+            partnership_status="active",
+            is_active=True,
+        )
+        org2 = Organization.objects.create(
+            name="Org 2",
+            acronym="ORG4",
+            organization_type="bmoa",
+            partnership_status="active",
+            is_active=True,
+        )
 
         user1 = User.objects.create_user(
             username='user1',
             password='pass',
-            organization=org1
+            user_type='bmoa',
+            organization=org1.name,
+            moa_organization=org1,
         )
         user2 = User.objects.create_user(
             username='user2',
             password='pass',
-            organization=org2
+            user_type='bmoa',
+            organization=org2.name,
+            moa_organization=org2,
         )
 
         proposal = BudgetProposal.objects.create(

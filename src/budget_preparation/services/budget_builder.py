@@ -49,20 +49,20 @@ class BudgetBuilderService:
             title=title,
             description=description,
             submitted_by=user,
-            total_proposed_budget=Decimal('0.00')
+            total_requested_budget=Decimal('0.00')
         )
 
         return proposal
 
     @transaction.atomic
-    def add_program_budget(self, proposal, program, allocated_amount, priority, justification, expected_outputs=''):
+    def add_program_budget(self, proposal, program, requested_amount, priority, justification, expected_outputs=''):
         """
         Add a program budget to a proposal.
 
         Args:
             proposal: BudgetProposal instance
             program: WorkPlanObjective instance
-            allocated_amount: Budget amount (Decimal or float)
+            requested_amount: Budget amount (Decimal or float)
             priority: Priority level ('high', 'medium', 'low')
             justification: Justification text
             expected_outputs: Expected outputs text (optional)
@@ -83,7 +83,7 @@ class BudgetBuilderService:
         program_budget = ProgramBudget.objects.create(
             budget_proposal=proposal,
             program=program,
-            allocated_amount=Decimal(str(allocated_amount)),
+            requested_amount=Decimal(str(requested_amount)),
             priority_level=priority,
             justification=justification,
             expected_outputs=expected_outputs or f"Expected outputs for {program.title}"
@@ -197,7 +197,7 @@ class BudgetBuilderService:
         """Update proposal total from program budgets."""
         total = proposal.allocated_total
         proposal.total_proposed_budget = total
-        proposal.save(update_fields=['total_proposed_budget', 'updated_at'])
+        proposal.save(update_fields=['total_requested_budget', 'updated_at'])
 
     @transaction.atomic
     def add_justification(self, program_budget, rationale, alignment, expected_impact,

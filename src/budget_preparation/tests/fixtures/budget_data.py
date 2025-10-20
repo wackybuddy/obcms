@@ -15,7 +15,8 @@ from budget_preparation.models import (
 )
 from monitoring.models import MonitoringEntry
 from planning.models import StrategicPlan, StrategicGoal, AnnualWorkPlan
-from coordination.models import Organization
+from organizations.models import Organization
+from coordination.models import Organization as CoordinationOrganization
 
 User = get_user_model()
 
@@ -23,12 +24,16 @@ User = get_user_model()
 @pytest.fixture
 def test_organization(db):
     """Create test organization for OOBC."""
-    return Organization.objects.create(
-        name="Office for Other Bangsamoro Communities",
+    organization, _ = Organization.objects.get_or_create(
         code="OOBC",
-        description="Test organization for budget testing",
-        is_active=True
+        defaults={
+            "name": "Office for Other Bangsamoro Communities",
+            "acronym": "OOBC",
+            "org_type": "office",
+            "is_active": True,
+        },
     )
+    return organization
 
 
 @pytest.fixture
@@ -100,12 +105,26 @@ def annual_work_plan(db, strategic_plan, test_user):
 @pytest.fixture
 def monitoring_entry(db, test_organization):
     """Create test monitoring entry (PPA)."""
+    coordination_org, _ = CoordinationOrganization.objects.get_or_create(
+        name=test_organization.name,
+        defaults={
+            "acronym": test_organization.acronym or test_organization.code,
+            "organization_type": "bmoa",
+            "description": "Test coordination record for budget monitoring entry",
+            "partnership_status": "active",
+            "is_active": True,
+        },
+    )
+
     return MonitoringEntry.objects.create(
         title="Education Infrastructure Program",
-        description="Build schools and learning centers",
-        category='program',
-        status='active',
-        organization=test_organization
+        category="moa_ppa",
+        summary="Build schools and learning centers",
+        status="planning",
+        priority="high",
+        lead_organization=coordination_org,
+        implementing_moa=coordination_org,
+        fiscal_year=2025
     )
 
 
