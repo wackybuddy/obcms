@@ -181,31 +181,6 @@
             console.log('[Sidebar] Content loaded');
             htmx.process(target);
         }
-
-        const form = target.querySelector && target.querySelector('form[hx-post]');
-        if (!form || form.dataset.hxManualSubmit === 'true') {
-            return;
-        }
-
-        const requiresManualSubmit = !!form.querySelector('input[name=\"implementing_moa\"]');
-        if (!requiresManualSubmit) {
-            return;
-        }
-
-        form.dataset.hxManualSubmit = 'true';
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const url = form.getAttribute('hx-post');
-            const swapTarget = form.getAttribute('hx-target') || `#${target.id}`;
-            const swapStyle = form.getAttribute('hx-swap') || 'innerHTML';
-            const values = Object.fromEntries(new FormData(form).entries());
-
-            htmx.ajax('POST', url, {
-                target: swapTarget,
-                swap: swapStyle,
-                values: values
-            });
-        });
     });
 
     document.body.addEventListener('htmx:beforeSwap', function(event) {

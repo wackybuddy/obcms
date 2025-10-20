@@ -56,8 +56,14 @@ def send_security_alert(event_type, details, severity="WARNING", metadata=None):
     # Format alert message
     alert_message = f"{emoji} **{severity}**: {event_type}\n\n{details}"
 
+    # Enrich metadata with timestamp if provided
     if metadata:
         alert_message += f"\n\n**Metadata:**\n```json\n{json.dumps(metadata, indent=2)}\n```"
+        if "timestamp" not in metadata:
+            metadata["timestamp"] = timezone.now().isoformat()
+    else:
+        # Create metadata with timestamp if not provided
+        metadata = {"timestamp": timezone.now().isoformat()}
 
     # Always log the alert
     _log_alert(severity, event_type, details, metadata)

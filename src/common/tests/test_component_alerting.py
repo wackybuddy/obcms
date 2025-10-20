@@ -198,7 +198,7 @@ class AlertingMessagingComponentTests(TestCase):
                 actual_color = payload["attachments"][0]["color"]
                 self.assertEqual(actual_color, expected_color)
 
-    @patch("django.core.mail.send_mail")
+    @patch("common.alerting.send_mail")
     def test_email_alert_payload_structure(self, mock_send_mail):
         """Test that email alert has correct subject and message structure."""
         with override_settings(

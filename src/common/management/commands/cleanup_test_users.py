@@ -27,7 +27,20 @@ class Command(BaseCommand):
             self.stdout.write('No actual deletions will be performed\n')
 
         # Identify users to keep
-        admin_user = User.objects.get(username='admin', id=1)
+        try:
+            admin_user = User.objects.get(username='admin', id=1)
+        except User.DoesNotExist:
+            # Try to get any admin user, or create one if none exists
+            admin_users = User.objects.filter(is_superuser=True)
+            if admin_users.exists():
+                admin_user = admin_users.first()
+            else:
+                self.stdout.write(self.style.WARNING('No admin user found. Creating default admin user...'))
+                admin_user = User.objects.create_superuser(
+                    username='admin',
+                    email='admin@example.com',
+                    password='admin123'
+                )
         oobc_staff = User.objects.filter(username__endswith='.oobc')
 
         self.stdout.write(self.style.SUCCESS(f'\n✓ KEEPING:'))
