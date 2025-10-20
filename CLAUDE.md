@@ -104,23 +104,6 @@ With powerful AI coding agents, a year's worth of traditional development work c
 
 **Critical:** This policy applies to ALL documentation files under `docs/`, including implementation plans, feature specifications, and phased rollout plans. Never use week ranges, day counts, hour estimates, or any time-based labels.
 
-## BMMS Critical Definition
-
-**BMMS = Bangsamoro Ministerial Management System**
-
-**NOT "Bangsamoro Management & Monitoring System"** - This is incorrect!
-
-BMMS is the strategic evolution of OBCMS from a single-organization platform (OOBC) to a comprehensive multi-tenant management system serving all 44 BARMM Ministries, Offices, and Agencies (MOAs).
-
-**Key Points:**
-- BMMS serves **MINISTRIES** (hence "Ministerial")
-- 44 MOAs (Ministries, Offices, and Agencies)
-- Multi-tenant architecture with organization-based data isolation
-- Office of the Chief Minister (OCM) - NOT "CMO" - provides centralized oversight
-
-**Always use:** "Bangsamoro Ministerial Management System"
-**Never use:** "Bangsamoro Management & Monitoring System"
-
 ## Development Environment
 
 ### Setup Requirements
@@ -143,7 +126,7 @@ BMMS is the strategic evolution of OBCMS from a single-organization platform (OO
 ### Django Project Structure
 - **Main Project**: `src/obc_management/` - Django settings and configuration
 - **Core Apps**: common, communities, mana, coordination, policies
-- **Multi-tenant**: Organization-based data isolation (MOA A cannot see MOA B's data)
+- **Architecture**: Multi-organizational system supporting OOBC and partner ministries with data isolation
 
 ### Technical Stack
 - Django + DRF (REST APIs)
@@ -153,6 +136,31 @@ BMMS is the strategic evolution of OBCMS from a single-organization platform (OO
 - Leaflet.js (maps), FullCalendar (scheduling)
 
 **See:** [Architecture Documentation](docs/product/) for detailed specifications
+
+## OBCMS Multi-Organizational Architecture
+
+OBCMS supports multiple organizations working with OOBC:
+- **Primary Organization**: OOBC (Office for Other Bangsamoro Communities)
+- **Partner Ministries**: Health, Education, Social Services, etc.
+- **Collaborating Organizations**: NGOs, local government units
+
+### Data Isolation
+- Each organization has isolated data access
+- Cross-organizational coordination supported
+- Role-based permissions enforced
+
+### Key Modules
+- **Organizations**: Multi-tenant organization management
+- **Planning**: Strategic planning for OOBC operations
+- **Budgeting**: Budget preparation and execution for programs
+- **MANA**: Multi-sectoral needs assessment (health, education, livelihood)
+- **Coordination**: Cross-organizational collaboration
+
+### Use Cases
+- Ministry of Health: Health assessments in OBC communities
+- Ministry of Education: Education programs and school planning
+- Ministry of Social Services: Livelihood and social development programs
+- OOBC: Cross-cutting coordination and strategic oversight
 
 ## Domain Context
 
@@ -179,7 +187,7 @@ This system supports the Office for Other Bangsamoro Communities (OOBC) serving 
 - Implement proper `__str__` methods
 - Use organization-scoped queries for multi-tenancy
 
-**See:** [BMMS Transition Plan](docs/plans/bmms/TRANSITION_PLAN.md) for model specifications
+**See:** [Architecture Documentation](docs/product/) for model specifications
 
 ### API Development
 - All APIs require authentication by default
@@ -243,7 +251,6 @@ This system supports the Office for Other Bangsamoro Communities (OOBC) serving 
 - `docs/testing/` - Testing guides, verification reports
 - `docs/improvements/` - Implementation tracking
 - `docs/ui/` - UI/UX documentation
-- `docs/plans/bmms/` - BMMS planning documents
 
 ### Documentation Rules
 1. ❌ NEVER create documentation in project root
@@ -287,31 +294,6 @@ This system supports the Office for Other Bangsamoro Communities (OOBC) serving 
 
 **See:** [Full Deployment Documentation Index](docs/deployment/)
 
-## BMMS Implementation
-
-**BMMS Status:** ✅ Planning Complete - Ready for Phase 1
-
-### Phase Order
-1. **Phase 1**: Foundation (Organizations App) - CRITICAL
-2. **Phase 2**: Planning Module - HIGH
-3. **Phase 3**: Budgeting Module (Parliament Bill No. 325) - CRITICAL
-4. **Phase 4**: Coordination Enhancement - MEDIUM
-5. **Phase 5**: Module Migration (MANA/M&E/Policies) - MEDIUM
-6. **Phase 6**: OCM Aggregation - HIGH
-7. **Phase 7**: Pilot MOA Onboarding (3 MOAs) - HIGH
-8. **Phase 8**: Full Rollout (44 MOAs) - MEDIUM
-
-**Additional Phases:**
-- **BEN-I**: Individual Beneficiary Database
-- **BEN-O**: Organizational Beneficiary Database
-- **URL**: URL Refactoring
-- **TEST**: Continuous Testing Strategy
-
-**See:**
-- [BMMS Planning Overview](docs/plans/bmms/README.md)
-- [BMMS Transition Plan](docs/plans/bmms/TRANSITION_PLAN.md) - Complete implementation guide
-- [Task Breakdowns](docs/plans/bmms/tasks/) - Detailed execution tasks
-
 ## Testing Requirements
 
 ### Test Coverage
@@ -328,13 +310,12 @@ This system supports the Office for Other Bangsamoro Communities (OOBC) serving 
 
 **See:**
 - [Performance Test Results](docs/testing/PERFORMANCE_TEST_RESULTS.md)
-- [Testing Expansion Strategy](docs/plans/bmms/subfiles/TESTING_EXPANSION.md)
 
 ## Security & Compliance
 
 ### Security Standards
-- Organization-based data isolation (MOA A cannot see MOA B)
-- OCM read-only aggregated access
+- Organization-based data isolation (each organization has isolated data access)
+- Role-based permissions enforced
 - Audit logging for sensitive operations
 - Data Privacy Act 2012 compliance (beneficiary data)
 
@@ -352,7 +333,6 @@ This system supports the Office for Other Bangsamoro Communities (OOBC) serving 
 - [docs/README.md](docs/README.md) - Full documentation index
 
 ### Quick Links
-- [BMMS Planning](docs/plans/bmms/README.md)
 - [UI Standards](docs/ui/OBCMS_UI_STANDARDS_MASTER.md)
 - [Deployment Guides](docs/deployment/)
 - [Development Guidelines](docs/development/README.md)
@@ -365,5 +345,4 @@ This system supports the Office for Other Bangsamoro Communities (OOBC) serving 
 
 ---
 
-**Remember:** BMMS = Bangsamoro **Ministerial** Management System (serving **Ministries**)
-**Remember:** OCM = **Office** of the Chief Minister (NOT "CMO")
+**Remember:** OBCMS is a multi-organizational system focused on OOBC operations with partner ministry support

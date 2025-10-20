@@ -21,6 +21,13 @@ from .models import Allotment, Obligation, Disbursement, DisbursementLineItem
 logger = logging.getLogger(__name__)
 
 
+def _user_display(user):
+    if not user:
+        return "system"
+    full_name = getattr(user, "get_full_name", lambda: "")()
+    return full_name or getattr(user, "username", str(user))
+
+
 # ============================================================================
 # ALLOTMENT SIGNALS
 # ============================================================================
@@ -45,9 +52,9 @@ def allotment_post_save(sender, instance, created, **kwargs):
         logger.info(
             f"Allotment created: {instance.id} | "
             f"Program: {instance.program_budget} | "
-            f"Quarter: Q{instance.quarter} | "
+            f"Quarter: {instance.get_quarter_display()} | "
             f"Amount: ±{instance.amount:,.2f} | "
-            f"Created by: {instance.created_by}"
+            f"Released by: {_user_display(instance.released_by)}"
         )
     else:
         # Check for amount changes
@@ -101,9 +108,10 @@ def obligation_post_save(sender, instance, created, **kwargs):
         logger.info(
             f"Obligation created: {instance.id} | "
             f"Allotment: {instance.allotment.id} | "
-            f"Description: {instance.description} | "
+            f"Work Item: {getattr(instance.work_item, 'title', 'N/A')} | "
+            f"Payee: {instance.payee or 'N/A'} | "
             f"Amount: ±{instance.amount:,.2f} | "
-            f"Created by: {instance.created_by}"
+            f"Obligated by: {_user_display(instance.obligated_by)}"
         )
     else:
         old_amount = getattr(instance, '_old_amount', None)
@@ -128,7 +136,7 @@ def obligation_deleted(sender, instance, **kwargs):
     """Log obligation deletion."""
     logger.warning(
         f"Obligation deleted: {instance.id} | "
-        f"Description: {instance.description} | "
+        f"Work Item: {getattr(instance.work_item, 'title', 'N/A')} | "
         f"Amount: ±{instance.amount:,.2f}"
     )
 
@@ -155,10 +163,10 @@ def disbursement_post_save(sender, instance, created, **kwargs):
         logger.info(
             f"Disbursement created: {instance.id} | "
             f"Obligation: {instance.obligation.id} | "
-            f"Payee: {instance.payee} | "
             f"Amount: ±{instance.amount:,.2f} | "
-            f"Payment Method: {instance.payment_method} | "
-            f"Created by: {instance.created_by}"
+            f"Payment Method: {instance.get_payment_method_display()} | "
+            f"Status: {instance.get_status_display()} | "
+            f"Processed by: {_user_display(instance.disbursed_by)}"
         )
     else:
         old_amount = getattr(instance, '_old_amount', None)
@@ -176,7 +184,7 @@ def disbursement_deleted(sender, instance, **kwargs):
     """Log disbursement deletion."""
     logger.warning(
         f"Disbursement deleted: {instance.id} | "
-        f"Payee: {instance.payee} | "
+        f"Reference: {instance.reference_number or 'N/A'} | "
         f"Amount: ±{instance.amount:,.2f}"
     )
 

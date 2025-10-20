@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 import environ
 
-from obc_management.settings.bmms_config import BMMSMode
+# from obc_management.settings.bmms_config import BMMSMode  # Commented out - not needed for OBCMS-centric operation
 
 # Initialize environment variables
 env = environ.Env(
@@ -82,7 +82,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "common",
-    "organizations",  # Phase 1: BMMS multi-tenant foundation (44 MOAs)
+    "organizations",  # Multi-organizational support (OOBC + partner ministries)
     "communities",
     "municipal_profiles",
     "monitoring",
@@ -96,10 +96,10 @@ LOCAL_APPS = [
     "services",  # Phase 3: Service catalog and applications
     "project_central",  # Integrated project management system
     "ai_assistant",  # AI assistant with vector search and semantic similarity
-    "planning",  # Phase 1: Strategic planning module (BMMS)
-    "budget_preparation",  # Phase 2A: Budget Preparation (Parliament Bill No. 325)
-    "budget_execution",  # Phase 2B: Budget Execution (Parliament Bill No. 325 Section 78)
-    "ocm",  # Phase 6: OCM aggregation layer
+    "planning",  # Strategic planning for OOBC operations
+    "budget_preparation",  # Budget preparation for OOBC programs
+    "budget_execution",  # Budget execution and financial tracking
+    # "ocm",  # OCM aggregation layer - removed for OBCMS-centric operation
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -132,9 +132,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "axes.middleware.AxesMiddleware",  # Failed login tracking (after AuthenticationMiddleware)
     "auditlog.middleware.AuditlogMiddleware",  # Audit logging (after AuthenticationMiddleware)
-    "common.middleware.organization_context.OrganizationContextMiddleware",  # Phase 5: BMMS multi-tenant organization context (after AuthenticationMiddleware)
+    "common.middleware.organization_context.OrganizationContextMiddleware",  # Multi-tenant organization context (after AuthenticationMiddleware)
     "common.middleware.AuditMiddleware",  # Budget system audit logging (Parliament Bill No. 325 Section 78)
-    "ocm.middleware.OCMAccessMiddleware",  # Enforce OCM read-only access
+    # "ocm.middleware.OCMAccessMiddleware",  # OCM middleware - removed for OBCMS-centric operation
     "common.middleware.APILoggingMiddleware",  # API request/response logging for security audit
     "common.middleware.DeprecationLoggingMiddleware",  # Track deprecated URL usage for migration planning
     "common.middleware.MANAAccessControlMiddleware",  # Restrict MANA user access to authorized pages only
@@ -633,21 +633,22 @@ WORKITEM_MIGRATION_STRICT_MODE = env.bool(
 
 # ========== BMMS MODE CONFIGURATION ==========
 # Operational mode: 'obcms' (single-tenant) or 'bmms' (multi-tenant)
-BMMS_MODE = env.str('BMMS_MODE', default=BMMSMode.OBCMS)
+# BMMS_MODE = env.str('BMMS_MODE', default=BMMSMode.OBCMS)  # Commented out - OBCMS-centric operation
+BMMS_MODE = env.str('BMMS_MODE', default='obcms')  # Default to OBCMS mode
 
 # Default organization code for OBCMS mode
 DEFAULT_ORGANIZATION_CODE = env.str('DEFAULT_ORGANIZATION_CODE', default='OOBC')
 
-# ========== BMMS MULTI-TENANT RBAC CONFIGURATION ==========
-# Phase 5: Organization Context and Multi-Tenant Support
-# See: docs/plans/bmms/TRANSITION_PLAN.md
+# ========== MULTI-TENANT RBAC CONFIGURATION ==========
+# Organization Context and Multi-Tenant Support
+# Supports OOBC and partner ministries collaboration
 
 RBAC_SETTINGS = {
     # Enable multi-tenant organization context
     # In OBCMS mode, this is automatically set to False
     'ENABLE_MULTI_TENANT': env.bool(
         'ENABLE_MULTI_TENANT',
-        default=(BMMS_MODE == BMMSMode.BMMS)
+        default=(BMMS_MODE == 'bmms')
     ),
 
     # Office of Chief Minister (OCM) organization code
@@ -661,7 +662,7 @@ RBAC_SETTINGS = {
     # In OBCMS mode, this is automatically set to False
     'ALLOW_ORGANIZATION_SWITCHING': env.bool(
         'ALLOW_ORGANIZATION_SWITCHING',
-        default=(BMMS_MODE == BMMSMode.BMMS)
+        default=(BMMS_MODE == 'bmms')
     ),
 
     # Session key for current organization

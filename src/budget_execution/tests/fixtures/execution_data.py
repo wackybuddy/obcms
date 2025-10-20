@@ -9,7 +9,7 @@ from decimal import Decimal
 from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 from budget_execution.models import Allotment, Obligation, Disbursement
-from common.work_item_model import WorkItem
+from budget_execution.models import WorkItem
 from budget_preparation.models import ProgramBudget
 
 User = get_user_model()
@@ -34,7 +34,7 @@ def allotment_q1(db, approved_program_budget, execution_user):
         program_budget=approved_program_budget,
         quarter='Q1',
         amount=Decimal('10000000.00'),  # 10M for Q1
-        release_date=date(2025, 1, 15),
+        released_at=date(2025, 1, 15),
         released_by=execution_user,
         status='released',
         reference_number='ALL-2025-Q1-001'
@@ -48,7 +48,7 @@ def allotment_q2(db, approved_program_budget, execution_user):
         program_budget=approved_program_budget,
         quarter='Q2',
         amount=Decimal('12000000.00'),  # 12M for Q2
-        release_date=date(2025, 4, 15),
+        released_at=date(2025, 4, 15),
         released_by=execution_user,
         status='released',
         reference_number='ALL-2025-Q2-001'
@@ -63,7 +63,8 @@ def work_item(db, monitoring_entry):
         title="School Construction - Lanao del Sur",
         description="Build 2-classroom school building",
         estimated_cost=Decimal('5000000.00'),
-        target_completion_date=date(2025, 6, 30),
+        start_date=date(2025, 1, 15),
+        end_date=date(2025, 6, 30),
         status='in_progress'
     )
 
@@ -76,8 +77,9 @@ def work_item_2(db, monitoring_entry):
         title="Teacher Training Program",
         description="Train 50 teachers",
         estimated_cost=Decimal('500000.00'),
-        target_completion_date=date(2025, 3, 31),
-        status='not_started'
+        start_date=date(2025, 1, 15),
+        end_date=date(2025, 3, 31),
+        status='planned'
     )
 
 
@@ -89,12 +91,10 @@ def obligation(db, allotment_q1, work_item, execution_user):
         work_item=work_item,
         amount=Decimal('5000000.00'),  # 5M obligation
         payee="ABC Construction Corp.",
-        payee_tin="123-456-789-000",
-        purpose="School building construction contract",
-        obligation_date=date(2025, 2, 1),
+        obligated_at=date(2025, 2, 1),
         obligated_by=execution_user,
         status='obligated',
-        reference_number='OBL-2025-001'
+        notes="School building construction contract",
     )
 
 
@@ -106,11 +106,10 @@ def partial_obligation(db, allotment_q1, work_item_2, execution_user):
         work_item=work_item_2,
         amount=Decimal('500000.00'),
         payee="Training Services Inc.",
-        purpose="Teacher training program",
-        obligation_date=date(2025, 2, 15),
+        obligated_at=date(2025, 2, 15),
         obligated_by=execution_user,
         status='partially_disbursed',
-        reference_number='OBL-2025-002'
+        notes="Teacher training program",
     )
 
 
@@ -120,10 +119,8 @@ def disbursement(db, obligation, execution_user):
     return Disbursement.objects.create(
         obligation=obligation,
         amount=Decimal('2500000.00'),  # 50% payment
-        payment_date=date(2025, 3, 1),
+        disbursed_at=date(2025, 3, 1),
         payment_method='check',
-        check_number='CHK-2025-001',
-        bank_name='Land Bank of the Philippines',
         disbursed_by=execution_user,
         status='paid',
         reference_number='DIS-2025-001'
@@ -136,9 +133,8 @@ def full_disbursement(db, partial_obligation, execution_user):
     return Disbursement.objects.create(
         obligation=partial_obligation,
         amount=Decimal('500000.00'),  # 100% payment
-        payment_date=date(2025, 3, 15),
+        disbursed_at=date(2025, 3, 15),
         payment_method='bank_transfer',
-        bank_name='Development Bank of the Philippines',
         disbursed_by=execution_user,
         status='paid',
         reference_number='DIS-2025-002'
@@ -155,6 +151,7 @@ def multiple_disbursements(db, obligation, execution_user):
         obligation=obligation,
         amount=Decimal('1500000.00'),
         payment_method='check',
+        disbursed_at=date(2025, 2, 15),
         disbursed_by=execution_user,
         status='paid',
         reference_number='DIS-2025-101'
@@ -165,6 +162,7 @@ def multiple_disbursements(db, obligation, execution_user):
         obligation=obligation,
         amount=Decimal('1500000.00'),
         payment_method='check',
+        disbursed_at=date(2025, 3, 15),
         disbursed_by=execution_user,
         status='paid',
         reference_number='DIS-2025-102'
@@ -175,6 +173,7 @@ def multiple_disbursements(db, obligation, execution_user):
         obligation=obligation,
         amount=Decimal('2000000.00'),
         payment_method='bank_transfer',
+        disbursed_at=date(2025, 4, 15),
         disbursed_by=execution_user,
         status='paid',
         reference_number='DIS-2025-103'
@@ -198,7 +197,7 @@ def complete_execution_cycle(db, approved_program_budget, monitoring_entry, exec
         program_budget=approved_program_budget,
         quarter='Q1',
         amount=Decimal('20000000.00'),
-        release_date=date(2025, 1, 15),
+        released_at=date(2025, 1, 15),
         released_by=execution_user,
         status='released'
     )
@@ -220,7 +219,7 @@ def complete_execution_cycle(db, approved_program_budget, monitoring_entry, exec
             work_item=work_item,
             amount=Decimal(f'{5000000 * i}.00'),
             payee=f"Contractor {i}",
-            purpose=f"Contract {i}",
+            obligated_at=date(2025, 1, 15 + i),
             obligated_by=execution_user,
             status='obligated'
         )
@@ -231,6 +230,7 @@ def complete_execution_cycle(db, approved_program_budget, monitoring_entry, exec
             obligation=obligation,
             amount=Decimal(f'{2500000 * i}.00'),
             payment_method='check',
+            disbursed_at=date(2025, 2, 1 + i),
             disbursed_by=execution_user,
             status='paid',
             reference_number=f'DIS-LOOP-{i}'

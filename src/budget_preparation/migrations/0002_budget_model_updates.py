@@ -111,14 +111,6 @@ class Migration(migrations.Migration):
                 to='planning.annualworkplan',
             ),
         ),
-        AddFieldIfMissing(
-            model_name='programbudget',
-            name='expected_outcomes',
-            field=models.TextField(
-                blank=True,
-                help_text='Expected outcomes and beneficiaries',
-            ),
-        ),
         migrations.AddField(
             model_name='budgetlineitem',
             name='sub_category',

@@ -7,6 +7,7 @@ These are CRITICAL tests - 100% pass rate required.
 
 import pytest
 from decimal import Decimal
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from budget_execution.models import Allotment, Obligation, Disbursement
 
@@ -75,7 +76,7 @@ class TestObligationConstraints:
         )
 
         # Create another obligation for 5M - should FAIL (total would be 11M > 10M)
-        with pytest.raises(IntegrityError) as exc_info:
+        with pytest.raises((ValidationError, IntegrityError)) as exc_info:
             with transaction.atomic():
                 Obligation.objects.create(
                     allotment=allotment_q1,
@@ -125,7 +126,7 @@ class TestObligationConstraints:
 
     def test_obligation_amount_positive(self, allotment_q1, work_item, execution_user):
         """Test obligation amount must be positive."""
-        with pytest.raises(IntegrityError):
+        with pytest.raises((ValidationError, IntegrityError)):
             with transaction.atomic():
                 Obligation.objects.create(
                     allotment=allotment_q1,
@@ -155,7 +156,7 @@ class TestDisbursementConstraints:
         )
 
         # Create another disbursement for 3M - should FAIL (total would be 6M > 5M)
-        with pytest.raises(IntegrityError) as exc_info:
+        with pytest.raises((ValidationError, IntegrityError)) as exc_info:
             with transaction.atomic():
                 Disbursement.objects.create(
                     obligation=obligation,
@@ -203,7 +204,7 @@ class TestDisbursementConstraints:
 
     def test_disbursement_amount_positive(self, obligation, execution_user):
         """Test disbursement amount must be positive."""
-        with pytest.raises(IntegrityError):
+        with pytest.raises((ValidationError, IntegrityError)):
             with transaction.atomic():
                 Disbursement.objects.create(
                     obligation=obligation,

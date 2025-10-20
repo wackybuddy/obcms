@@ -1,5 +1,36 @@
+from django.core.exceptions import FieldDoesNotExist
 from django.db import migrations, models
 import django.db.models.deletion
+
+
+def column_exists(schema_editor, table_name, column_name):
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        return any(row[1] == column_name for row in cursor.fetchall())
+
+
+class AlterFieldIfExists(migrations.AlterField):
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        from_model = from_state.apps.get_model(app_label, self.model_name)
+        try:
+            from_field = from_model._meta.get_field(self.name)
+        except FieldDoesNotExist:
+            return
+        table_name = from_model._meta.db_table
+        if not column_exists(schema_editor, table_name, from_field.column):
+            return
+        super().database_forwards(app_label, schema_editor, from_state, to_state)
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        to_model = to_state.apps.get_model(app_label, self.model_name)
+        try:
+            to_field = to_model._meta.get_field(self.name)
+        except FieldDoesNotExist:
+            return
+        table_name = to_model._meta.db_table
+        if not column_exists(schema_editor, table_name, to_field.column):
+            return
+        super().database_backwards(app_label, schema_editor, from_state, to_state)
 
 
 class Migration(migrations.Migration):
@@ -10,7 +41,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
+        AlterFieldIfExists(
             model_name='allotment',
             name='released_by',
             field=models.ForeignKey(
@@ -22,7 +53,7 @@ class Migration(migrations.Migration):
                 to='common.user',
             ),
         ),
-        migrations.AlterField(
+        AlterFieldIfExists(
             model_name='disbursement',
             name='disbursed_by',
             field=models.ForeignKey(
@@ -34,7 +65,7 @@ class Migration(migrations.Migration):
                 to='common.user',
             ),
         ),
-        migrations.AlterField(
+        AlterFieldIfExists(
             model_name='obligation',
             name='work_item',
             field=models.ForeignKey(
@@ -46,7 +77,7 @@ class Migration(migrations.Migration):
                 to='budget_execution.workitem',
             ),
         ),
-        migrations.AlterField(
+        AlterFieldIfExists(
             model_name='obligation',
             name='obligated_by',
             field=models.ForeignKey(
@@ -58,7 +89,7 @@ class Migration(migrations.Migration):
                 to='common.user',
             ),
         ),
-        migrations.AlterField(
+        AlterFieldIfExists(
             model_name='obligation',
             name='payee',
             field=models.CharField(
