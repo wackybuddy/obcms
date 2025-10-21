@@ -459,12 +459,12 @@ class WorkItemQuickEditForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # Populate dropdowns after initialization to avoid circular imports during app loading
-        # Restrict implementing_moa to OOBC and organizations with PPAs
+        # Restrict implementing_moa to OOBC organizations and active organizations
         from django.db.models import Q
         self.fields['implementing_moa'].queryset = Organization.objects.filter(
             Q(name__iexact="Office for Other Bangsamoro Communities (OOBC)") |
             Q(acronym__iexact="OOBC") |
-            Q(implementing_moa_ppas__isnull=False)  # Organizations that have PPAs
+            Q(is_active=True)  # Show active organizations
         ).distinct().order_by('name')
 
         self.fields['related_ppa'].queryset = (
