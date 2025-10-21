@@ -14,7 +14,7 @@ import uuid
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse, HttpResponse, Http404
 from django.db import models
 from django.db.models import Q, Count
 from django.views.decorators.http import require_POST, require_http_methods
@@ -265,12 +265,17 @@ def work_item_detail(request, pk):
     - Optimized children queryset with minimal fields
     """
     # Load work item with related data
-    work_item = get_object_or_404(
-        WorkItem.objects
-        .select_related('parent', 'created_by')
-        .prefetch_related('assignees', 'teams', 'related_items'),
-        pk=pk
-    )
+    try:
+        work_item = get_object_or_404(
+            WorkItem.objects
+            .select_related('parent', 'created_by')
+            .prefetch_related('assignees', 'teams', 'related_items'),
+            pk=pk
+        )
+    except Http404:
+        # If work item is not found (likely deleted), redirect to list with message
+        messages.info(request, 'The work item you are looking for has been deleted or no longer exists.')
+        return redirect('common:work_item_list')
 
     # Get breadcrumb (ancestors) - already optimized by select_related on parent
     breadcrumb = work_item.get_ancestors(include_self=True)
