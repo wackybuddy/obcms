@@ -52,9 +52,8 @@
             </h2>
             <div class="flex items-center gap-3">
                 <button type="button"
-                        onclick="openSidebarAndLoad(this)"
+                        onclick="openModalAndLoad(this)"
                         data-hx-get="{% url 'common:work_item_sidebar_create' %}?assignee={{ profile.user.pk }}"
-                        data-hx-target="#sidebar-content"
                         class="inline-flex items-center px-3 py-1.5 rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 text-xs font-semibold transition-colors">
                     <i class="fas fa-plus mr-1"></i>
                     Create work item

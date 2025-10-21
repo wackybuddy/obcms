@@ -7,24 +7,31 @@
 <style>
     .sidebar-scrollbar {
         scrollbar-width: thin;
-        scrollbar-color: #cbd5e1 #f8fafc;
+        scrollbar-color: #94a3b8 #f1f5f9;
+        scrollbar-gutter: stable;
+        overflow-y: scroll;
     }
 
     .sidebar-scrollbar::-webkit-scrollbar {
-        width: 8px;
+        width: 10px;
     }
 
     .sidebar-scrollbar::-webkit-scrollbar-track {
-        background: #f8fafc;
-    }
-
-    .sidebar-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: #f1f5f9;
         border-radius: 4px;
     }
 
-    .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    .sidebar-scrollbar::-webkit-scrollbar-thumb {
         background: #94a3b8;
+        border-radius: 5px;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar-thumb:active {
+        background: #475569;
     }
 </style>
 

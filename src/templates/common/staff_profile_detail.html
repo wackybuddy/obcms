@@ -6,8 +6,6 @@
 {% block extra_css %}
 <!-- FullCalendar CSS for calendar widget -->
 <link href="{% static 'common/vendor/fullcalendar/main.min.css' %}" rel="stylesheet">
-<!-- Sidebar Width Fix -->
-<link href="{% static 'common/css/sidebar-fix.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block breadcrumb %}
@@ -33,6 +31,7 @@
 
 <!-- Sidebar initialization scripts -->
 {% include 'work_items/partials/sidebar_init_scripts.html' %}
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const navContainer = document.getElementById('staffProfileTabs');
@@ -240,6 +239,25 @@
         });
     });
 </script>
+
+<!-- Custom event handler for staff profile work item creation -->
+<script>
+(function() {
+    'use strict';
+
+    /**
+     * Listen for workItemCreated event to close sidebar and refresh tasks tab
+     */
+    document.body.addEventListener('workItemCreated', function(event) {
+        console.log('[Sidebar] Work item created, closing sidebar and reloading tasks tab');
+        closeSidebar();
+        // Reload page to show new work item in tasks list
+        window.location.reload();
+    });
+
+    console.log('✅ Staff profile sidebar functionality initialized');
+})();
+</script>
 {% endblock %}
 
 {% block content %}
@@ -326,42 +344,7 @@
     </div>
 </div>
 
-<!-- Right Sidebar Panel (Outside main content for fixed positioning) -->
-<aside id="work-item-sidebar"
-       class="fixed top-0 right-0 h-full w-96 flex-none bg-white border-l border-gray-200 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
-    <div class="h-full flex flex-col">
-        <!-- Sidebar Content (HTMX target) -->
-        <div id="sidebar-content" class="flex-1 overflow-y-auto p-6">
-            <div class="text-center text-gray-500 py-8">
-                <i class="fas fa-tasks text-4xl mb-3"></i>
-                <p>Click an action button to view details</p>
-            </div>
-        </div>
-    </div>
-</aside>
-
-<!-- Sidebar Backdrop -->
-<div id="sidebar-backdrop"
-     class="fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity duration-300"
-     onclick="closeSidebar()"></div>
+<!-- Work Item Creation Modal -->
+{% include 'common/staff_profile/partials/work_item_modal.html' %}
 
 {% endblock %}
-
-<!-- Custom event handler for staff profile work item creation -->
-<script>
-(function() {
-    'use strict';
-
-    /**
-     * Listen for workItemCreated event to close sidebar and refresh tasks tab
-     */
-    document.body.addEventListener('workItemCreated', function(event) {
-        console.log('[Sidebar] Work item created, closing sidebar and reloading tasks tab');
-        closeSidebar();
-        // Reload page to show new work item in tasks list
-        window.location.reload();
-    });
-
-    console.log('✅ Staff profile sidebar functionality initialized');
-})();
-</script>

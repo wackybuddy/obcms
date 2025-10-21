@@ -1593,10 +1593,15 @@ def work_item_sidebar_create(request):
                 logger = logging.getLogger(__name__)
 
                 try:
-                    project = related_ppa.ensure_execution_project(
-                        created_by=request.user,
-                        updated_by=request.user,
-                    )
+                    # Optimize: Only call ensure_execution_project if execution_project is None
+                    # This avoids expensive select_for_update when project already exists
+                    if related_ppa.execution_project:
+                        project = related_ppa.execution_project
+                    else:
+                        project = related_ppa.ensure_execution_project(
+                            created_by=request.user,
+                            updated_by=request.user,
+                        )
                 except ValidationError as exc:
                     message = "; ".join(exc.messages) if hasattr(exc, "messages") else str(exc)
                     logger.warning(
