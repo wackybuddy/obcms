@@ -1,12 +1,38 @@
 {# Unified Work Item Sidebar Component #}
 {# This is the CANONICAL sidebar implementation - used across all work item pages #}
 {# Based on the perfect work-items sidebar from http://localhost:8000/oobc-management/work-items/ #}
+{# Includes self-contained scrollbar styling #}
+
+<!-- Sidebar Scrollbar Styling -->
+<style>
+    .sidebar-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f8fafc;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar-track {
+        background: #f8fafc;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
 
 <aside id="work-item-sidebar"
        class="fixed top-0 right-0 h-full w-96 bg-white border-l border-gray-200 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50">
     <div class="h-full flex flex-col">
         <!-- Sidebar Content (HTMX target) -->
-        <div id="sidebar-content" class="flex-1 overflow-y-auto p-6">
+        <div id="sidebar-content" class="flex-1 overflow-y-scroll overflow-x-hidden sidebar-scrollbar p-6">
             <div class="text-center text-gray-500 py-8">
                 <i class="fas fa-tasks text-4xl mb-3"></i>
                 <p>Click an action button to view details</p>

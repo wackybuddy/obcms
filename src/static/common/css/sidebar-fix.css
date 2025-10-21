@@ -1,0 +1,22 @@
+/* Sidebar Width Fix - Force 384px width */
+#work-item-sidebar {
+    width: 384px !important;
+    max-width: 384px !important;
+    min-width: 384px !important;
+    flex-shrink: 0 !important;
+}
+
+#work-item-sidebar .h-full {
+    width: 384px !important;
+    max-width: 384px !important;
+}
+
+#sidebar-content {
+    width: 360px !important;  /* 384px - padding */
+    max-width: 360px !important;
+    overflow-x: hidden !important;
+}
+
+#sidebar-content * {
+    max-width: 100% !important;
+}
