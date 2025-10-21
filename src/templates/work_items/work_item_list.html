@@ -407,6 +407,20 @@
             });
         }
 
+        // Handle data-close-modal attribute for detail card X button
+        document.addEventListener('click', function(event) {
+            if (event.target.closest('[data-close-modal]')) {
+                const editModal = document.getElementById('work-item-modal');
+                const createModal = document.getElementById('work-item-create-modal');
+
+                if (editModal && !editModal.classList.contains('hidden')) {
+                    closeWorkItemModal();
+                } else if (createModal && !createModal.classList.contains('hidden')) {
+                    closeCreateWorkItemModal();
+                }
+            }
+        });
+
         // Escape key to close modals
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
