@@ -315,7 +315,7 @@
     <!-- Work Item Create Modal -->
     <div id="work-item-create-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
         <!-- Overlay - Click to close -->
-        <div id="create-modal-overlay" class="fixed inset-0 z-40 bg-black/50 transition-opacity"></div>
+        <div id="create-modal-overlay" class="fixed inset-0 z-50 bg-black/50 transition-opacity pointer-events-auto"></div>
 
         <!-- Modal Container -->
         <div class="fixed inset-0 overflow-y-auto pointer-events-none z-50">
@@ -377,16 +377,34 @@
 
     // Setup modal close handlers
     document.addEventListener('DOMContentLoaded', function() {
-        // Edit Modal - Overlay click to close
-        const overlay = document.getElementById('modal-overlay');
-        if (overlay) {
-            overlay.addEventListener('click', closeWorkItemModal);
+        // Edit Modal - Overlay/outside click to close
+        const editModal = document.getElementById('work-item-modal');
+        if (editModal) {
+            editModal.addEventListener('click', function(event) {
+                // Find the modal content box (white box with the form)
+                const modalContentBox = this.querySelector('.relative.w-full.max-w-4xl');
+
+                // Close if the click is NOT inside the modal content box
+                // (i.e., clicking on overlay or outside the form area)
+                if (modalContentBox && !modalContentBox.contains(event.target)) {
+                    closeWorkItemModal();
+                }
+            });
         }
 
-        // Create Modal - Overlay click to close
-        const createOverlay = document.getElementById('create-modal-overlay');
-        if (createOverlay) {
-            createOverlay.addEventListener('click', closeCreateWorkItemModal);
+        // Create Modal - Overlay/outside click to close
+        const createModal = document.getElementById('work-item-create-modal');
+        if (createModal) {
+            createModal.addEventListener('click', function(event) {
+                // Find the modal content box (white box with the form)
+                const modalContentBox = this.querySelector('.relative.w-full.max-w-4xl');
+
+                // Close if the click is NOT inside the modal content box
+                // (i.e., clicking on overlay or outside the form area)
+                if (modalContentBox && !modalContentBox.contains(event.target)) {
+                    closeCreateWorkItemModal();
+                }
+            });
         }
 
         // Escape key to close modals
