@@ -194,8 +194,8 @@
             </button>
             <button type="button"
                     data-hx-get="{% url 'common:work_item_sidebar_edit' pk=work_item.pk %}"
-                    data-hx-target="#sidebar-content"
-                    onclick="openSidebarAndLoad(this)"
+                    data-hx-target="#work-item-modal-content"
+                    onclick="openWorkItemModal ? openWorkItemModal() : (document.getElementById('taskModal').classList.remove('hidden'))"
                     class="text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 p-1.5 rounded transition-colors duration-150"
                     title="Edit">
                 <i class="fas fa-edit text-sm"></i>

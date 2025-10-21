@@ -983,6 +983,7 @@ def work_item_sidebar_edit(request, pk):
     is_moa_page = '/coordination/organizations/' in referer
     is_ppa_sidebar = hx_target == 'ppa-sidebar-content' or ('/monitoring/entry/' in referer and not is_moa_page)
     is_staff_sidebar = '/staff/profiles/' in referer or '/profile/' in referer
+    is_work_item_modal = hx_target == 'work-item-modal-content'
 
     use_sidebar_templates = is_tree_page or is_ppa_sidebar or is_staff_sidebar or is_moa_page
     should_update_oob_row = is_tree_page or is_ppa_sidebar
@@ -995,7 +996,9 @@ def work_item_sidebar_edit(request, pk):
         sidebar_target_id = 'detailPanelBody'
 
     close_action = 'closeSidebar'
-    if sidebar_target_id.endswith('detailPanelBody'):
+    if is_work_item_modal:
+        close_action = 'closeWorkItemModal'
+    elif sidebar_target_id.endswith('detailPanelBody'):
         prefix = sidebar_target_id[: -len('detailPanelBody')].rstrip('-')
         close_action = f'{prefix}_closeDetailPanel' if prefix else 'closeDetailPanel'
 
@@ -1151,7 +1154,7 @@ def work_item_sidebar_edit(request, pk):
                 'sidebar_target_id': sidebar_target_id,
                 'close_action': close_action,
             }
-            return render(request, 'work_items/partials/sidebar_edit_form.html', context)
+            return render(request, 'work_items/partials/work_item_edit_modal.html', context)
 
     else:  # GET
         from common.forms.work_items import WorkItemQuickEditForm
@@ -1163,7 +1166,7 @@ def work_item_sidebar_edit(request, pk):
             'sidebar_target_id': sidebar_target_id,
             'close_action': close_action,
         }
-        return render(request, 'work_items/partials/sidebar_edit_form.html', context)
+        return render(request, 'work_items/partials/work_item_edit_modal.html', context)
 
 
 @login_required
@@ -1222,7 +1225,7 @@ def work_item_duplicate(request, pk):
         'close_action': close_action,
     }
 
-    response = render(request, 'work_items/partials/sidebar_edit_form.html', context)
+    response = render(request, 'work_items/partials/work_item_edit_modal.html', context)
 
     # Trigger calendar refresh and success toast
     import json
@@ -1316,7 +1319,10 @@ def work_item_sidebar_create(request):
 
     is_calendar_context = not (is_ppa_page or is_moa_page or is_work_items_tree or is_staff_profile)
 
-    if hx_target:
+    # Detect if request is for create modal (centered modal on work items page)
+    is_create_modal = hx_target == 'work-item-create-modal-content'
+
+    if hx_target and not is_create_modal:
         sidebar_target_id = hx_target
     elif use_ppa_sidebar:
         sidebar_target_id = 'ppa-sidebar-content'
@@ -1326,11 +1332,13 @@ def work_item_sidebar_create(request):
         sidebar_target_id = 'sidebar-content'
 
     close_action = 'closeSidebar'
-    if sidebar_target_id.endswith('detailPanelBody'):
+    if is_create_modal:
+        close_action = 'closeCreateWorkItemModal'
+    elif sidebar_target_id.endswith('detailPanelBody'):
         prefix = sidebar_target_id[: -len('detailPanelBody')].rstrip('-')
         close_action = f'{prefix}_closeDetailPanel' if prefix else 'closeDetailPanel'
 
-    if use_ppa_sidebar:
+    if use_ppa_sidebar and not is_create_modal:
         close_action = 'closePPASidebar'
 
     oobc_org = (
@@ -1402,7 +1410,11 @@ def work_item_sidebar_create(request):
                 related_ppa = None
 
     # Use PPA-specific template if on PPA page, otherwise use sidebar template
-    create_template = 'work_items/partials/sidebar_create_form.html'
+    # Use create modal template if request is for centered modal
+    if is_create_modal:
+        create_template = 'work_items/partials/work_item_create_modal.html'
+    else:
+        create_template = 'work_items/partials/sidebar_create_form.html'
 
     if request.method == 'POST':
         from common.forms.work_items import WorkItemQuickEditForm

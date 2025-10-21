@@ -84,9 +84,9 @@
                 <div class="flex-shrink-0">
                     <div class="flex flex-col gap-3 min-w-[220px]">
                         <button type="button"
-                                onclick="openSidebarAndLoad(this)"
+                                onclick="openCreateWorkItemModal(this)"
                                 data-hx-get="{% url 'common:work_item_sidebar_create' %}"
-                                data-hx-target="#sidebar-content"
+                                data-hx-target="#work-item-create-modal-content"
                                 class="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-emerald-600 font-semibold shadow-lg hover:bg-emerald-50 hover:shadow-xl transition-all duration-200">
                             <i class="fas fa-plus-circle"></i>
                             <span>Create Work Item</span>
@@ -290,6 +290,143 @@
 
     {# Delete Modal Container - HTMX will inject modal content here #}
     <div id="delete-modal-container" aria-live="polite" role="region" aria-label="Delete confirmation modal"></div>
+
+    <!-- Work Item Edit/View Modal -->
+    <div id="work-item-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+        <!-- Overlay - Click to close -->
+        <div id="modal-overlay" class="fixed inset-0 bg-black/50 transition-opacity"></div>
+
+        <!-- Modal Container -->
+        <div class="fixed inset-0 overflow-y-auto pointer-events-none">
+            <div class="flex min-h-full items-center justify-center p-4 pointer-events-auto">
+                <div class="relative w-full max-w-4xl transform rounded-2xl bg-white shadow-2xl transition-all pointer-events-auto">
+                    <!-- Modal Content -->
+                    <div id="work-item-modal-content" class="p-6">
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fas fa-tasks text-4xl mb-3"></i>
+                            <p>Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Item Create Modal -->
+    <div id="work-item-create-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+        <!-- Overlay - Click to close -->
+        <div id="create-modal-overlay" class="fixed inset-0 z-40 bg-black/50 transition-opacity"></div>
+
+        <!-- Modal Container -->
+        <div class="fixed inset-0 overflow-y-auto pointer-events-none z-50">
+            <div class="flex min-h-full items-center justify-center p-4 pointer-events-auto">
+                <div class="relative w-full max-w-4xl transform rounded-2xl bg-white shadow-2xl transition-all pointer-events-auto">
+                    <!-- Modal Content -->
+                    <div id="work-item-create-modal-content" class="p-6">
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fas fa-plus text-4xl mb-3"></i>
+                            <p>Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Edit Modal Functions
+    window.openWorkItemModal = function() {
+        const modal = document.getElementById('work-item-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    };
+
+    window.closeWorkItemModal = function() {
+        const modal = document.getElementById('work-item-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    };
+
+    // Create Modal Functions
+    window.openCreateWorkItemModal = function(button) {
+        const modal = document.getElementById('work-item-create-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            // Trigger HTMX request to load form
+            if (button && button.hasAttribute('data-hx-get')) {
+                htmx.ajax('GET', button.getAttribute('data-hx-get'), {
+                    target: button.getAttribute('data-hx-target'),
+                    swap: 'innerHTML'
+                });
+            }
+        }
+    };
+
+    window.closeCreateWorkItemModal = function() {
+        const modal = document.getElementById('work-item-create-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    };
+
+    // Setup modal close handlers
+    document.addEventListener('DOMContentLoaded', function() {
+        // Edit Modal - Overlay click to close
+        const overlay = document.getElementById('modal-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', closeWorkItemModal);
+        }
+
+        // Create Modal - Overlay click to close
+        const createOverlay = document.getElementById('create-modal-overlay');
+        if (createOverlay) {
+            createOverlay.addEventListener('click', closeCreateWorkItemModal);
+        }
+
+        // Escape key to close modals
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const editModal = document.getElementById('work-item-modal');
+                const createModal = document.getElementById('work-item-create-modal');
+
+                if (editModal && !editModal.classList.contains('hidden')) {
+                    closeWorkItemModal();
+                }
+                if (createModal && !createModal.classList.contains('hidden')) {
+                    closeCreateWorkItemModal();
+                }
+            }
+        });
+    });
+
+    // Close modal on successful form submission
+    document.body.addEventListener('htmx:beforeSwap', function(event) {
+        const target = event.detail.target;
+        if (!target) return;
+
+        const status = event.detail.xhr.status;
+
+        // Handle edit modal submission (204 response)
+        if (target.id === 'work-item-modal-content' && status === 204) {
+            closeWorkItemModal();
+            location.reload();
+            event.detail.shouldSwap = false;
+        }
+
+        // Handle create modal submission (201 or 204 response)
+        if (target.id === 'work-item-create-modal-content' && (status === 201 || status === 204)) {
+            closeCreateWorkItemModal();
+            location.reload();
+            event.detail.shouldSwap = false;
+        }
+    });
+    </script>
 </div>
 
 <!-- Unified Sidebar Component (used across all work item pages) -->

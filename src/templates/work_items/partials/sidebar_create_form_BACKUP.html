@@ -1,0 +1,457 @@
+{% load math_extras %}
+{% with target_id=sidebar_target_id|default:'sidebar-content' %}
+{% with default_close=use_ppa_sidebar|yesno:"closePPASidebar,closeSidebar" %}
+{% with close_fn=close_action|default:default_close %}
+<form action="javascript:void(0);"
+      hx-post="{% url 'common:work_item_sidebar_create' %}{% if ppa_id %}?ppa_id={{ ppa_id }}{% endif %}"
+      hx-target="#{{ target_id }}"
+      hx-swap="innerHTML"
+      hx-indicator="#formSubmitIndicator"
+      hx-sync="this:drop"
+      hx-disabled-elt="#{{ target_id }} button[type='submit']"
+      data-close-action="{{ close_fn }}"
+      class="space-y-5 workitem-create-form">
+{% csrf_token %}
+{% if ppa_id %}<input type="hidden" name="ppa_id" value="{{ ppa_id }}">{% endif %}
+{% if assignee_id %}<input type="hidden" name="assignee_id" value="{{ assignee_id }}">{% endif %}
+<input type="hidden" name="submission_token" value="{{ submission_token }}">
+
+    <div class="flex items-center justify-between pb-3 border-b border-gray-200">
+        <div class="flex items-start gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                <i class="fas fa-plus"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-semibold text-gray-900">Create New Work Item</h2>
+                <p class="text-sm text-gray-500">Set the essentials—status, dates, and budget—in a single flow.</p>
+            </div>
+        </div>
+        <button type="button"
+                onclick="{{ close_fn }}()"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Close sidebar panel">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    {% if form.non_field_errors %}
+    <div class="rounded-lg border border-red-200 bg-red-50 p-3">
+        <div class="flex items-start gap-2">
+            <i class="fas fa-exclamation-circle text-red-600 mt-0.5"></i>
+            <div class="space-y-1 text-sm text-red-700">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not ppa_info %}
+        {% if lock_implementing_moa %}
+            {{ form.implementing_moa.as_hidden }}
+        {% endif %}
+    {% endif %}
+
+    <div class="space-y-3 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+        <div>
+            <label class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                <i class="fas fa-building"></i>
+                Implementing MOA
+            </label>
+            {% if lock_implementing_moa or implementing_moa_obj or ppa_info or auto_assign_oobc %}
+                <div class="mt-1 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-gray-900">
+                    {% if implementing_moa_obj %}
+                        {{ implementing_moa_obj.name }}
+                        {% if implementing_moa_obj.acronym %}
+                        <span class="text-gray-500">({{ implementing_moa_obj.acronym }})</span>
+                        {% endif %}
+                    {% elif auto_assign_oobc %}
+                        Office for Other Bangsamoro Communities (OOBC)
+                    {% else %}
+                        <span class="italic text-blue-600">No implementing MOA specified</span>
+                    {% endif %}
+                </div>
+                <p class="mt-1 text-xs text-blue-600">
+                    Work items created here inherit ownership from this MOA.
+                </p>
+                {{ form.implementing_moa.as_hidden }}
+            {% else %}
+                <div class="relative mt-1">
+                    {{ form.implementing_moa }}
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-xs">
+                        <i class="fas fa-chevron-down"></i>
+                    </span>
+                </div>
+                <p class="mt-1 text-xs text-blue-600">
+                    Optional. Link this work item to an implementing partner for reporting.
+                </p>
+                {% if form.implementing_moa.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.implementing_moa.errors.0 }}</p>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                <i class="fas fa-folder-open"></i>
+                Related PPA{% if requires_related_ppa %} <span class="text-red-500">*</span>{% endif %}
+            </label>
+            {% if ppa_info %}
+                <div class="mt-1 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-gray-900">
+                    {{ ppa_info.title }}
+                </div>
+                <p class="mt-1 text-xs text-blue-600">This work item will be linked to this PPA.</p>
+                {{ form.related_ppa.as_hidden }}
+            {% elif ppa_options %}
+                <div class="space-y-2">
+                    <div class="relative">
+                        <select name="ppa_id"
+                                class="block w-full appearance-none rounded-lg border border-blue-200 bg-white py-2 px-3 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                                {% if requires_related_ppa %}required{% endif %}>
+                            <option value="">{% if requires_related_ppa %}Select PPA...{% else %}Select PPA (optional){% endif %}</option>
+                            {% for option in ppa_options %}
+                            <option value="{{ option.id }}"
+                                    {% if option.id == selected_ppa_id %}selected{% endif %}
+                                    {% if not option.tracking_enabled %}disabled{% endif %}>
+                                {{ option.title }}
+                                {% if not option.tracking_enabled %}(Enable tracking to use){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 text-xs">
+                            <i class="fas fa-chevron-down"></i>
+                        </span>
+                    </div>
+                    <p class="text-xs text-blue-600">
+                        {% if requires_related_ppa %}
+                            Choose the PPA that this work item belongs to.
+                        {% else %}
+                            Associate this work item with a PPA when relevant.
+                        {% endif %}
+                    </p>
+                    {% if has_disabled_ppa_options %}
+                    <p class="text-xs text-amber-600">
+                        PPAs marked unavailable require work item tracking to be enabled.
+                    </p>
+                    {% endif %}
+                </div>
+            {% elif requires_related_ppa %}
+                <div class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    <i class="fas fa-info-circle mt-0.5"></i>
+                    <p>No tracked PPAs are available for this MOA. Enable work item tracking to continue.</p>
+                </div>
+            {% else %}
+                <div class="space-y-2">
+                    {{ form.related_ppa }}
+                    <p class="text-xs text-blue-600">Optional. Associate this work item with an existing PPA when relevant.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if assignee_user %}
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+        <label class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">
+            <i class="fas fa-user-check"></i>
+            Assigned To
+        </label>
+        <div class="mt-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-gray-900">
+            {{ assignee_user.get_full_name|default:assignee_user.username }}
+        </div>
+        <p class="mt-1 text-xs text-emerald-600">This work item will automatically assign to this user.</p>
+    </div>
+    {% endif %}
+
+    {% if form.parent and not ppa_info %}
+    {{ form.parent.as_hidden }}
+    {% with parent_display=form.initial.parent %}
+    {% if parent_display %}
+    <div class="flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-3">
+        <i class="fas fa-sitemap text-blue-500 mt-1"></i>
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wide text-blue-700">Parent Work Item</p>
+            <p class="text-sm font-medium text-blue-900">{{ parent_display }}</p>
+            <p class="text-xs text-blue-600 mt-0.5">New work item will appear beneath this parent in the hierarchy.</p>
+        </div>
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endif %}
+
+    <div class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+        <div class="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <i class="fas fa-info-circle text-blue-500"></i>
+            Basic Information
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Title <span class="text-red-500">*</span>
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div>
+                <label for="{{ form.work_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Type <span class="text-red-500">*</span>
+                </label>
+                {{ form.work_type }}
+                {% if form.work_type.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.work_type.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div data-activity-category-wrapper class="hidden">
+                <label for="{{ form.activity_category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Activity Category
+                </label>
+                <div class="relative">
+                    {{ form.activity_category }}
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </span>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Classify the activity to keep calendars focused.</p>
+                {% if form.activity_category.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.activity_category.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Status
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Priority
+                    </label>
+                    {{ form.priority }}
+                    {% if form.priority.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.priority.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-4 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+        <div class="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <i class="fas fa-calendar-alt text-purple-500"></i>
+            Schedule & Progress
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Start Date
+                </label>
+                {{ form.start_date }}
+                {% if form.start_date.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.start_date.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div>
+                <label for="{{ form.due_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Due Date
+                </label>
+                {{ form.due_date }}
+                {% if form.due_date.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.due_date.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 space-y-4">
+        <div class="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+            <i class="fas fa-wallet"></i>
+            Budget Tracking
+        </div>
+        {% if ppa_info and ppa_info.budget_allocation %}
+        <div class="rounded-xl border border-emerald-200 bg-white p-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Total PPA Budget</p>
+            <p class="mt-1 text-base font-semibold text-gray-900" id="ppa-total-budget" data-value="{{ ppa_info.budget_allocation }}">
+                {{ ppa_info.budget_allocation|currency_php }}
+            </p>
+            <p class="text-xs text-gray-500 mt-1">Budget available from the associated PPA.</p>
+        </div>
+        {% endif %}
+        <div>
+            <label for="{{ form.allocated_budget.id_for_label }}" class="block text-xs font-medium text-gray-700 mb-1">
+                Allocated Budget
+            </label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₱</span>
+                {{ form.allocated_budget }}
+            </div>
+            <div id="budget-error-message"
+                 class="hidden mt-1 flex items-center gap-1 text-xs text-red-600">
+                <i class="fas fa-exclamation-circle"></i>
+                <span></span>
+            </div>
+            {% if form.allocated_budget.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ form.allocated_budget.errors.0 }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-5">
+        <label for="{{ form.description.id_for_label }}" class="flex items-center gap-2 text-sm font-semibold text-gray-900">
+            <i class="fas fa-align-left text-purple-500"></i>
+            Description
+        </label>
+        <div class="mt-3">
+            {{ form.description }}
+            {% if form.description.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ form.description.errors.0 }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <input type="hidden" name="progress" value="{{ form.initial.progress|default:0 }}">
+
+    <div class="border-t border-gray-200 pt-4 flex gap-3">
+        <button type="submit"
+                class="flex-1 inline-flex items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:from-blue-700 hover:to-emerald-700 disabled:pointer-events-none disabled:opacity-50">
+            <i class="fas fa-plus mr-2"></i>
+            Create Work Item
+        </button>
+        <button type="button"
+                onclick="{{ close_fn }}()"
+                class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50">
+            <i class="fas fa-rotate-left mr-2"></i>
+            Cancel
+        </button>
+    </div>
+
+    <div id="formSubmitIndicator" class="htmx-indicator py-2 text-center text-sm text-gray-600">
+        <i class="fas fa-spinner fa-spin text-blue-500"></i>
+        <span class="ml-2">Creating…</span>
+    </div>
+</form>
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+<script>
+(function() {
+    'use strict';
+
+    const formEl = document.currentScript?.previousElementSibling;
+    if (!(formEl instanceof HTMLFormElement)) {
+        return;
+    }
+
+    setTimeout(() => {
+        const containerIds = ['{{ target_id }}', 'sidebar-content', 'ppa-sidebar-content'];
+        for (const id of containerIds) {
+            const scope = document.getElementById(id);
+            if (!scope) continue;
+            const focusable = scope.querySelector('input, select, textarea');
+            if (focusable) {
+                focusable.focus();
+                break;
+            }
+        }
+    }, 120);
+
+    const workTypeSelect = formEl.querySelector('select[name="work_type"]');
+    const activityWrapper = formEl.querySelector('[data-activity-category-wrapper]');
+    const activitySelect = formEl.querySelector('select[name="activity_category"]');
+
+    function syncActivityCategoryVisibility() {
+        if (!activityWrapper) return;
+        const value = workTypeSelect ? workTypeSelect.value : null;
+        const isActivity = value === 'activity' || value === 'sub_activity';
+        activityWrapper.classList.toggle('hidden', !isActivity);
+        if (isActivity && activitySelect && !activitySelect.value) {
+            activitySelect.value = 'coordination';
+        }
+    }
+
+    if (workTypeSelect && activityWrapper) {
+        workTypeSelect.addEventListener('change', syncActivityCategoryVisibility);
+        syncActivityCategoryVisibility();
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('en-PH', {
+            style: 'currency',
+            currency: 'PHP',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(value || 0);
+    }
+
+    function toNumber(value) {
+        if (value === null || value === undefined || value === '') {
+            return 0;
+        }
+        if (typeof value === 'number') {
+            return value;
+        }
+        const parsed = parseFloat(String(value).replace(/,/g, ''));
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function validateBudget() {
+        const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+        if (!allocatedInput) return;
+
+        const ppaBudgetEl = document.getElementById('ppa-total-budget');
+        const submitBtn = formEl.querySelector('button[type="submit"]');
+        const errorDiv = document.getElementById('budget-error-message');
+        const errorSpan = errorDiv ? errorDiv.querySelector('span') : null;
+
+        const allocated = toNumber(allocatedInput.value);
+        const ppaBudget = ppaBudgetEl ? toNumber(ppaBudgetEl.dataset.value) : 0;
+
+        const overBudget = ppaBudget > 0 && allocated > ppaBudget;
+
+        allocatedInput.classList.toggle('ring-2', overBudget);
+        allocatedInput.classList.toggle('ring-red-500', overBudget);
+        allocatedInput.classList.toggle('border-red-500', overBudget);
+
+        if (errorDiv && errorSpan) {
+            if (overBudget) {
+                errorSpan.textContent = `Allocated budget cannot exceed PPA total budget (${formatCurrency(ppaBudget)})`;
+                errorDiv.classList.remove('hidden');
+            } else {
+                errorDiv.classList.add('hidden');
+            }
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = overBudget;
+            submitBtn.classList.toggle('opacity-50', overBudget);
+            submitBtn.classList.toggle('cursor-not-allowed', overBudget);
+        }
+    }
+
+    setTimeout(() => {
+        const allocatedInput = document.getElementById('{{ form.allocated_budget.id_for_label }}');
+        if (!allocatedInput) return;
+
+        allocatedInput.addEventListener('focus', () => {
+            allocatedInput.value = allocatedInput.value.replace(/,/g, '');
+        });
+
+        allocatedInput.addEventListener('blur', () => {
+            const numeric = toNumber(allocatedInput.value);
+            allocatedInput.value = numeric ? numeric.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+            validateBudget();
+        });
+
+        allocatedInput.addEventListener('input', validateBudget);
+        allocatedInput.addEventListener('change', validateBudget);
+
+        validateBudget();
+    }, 140);
+})();
+</script>
