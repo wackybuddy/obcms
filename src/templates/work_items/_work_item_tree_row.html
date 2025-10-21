@@ -202,8 +202,8 @@
             </button>
             <button type="button"
                     data-hx-get="{% url 'common:work_item_sidebar_create' %}?parent={{ work_item.pk }}"
-                    data-hx-target="#sidebar-content"
-                    onclick="openSidebarAndLoad(this)"
+                    data-hx-target="#work-item-create-modal-content"
+                    onclick="openCreateWorkItemModal(this)"
                     class="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1.5 rounded transition-colors duration-150"
                     title="Add Child Item">
                 <i class="fas fa-plus-circle text-sm"></i>
