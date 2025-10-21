@@ -38,6 +38,8 @@
           class="grid grid-cols-1 lg:grid-cols-2 gap-6"
           {% if work_item %}data-autosave="true"{% endif %}>
         {% csrf_token %}
+        <!-- Flag to indicate manual save vs autosave -->
+        <input type="hidden" id="is-manual-save" name="is_manual_save" value="false">
         {% if submission_token %}
         <input type="hidden" name="submission_token" value="{{ submission_token }}">
         {% endif %}
@@ -867,7 +869,7 @@
             </div>
             {% endif %}
             <div class="flex flex-col sm:flex-row justify-end gap-4">
-                <button type="submit" class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <button type="submit" id="save-work-item-btn" class="bg-gradient-to-r from-blue-600 to-emerald-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                     <i class="fas fa-save mr-2"></i>
                     Save Work Item
                 </button>
@@ -1181,9 +1183,12 @@ document.addEventListener('DOMContentLoaded', () => {
         element.addEventListener('change', handleFieldMutation);
     });
 
-    form.addEventListener('submit', () => {
+    form.addEventListener('submit', (event) => {
+        // Allow normal form submission (which triggers redirect)
+        // Don't prevent default - let the form submit normally to the server
         clearTimeout(autosaveTimer);
         hasPendingChanges = false;
+        // Important: Do NOT prevent default - we want the form to submit and redirect
     });
 
     window.addEventListener('beforeunload', (event) => {
@@ -1256,6 +1261,23 @@ function searchableMultiSelect(selectId) {
         },
     };
 }
+
+// Handle Save button click - bypass autosave and submit normally for redirect
+document.addEventListener('DOMContentLoaded', function() {
+    const saveButton = document.getElementById('save-work-item-btn');
+    const form = document.getElementById('work-item-form');
+    const isManualSaveInput = document.getElementById('is-manual-save');
+
+    if (saveButton && form && isManualSaveInput) {
+        saveButton.addEventListener('click', function(e) {
+            // Mark this as a manual save (not autosave)
+            isManualSaveInput.value = 'true';
+
+            // Allow form to submit normally (browser will POST and handle redirect)
+            // Don't prevent default - we want normal form submission
+        });
+    }
+});
 
 // Budget variance calculation with PPA validation
 function calculateBudgetVariance() {

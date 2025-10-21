@@ -266,19 +266,31 @@ def build_staff_profile_detail_context(
         .filter(is_active=True)
         .order_by("team__name")
     )
-    recent_tasks = (
-        WorkItem.objects.filter(assignees=profile.user)
-        .prefetch_related("teams", "assignees")
-        .order_by("-updated_at")[:10]
-    )
+
+    # Get status filter from query params
+    status_filter = request.GET.get('status', '')
+
+    # Get all tasks for the user
+    all_tasks = WorkItem.objects.filter(assignees=profile.user).prefetch_related("teams", "assignees")
+
+    # Filter by status if provided
+    if status_filter:
+        recent_tasks = all_tasks.filter(status=status_filter).order_by("-updated_at")[:10]
+    else:
+        recent_tasks = all_tasks.order_by("-updated_at")[:10]
+
     trainings = profile.training_enrollments.select_related("program")
     development_plans = profile.development_plans.all()
     performance_targets = profile.performance_targets.select_related("team")
 
+    # Build tasks_by_status dictionary
     tasks_by_status = {
-        label: profile.user.assigned_work_items.filter(status=status).count()
+        status: profile.user.assigned_work_items.filter(status=status).count()
         for status, label in WorkItem.STATUS_CHOICES
     }
+
+    # Calculate total tasks count
+    total_tasks_count = profile.user.assigned_work_items.count()
 
     viewer = viewing_user or request.user
     can_edit = (
@@ -297,6 +309,8 @@ def build_staff_profile_detail_context(
         "competency_categories": STAFF_COMPETENCY_CATEGORIES,
         "competency_levels": STAFF_COMPETENCY_PROFICIENCY_LEVELS,
         "tasks_by_status": tasks_by_status,
+        "total_tasks_count": total_tasks_count,
+        "status_choices": WorkItem.STATUS_CHOICES,
         "tabs": tabs,
         "active_tab": active_tab,
         "is_self_profile": viewer == profile.user,
@@ -3136,6 +3150,11 @@ def staff_profiles_detail(request, pk):
         profile,
         base_url=detail_url,
     )
+
+    # Handle HTMX partial requests for tasks section
+    if request.headers.get('HX-Request') == 'true' and request.GET.get('partial') == 'tasks':
+        return render(request, "common/staff_profile/partials/tasks_section.html", context)
+
     return render(request, "common/staff_profile_detail.html", context)
 
 

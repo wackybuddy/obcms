@@ -315,6 +315,13 @@ def work_item_detail(request, pk):
         'can_delete': permissions['can_delete'],
     }
 
+    # Check if this is an HTMX request (from modal)
+    is_htmx_request = request.headers.get('HX-Request') == 'true'
+    if is_htmx_request:
+        # Return only the card content for modal display
+        return render(request, 'work_items/work_item_detail_card.html', context)
+
+    # Return full page for direct navigation
     return render(request, 'work_items/work_item_detail.html', context)
 
 
@@ -490,7 +497,9 @@ def work_item_edit(request, pk):
         raise PermissionDenied('You do not have permission to edit this work item.')
 
     if request.method == 'POST':
-        is_autosave = request.headers.get('X-Autosave') == 'true'
+        # Check if this is a manual save (Save button) or autosave (background)
+        is_manual_save = request.POST.get('is_manual_save') == 'true'
+        is_autosave = request.headers.get('X-Autosave') == 'true' and not is_manual_save
         form = WorkItemForm(request.POST, instance=work_item)
 
         if form.is_valid():
@@ -1478,6 +1487,21 @@ def work_item_sidebar_create(request):
                 })
                 return response
 
+            if is_staff_profile:
+                # For staff profile pages, refresh the tasks section automatically
+                response['HX-Trigger'] = json.dumps({
+                    'refreshStaffTasksSection': {
+                        'workItemId': str(work_item.pk),
+                        'assigneeId': str(assignee_user.pk) if assignee_user else None,
+                    },
+                    'showToast': {
+                        'message': message,
+                        'level': level
+                    },
+                    'closeSidebar': True,
+                })
+                return response
+
             # Default calendar/sidebar behaviour
             event_payload = serialize_work_item_for_calendar(work_item)
             response['HX-Trigger'] = json.dumps({
@@ -1621,7 +1645,7 @@ def work_item_sidebar_create(request):
 
             # Handle assignee from hidden field (if creating from staff profile)
             if assignee_user:
-                work_item.assigned_users.add(assignee_user)
+                work_item.assignees.add(assignee_user)
 
             # Link to PPA if ppa_id was provided
             # Invalidate caches
