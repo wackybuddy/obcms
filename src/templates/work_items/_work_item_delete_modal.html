@@ -231,6 +231,13 @@
             }, 220);
 
             // Close modal after successful deletion
+            // First, clear the delete modal container
+            const deleteModalContainer = document.getElementById('delete-modal-container');
+            if (deleteModalContainer) {
+                deleteModalContainer.innerHTML = '';
+            }
+
+            // Then, close the modal-backdrop if it exists
             const modal = document.querySelector('.modal-backdrop');
             if (modal) {
                 setTimeout(() => modal.remove(), 300);
