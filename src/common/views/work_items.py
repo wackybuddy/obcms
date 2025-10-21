@@ -943,7 +943,13 @@ def work_item_sidebar_detail(request, pk):
         sidebar_target_id = 'detailPanelBody'
 
     close_action = 'closeSidebar'
-    if sidebar_target_id.endswith('detailPanelBody'):
+
+    # If loading inside a modal, use modal close function
+    if hx_target == 'work-item-modal-content':
+        close_action = 'closeWorkItemModal'
+    elif hx_target == 'work-item-create-modal-content':
+        close_action = 'closeCreateWorkItemModal'
+    elif sidebar_target_id.endswith('detailPanelBody'):
         prefix = sidebar_target_id[: -len('detailPanelBody')].rstrip('-')
         close_action = f'{prefix}_closeDetailPanel' if prefix else 'closeDetailPanel'
 
