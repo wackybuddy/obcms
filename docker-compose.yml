@@ -8,11 +8,6 @@ services:
     volumes:
       - .:/app
       - static_volume:/app/src/staticfiles
-    depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
     command: >
       sh -c "cd src &&
              python manage.py migrate &&
@@ -39,6 +34,4 @@ services:
              celery -A obc_management beat -l info"
 
 volumes:
-  postgres_data:
-  redis_data:
   static_volume:
