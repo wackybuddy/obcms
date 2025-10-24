@@ -1,0 +1,98 @@
+services:
+  migrate:
+    build:
+      context: .
+      target: production
+    command: >
+      sh -c "cd src &&
+            echo '=== Running deployment checks ===' &&
+            python manage.py check --deploy &&
+            echo '=== Running database migrations ===' &&
+            python manage.py migrate --noinput &&
+            echo '=== Collecting static files ===' &&
+            python manage.py collectstatic --noinput &&
+            echo '=== Migration complete ==='  "
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: production
+    restart: unless-stopped
+    volumes:
+      - static_volume:/app/src/staticfiles
+      - media_volume:/app/src/media
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  celery-worker:
+    build:
+      context: .
+      target: production
+    restart: unless-stopped
+    volumes:
+      - media_volume:/app/src/media
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: >
+      sh -c "cd src &&
+             celery -A obc_management worker
+             --loglevel=info
+             --concurrency=4
+             --max-tasks-per-child=1000
+             --time-limit=300
+             --soft-time-limit=240"
+    stop_grace_period: 60s
+
+  celery-beat:
+    build:
+      context: .
+      target: production
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: >
+      sh -c "cd src &&
+             celery -A obc_management beat --loglevel=info"
+    stop_grace_period: 30s
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/load_balancer.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost/health/",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  static_volume:
+  media_volume:
