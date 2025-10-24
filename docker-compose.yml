@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      target: development
+      target: production
     ports:
       - "8000:8000"
     volumes:
@@ -16,7 +16,7 @@ services:
   celery:
     build:
       context: .
-      target: development
+      target: production
     volumes:
       - .:/app
     command: >
@@ -26,7 +26,7 @@ services:
   celery-beat:
     build:
       context: .
-      target: development
+      target: production
     volumes:
       - .:/app
     command: >
